@@ -345,7 +345,7 @@ where
                                 // }
                             }
                             Err(reason) => {
-                                debug!("Snapshotting skipped: {:?}", reason);
+                                debug!("Snapshotting skipped: {reason}");
                             }
                         }
 
@@ -365,7 +365,7 @@ where
                                     )
                                     .await
                                     {
-                                        error!("Pruning milestone range failed: {}.", e);
+                                        error!("Pruning milestone range failed: {e}.");
                                     }
                                 }
                                 PruningTask::ByDbSize { num_bytes_to_prune } => {
@@ -379,12 +379,12 @@ where
                                     )
                                     .await
                                     {
-                                        error!("Pruning by storage size failed: {}.", e);
+                                        error!("Pruning by storage size failed: {e}.");
                                     }
                                 }
                             },
                             Err(reason) => {
-                                debug!("Pruning skipped: {}", reason);
+                                debug!("Pruning skipped: {reason}");
                             }
                         }
                     }

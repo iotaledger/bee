@@ -20,18 +20,18 @@ static LAST_PRUNING_BY_SIZE: AtomicU64 = AtomicU64::new(0);
 /// Reasons for skipping pruning.
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum PruningSkipReason {
-    #[error("Pruning disabled.")]
+    #[error("disabled")]
     Disabled,
-    #[error("Pruning by index range below index threshold.")]
-    BelowMilestoneIndexThreshold,
-    #[error("Pruning by size not supported by the storage layer.")]
-    PruningBySizeUnsupported,
-    #[error("Pruning by size currently unavailable.")]
-    PruningBySizeUnavailable,
-    #[error("Pruning by size below size threshold.")]
-    BelowStorageSizeThreshold,
-    #[error("Pruning by size below cooldown threshold.")]
-    BelowCooldownTimeThreshold,
+    #[error("ledger index < target index threshold")]
+    BelowTargetIndexThreshold,
+    #[error("size metric not supported by the storage layer")]
+    SizeMetricUnsupported,
+    #[error("size metric currently unavailable")]
+    SizeMetricUnavailable,
+    #[error("current size < target size threshold")]
+    BelowTargetSizeThreshold,
+    #[error("cooldown")]
+    Cooldown,
 }
 
 pub(crate) enum PruningTask {
@@ -61,17 +61,17 @@ pub(crate) fn should_prune<S: StorageBackend>(
         let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
 
         if now < last + pruning_config.db_size().cooldown_time() {
-            Err(PruningSkipReason::BelowCooldownTimeThreshold)
+            Err(PruningSkipReason::Cooldown)
         } else {
             let actual_size = {
                 if let Ok(size) = storage.size() {
                     if let Some(size) = size {
                         Ok(size)
                     } else {
-                        Err(PruningSkipReason::PruningBySizeUnavailable)
+                        Err(PruningSkipReason::SizeMetricUnavailable)
                     }
                 } else {
-                    Err(PruningSkipReason::PruningBySizeUnsupported)
+                    Err(PruningSkipReason::SizeMetricUnsupported)
                 }
             };
 
@@ -82,7 +82,7 @@ pub(crate) fn should_prune<S: StorageBackend>(
                     log::debug!("Storage size: actual {actual_size} threshold {threshold_size}");
 
                     if actual_size < threshold_size {
-                        Err(PruningSkipReason::BelowStorageSizeThreshold)
+                        Err(PruningSkipReason::BelowTargetSizeThreshold)
                     } else {
                         // Panic: cannot underflow due to actual_size >= threshold_size.
                         let excess_size = actual_size - threshold_size;
@@ -107,10 +107,10 @@ pub(crate) fn should_prune<S: StorageBackend>(
 
     if pruning_by_size.is_err() && pruning_config.milestones().enabled() {
         let pruning_index = *tangle.get_pruning_index() + 1;
-        let pruning_threshold = pruning_index + milestones_to_keep;
+        let target_index_threshold = pruning_index + milestones_to_keep;
 
-        if *ledger_index < pruning_threshold {
-            Err(PruningSkipReason::BelowMilestoneIndexThreshold)
+        if *ledger_index < target_index_threshold {
+            Err(PruningSkipReason::BelowTargetIndexThreshold)
         } else {
             let target_pruning_index = *ledger_index - milestones_to_keep;
 

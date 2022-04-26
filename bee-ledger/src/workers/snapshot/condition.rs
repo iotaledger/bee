@@ -8,11 +8,11 @@ use crate::{types::LedgerIndex, workers::snapshot::config::SnapshotConfig};
 /// Reasons for skipping snapshotting.
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum SnapshottingSkipReason {
-    #[error("Snapshotting disabled.")]
+    #[error("disabled")]
     Disabled,
-    #[error("Ledger index below snapshotting depth.")]
+    #[error("ledger index < snapshotting depth")]
     BelowDepth,
-    #[error("Ledger index below next snapshot index {next_snapshot_index}.")]
+    #[error("ledger index < next snapshot index {next_snapshot_index}")]
     BelowNextSnapshotIndex { next_snapshot_index: u32 },
 }
 
