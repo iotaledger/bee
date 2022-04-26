@@ -61,7 +61,7 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
     // not overwrite the old value.
     {
         let index = metadata.milestone_index().map_or(0, |i| *i + 1);
-        let mut metadata = metadata.clone();
+        let mut metadata = metadata;
         metadata.set_milestone_index(MilestoneIndex(index));
 
         InsertStrict::<MessageId, MessageMetadata>::insert_strict(storage, &message_id, &metadata).unwrap();
