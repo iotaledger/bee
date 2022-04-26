@@ -88,7 +88,7 @@ pub async fn prune_by_size<S: StorageBackend>(
         let index = *tangle.get_pruning_index() + 1;
 
         if *ledger_index < index + MILESTONES_TO_KEEP_MIN {
-            log::debug!("Minimum pruning index reached.");
+            log::debug!("Minimum number of milestones to keep reached.");
             break;
         }
 
