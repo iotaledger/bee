@@ -187,7 +187,7 @@ pub struct SnapshottingConfig {
 }
 
 impl SnapshottingConfig {
-    /// Returns whether pruning based on milestone indexes is enabled.
+    /// Returns whether snapshotting is enabled.
     pub fn enabled(&self) -> bool {
         self.enabled
     }
