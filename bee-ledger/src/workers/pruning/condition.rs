@@ -51,7 +51,60 @@ pub(crate) fn should_prune<S: StorageBackend>(
     milestones_to_keep: u32,
     config: &PruningConfig,
 ) -> Result<PruningTask, PruningSkipReason> {
-    if config.milestones().enabled() {
+    if !config.milestones().enabled() && !config.db_size().enabled() {
+        return Err(PruningSkipReason::Disabled);
+    }
+
+    let pruning_by_size = if config.db_size().enabled() {
+        let last = Duration::from_secs(LAST_PRUNING_BY_SIZE.load(Ordering::Relaxed));
+        // Panic: should not cause problems on properly set up hosts.
+        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+
+        if now < last + config.db_size().cooldown_time() {
+            Err(PruningSkipReason::BelowCooldownTimeThreshold)
+        } else {
+            let actual_size = {
+                if let Ok(size) = storage.size() {
+                    if let Some(size) = size {
+                        Ok(size)
+                    } else {
+                        Err(PruningSkipReason::PruningBySizeUnavailable)
+                    }
+                } else {
+                    Err(PruningSkipReason::PruningBySizeUnsupported)
+                }
+            };
+
+            match actual_size {
+                Ok(actual_size) => {
+                    let threshold_size = config.db_size().target_size();
+
+                    log::debug!("Storage size: actual {actual_size} threshold {threshold_size}");
+
+                    if actual_size < threshold_size {
+                        Err(PruningSkipReason::BelowStorageSizeThreshold)
+                    } else {
+                        // Panic: cannot underflow due to actual_size >= threshold_size.
+                        let excess_size = actual_size - threshold_size;
+                        let num_bytes_to_prune = excess_size
+                            + (config.db_size().threshold_percentage() as f64 / 100.0 * threshold_size as f64) as usize;
+
+                        log::debug!("Num bytes to prune: {num_bytes_to_prune}");
+
+                        // Store the time we issued a pruning-by-size.
+                        LAST_PRUNING_BY_SIZE.store(now.as_secs(), Ordering::Relaxed);
+
+                        Ok(PruningTask::ByDbSize { num_bytes_to_prune })
+                    }
+                }
+                Err(reason) => Err(reason),
+            }
+        }
+    } else {
+        Err(PruningSkipReason::Disabled)
+    };
+
+    if pruning_by_size.is_err() && config.milestones().enabled() {
         let pruning_index = *tangle.get_pruning_index() + 1;
         let pruning_threshold = pruning_index + milestones_to_keep;
 
@@ -69,46 +122,7 @@ pub(crate) fn should_prune<S: StorageBackend>(
                 },
             })
         }
-    } else if config.db_size().enabled() {
-        let last = Duration::from_secs(LAST_PRUNING_BY_SIZE.load(Ordering::Relaxed));
-        // Panic: should not cause problems on properly set up hosts.
-        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
-
-        if now < last + config.db_size().cooldown_time() {
-            return Err(PruningSkipReason::BelowCooldownTimeThreshold);
-        }
-
-        let actual_size = {
-            if let Ok(size) = storage.size() {
-                if let Some(size) = size {
-                    size
-                } else {
-                    return Err(PruningSkipReason::PruningBySizeUnavailable);
-                }
-            } else {
-                return Err(PruningSkipReason::PruningBySizeUnsupported);
-            }
-        };
-        let threshold_size = config.db_size().target_size();
-
-        log::debug!("Storage size: actual {actual_size} threshold {threshold_size}");
-
-        if actual_size < threshold_size {
-            Err(PruningSkipReason::BelowStorageSizeThreshold)
-        } else {
-            // Panic: cannot underflow due to actual_size >= threshold_size.
-            let excess_size = actual_size - threshold_size;
-            let num_bytes_to_prune =
-                excess_size + (config.db_size().threshold_percentage() as f64 / 100.0 * threshold_size as f64) as usize;
-
-            log::debug!("Num bytes to prune: {num_bytes_to_prune}");
-
-            // Store the time we issued a pruning-by-size.
-            LAST_PRUNING_BY_SIZE.store(now.as_secs(), Ordering::Relaxed);
-
-            Ok(PruningTask::ByDbSize { num_bytes_to_prune })
-        }
     } else {
-        Err(PruningSkipReason::Disabled)
+        pruning_by_size
     }
 }
