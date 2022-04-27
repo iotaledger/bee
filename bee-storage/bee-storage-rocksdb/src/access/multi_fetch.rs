@@ -4,9 +4,11 @@
 use std::{marker::PhantomData, vec::IntoIter};
 
 use bee_ledger::types::{ConsumedOutput, CreatedOutput, OutputDiff};
-use bee_message::{milestone::Milestone, output::OutputId, payload::milestone::MilestoneIndex, Message, MessageId};
+use bee_message::{output::OutputId, payload::milestone::MilestoneIndex, Message, MessageId};
 use bee_storage::{access::MultiFetch, system::System};
-use bee_tangle::{message_metadata::MessageMetadata, solid_entry_point::SolidEntryPoint};
+use bee_tangle::{
+    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+};
 use packable::{Packable, PackableExt};
 use parking_lot::RwLockReadGuard;
 
@@ -59,7 +61,7 @@ impl_multi_fetch!(u8, System, CF_SYSTEM);
 impl_multi_fetch!(MessageId, Message, CF_MESSAGE_ID_TO_MESSAGE);
 impl_multi_fetch!(OutputId, CreatedOutput, CF_OUTPUT_ID_TO_CREATED_OUTPUT);
 impl_multi_fetch!(OutputId, ConsumedOutput, CF_OUTPUT_ID_TO_CONSUMED_OUTPUT);
-impl_multi_fetch!(MilestoneIndex, Milestone, CF_MILESTONE_INDEX_TO_MILESTONE);
+impl_multi_fetch!(MilestoneIndex, MilestoneMetadata, CF_MILESTONE_INDEX_TO_MILESTONE);
 impl_multi_fetch!(SolidEntryPoint, MilestoneIndex, CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX);
 impl_multi_fetch!(MilestoneIndex, OutputDiff, CF_MILESTONE_INDEX_TO_OUTPUT_DIFF);
 

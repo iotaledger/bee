@@ -4,9 +4,9 @@
 use std::{any::TypeId, collections::HashSet, convert::Infallible};
 
 use async_trait::async_trait;
-use bee_message::{milestone::Milestone, payload::milestone::MilestoneIndex, MessageId};
+use bee_message::{payload::milestone::MilestoneIndex, MessageId};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{message_metadata::IndexId, Tangle, TangleWorker};
+use bee_tangle::{message_metadata::IndexId, milestone_metadata::MilestoneMetadata, Tangle, TangleWorker};
 use futures::{future::FutureExt, stream::StreamExt};
 use log::{debug, info};
 use tokio::sync::mpsc;
@@ -15,7 +15,7 @@ use tokio_stream::wrappers::UnboundedReceiverStream;
 use crate::workers::storage::StorageBackend;
 
 #[derive(Debug)]
-pub(crate) struct IndexUpdaterWorkerEvent(pub(crate) MilestoneIndex, pub(crate) Milestone);
+pub(crate) struct IndexUpdaterWorkerEvent(pub(crate) MilestoneIndex, pub(crate) MilestoneMetadata);
 
 pub(crate) struct IndexUpdaterWorker {
     pub(crate) tx: mpsc::UnboundedSender<IndexUpdaterWorkerEvent>,
@@ -67,7 +67,7 @@ where
     }
 }
 
-async fn process<B: StorageBackend>(tangle: &Tangle<B>, milestone: Milestone, index: MilestoneIndex) {
+async fn process<B: StorageBackend>(tangle: &Tangle<B>, milestone: MilestoneMetadata, index: MilestoneIndex) {
     if let Some(parents) = tangle
         .get(milestone.message_id())
         .map(|message| message.parents().to_vec())

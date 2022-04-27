@@ -7,13 +7,11 @@ use bee_ledger::types::{
     snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
     Unspent,
 };
-use bee_message::{
-    address::Ed25519Address, milestone::Milestone, output::OutputId, payload::milestone::MilestoneIndex, Message,
-    MessageId,
-};
+use bee_message::{address::Ed25519Address, output::OutputId, payload::milestone::MilestoneIndex, Message, MessageId};
 use bee_storage::{access::Exist, backend::StorageBackend};
 use bee_tangle::{
-    message_metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
+    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+    unreferenced_message::UnreferencedMessage,
 };
 use packable::PackableExt;
 
@@ -94,7 +92,7 @@ impl Exist<(), LedgerIndex> for Storage {
     }
 }
 
-impl Exist<MilestoneIndex, Milestone> for Storage {
+impl Exist<MilestoneIndex, MilestoneMetadata> for Storage {
     fn exist(&self, index: &MilestoneIndex) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner

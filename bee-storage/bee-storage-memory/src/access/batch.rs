@@ -7,16 +7,14 @@ use bee_ledger::types::{
     snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
     Unspent,
 };
-use bee_message::{
-    address::Ed25519Address, milestone::Milestone, output::OutputId, payload::milestone::MilestoneIndex, Message,
-    MessageId,
-};
+use bee_message::{address::Ed25519Address, output::OutputId, payload::milestone::MilestoneIndex, Message, MessageId};
 use bee_storage::{
     access::{Batch, BatchBuilder},
     backend::StorageBackend,
 };
 use bee_tangle::{
-    message_metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
+    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+    unreferenced_message::UnreferencedMessage,
 };
 
 use crate::{storage::Storage, table::TableBatch};
@@ -32,7 +30,7 @@ pub struct StorageBatch {
     output_id_unspent: TableBatch<Unspent, ()>,
     ed25519_address_to_output_id: TableBatch<(Ed25519Address, OutputId), ()>,
     ledger_index: TableBatch<(), LedgerIndex>,
-    milestone_index_to_milestone: TableBatch<MilestoneIndex, Milestone>,
+    milestone_index_to_milestone: TableBatch<MilestoneIndex, MilestoneMetadata>,
     snapshot_info: TableBatch<(), SnapshotInfo>,
     solid_entry_point_to_milestone_index: TableBatch<SolidEntryPoint, MilestoneIndex>,
     milestone_index_to_output_diff: TableBatch<MilestoneIndex, OutputDiff>,
@@ -108,7 +106,7 @@ impl_batch!(OutputId, ConsumedOutput, output_id_to_consumed_output);
 impl_batch!(Unspent, (), output_id_unspent);
 impl_batch!((Ed25519Address, OutputId), (), ed25519_address_to_output_id);
 impl_batch!((), LedgerIndex, ledger_index);
-impl_batch!(MilestoneIndex, Milestone, milestone_index_to_milestone);
+impl_batch!(MilestoneIndex, MilestoneMetadata, milestone_index_to_milestone);
 impl_batch!((), SnapshotInfo, snapshot_info);
 impl_batch!(SolidEntryPoint, MilestoneIndex, solid_entry_point_to_milestone_index);
 impl_batch!(MilestoneIndex, OutputDiff, milestone_index_to_output_diff);

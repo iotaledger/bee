@@ -5,7 +5,6 @@ use std::{any::TypeId, convert::Infallible};
 
 use async_trait::async_trait;
 use bee_message::{
-    milestone::Milestone,
     payload::{
         milestone::{MilestonePayload, MilestoneValidationError},
         Payload,
@@ -13,7 +12,7 @@ use bee_message::{
     Message, MessageId,
 };
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{event::LatestMilestoneChanged, Tangle, TangleWorker};
+use bee_tangle::{event::LatestMilestoneChanged, milestone_metadata::MilestoneMetadata, Tangle, TangleWorker};
 use futures::{future::FutureExt, stream::StreamExt};
 use log::{debug, error, info};
 use tokio::sync::mpsc;
@@ -48,7 +47,7 @@ fn validate(
     message: &Message,
     milestone: &MilestonePayload,
     key_manager: &MilestoneKeyManager,
-) -> Result<Milestone, Error> {
+) -> Result<MilestoneMetadata, Error> {
     if !message.parents().eq(milestone.essence().parents()) {
         return Err(Error::MessageMilestoneParentsMismatch);
     }
@@ -63,7 +62,7 @@ fn validate(
         )
         .map_err(Error::InvalidMilestone)?;
 
-    Ok(Milestone::new(message_id, milestone.essence().timestamp()))
+    Ok(MilestoneMetadata::new(message_id, milestone.essence().timestamp()))
 }
 
 #[allow(clippy::too_many_arguments)]

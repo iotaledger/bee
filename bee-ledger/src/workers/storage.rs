@@ -5,13 +5,14 @@
 
 use std::collections::HashMap;
 
-use bee_message::{milestone::Milestone, output::OutputId, payload::milestone::MilestoneIndex, Message, MessageId};
+use bee_message::{output::OutputId, payload::milestone::MilestoneIndex, Message, MessageId};
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Exist, Fetch, Insert, Truncate},
     backend,
 };
 use bee_tangle::{
-    message_metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
+    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+    unreferenced_message::UnreferencedMessage,
 };
 
 use crate::{
@@ -38,13 +39,13 @@ pub trait StorageBackend:
     + Batch<(MessageId, MessageId), ()>
     + Batch<MessageId, Message>
     + Batch<MessageId, MessageMetadata>
-    + Batch<MilestoneIndex, Milestone>
+    + Batch<MilestoneIndex, MilestoneMetadata>
     + Exist<Unspent, ()>
     + Fetch<(), SnapshotInfo>
     + Fetch<OutputId, CreatedOutput>
     + Fetch<(), LedgerIndex>
     + Fetch<bool, Vec<TreasuryOutput>>
-    + Fetch<MilestoneIndex, Milestone>
+    + Fetch<MilestoneIndex, MilestoneMetadata>
     + Fetch<MilestoneIndex, Vec<Receipt>>
     + Fetch<MilestoneIndex, Vec<UnreferencedMessage>>
     + Fetch<MilestoneIndex, OutputDiff>
@@ -73,13 +74,13 @@ impl<T> StorageBackend for T where
         + Batch<(MessageId, MessageId), ()>
         + Batch<MessageId, Message>
         + Batch<MessageId, MessageMetadata>
-        + Batch<MilestoneIndex, Milestone>
+        + Batch<MilestoneIndex, MilestoneMetadata>
         + Exist<Unspent, ()>
         + Fetch<(), SnapshotInfo>
         + Fetch<OutputId, CreatedOutput>
         + Fetch<(), LedgerIndex>
         + Fetch<bool, Vec<TreasuryOutput>>
-        + Fetch<MilestoneIndex, Milestone>
+        + Fetch<MilestoneIndex, MilestoneMetadata>
         + Fetch<MilestoneIndex, Vec<Receipt>>
         + Fetch<MilestoneIndex, Vec<UnreferencedMessage>>
         + Fetch<MilestoneIndex, OutputDiff>

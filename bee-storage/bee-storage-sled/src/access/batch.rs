@@ -9,16 +9,14 @@ use bee_ledger::types::{
     snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
     Unspent,
 };
-use bee_message::{
-    address::Ed25519Address, milestone::Milestone, output::OutputId, payload::milestone::MilestoneIndex, Message,
-    MessageId,
-};
+use bee_message::{address::Ed25519Address, output::OutputId, payload::milestone::MilestoneIndex, Message, MessageId};
 use bee_storage::{
     access::{Batch, BatchBuilder},
     backend::StorageBackend,
 };
 use bee_tangle::{
-    message_metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
+    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+    unreferenced_message::UnreferencedMessage,
 };
 use packable::{Packable, PackableExt};
 use sled::{transaction::TransactionError, Transactional};
@@ -353,12 +351,12 @@ impl Batch<(), LedgerIndex> for Storage {
     }
 }
 
-impl Batch<MilestoneIndex, Milestone> for Storage {
+impl Batch<MilestoneIndex, MilestoneMetadata> for Storage {
     fn batch_insert(
         &self,
         batch: &mut Self::Batch,
         index: &MilestoneIndex,
-        milestone: &Milestone,
+        milestone: &MilestoneMetadata,
     ) -> Result<(), <Self as StorageBackend>::Error> {
         batch.key_buf.clear();
         // Packing to bytes can't fail.

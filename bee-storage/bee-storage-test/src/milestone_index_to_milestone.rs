@@ -1,80 +1,81 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{milestone::Milestone, payload::milestone::MilestoneIndex};
+use bee_message::payload::milestone::MilestoneIndex;
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate},
     backend,
 };
-use bee_test::rand::milestone::{rand_milestone, rand_milestone_index};
+use bee_tangle::milestone_metadata::MilestoneMetadata;
+use bee_test::rand::milestone::{rand_milestone_index, rand_milestone_metadata};
 
 pub trait StorageBackend:
     backend::StorageBackend
-    + Exist<MilestoneIndex, Milestone>
-    + Fetch<MilestoneIndex, Milestone>
-    + for<'a> MultiFetch<'a, MilestoneIndex, Milestone>
-    + Insert<MilestoneIndex, Milestone>
-    + Delete<MilestoneIndex, Milestone>
+    + Exist<MilestoneIndex, MilestoneMetadata>
+    + Fetch<MilestoneIndex, MilestoneMetadata>
+    + for<'a> MultiFetch<'a, MilestoneIndex, MilestoneMetadata>
+    + Insert<MilestoneIndex, MilestoneMetadata>
+    + Delete<MilestoneIndex, MilestoneMetadata>
     + BatchBuilder
-    + Batch<MilestoneIndex, Milestone>
-    + for<'a> AsIterator<'a, MilestoneIndex, Milestone>
-    + Truncate<MilestoneIndex, Milestone>
+    + Batch<MilestoneIndex, MilestoneMetadata>
+    + for<'a> AsIterator<'a, MilestoneIndex, MilestoneMetadata>
+    + Truncate<MilestoneIndex, MilestoneMetadata>
 {
 }
 
 impl<T> StorageBackend for T where
     T: backend::StorageBackend
-        + Exist<MilestoneIndex, Milestone>
-        + Fetch<MilestoneIndex, Milestone>
-        + for<'a> MultiFetch<'a, MilestoneIndex, Milestone>
-        + Insert<MilestoneIndex, Milestone>
-        + Delete<MilestoneIndex, Milestone>
+        + Exist<MilestoneIndex, MilestoneMetadata>
+        + Fetch<MilestoneIndex, MilestoneMetadata>
+        + for<'a> MultiFetch<'a, MilestoneIndex, MilestoneMetadata>
+        + Insert<MilestoneIndex, MilestoneMetadata>
+        + Delete<MilestoneIndex, MilestoneMetadata>
         + BatchBuilder
-        + Batch<MilestoneIndex, Milestone>
-        + for<'a> AsIterator<'a, MilestoneIndex, Milestone>
-        + Truncate<MilestoneIndex, Milestone>
+        + Batch<MilestoneIndex, MilestoneMetadata>
+        + for<'a> AsIterator<'a, MilestoneIndex, MilestoneMetadata>
+        + Truncate<MilestoneIndex, MilestoneMetadata>
 {
 }
 
 pub fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B) {
-    let (index, milestone) = (rand_milestone_index(), rand_milestone());
+    let (index, milestone) = (rand_milestone_index(), rand_milestone_metadata());
 
-    assert!(!Exist::<MilestoneIndex, Milestone>::exist(storage, &index).unwrap());
+    assert!(!Exist::<MilestoneIndex, MilestoneMetadata>::exist(storage, &index).unwrap());
     assert!(
-        Fetch::<MilestoneIndex, Milestone>::fetch(storage, &index)
+        Fetch::<MilestoneIndex, MilestoneMetadata>::fetch(storage, &index)
             .unwrap()
             .is_none()
     );
-    let results = MultiFetch::<MilestoneIndex, Milestone>::multi_fetch(storage, &[index])
+    let results = MultiFetch::<MilestoneIndex, MilestoneMetadata>::multi_fetch(storage, &[index])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(None))));
 
-    Insert::<MilestoneIndex, Milestone>::insert(storage, &index, &milestone).unwrap();
+    Insert::<MilestoneIndex, MilestoneMetadata>::insert(storage, &index, &milestone).unwrap();
 
-    assert!(Exist::<MilestoneIndex, Milestone>::exist(storage, &index).unwrap());
+    assert!(Exist::<MilestoneIndex, MilestoneMetadata>::exist(storage, &index).unwrap());
     assert_eq!(
-        Fetch::<MilestoneIndex, Milestone>::fetch(storage, &index)
+        Fetch::<MilestoneIndex, MilestoneMetadata>::fetch(storage, &index)
             .unwrap()
             .unwrap(),
         milestone
     );
-    let results = MultiFetch::<MilestoneIndex, Milestone>::multi_fetch(storage, &[index])
+    let results = MultiFetch::<MilestoneIndex, MilestoneMetadata>::multi_fetch(storage, &[index])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(Some(v))) if v == &milestone));
 
-    Delete::<MilestoneIndex, Milestone>::delete(storage, &index).unwrap();
+    Delete::<MilestoneIndex, MilestoneMetadata>::delete(storage, &index).unwrap();
 
-    assert!(!Exist::<MilestoneIndex, Milestone>::exist(storage, &index).unwrap());
+    assert!(!Exist::<MilestoneIndex, MilestoneMetadata>::exist(storage, &index).unwrap());
     assert!(
-        Fetch::<MilestoneIndex, Milestone>::fetch(storage, &index)
+        Fetch::<MilestoneIndex, MilestoneMetadata>::fetch(storage, &index)
             .unwrap()
             .is_none()
     );
-    let results = MultiFetch::<MilestoneIndex, Milestone>::multi_fetch(storage, &[index])
+    let results = MultiFetch::<MilestoneIndex, MilestoneMetadata>::multi_fetch(storage, &[index])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
@@ -85,23 +86,23 @@ pub fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B) {
     let mut milestones = Vec::new();
 
     for _ in 0..10 {
-        let (index, milestone) = (rand_milestone_index(), rand_milestone());
-        Insert::<MilestoneIndex, Milestone>::insert(storage, &index, &milestone).unwrap();
-        Batch::<MilestoneIndex, Milestone>::batch_delete(storage, &mut batch, &index).unwrap();
+        let (index, milestone) = (rand_milestone_index(), rand_milestone_metadata());
+        Insert::<MilestoneIndex, MilestoneMetadata>::insert(storage, &index, &milestone).unwrap();
+        Batch::<MilestoneIndex, MilestoneMetadata>::batch_delete(storage, &mut batch, &index).unwrap();
         indexes.push(index);
         milestones.push((index, None));
     }
 
     for _ in 0..10 {
-        let (index, milestone) = (rand_milestone_index(), rand_milestone());
-        Batch::<MilestoneIndex, Milestone>::batch_insert(storage, &mut batch, &index, &milestone).unwrap();
+        let (index, milestone) = (rand_milestone_index(), rand_milestone_metadata());
+        Batch::<MilestoneIndex, MilestoneMetadata>::batch_insert(storage, &mut batch, &index, &milestone).unwrap();
         indexes.push(index);
         milestones.push((index, Some(milestone)));
     }
 
     storage.batch_commit(batch, true).unwrap();
 
-    let iter = AsIterator::<MilestoneIndex, Milestone>::iter(storage).unwrap();
+    let iter = AsIterator::<MilestoneIndex, MilestoneMetadata>::iter(storage).unwrap();
     let mut count = 0;
 
     for result in iter {
@@ -112,7 +113,7 @@ pub fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(count, 10);
 
-    let results = MultiFetch::<MilestoneIndex, Milestone>::multi_fetch(storage, &indexes)
+    let results = MultiFetch::<MilestoneIndex, MilestoneMetadata>::multi_fetch(storage, &indexes)
         .unwrap()
         .collect::<Vec<_>>();
 
@@ -122,9 +123,9 @@ pub fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B) {
         assert_eq!(milestone, result.unwrap());
     }
 
-    Truncate::<MilestoneIndex, Milestone>::truncate(storage).unwrap();
+    Truncate::<MilestoneIndex, MilestoneMetadata>::truncate(storage).unwrap();
 
-    let mut iter = AsIterator::<MilestoneIndex, Milestone>::iter(storage).unwrap();
+    let mut iter = AsIterator::<MilestoneIndex, MilestoneMetadata>::iter(storage).unwrap();
 
     assert!(iter.next().is_none());
 }

@@ -5,13 +5,11 @@ use bee_ledger::types::{
     snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
     Unspent,
 };
-use bee_message::{
-    address::Ed25519Address, milestone::Milestone, output::OutputId, payload::milestone::MilestoneIndex, Message,
-    MessageId,
-};
+use bee_message::{address::Ed25519Address, output::OutputId, payload::milestone::MilestoneIndex, Message, MessageId};
 use bee_storage::access::Delete;
 use bee_tangle::{
-    message_metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
+    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+    unreferenced_message::UnreferencedMessage,
 };
 use packable::PackableExt;
 
@@ -103,7 +101,7 @@ impl Delete<(), LedgerIndex> for Storage {
     }
 }
 
-impl Delete<MilestoneIndex, Milestone> for Storage {
+impl Delete<MilestoneIndex, MilestoneMetadata> for Storage {
     fn delete(&self, index: &MilestoneIndex) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
             .delete_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)?, index.pack_to_vec())?;
