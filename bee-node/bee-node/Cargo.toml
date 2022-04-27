@@ -24,7 +24,7 @@ bee-rest-api = { version = "0.2.0", path = "../../bee-api/bee-rest-api", default
 bee-runtime = { version = "0.1.1-alpha", path = "../../bee-runtime", default-features = false }
 bee-storage = { version = "0.12.0", path = "../../bee-storage/bee-storage", default-features = false }
 bee-storage-null = { version = "0.3.0", path = "../../bee-storage/bee-storage-null", default-features = false }
-bee-storage-rocksdb = { version = "0.7.0", path = "../../bee-storage/bee-storage-rocksdb", default-features = false, optional = true }
+bee-storage-rocksdb = { version = "0.8.0", path = "../../bee-storage/bee-storage-rocksdb", default-features = false, optional = true }
 bee-storage-sled = { version = "0.7.0", path = "../../bee-storage/bee-storage-sled", default-features = false, optional = true }
 bee-tangle = { version = "0.3.0", path = "../../bee-tangle", default-features = false }
 
