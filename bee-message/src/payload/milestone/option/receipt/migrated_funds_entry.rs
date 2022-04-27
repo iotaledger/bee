@@ -5,7 +5,9 @@ use core::ops::RangeInclusive;
 
 use packable::{bounded::BoundedU64, Packable};
 
-use crate::{address::Address, constant::IOTA_SUPPLY, payload::milestone::option::receipt::TailTransactionHash, Error};
+use crate::{
+    address::Address, constant::TOKEN_SUPPLY, payload::milestone::option::receipt::TailTransactionHash, Error,
+};
 
 const MIGRATED_FUNDS_ENTRY_AMOUNT_MIN: u64 = 1_000_000;
 
@@ -26,7 +28,7 @@ pub struct MigratedFundsEntry {
 
 impl MigratedFundsEntry {
     /// Range of valid amounts for a [`MigratedFundsEntry`].
-    pub const AMOUNT_RANGE: RangeInclusive<u64> = MIGRATED_FUNDS_ENTRY_AMOUNT_MIN..=IOTA_SUPPLY;
+    pub const AMOUNT_RANGE: RangeInclusive<u64> = MIGRATED_FUNDS_ENTRY_AMOUNT_MIN..=TOKEN_SUPPLY;
 
     /// Creates a new [`MigratedFundsEntry`].
     pub fn new(tail_transaction_hash: TailTransactionHash, address: Address, amount: u64) -> Result<Self, Error> {

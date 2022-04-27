@@ -7,7 +7,7 @@ use hashbrown::HashSet;
 use packable::{bounded::BoundedU16, prefix::BoxedSlicePrefix, Packable};
 
 use crate::{
-    constant::IOTA_SUPPLY,
+    constant::TOKEN_SUPPLY,
     input::{Input, INPUT_COUNT_RANGE},
     output::{NativeTokens, Output, OUTPUT_COUNT_RANGE},
     payload::{OptionalPayload, Payload},
@@ -191,7 +191,7 @@ fn verify_outputs<const VERIFY: bool>(outputs: &[Output]) -> Result<(), Error> {
             .ok_or(Error::InvalidTransactionAmountSum(amount_sum as u128 + amount as u128))?;
 
         // Accumulated output balance must not exceed the total supply of tokens.
-        if amount_sum > IOTA_SUPPLY {
+        if amount_sum > TOKEN_SUPPLY {
             return Err(Error::InvalidTransactionAmountSum(amount_sum as u128));
         }
 

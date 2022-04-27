@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{constant::IOTA_SUPPLY, milestone::MilestoneIndex, payload::milestone::ReceiptMilestoneOption};
+use bee_message::{constant::TOKEN_SUPPLY, milestone::MilestoneIndex, payload::milestone::ReceiptMilestoneOption};
 
 use crate::types::{error::Error, TreasuryOutput};
 
@@ -39,7 +39,7 @@ impl Receipt {
                 .ok_or_else(|| Error::MigratedFundsAmountOverflow(migrated_amount as u128 + funds.amount() as u128))?;
         }
 
-        if migrated_amount > IOTA_SUPPLY {
+        if migrated_amount > TOKEN_SUPPLY {
             return Err(Error::InvalidMigratedFundsAmount(migrated_amount));
         }
 
