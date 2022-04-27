@@ -16,7 +16,7 @@ fn debug_impl() {
 
     assert_eq!(
         format!("{:?}", milestone),
-        "Milestone { message_id: MessageId(0x9e23e9fccb816af4ad355c27d904b6a6e88618e0bed1b640df3d4c19f4579bc9), timestamp: 0 }",
+        "MilestoneMetadata { message_id: MessageId(0x9e23e9fccb816af4ad355c27d904b6a6e88618e0bed1b640df3d4c19f4579bc9), timestamp: 0 }",
     );
 }
 
