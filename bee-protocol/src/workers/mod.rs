@@ -72,6 +72,7 @@ where
         .with_worker_cfg::<HasherWorker>(config.clone())
         .with_worker_cfg::<ProcessorWorker>(ProcessorWorkerConfig {
             network_id: network_id.1,
+            minimum_pow_score: config.minimum_pow_score,
             byte_cost: config.byte_cost.clone(),
         })
         .with_worker::<MessageResponderWorker>()

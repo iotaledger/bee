@@ -17,9 +17,7 @@ use crate::{
     types::metrics::NodeMetrics,
     workers::{
         config::ProtocolConfig,
-        message::{
-            submitter::notify_invalid_message, HashCache, MessageSubmitterError, ProcessorWorker, ProcessorWorkerEvent,
-        },
+        message::{HashCache, MessageSubmitterError, ProcessorWorker, ProcessorWorkerEvent},
         packets::MessagePacket,
         storage::StorageBackend,
         MetricsWorker, PeerManager, PeerManagerResWorker,
@@ -58,8 +56,6 @@ where
         let processor_worker = node.worker::<ProcessorWorker>().unwrap().tx.clone();
         let metrics = node.resource::<NodeMetrics>();
         let peer_manager = node.resource::<PeerManager>();
-
-        let minimum_pow_score = config.minimum_pow_score;
 
         let mut cache = HashCache::new(config.workers.message_worker_cache);
 
@@ -100,18 +96,10 @@ where
 
                 let pow_score = pow.score(&message_packet.bytes);
 
-                if pow_score < minimum_pow_score {
-                    notify_invalid_message(
-                        format!("Insufficient pow score: {} < {}.", pow_score, minimum_pow_score),
-                        &metrics,
-                        notifier,
-                    );
-                    continue;
-                }
-
                 if let Err(e) = processor_worker.send(ProcessorWorkerEvent {
                     from,
                     message_packet,
+                    pow_score,
                     notifier,
                 }) {
                     warn!("Sending event to the processor worker failed: {}.", e);
