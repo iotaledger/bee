@@ -17,7 +17,7 @@ use bee_message::{
 use bee_storage::{
     access::{Fetch, Insert},
     backend::StorageBackend,
-    system::{StorageHealth, StorageVersion, System, SYSTEM_HEALTH_KEY, SYSTEM_VERSION_KEY},
+    system::{StorageHealth, StorageVersion, System, SYSTEM_HEALTH_KEY},
 };
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
@@ -45,8 +45,6 @@ impl<T> From<PoisonError<T>> for Error {
         Self::PoisonedLock
     }
 }
-
-pub(crate) const STORAGE_VERSION: StorageVersion = StorageVersion(0);
 
 /// An in-memory database.
 #[derive(Default)]
@@ -88,22 +86,6 @@ impl StorageBackend for Storage {
 
     fn start(_: Self::Config) -> Result<Self, Self::Error> {
         let storage = Self::new();
-
-        match Fetch::<u8, System>::fetch(&storage, &SYSTEM_VERSION_KEY)? {
-            Some(System::Version(version)) => {
-                if version != STORAGE_VERSION {
-                    return Err(Error::VersionMismatch(version, STORAGE_VERSION));
-                }
-            }
-            None => Insert::<u8, System>::insert(&storage, &SYSTEM_VERSION_KEY, &System::Version(STORAGE_VERSION))?,
-            _ => panic!("Another system value was inserted on the version key."),
-        }
-
-        if let Some(health) = storage.get_health()? {
-            if health != StorageHealth::Healthy {
-                return Err(Self::Error::UnhealthyStorage(health));
-            }
-        }
 
         storage.set_health(StorageHealth::Idle)?;
 
