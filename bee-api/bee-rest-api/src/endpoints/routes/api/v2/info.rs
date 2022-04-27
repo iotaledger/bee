@@ -3,6 +3,7 @@
 
 use std::{convert::Infallible, net::IpAddr};
 
+use bee_message::constant::{IOTA_SUPPLY, PROTOCOL_VERSION};
 use bee_protocol::workers::{config::ProtocolConfig, PeerManager};
 use bee_runtime::{node::NodeInfo, resource::ResourceHandle};
 use bee_tangle::Tangle;
@@ -80,6 +81,7 @@ pub(crate) async fn info<B: StorageBackend>(
             pruning_index: *tangle.get_pruning_index(),
         },
         protocol: ProtocolResponse {
+            version: PROTOCOL_VERSION,
             network_name: network_id.0,
             bech32_hrp,
             min_pow_score: protocol_config.minimum_pow_score(),
@@ -88,6 +90,7 @@ pub(crate) async fn info<B: StorageBackend>(
                 v_byte_factor_key: protocol_config.byte_cost().v_byte_factor_key,
                 v_byte_factor_data: protocol_config.byte_cost().v_byte_factor_data,
             },
+            token_supply: IOTA_SUPPLY,
         },
         metrics: MetricsResponse {
             messages_per_second: 0.0,            // TODO
