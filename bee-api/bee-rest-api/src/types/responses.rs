@@ -44,6 +44,8 @@ pub struct StatusResponse {
 /// Protocol information about the node.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct ProtocolResponse {
+    #[serde(rename = "protocolVersion")]
+    pub version: u8,
     #[serde(rename = "networkName")]
     pub network_name: String,
     #[serde(rename = "bech32HRP")]
@@ -52,6 +54,8 @@ pub struct ProtocolResponse {
     pub min_pow_score: f64,
     #[serde(rename = "rentStructure")]
     pub rent_structure: RentStructureResponse,
+    #[serde(rename = "tokenSupply")]
+    pub token_supply: String,
 }
 
 /// Returned in [`InfoResponse`].
