@@ -1,7 +1,7 @@
 {
   "alias": "Bee alphanet node",
   "bech32Hrp": "rms",
-  "networkId": "alphanet-3",
+  "networkId": "alphanet-4",
   "logger": {
     "outputs": [
       {
