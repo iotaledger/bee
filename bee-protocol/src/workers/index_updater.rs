@@ -6,7 +6,7 @@ use std::{any::TypeId, collections::HashSet, convert::Infallible};
 use async_trait::async_trait;
 use bee_message::{milestone::Milestone, payload::milestone::MilestoneIndex, MessageId};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{metadata::IndexId, Tangle, TangleWorker};
+use bee_tangle::{message_metadata::IndexId, Tangle, TangleWorker};
 use futures::{future::FutureExt, stream::StreamExt};
 use log::{debug, info};
 use tokio::sync::mpsc;

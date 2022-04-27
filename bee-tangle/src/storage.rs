@@ -7,7 +7,7 @@ use bee_storage::{
     backend,
 };
 
-use crate::{metadata::MessageMetadata, solid_entry_point::SolidEntryPoint};
+use crate::{message_metadata::MessageMetadata, solid_entry_point::SolidEntryPoint};
 
 /// A blanket-implemented helper trait for the storage layer.
 pub trait StorageBackend:

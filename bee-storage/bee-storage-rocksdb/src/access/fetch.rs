@@ -10,7 +10,7 @@ use bee_message::{
 };
 use bee_storage::{access::Fetch, system::System};
 use bee_tangle::{
-    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
+    message_metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
 use packable::PackableExt;
 

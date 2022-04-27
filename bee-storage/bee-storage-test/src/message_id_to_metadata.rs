@@ -6,8 +6,8 @@ use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, InsertStrict, MultiFetch, Truncate, Update},
     backend,
 };
-use bee_tangle::metadata::MessageMetadata;
-use bee_test::rand::{message::rand_message_id, metadata::rand_message_metadata};
+use bee_tangle::message_metadata::MessageMetadata;
+use bee_test::rand::{message::rand_message_id, message_metadata::rand_message_metadata};
 
 pub trait StorageBackend:
     backend::StorageBackend

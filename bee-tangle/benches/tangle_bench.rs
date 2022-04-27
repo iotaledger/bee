@@ -4,8 +4,8 @@
 use bee_message::{semantic::ConflictReason, Message, MessageId};
 use bee_runtime::resource::ResourceHandle;
 use bee_storage_null::Storage as NullStorage;
-use bee_tangle::{config::TangleConfig, metadata::MessageMetadata, Tangle};
-use bee_test::rand::{message::rand_message, metadata::rand_message_metadata, number::rand_number};
+use bee_tangle::{config::TangleConfig, message_metadata::MessageMetadata, Tangle};
+use bee_test::rand::{message::rand_message, message_metadata::rand_message_metadata, number::rand_number};
 use criterion::*;
 use rand::seq::SliceRandom;
 

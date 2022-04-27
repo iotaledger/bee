@@ -5,7 +5,7 @@
 
 use bee_message::MessageId;
 use bee_storage::{access::Update, backend::StorageBackend};
-use bee_tangle::metadata::MessageMetadata;
+use bee_tangle::message_metadata::MessageMetadata;
 
 use crate::storage::Storage;
 

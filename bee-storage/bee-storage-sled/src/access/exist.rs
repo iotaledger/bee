@@ -13,7 +13,7 @@ use bee_message::{
 };
 use bee_storage::{access::Exist, backend::StorageBackend};
 use bee_tangle::{
-    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
+    message_metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
 use packable::PackableExt;
 

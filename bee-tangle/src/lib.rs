@@ -13,7 +13,7 @@ pub mod event;
 /// Message flags.
 pub mod flags;
 /// Message data, including message flags.
-pub mod metadata;
+pub mod message_metadata;
 /// Types used to represent SEPs (Solid Entry Points).
 pub mod solid_entry_point;
 /// Types used for interoperation with a node's storage layer.

@@ -4,7 +4,7 @@
 use bee_message::semantic::ConflictReason;
 use bee_tangle::{
     flags::Flags,
-    metadata::{IndexId, MessageMetadata},
+    message_metadata::{IndexId, MessageMetadata},
 };
 
 use crate::rand::{

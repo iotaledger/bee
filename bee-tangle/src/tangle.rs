@@ -12,7 +12,7 @@ use tokio::sync::Mutex;
 
 use crate::{
     config::TangleConfig,
-    metadata::{IndexId, MessageMetadata},
+    message_metadata::{IndexId, MessageMetadata},
     solid_entry_point::SolidEntryPoint,
     storage::StorageBackend,
     urts::UrtsTipPool,

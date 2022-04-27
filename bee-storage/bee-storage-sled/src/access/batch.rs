@@ -18,7 +18,7 @@ use bee_storage::{
     backend::StorageBackend,
 };
 use bee_tangle::{
-    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
+    message_metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
 use packable::{Packable, PackableExt};
 use sled::{transaction::TransactionError, Transactional};

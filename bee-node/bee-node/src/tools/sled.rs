@@ -20,7 +20,7 @@ use bee_storage_sled::{
     trees::*,
 };
 use bee_tangle::{
-    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
+    message_metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
 use structopt::StructOpt;
 use thiserror::Error;

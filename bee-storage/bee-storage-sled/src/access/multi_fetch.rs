@@ -8,7 +8,7 @@ use std::{marker::PhantomData, slice::Iter};
 use bee_ledger::types::{ConsumedOutput, CreatedOutput, OutputDiff};
 use bee_message::{milestone::Milestone, output::OutputId, payload::milestone::MilestoneIndex, Message, MessageId};
 use bee_storage::{access::MultiFetch, backend::StorageBackend, system::System};
-use bee_tangle::{metadata::MessageMetadata, solid_entry_point::SolidEntryPoint};
+use bee_tangle::{message_metadata::MessageMetadata, solid_entry_point::SolidEntryPoint};
 use packable::{Packable, PackableExt};
 
 use crate::{storage::Storage, trees::*};

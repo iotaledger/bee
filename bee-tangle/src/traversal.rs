@@ -9,7 +9,7 @@ use std::collections::HashSet;
 
 use bee_message::{Message, MessageId};
 
-use crate::{metadata::MessageMetadata, storage::StorageBackend, tangle::Tangle};
+use crate::{message_metadata::MessageMetadata, storage::StorageBackend, tangle::Tangle};
 
 /// A Tangle walker that - given a starting vertex - visits all of its ancestors that are connected through
 /// either the *parent1* or the *parent2* edge. The walk continues as long as the visited vertices match a certain
