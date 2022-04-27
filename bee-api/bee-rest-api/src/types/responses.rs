@@ -45,7 +45,7 @@ pub struct StatusResponse {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct ProtocolResponse {
     #[serde(rename = "protocolVersion")]
-    pub version: String,
+    pub version: u8,
     #[serde(rename = "networkName")]
     pub network_name: String,
     #[serde(rename = "bech32HRP")]
