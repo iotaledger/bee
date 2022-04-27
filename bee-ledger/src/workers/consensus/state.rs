@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::{
-    constant::IOTA_SUPPLY,
+    constant::TOKEN_SUPPLY,
     output::{self},
 };
 use bee_storage::access::AsIterator;
@@ -39,7 +39,7 @@ fn validate_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury: u64) 
     if supply
         .checked_add(treasury)
         .ok_or(Error::LedgerStateOverflow(supply as u128 + treasury as u128))?
-        != IOTA_SUPPLY
+        != TOKEN_SUPPLY
     {
         Err(Error::InvalidLedgerUnspentState(supply))
     } else {

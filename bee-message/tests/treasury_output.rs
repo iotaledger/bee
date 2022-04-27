@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{constant::IOTA_SUPPLY, output::TreasuryOutput, Error};
+use bee_message::{constant::TOKEN_SUPPLY, output::TreasuryOutput, Error};
 use packable::{bounded::InvalidBoundedU64, error::UnpackError, PackableExt};
 
 #[test]
@@ -16,7 +16,7 @@ fn new_valid_min_amount() {
 
 #[test]
 fn new_valid_max_amount() {
-    assert_eq!(TreasuryOutput::new(IOTA_SUPPLY).unwrap().amount(), IOTA_SUPPLY);
+    assert_eq!(TreasuryOutput::new(TOKEN_SUPPLY).unwrap().amount(), TOKEN_SUPPLY);
 }
 
 #[test]

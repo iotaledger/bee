@@ -3,7 +3,7 @@
 
 use bee_message::{
     address::{Address, Ed25519Address},
-    constant::IOTA_SUPPLY,
+    constant::TOKEN_SUPPLY,
     input::{Input, TreasuryInput, UtxoInput},
     output::{unlock_condition::AddressUnlockCondition, BasicOutput, Output, TreasuryOutput},
     payload::{
@@ -285,7 +285,7 @@ fn build_invalid_accumulated_output() {
 
     let bytes1: [u8; 32] = prefix_hex::decode(ED25519_ADDRESS_1).unwrap();
     let address1 = Address::from(Ed25519Address::new(bytes1));
-    let amount1 = IOTA_SUPPLY - 1_000_000;
+    let amount1 = TOKEN_SUPPLY - 1_000_000;
     let output1 = Output::Basic(
         BasicOutput::build_with_amount(amount1)
             .unwrap()

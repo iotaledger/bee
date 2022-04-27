@@ -5,7 +5,7 @@ use core::str::FromStr;
 
 use bee_message::{
     address::{Address, Ed25519Address},
-    constant::IOTA_SUPPLY,
+    constant::TOKEN_SUPPLY,
     payload::milestone::option::MigratedFundsEntry,
     Error,
 };
@@ -32,9 +32,9 @@ fn new_invalid_amount() {
         MigratedFundsEntry::new(
             rand_tail_transaction_hash(),
             Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-            IOTA_SUPPLY + 1
+            TOKEN_SUPPLY + 1
         ),
-        Err(Error::InvalidMigratedFundsEntryAmount(InvalidBoundedU64(n))) if n == IOTA_SUPPLY + 1
+        Err(Error::InvalidMigratedFundsEntryAmount(InvalidBoundedU64(n))) if n == TOKEN_SUPPLY + 1
     ));
 }
 

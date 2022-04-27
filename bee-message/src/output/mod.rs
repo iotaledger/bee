@@ -55,7 +55,7 @@ pub use self::{
     treasury::TreasuryOutput,
     unlock_condition::{UnlockCondition, UnlockConditions},
 };
-use crate::{address::Address, constant::IOTA_SUPPLY, semantic::ValidationContext, Error};
+use crate::{address::Address, constant::TOKEN_SUPPLY, semantic::ValidationContext, Error};
 
 /// The maximum number of outputs of a transaction.
 pub const OUTPUT_COUNT_MAX: u16 = 128;
@@ -103,7 +103,7 @@ pub enum Output {
 
 impl Output {
     /// Valid amounts for an [`Output`].
-    pub const AMOUNT_RANGE: RangeInclusive<u64> = 1..=IOTA_SUPPLY;
+    pub const AMOUNT_RANGE: RangeInclusive<u64> = 1..=TOKEN_SUPPLY;
 
     /// Return the output kind of an [`Output`].
     pub fn kind(&self) -> u8 {
