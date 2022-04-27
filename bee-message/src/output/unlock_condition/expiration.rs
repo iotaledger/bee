@@ -9,7 +9,7 @@ use packable::{
     Packable,
 };
 
-use crate::{address::Address, milestone::MilestoneIndex, Error};
+use crate::{address::Address, payload::milestone::MilestoneIndex, Error};
 
 /// Defines a milestone index and/or unix time until which only Address, defined in Address Unlock Condition, is allowed
 /// to unlock the output. After the milestone index and/or unix time, only Return Address can unlock it.
@@ -127,7 +127,7 @@ pub mod dto {
     use crate::{
         address::dto::AddressDto,
         dto::{is_zero, is_zero_milestone},
-        milestone::MilestoneIndex,
+        payload::milestone::MilestoneIndex,
     };
 
     #[derive(Clone, Debug, Serialize, Deserialize)]

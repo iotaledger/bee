@@ -3,11 +3,7 @@
 
 use std::collections::VecDeque;
 
-use bee_message::{
-    milestone::{Milestone, MilestoneIndex},
-    output::OutputId,
-    Message, MessageId,
-};
+use bee_message::{milestone::Milestone, output::OutputId, payload::milestone::MilestoneIndex, Message, MessageId};
 use bee_storage::access::{Batch, Fetch};
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage, Tangle,

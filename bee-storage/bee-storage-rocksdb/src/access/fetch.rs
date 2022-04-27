@@ -5,10 +5,8 @@ use bee_ledger::types::{
     snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
 };
 use bee_message::{
-    address::Ed25519Address,
-    milestone::{Milestone, MilestoneIndex},
-    output::OutputId,
-    Message, MessageId,
+    address::Ed25519Address, milestone::Milestone, output::OutputId, payload::milestone::MilestoneIndex, Message,
+    MessageId,
 };
 use bee_storage::{access::Fetch, system::System};
 use bee_tangle::{

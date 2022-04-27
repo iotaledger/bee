@@ -3,10 +3,7 @@
 
 use std::sync::atomic::{AtomicU32, Ordering};
 
-use bee_message::{
-    milestone::{Milestone, MilestoneIndex},
-    Message, MessageId,
-};
+use bee_message::{milestone::Milestone, payload::milestone::MilestoneIndex, Message, MessageId};
 use bee_runtime::resource::ResourceHandle;
 use hashbrown::HashMap;
 use log::warn;

@@ -6,10 +6,9 @@ use core::str::FromStr;
 use bee_message::{
     address::{Address, Ed25519Address},
     input::{Input, TreasuryInput, UtxoInput},
-    milestone::MilestoneIndex,
     output::{unlock_condition::AddressUnlockCondition, BasicOutput, Output, TreasuryOutput},
     payload::{
-        milestone::{option::MilestoneOptions, MilestoneEssence, MilestonePayload},
+        milestone::{option::MilestoneOptions, MilestoneEssence, MilestoneIndex, MilestonePayload},
         transaction::{RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayload},
         Payload, TaggedDataPayload, TreasuryTransactionPayload,
     },

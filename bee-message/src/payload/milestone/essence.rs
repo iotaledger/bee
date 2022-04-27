@@ -12,9 +12,8 @@ use packable::{
 };
 
 use crate::{
-    milestone::MilestoneIndex,
     parent::Parents,
-    payload::milestone::{MilestoneId, MilestoneOptions},
+    payload::milestone::{MilestoneId, MilestoneIndex, MilestoneOptions},
     Error,
 };
 

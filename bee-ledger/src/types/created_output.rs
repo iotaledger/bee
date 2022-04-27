@@ -3,7 +3,7 @@
 
 use core::ops::Deref;
 
-use bee_message::{milestone::MilestoneIndex, output::Output, MessageId};
+use bee_message::{output::Output, payload::milestone::MilestoneIndex, MessageId};
 
 use crate::types::error::Error;
 

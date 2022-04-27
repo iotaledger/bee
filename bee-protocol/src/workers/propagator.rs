@@ -4,7 +4,7 @@
 use std::{any::TypeId, convert::Infallible};
 
 use async_trait::async_trait;
-use bee_message::{milestone::MilestoneIndex, MessageId};
+use bee_message::{payload::milestone::MilestoneIndex, MessageId};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{metadata::IndexId, solid_entry_point::SolidEntryPoint, Tangle, TangleWorker};
 use futures::{future::FutureExt, stream::StreamExt};

@@ -10,7 +10,7 @@ use std::{
 
 use async_trait::async_trait;
 use bee_gossip::PeerId;
-use bee_message::milestone::MilestoneIndex;
+use bee_message::payload::milestone::MilestoneIndex;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{Tangle, TangleWorker};
 use futures::StreamExt;

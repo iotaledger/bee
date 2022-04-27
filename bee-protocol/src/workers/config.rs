@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::{
-    milestone::MilestoneIndex,
     output::{ByteCostConfig, ByteCostConfigBuilder},
+    payload::milestone::MilestoneIndex,
 };
 use serde::Deserialize;
 

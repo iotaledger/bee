@@ -6,11 +6,7 @@
 use std::{marker::PhantomData, slice::Iter};
 
 use bee_ledger::types::{ConsumedOutput, CreatedOutput, OutputDiff};
-use bee_message::{
-    milestone::{Milestone, MilestoneIndex},
-    output::OutputId,
-    Message, MessageId,
-};
+use bee_message::{milestone::Milestone, output::OutputId, payload::milestone::MilestoneIndex, Message, MessageId};
 use bee_storage::{access::MultiFetch, backend::StorageBackend, system::System};
 use bee_tangle::{metadata::MessageMetadata, solid_entry_point::SolidEntryPoint};
 use packable::{Packable, PackableExt};

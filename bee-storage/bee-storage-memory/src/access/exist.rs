@@ -8,10 +8,8 @@ use bee_ledger::types::{
     Unspent,
 };
 use bee_message::{
-    address::Ed25519Address,
-    milestone::{Milestone, MilestoneIndex},
-    output::OutputId,
-    Message, MessageId,
+    address::Ed25519Address, milestone::Milestone, output::OutputId, payload::milestone::MilestoneIndex, Message,
+    MessageId,
 };
 use bee_storage::{access::Exist, backend::StorageBackend};
 use bee_tangle::{

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::{
-    milestone::{Milestone, MilestoneIndex},
-    payload::milestone::MilestoneId,
+    milestone::Milestone,
+    payload::milestone::{MilestoneId, MilestoneIndex},
 };
 
 use crate::rand::{bytes::rand_bytes_array, message::rand_message_id, number::rand_number};

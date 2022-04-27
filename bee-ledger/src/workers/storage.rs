@@ -5,11 +5,7 @@
 
 use std::collections::HashMap;
 
-use bee_message::{
-    milestone::{Milestone, MilestoneIndex},
-    output::OutputId,
-    Message, MessageId,
-};
+use bee_message::{milestone::Milestone, output::OutputId, payload::milestone::MilestoneIndex, Message, MessageId};
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Exist, Fetch, Insert, Truncate},
     backend,

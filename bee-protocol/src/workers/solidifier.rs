@@ -5,10 +5,7 @@ use std::{any::TypeId, cmp, convert::Infallible};
 
 use async_trait::async_trait;
 use bee_ledger::workers::consensus::{ConsensusWorker, ConsensusWorkerCommand};
-use bee_message::{
-    milestone::{Milestone, MilestoneIndex},
-    MessageId,
-};
+use bee_message::{milestone::Milestone, payload::milestone::MilestoneIndex, MessageId};
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{event::SolidMilestoneChanged, traversal, Tangle, TangleWorker};
 use futures::StreamExt;

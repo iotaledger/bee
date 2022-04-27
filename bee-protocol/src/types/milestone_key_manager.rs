@@ -5,7 +5,7 @@
 
 use std::collections::HashSet;
 
-use bee_message::milestone::MilestoneIndex;
+use bee_message::payload::milestone::MilestoneIndex;
 
 use crate::types::milestone_key_range::MilestoneKeyRange;
 
