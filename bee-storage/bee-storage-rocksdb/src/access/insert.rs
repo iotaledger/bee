@@ -11,7 +11,10 @@ use bee_message::{
     output::OutputId,
     Message, MessageId,
 };
-use bee_storage::{access::Insert, system::System};
+use bee_storage::{
+    access::{Insert, InsertStrict},
+    system::System,
+};
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
@@ -43,17 +46,21 @@ impl Insert<MessageId, Message> for Storage {
     }
 }
 
-impl Insert<MessageId, MessageMetadata> for Storage {
-    fn insert(
+impl InsertStrict<MessageId, MessageMetadata> for Storage {
+    fn insert_strict(
         &self,
         message_id: &MessageId,
         metadata: &MessageMetadata,
     ) -> Result<(), <Self as StorageBackend>::Error> {
-        self.inner.put_cf(
+        let guard = self.locks.message_id_to_metadata.read();
+
+        self.inner.merge_cf(
             self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?,
             message_id,
             metadata.pack_to_vec(),
         )?;
+
+        drop(guard);
 
         Ok(())
     }

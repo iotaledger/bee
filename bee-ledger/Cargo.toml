@@ -19,7 +19,7 @@ rustdoc-args = [ "--cfg", "doc_cfg" ]
 [dependencies]
 bee-message = { version = "0.2.0", path = "../bee-message", default-features = false, features = [ "std" ] }
 bee-runtime = { version = "0.1.1-alpha", path = "../bee-runtime", default-features = false, optional = true }
-bee-storage = { version = "0.9.0", path = "../bee-storage/bee-storage", default-features = false, optional = true }
+bee-storage = { version = "0.12.0", path = "../bee-storage/bee-storage", default-features = false, optional = true }
 bee-tangle = { version = "0.3.0", path = "../bee-tangle", default-features = false, optional = true }
 
 async-trait = { version = "0.1.51", default-features = false, optional = true }

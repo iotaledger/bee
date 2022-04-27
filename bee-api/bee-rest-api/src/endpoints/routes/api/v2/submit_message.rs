@@ -156,7 +156,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
         if parsed_nonce == 0 { None } else { Some(parsed_nonce) }
     };
 
-    let message = build_message(parents, payload, nonce, rest_api_config, protocol_config).await?;
+    let message = build_message(parents, payload, nonce, rest_api_config, protocol_config)?;
     let message_id = forward_to_message_submitter(message.pack_to_vec(), message_submitter).await?;
 
     Ok(warp::reply::with_status(
@@ -167,7 +167,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
     ))
 }
 
-pub(crate) async fn build_message(
+pub(crate) fn build_message(
     parents: Vec<MessageId>,
     payload: Option<Payload>,
     nonce: Option<u64>,

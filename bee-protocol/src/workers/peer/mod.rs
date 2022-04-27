@@ -90,8 +90,7 @@ impl PeerWorker {
             &self.milestone_requester,
             &*requested_milestones,
             Some(*self.peer.id()),
-        )
-        .await;
+        );
 
         // TODO is this needed ?
         let tangle = tangle.into_weak();

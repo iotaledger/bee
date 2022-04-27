@@ -7,9 +7,10 @@ pub use bee_storage::{
     backend::StorageBackend,
     system::{StorageHealth, StorageVersion, System, SYSTEM_HEALTH_KEY, SYSTEM_VERSION_KEY},
 };
+use parking_lot::RwLock;
 use rocksdb::{
-    ColumnFamily, ColumnFamilyDescriptor, DBCompactionStyle, DBCompressionType, Env, FlushOptions, Options,
-    SliceTransform, DB,
+    ColumnFamily, ColumnFamilyDescriptor, DBCompactionStyle, DBCompressionType, Env, FlushOptions, MergeOperands,
+    Options, SliceTransform, DB,
 };
 
 use super::{
@@ -20,9 +21,14 @@ use super::{
 
 pub(crate) const STORAGE_VERSION: StorageVersion = StorageVersion(10);
 
+pub struct Locks {
+    pub(crate) message_id_to_metadata: RwLock<()>,
+}
+
 pub struct Storage {
     pub(crate) config: StorageConfig,
     pub(crate) inner: DB,
+    pub(crate) locks: Locks,
 }
 
 impl Storage {
@@ -31,7 +37,14 @@ impl Storage {
 
         let cf_message_id_to_message = ColumnFamilyDescriptor::new(CF_MESSAGE_ID_TO_MESSAGE, Options::default());
 
-        let cf_message_id_to_metadata = ColumnFamilyDescriptor::new(CF_MESSAGE_ID_TO_METADATA, Options::default());
+        fn keep_current(_key: &[u8], existing_val: Option<&[u8]>, operands: &MergeOperands) -> Option<Vec<u8>> {
+            // Keep the existing value, if the value does not exist, take the first operand
+            // instead.
+            existing_val.or_else(|| operands.into_iter().next()).map(|v| v.to_vec())
+        }
+        let mut options = Options::default();
+        options.set_merge_operator_associative("keep current", keep_current);
+        let cf_message_id_to_metadata = ColumnFamilyDescriptor::new(CF_MESSAGE_ID_TO_METADATA, options);
 
         let mut options = Options::default();
         options.set_prefix_extractor(SliceTransform::create_fixed_prefix(MessageId::LENGTH));
@@ -141,6 +154,9 @@ impl Storage {
         Ok(Storage {
             config: config.storage,
             inner: db,
+            locks: Locks {
+                message_id_to_metadata: RwLock::new(()),
+            },
         })
     }
 

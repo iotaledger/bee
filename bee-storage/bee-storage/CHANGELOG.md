@@ -19,11 +19,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
-## 0.10.0 - 2022-XX-XX
+## 0.12.0 - 2022-XX-XX
 
 ### Changed
 
 - Use `packable` instead of `bee-common::packable` to serialize and deserialize system types;
+
+## 0.11.0 - 2022-03-17
+
+### Added
+
+- `InsertStrict` access trait;
+
+## 0.10.0 - 2022-03-11
+
+### Added
+
+- `Update` access trait;
 
 ## 0.9.0 - 2021-06-15
 
