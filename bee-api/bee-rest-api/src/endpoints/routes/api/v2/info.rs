@@ -90,7 +90,7 @@ pub(crate) async fn info<B: StorageBackend>(
                 v_byte_factor_key: protocol_config.byte_cost().v_byte_factor_key,
                 v_byte_factor_data: protocol_config.byte_cost().v_byte_factor_data,
             },
-            token_supply: IOTA_SUPPLY,
+            token_supply: IOTA_SUPPLY.to_string(),
         },
         metrics: MetricsResponse {
             messages_per_second: 0.0,            // TODO

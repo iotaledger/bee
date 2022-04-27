@@ -55,7 +55,7 @@ pub struct ProtocolResponse {
     #[serde(rename = "rentStructure")]
     pub rent_structure: RentStructureResponse,
     #[serde(rename = "tokenSupply")]
-    pub token_supply: u64,
+    pub token_supply: String,
 }
 
 /// Returned in [`InfoResponse`].
