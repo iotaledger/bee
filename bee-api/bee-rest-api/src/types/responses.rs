@@ -68,7 +68,6 @@ pub struct ConfirmedMilestoneResponse {
 /// Protocol information about the node.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct ProtocolResponse {
-    #[serde(rename = "protocolVersion")]
     pub version: u8,
     #[serde(rename = "networkName")]
     pub network_name: String,
