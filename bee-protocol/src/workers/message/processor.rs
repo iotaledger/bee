@@ -145,7 +145,7 @@ where
                         if let Some(Payload::Milestone(_)) = message.payload() {
                             if message.nonce() != 0 {
                                 notify_invalid_message(
-                                    format!("Non zero milestone nonce: {}.", message.nonce()),
+                                    format!("Non-zero milestone nonce: {}.", message.nonce()),
                                     &metrics,
                                     notifier,
                                 );
