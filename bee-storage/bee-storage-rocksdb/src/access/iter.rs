@@ -6,7 +6,12 @@ use std::marker::PhantomData;
 use bee_ledger::types::{
     snapshot::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput, Unspent,
 };
-use bee_message::{address::Ed25519Address, output::OutputId, payload::milestone::MilestoneIndex, Message, MessageId};
+use bee_message::{
+    address::Ed25519Address,
+    output::OutputId,
+    payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
+    Message, MessageId,
+};
 use bee_storage::{access::AsIterator, system::System};
 use bee_tangle::{
     message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
@@ -189,6 +194,17 @@ impl<'a> StorageIterator<'a, MilestoneIndex, MilestoneMetadata> {
     }
 }
 
+impl<'a> StorageIterator<'a, MilestoneId, MilestonePayload> {
+    fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (MilestoneId, MilestonePayload) {
+        (
+            // Unpacking from storage is fine.
+            MilestoneId::unpack_unverified(&mut key).unwrap(),
+            // Unpacking from storage is fine.
+            MilestonePayload::unpack_unverified(&mut value).unwrap(),
+        )
+    }
+}
+
 impl<'a> StorageIterator<'a, (), SnapshotInfo> {
     fn unpack_key_value(_: &[u8], mut value: &[u8]) -> ((), SnapshotInfo) {
         (
@@ -277,7 +293,12 @@ impl_iter!(OutputId, ConsumedOutput, CF_OUTPUT_ID_TO_CONSUMED_OUTPUT);
 impl_iter!(Unspent, (), CF_OUTPUT_ID_UNSPENT);
 impl_iter!((Ed25519Address, OutputId), (), CF_ED25519_ADDRESS_TO_OUTPUT_ID);
 impl_iter!((), LedgerIndex, CF_LEDGER_INDEX);
-impl_iter!(MilestoneIndex, MilestoneMetadata, CF_MILESTONE_INDEX_TO_MILESTONE);
+impl_iter!(
+    MilestoneIndex,
+    MilestoneMetadata,
+    CF_MILESTONE_INDEX_TO_MILESTONE_METADATA
+);
+impl_iter!(MilestoneId, MilestonePayload, CF_MILESTONE_ID_TO_MILESTONE_PAYLOAD);
 impl_iter!((), SnapshotInfo, CF_SNAPSHOT_INFO);
 impl_iter!(SolidEntryPoint, MilestoneIndex, CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX);
 impl_iter!(MilestoneIndex, OutputDiff, CF_MILESTONE_INDEX_TO_OUTPUT_DIFF);
