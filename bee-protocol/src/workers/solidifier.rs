@@ -5,7 +5,10 @@ use std::{any::TypeId, cmp, convert::Infallible};
 
 use async_trait::async_trait;
 use bee_ledger::workers::consensus::{ConsensusWorker, ConsensusWorkerCommand};
-use bee_message::{payload::milestone::MilestoneIndex, MessageId};
+use bee_message::{
+    payload::milestone::{MilestoneId, MilestoneIndex},
+    MessageId,
+};
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{
     event::SolidMilestoneChanged, milestone_metadata::MilestoneMetadata, traversal, Tangle, TangleWorker,
@@ -82,7 +85,10 @@ fn solidify<B: StorageBackend>(
 
     if let Err(e) = index_updater_worker
         // TODO get MS
-        .send(IndexUpdaterWorkerEvent(index, MilestoneMetadata::new(id, 0)))
+        .send(IndexUpdaterWorkerEvent(
+            index,
+            MilestoneMetadata::new(id, MilestoneId::null(), 0),
+        ))
     {
         warn!("Sending message_id to `IndexUpdater` failed: {:?}.", e);
     }
@@ -92,7 +98,7 @@ fn solidify<B: StorageBackend>(
     bus.dispatch(SolidMilestoneChanged {
         index,
         // TODO get MS
-        milestone: MilestoneMetadata::new(id, 0),
+        milestone: MilestoneMetadata::new(id, MilestoneId::null(), 0),
     });
 }
 
