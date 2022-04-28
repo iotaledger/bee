@@ -151,15 +151,13 @@ where
                                 );
                                 continue;
                             }
-                        } else {
-                            if pow_score < config.minimum_pow_score {
-                                notify_invalid_message(
-                                    format!("Insufficient pow score: {} < {}.", pow_score, config.minimum_pow_score),
-                                    &metrics,
-                                    notifier,
-                                );
-                                continue;
-                            }
+                        } else if pow_score < config.minimum_pow_score {
+                            notify_invalid_message(
+                                format!("Insufficient pow score: {} < {}.", pow_score, config.minimum_pow_score),
+                                &metrics,
+                                notifier,
+                            );
+                            continue;
                         }
 
                         if let Some(Payload::Transaction(transaction)) = message.payload() {
