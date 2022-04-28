@@ -200,13 +200,13 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
         },
         CF_MILESTONE_INDEX_TO_MILESTONE_METADATA => match &tool.command {
             RocksdbCommand::Fetch { key } => {
-                let key = MilestoneId::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?;
-                let value = Fetch::<MilestoneId, MilestonePayload>::fetch(storage, &key)?;
+                let key = MilestoneIndex(u32::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?);
+                let value = Fetch::<MilestoneIndex, MilestoneMetadata>::fetch(storage, &key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let iterator = AsIterator::<MilestoneId, MilestonePayload>::iter(storage)?;
+                let iterator = AsIterator::<MilestoneIndex, MilestoneMetadata>::iter(storage)?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -216,13 +216,13 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
         },
         CF_MILESTONE_ID_TO_MILESTONE_PAYLOAD => match &tool.command {
             RocksdbCommand::Fetch { key } => {
-                let key = MilestoneIndex(u32::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?);
-                let value = Fetch::<MilestoneIndex, MilestoneMetadata>::fetch(storage, &key)?;
+                let key = MilestoneId::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?;
+                let value = Fetch::<MilestoneId, MilestonePayload>::fetch(storage, &key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let iterator = AsIterator::<MilestoneIndex, MilestoneMetadata>::iter(storage)?;
+                let iterator = AsIterator::<MilestoneId, MilestonePayload>::iter(storage)?;
 
                 for result in iterator {
                     let (key, value) = result?;
