@@ -90,7 +90,8 @@ pub struct BaseTokenResponse {
     #[serde(rename = "tickerSymbol")]
     pub ticker_symbol: String,
     pub unit: String,
-    pub subunit: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub subunit: Option<String>,
     pub decimals: u8,
     #[serde(rename = "useMetricPrefix")]
     pub use_metric_prefix: bool,
