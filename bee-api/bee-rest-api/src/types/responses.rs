@@ -17,6 +17,8 @@ pub struct InfoResponse {
     pub version: String,
     pub status: StatusResponse,
     pub protocol: ProtocolResponse,
+    #[serde(rename = "baseToken")]
+    pub base_token: BaseTokenResponse,
     pub metrics: MetricsResponse,
     pub features: Vec<String>,
     pub plugins: Vec<String>,
@@ -30,21 +32,42 @@ impl BodyInner for InfoResponse {}
 pub struct StatusResponse {
     #[serde(rename = "isHealthy")]
     pub is_healthy: bool,
-    #[serde(rename = "latestMilestoneTimestamp")]
-    pub latest_milestone_timestamp: u32,
-    #[serde(rename = "latestMilestoneIndex")]
-    pub latest_milestone_index: u32,
-    #[serde(rename = "confirmedMilestoneIndex")]
-    pub confirmed_milestone_index: u32,
+    #[serde(rename = "latestMilestone")]
+    pub latest_milestone: LatestMilestoneResponse,
+    #[serde(rename = "confirmedMilestone")]
+    pub confirmed_milestone: ConfirmedMilestoneResponse,
     #[serde(rename = "pruningIndex")]
     pub pruning_index: u32,
+}
+
+/// Returned in [`StatusResponse`].
+/// Information about the latest milestone.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct LatestMilestoneResponse {
+    #[serde(rename = "index")]
+    pub index: u32,
+    #[serde(rename = "timestamp")]
+    pub timestamp: u32,
+    #[serde(rename = "milestoneId")]
+    pub milestone_id: String,
+}
+
+/// Returned in [`StatusResponse`].
+/// Information about the confirmed milestone.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct ConfirmedMilestoneResponse {
+    #[serde(rename = "index")]
+    pub index: u32,
+    #[serde(rename = "timestamp")]
+    pub timestamp: u32,
+    #[serde(rename = "milestoneId")]
+    pub milestone_id: String,
 }
 
 /// Returned in [`InfoResponse`].
 /// Protocol information about the node.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct ProtocolResponse {
-    #[serde(rename = "protocolVersion")]
     pub version: u8,
     #[serde(rename = "networkName")]
     pub network_name: String,
@@ -56,6 +79,21 @@ pub struct ProtocolResponse {
     pub rent_structure: RentStructureResponse,
     #[serde(rename = "tokenSupply")]
     pub token_supply: String,
+}
+
+/// Returned in [`InfoResponse`].
+/// Information about the base token.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct BaseTokenResponse {
+    pub name: String,
+    #[serde(rename = "tickerSymbol")]
+    pub ticker_symbol: String,
+    pub unit: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub subunit: Option<String>,
+    pub decimals: u8,
+    #[serde(rename = "useMetricPrefix")]
+    pub use_metric_prefix: bool,
 }
 
 /// Returned in [`InfoResponse`].

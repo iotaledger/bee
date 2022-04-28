@@ -21,7 +21,10 @@ use crate::{
         storage::StorageBackend,
         Bech32Hrp, NetworkId,
     },
-    types::responses::{InfoResponse, MetricsResponse, ProtocolResponse, RentStructureResponse, StatusResponse},
+    types::responses::{
+        BaseTokenResponse, ConfirmedMilestoneResponse, InfoResponse, LatestMilestoneResponse, MetricsResponse,
+        ProtocolResponse, RentStructureResponse, StatusResponse,
+    },
 };
 
 fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
@@ -76,19 +79,29 @@ pub(crate) fn info<B: StorageBackend>(
     peer_manager: ResourceHandle<PeerManager>,
 ) -> Result<impl Reply, Infallible> {
     let latest_milestone_index = tangle.get_latest_milestone_index();
-    let latest_milestone_timestamp = tangle
-        .get_milestone(latest_milestone_index)
-        .map(|m| m.timestamp())
-        .unwrap_or_default();
+    let confirmed_milestone_index = tangle.get_confirmed_milestone_index();
 
     Ok(warp::reply::json(&InfoResponse {
         name: node_info.name.clone(),
         version: node_info.version.clone(),
         status: StatusResponse {
             is_healthy: health::is_healthy(&tangle, &peer_manager),
-            latest_milestone_timestamp,
-            latest_milestone_index: *latest_milestone_index,
-            confirmed_milestone_index: *tangle.get_confirmed_milestone_index(),
+            latest_milestone: LatestMilestoneResponse {
+                index: *latest_milestone_index,
+                timestamp: tangle
+                    .get_milestone(latest_milestone_index)
+                    .map(|m| m.timestamp())
+                    .unwrap_or_default(),
+                milestone_id: "".to_string(), // TODO: replace with milestone id using milestone id mapping
+            },
+            confirmed_milestone: ConfirmedMilestoneResponse {
+                index: *confirmed_milestone_index,
+                timestamp: tangle
+                    .get_milestone(confirmed_milestone_index)
+                    .map(|m| m.timestamp())
+                    .unwrap_or_default(),
+                milestone_id: "".to_string(), // TODO: replace with milestone id using milestone id mapping
+            },
             pruning_index: *tangle.get_pruning_index(),
         },
         protocol: ProtocolResponse {
@@ -102,6 +115,14 @@ pub(crate) fn info<B: StorageBackend>(
                 v_byte_factor_data: protocol_config.byte_cost().v_byte_factor_data,
             },
             token_supply: TOKEN_SUPPLY.to_string(),
+        },
+        base_token: BaseTokenResponse {
+            name: "Shimmer".to_string(),
+            ticker_symbol: "SMR".to_string(),
+            unit: "SMR".to_string(),
+            subunit: Some("glow".to_string()),
+            decimals: 6,
+            use_metric_prefix: false,
         },
         metrics: MetricsResponse {
             messages_per_second: 0.0,            // TODO
