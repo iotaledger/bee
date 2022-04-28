@@ -6,14 +6,11 @@ use std::net::IpAddr;
 use bee_message::payload::milestone::MilestoneIndex;
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::Tangle;
-use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
+use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
 
-use crate::{
-    endpoints::{
-        config::ROUTE_MILESTONE, filters::with_tangle, path_params::milestone_index, permission::has_permission,
-        rejection::CustomRejection, storage::StorageBackend,
-    },
-    types::responses::MilestoneResponse,
+use crate::endpoints::{
+    config::ROUTE_MILESTONE, filters::with_tangle, path_params::milestone_index, permission::has_permission,
+    storage::StorageBackend,
 };
 
 fn path() -> impl Filter<Extract = (MilestoneIndex,), Error = Rejection> + Clone {
@@ -40,14 +37,5 @@ pub(crate) fn milestone_by_milestone_index<B: StorageBackend>(
     milestone_index: MilestoneIndex,
     tangle: ResourceHandle<Tangle<B>>,
 ) -> Result<impl Reply, Rejection> {
-    match tangle.get_milestone(milestone_index) {
-        Some(milestone) => Ok(warp::reply::json(&MilestoneResponse {
-            milestone_index: *milestone_index,
-            message_id: milestone.message_id().to_string(),
-            timestamp: milestone.timestamp(),
-        })),
-        None => Err(reject::custom(CustomRejection::NotFound(
-            "cannot find milestone".to_string(),
-        ))),
-    }
+    Ok(warp::http::StatusCode::SERVICE_UNAVAILABLE)
 }

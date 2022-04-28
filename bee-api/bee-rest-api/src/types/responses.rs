@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{output::dto::OutputDto, MessageDto};
+use bee_message::{output::dto::OutputDto, payload::dto::MilestonePayloadDto, MessageDto};
 use serde::{Deserialize, Serialize};
 
 use crate::types::{
@@ -241,13 +241,7 @@ impl BodyInner for TreasuryResponse {}
 /// Response of GET /api/v2/milestone/{milestone_index}.
 /// Returns information about a milestone.
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct MilestoneResponse {
-    #[serde(rename = "index")]
-    pub milestone_index: u32,
-    #[serde(rename = "messageId")]
-    pub message_id: String,
-    pub timestamp: u32,
-}
+pub struct MilestoneResponse(pub MilestonePayloadDto);
 
 impl BodyInner for MilestoneResponse {}
 

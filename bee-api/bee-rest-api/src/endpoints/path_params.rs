@@ -4,7 +4,10 @@
 use bee_gossip::PeerId;
 use bee_message::{
     output::OutputId,
-    payload::{milestone::MilestoneIndex, transaction::TransactionId},
+    payload::{
+        milestone::{MilestoneId, MilestoneIndex},
+        transaction::TransactionId,
+    },
     MessageId,
 };
 use warp::{reject, Filter, Rejection};
@@ -41,6 +44,14 @@ pub(super) fn milestone_index() -> impl Filter<Extract = (MilestoneIndex,), Erro
             .parse::<u32>()
             .map_err(|_| reject::custom(CustomRejection::BadRequest("invalid milestone index".to_string())))
             .map(MilestoneIndex)
+    })
+}
+
+pub(super) fn milestone_id() -> impl Filter<Extract = (MilestoneId,), Error = Rejection> + Copy {
+    warp::path::param().and_then(|value: String| async move {
+        value
+            .parse::<MilestoneId>()
+            .map_err(|_| reject::custom(CustomRejection::BadRequest("invalid milestone id".to_string())))
     })
 }
 

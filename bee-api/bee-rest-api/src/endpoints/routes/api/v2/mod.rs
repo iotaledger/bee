@@ -7,7 +7,8 @@ pub mod message;
 pub mod message_children;
 pub mod message_metadata;
 pub mod message_raw;
-pub mod milestone;
+pub mod milestone_by_milestone_id;
+pub mod milestone_by_milestone_index;
 pub mod milestone_utxo_changes;
 pub mod output;
 pub mod peer;
@@ -89,7 +90,12 @@ pub(crate) fn filter<B: StorageBackend>(
         allowed_ips.clone(),
         tangle.clone(),
     ))
-    .or(milestone::filter(
+    .or(milestone_by_milestone_id::filter(
+        public_routes.clone(),
+        allowed_ips.clone(),
+        tangle.clone(),
+    ))
+    .or(milestone_by_milestone_index::filter(
         public_routes.clone(),
         allowed_ips.clone(),
         tangle.clone(),
