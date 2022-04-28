@@ -121,7 +121,7 @@ pub(crate) fn info<B: StorageBackend>(
             ticker_symbol: "SMR".to_string(),
             unit: "SMR".to_string(),
             decimals: 6,
-            subunit: "glow".to_string(),
+            subunit: Some("glow".to_string()),
             use_metric_prefix: false,
         },
         metrics: MetricsResponse {
