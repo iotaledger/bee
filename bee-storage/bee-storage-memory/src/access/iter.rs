@@ -6,7 +6,12 @@
 use bee_ledger::types::{
     snapshot::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput, Unspent,
 };
-use bee_message::{address::Ed25519Address, output::OutputId, payload::milestone::MilestoneIndex, Message, MessageId};
+use bee_message::{
+    address::Ed25519Address,
+    output::OutputId,
+    payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
+    Message, MessageId,
+};
 use bee_storage::{access::AsIterator, backend::StorageBackend, system::System};
 use bee_tangle::{
     message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
@@ -58,7 +63,8 @@ impl_iter!(OutputId, ConsumedOutput, output_id_to_consumed_output);
 impl_iter!(Unspent, (), output_id_unspent);
 impl_iter!((Ed25519Address, OutputId), (), ed25519_address_to_output_id);
 impl_iter!((), LedgerIndex, ledger_index);
-impl_iter!(MilestoneIndex, MilestoneMetadata, milestone_index_to_milestone);
+impl_iter!(MilestoneIndex, MilestoneMetadata, milestone_index_to_milestone_metadata);
+impl_iter!(MilestoneId, MilestonePayload, milestone_id_to_milestone_payload);
 impl_iter!((), SnapshotInfo, snapshot_info);
 impl_iter!(SolidEntryPoint, MilestoneIndex, solid_entry_point_to_milestone_index);
 impl_iter!(MilestoneIndex, OutputDiff, milestone_index_to_output_diff);

@@ -8,7 +8,12 @@ use std::sync::{PoisonError, RwLock};
 use bee_ledger::types::{
     snapshot::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput, Unspent,
 };
-use bee_message::{address::Ed25519Address, output::OutputId, payload::milestone::MilestoneIndex, Message, MessageId};
+use bee_message::{
+    address::Ed25519Address,
+    output::OutputId,
+    payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
+    Message, MessageId,
+};
 use bee_storage::{
     access::{Fetch, Insert},
     backend::StorageBackend,
@@ -59,7 +64,8 @@ pub(crate) struct InnerStorage {
     pub(crate) output_id_unspent: Table<Unspent, ()>,
     pub(crate) ed25519_address_to_output_id: VecBinTable<Ed25519Address, OutputId>,
     pub(crate) ledger_index: SingletonTable<LedgerIndex>,
-    pub(crate) milestone_index_to_milestone: Table<MilestoneIndex, MilestoneMetadata>,
+    pub(crate) milestone_index_to_milestone_metadata: Table<MilestoneIndex, MilestoneMetadata>,
+    pub(crate) milestone_id_to_milestone_payload: Table<MilestoneId, MilestonePayload>,
     pub(crate) snapshot_info: SingletonTable<SnapshotInfo>,
     pub(crate) solid_entry_point_to_milestone_index: Table<SolidEntryPoint, MilestoneIndex>,
     pub(crate) milestone_index_to_output_diff: Table<MilestoneIndex, OutputDiff>,
