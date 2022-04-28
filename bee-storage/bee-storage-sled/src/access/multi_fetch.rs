@@ -6,7 +6,11 @@
 use std::{marker::PhantomData, slice::Iter};
 
 use bee_ledger::types::{ConsumedOutput, CreatedOutput, OutputDiff};
-use bee_message::{output::OutputId, payload::milestone::MilestoneIndex, Message, MessageId};
+use bee_message::{
+    output::OutputId,
+    payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
+    Message, MessageId,
+};
 use bee_storage::{access::MultiFetch, backend::StorageBackend, system::System};
 use bee_tangle::{
     message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
@@ -91,7 +95,12 @@ impl_multi_fetch!(MessageId, Message, TREE_MESSAGE_ID_TO_MESSAGE);
 impl_multi_fetch!(MessageId, MessageMetadata, TREE_MESSAGE_ID_TO_METADATA);
 impl_multi_fetch!(OutputId, CreatedOutput, TREE_OUTPUT_ID_TO_CREATED_OUTPUT);
 impl_multi_fetch!(OutputId, ConsumedOutput, TREE_OUTPUT_ID_TO_CONSUMED_OUTPUT);
-impl_multi_fetch!(MilestoneIndex, MilestoneMetadata, TREE_MILESTONE_INDEX_TO_MILESTONE);
+impl_multi_fetch!(
+    MilestoneIndex,
+    MilestoneMetadata,
+    TREE_MILESTONE_INDEX_TO_MILESTONE_METADATA
+);
+impl_multi_fetch!(MilestoneId, MilestonePayload, TREE_MILESTONE_ID_TO_MILESTONE_PAYLOAD);
 impl_multi_fetch!(
     SolidEntryPoint,
     MilestoneIndex,

@@ -5,7 +5,12 @@ use bee_ledger::types::{
     snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
     Unspent,
 };
-use bee_message::{address::Ed25519Address, output::OutputId, payload::milestone::MilestoneIndex, Message, MessageId};
+use bee_message::{
+    address::Ed25519Address,
+    output::OutputId,
+    payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
+    Message, MessageId,
+};
 use bee_storage::access::Exist;
 use bee_tangle::{
     message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
@@ -112,7 +117,19 @@ impl Exist<MilestoneIndex, MilestoneMetadata> for Storage {
     fn exist(&self, index: &MilestoneIndex) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .get_pinned_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)?, index.pack_to_vec())?
+            .get_pinned_cf(
+                self.cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE_METADATA)?,
+                index.pack_to_vec(),
+            )?
+            .is_some())
+    }
+}
+
+impl Exist<MilestoneId, MilestonePayload> for Storage {
+    fn exist(&self, id: &MilestoneId) -> Result<bool, <Self as StorageBackend>::Error> {
+        Ok(self
+            .inner
+            .get_pinned_cf(self.cf_handle(CF_MILESTONE_ID_TO_MILESTONE_PAYLOAD)?, id.pack_to_vec())?
             .is_some())
     }
 }

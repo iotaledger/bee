@@ -7,7 +7,12 @@ use bee_ledger::types::{
     snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
     Unspent,
 };
-use bee_message::{address::Ed25519Address, output::OutputId, payload::milestone::MilestoneIndex, Message, MessageId};
+use bee_message::{
+    address::Ed25519Address,
+    output::OutputId,
+    payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
+    Message, MessageId,
+};
 use bee_storage::{
     access::{Insert, InsertStrict},
     backend::StorageBackend,
@@ -40,7 +45,8 @@ impl_insert!(OutputId, ConsumedOutput, output_id_to_consumed_output);
 impl_insert!(Unspent, (), output_id_unspent);
 impl_insert!((Ed25519Address, OutputId), (), ed25519_address_to_output_id);
 impl_insert!((), LedgerIndex, ledger_index);
-impl_insert!(MilestoneIndex, MilestoneMetadata, milestone_index_to_milestone);
+impl_insert!(MilestoneIndex, MilestoneMetadata, milestone_index_to_milestone_metadata);
+impl_insert!(MilestoneId, MilestonePayload, milestone_id_to_milestone_payload);
 impl_insert!((), SnapshotInfo, snapshot_info);
 impl_insert!(SolidEntryPoint, MilestoneIndex, solid_entry_point_to_milestone_index);
 impl_insert!(MilestoneIndex, OutputDiff, milestone_index_to_output_diff);

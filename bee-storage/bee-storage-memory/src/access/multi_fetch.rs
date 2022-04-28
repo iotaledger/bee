@@ -6,7 +6,11 @@
 use std::{iter::Map, vec::IntoIter};
 
 use bee_ledger::types::{ConsumedOutput, CreatedOutput, OutputDiff};
-use bee_message::{output::OutputId, payload::milestone::MilestoneIndex, Message, MessageId};
+use bee_message::{
+    output::OutputId,
+    payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
+    Message, MessageId,
+};
 use bee_storage::{access::MultiFetch, backend::StorageBackend, system::System};
 use bee_tangle::{
     message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
@@ -34,6 +38,7 @@ impl_multi_fetch!(MessageId, Message, message_id_to_message);
 impl_multi_fetch!(MessageId, MessageMetadata, message_id_to_metadata);
 impl_multi_fetch!(OutputId, CreatedOutput, output_id_to_created_output);
 impl_multi_fetch!(OutputId, ConsumedOutput, output_id_to_consumed_output);
-impl_multi_fetch!(MilestoneIndex, MilestoneMetadata, milestone_index_to_milestone);
+impl_multi_fetch!(MilestoneIndex, MilestoneMetadata, milestone_index_to_milestone_metadata);
+impl_multi_fetch!(MilestoneId, MilestonePayload, milestone_id_to_milestone_payload);
 impl_multi_fetch!(SolidEntryPoint, MilestoneIndex, solid_entry_point_to_milestone_index);
 impl_multi_fetch!(MilestoneIndex, OutputDiff, milestone_index_to_output_diff);

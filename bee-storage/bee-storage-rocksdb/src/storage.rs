@@ -64,8 +64,11 @@ impl Storage {
 
         let cf_ledger_index = ColumnFamilyDescriptor::new(CF_LEDGER_INDEX, Options::default());
 
-        let cf_milestone_index_to_milestone =
-            ColumnFamilyDescriptor::new(CF_MILESTONE_INDEX_TO_MILESTONE, Options::default());
+        let cf_milestone_index_to_milestone_metadata =
+            ColumnFamilyDescriptor::new(CF_MILESTONE_INDEX_TO_MILESTONE_METADATA, Options::default());
+
+        let cf_milestone_id_to_milestone_payload =
+            ColumnFamilyDescriptor::new(CF_MILESTONE_ID_TO_MILESTONE_PAYLOAD, Options::default());
 
         let cf_snapshot_info = ColumnFamilyDescriptor::new(CF_SNAPSHOT_INFO, Options::default());
 
@@ -136,7 +139,8 @@ impl Storage {
                 cf_output_id_unspent,
                 cf_ed25519_address_to_output_id,
                 cf_ledger_index,
-                cf_milestone_index_to_milestone,
+                cf_milestone_index_to_milestone_metadata,
+                cf_milestone_id_to_milestone_payload,
                 cf_snapshot_info,
                 cf_solid_entry_point_to_milestone_index,
                 cf_milestone_index_to_output_diff,

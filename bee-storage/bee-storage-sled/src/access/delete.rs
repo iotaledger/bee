@@ -7,7 +7,12 @@ use bee_ledger::types::{
     snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
     Unspent,
 };
-use bee_message::{address::Ed25519Address, output::OutputId, payload::milestone::MilestoneIndex, Message, MessageId};
+use bee_message::{
+    address::Ed25519Address,
+    output::OutputId,
+    payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
+    Message, MessageId,
+};
 use bee_storage::{access::Delete, backend::StorageBackend};
 use bee_tangle::{
     message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
@@ -96,8 +101,18 @@ impl Delete<(), LedgerIndex> for Storage {
 impl Delete<MilestoneIndex, MilestoneMetadata> for Storage {
     fn delete(&self, index: &MilestoneIndex) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
-            .open_tree(TREE_MILESTONE_INDEX_TO_MILESTONE)?
+            .open_tree(TREE_MILESTONE_INDEX_TO_MILESTONE_METADATA)?
             .remove(index.pack_to_vec())?;
+
+        Ok(())
+    }
+}
+
+impl Delete<MilestoneId, MilestonePayload> for Storage {
+    fn delete(&self, id: &MilestoneId) -> Result<(), <Self as StorageBackend>::Error> {
+        self.inner
+            .open_tree(TREE_MILESTONE_ID_TO_MILESTONE_PAYLOAD)?
+            .remove(id.pack_to_vec())?;
 
         Ok(())
     }

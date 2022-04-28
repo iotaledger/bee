@@ -7,7 +7,12 @@ use bee_ledger::types::{
     snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
     Unspent,
 };
-use bee_message::{address::Ed25519Address, output::OutputId, payload::milestone::MilestoneIndex, Message, MessageId};
+use bee_message::{
+    address::Ed25519Address,
+    output::OutputId,
+    payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
+    Message, MessageId,
+};
 use bee_storage::{access::Exist, backend::StorageBackend};
 use bee_tangle::{
     message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
@@ -96,7 +101,16 @@ impl Exist<MilestoneIndex, MilestoneMetadata> for Storage {
     fn exist(&self, index: &MilestoneIndex) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .open_tree(TREE_MILESTONE_INDEX_TO_MILESTONE)?
+            .open_tree(TREE_MILESTONE_INDEX_TO_MILESTONE_METADATA)?
+            .contains_key(index.pack_to_vec())?)
+    }
+}
+
+impl Exist<MilestoneId, MilestonePayload> for Storage {
+    fn exist(&self, index: &MilestoneId) -> Result<bool, <Self as StorageBackend>::Error> {
+        Ok(self
+            .inner
+            .open_tree(TREE_MILESTONE_ID_TO_MILESTONE_PAYLOAD)?
             .contains_key(index.pack_to_vec())?)
     }
 }
