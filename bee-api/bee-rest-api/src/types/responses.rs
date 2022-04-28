@@ -82,7 +82,7 @@ pub struct ProtocolResponse {
 }
 
 /// Returned in [`InfoResponse`].
-/// Rent information about the node.
+/// Information about the base token.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct BaseTokenResponse {
     pub name: String,
