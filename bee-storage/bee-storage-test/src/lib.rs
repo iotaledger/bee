@@ -8,7 +8,7 @@ mod ledger_index;
 mod message_id_to_message;
 mod message_id_to_message_id;
 mod message_id_to_metadata;
-mod milestone_index_to_milestone;
+mod milestone_index_to_milestone_metadata;
 mod milestone_index_to_output_diff;
 mod milestone_index_to_receipt;
 mod milestone_index_to_unreferenced_message;
@@ -23,7 +23,7 @@ pub use self::{
     ed25519_address_to_output_id::ed25519_address_to_output_id_access, ledger_index::ledger_index_access,
     message_id_to_message::message_id_to_message_access, message_id_to_message_id::message_id_to_message_id_access,
     message_id_to_metadata::message_id_to_metadata_access,
-    milestone_index_to_milestone::milestone_index_to_milestone_access,
+    milestone_index_to_milestone_metadata::milestone_index_to_milestone_metadata_access,
     milestone_index_to_output_diff::milestone_index_to_output_diff_access,
     milestone_index_to_receipt::milestone_index_to_receipt_access,
     milestone_index_to_unreferenced_message::milestone_index_to_unreferenced_message_access,

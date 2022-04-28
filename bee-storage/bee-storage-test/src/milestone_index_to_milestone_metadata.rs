@@ -37,7 +37,7 @@ impl<T> StorageBackend for T where
 {
 }
 
-pub fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B) {
+pub fn milestone_index_to_milestone_metadata_access<B: StorageBackend>(storage: &B) {
     let (index, milestone) = (rand_milestone_index(), rand_milestone_metadata());
 
     assert!(!Exist::<MilestoneIndex, MilestoneMetadata>::exist(storage, &index).unwrap());
