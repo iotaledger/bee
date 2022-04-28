@@ -120,8 +120,8 @@ pub(crate) fn info<B: StorageBackend>(
             name: "Shimmer".to_string(),
             ticker_symbol: "SMR".to_string(),
             unit: "SMR".to_string(),
-            decimals: 6,
             subunit: Some("glow".to_string()),
+            decimals: 6,
             use_metric_prefix: false,
         },
         metrics: MetricsResponse {
