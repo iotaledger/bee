@@ -9,7 +9,12 @@ use bee_ledger::types::{
     snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
     Unspent,
 };
-use bee_message::{address::Ed25519Address, output::OutputId, payload::milestone::MilestoneIndex, Message, MessageId};
+use bee_message::{
+    address::Ed25519Address,
+    output::OutputId,
+    payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
+    Message, MessageId,
+};
 use bee_storage::{
     access::{Batch, BatchBuilder},
     backend::StorageBackend,
@@ -367,7 +372,7 @@ impl Batch<MilestoneIndex, MilestoneMetadata> for Storage {
 
         batch
             .inner
-            .entry(TREE_MILESTONE_INDEX_TO_MILESTONE)
+            .entry(TREE_MILESTONE_INDEX_TO_MILESTONE_METADATA)
             .or_default()
             .insert(batch.key_buf.as_slice(), batch.value_buf.as_slice());
 
@@ -385,7 +390,45 @@ impl Batch<MilestoneIndex, MilestoneMetadata> for Storage {
 
         batch
             .inner
-            .entry(TREE_MILESTONE_INDEX_TO_MILESTONE)
+            .entry(TREE_MILESTONE_INDEX_TO_MILESTONE_METADATA)
+            .or_default()
+            .remove(batch.key_buf.as_slice());
+
+        Ok(())
+    }
+}
+
+impl Batch<MilestoneId, MilestonePayload> for Storage {
+    fn batch_insert(
+        &self,
+        batch: &mut Self::Batch,
+        id: &MilestoneId,
+        payload: &MilestonePayload,
+    ) -> Result<(), <Self as StorageBackend>::Error> {
+        batch.key_buf.clear();
+        // Packing to bytes can't fail.
+        id.pack(&mut batch.key_buf).unwrap();
+        batch.value_buf.clear();
+        // Packing to bytes can't fail.
+        payload.pack(&mut batch.value_buf).unwrap();
+
+        batch
+            .inner
+            .entry(TREE_MILESTONE_ID_TO_MILESTONE_PAYLOAD)
+            .or_default()
+            .insert(batch.key_buf.as_slice(), batch.value_buf.as_slice());
+
+        Ok(())
+    }
+
+    fn batch_delete(&self, batch: &mut Self::Batch, id: &MilestoneId) -> Result<(), <Self as StorageBackend>::Error> {
+        batch.key_buf.clear();
+        // Packing to bytes can't fail.
+        id.pack(&mut batch.key_buf).unwrap();
+
+        batch
+            .inner
+            .entry(TREE_MILESTONE_ID_TO_MILESTONE_PAYLOAD)
             .or_default()
             .remove(batch.key_buf.as_slice());
 

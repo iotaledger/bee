@@ -6,7 +6,12 @@ use std::str::FromStr;
 use bee_ledger::types::{
     snapshot::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput, Unspent,
 };
-use bee_message::{address::Ed25519Address, output::OutputId, payload::milestone::MilestoneIndex, Message, MessageId};
+use bee_message::{
+    address::Ed25519Address,
+    output::OutputId,
+    payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
+    Message, MessageId,
+};
 use bee_storage::{
     access::{AsIterator, Exist, Fetch},
     backend::StorageBackend,
@@ -176,7 +181,7 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
                 }
             }
         },
-        TREE_MILESTONE_INDEX_TO_MILESTONE => match &tool.command {
+        TREE_MILESTONE_INDEX_TO_MILESTONE_METADATA => match &tool.command {
             SledCommand::Fetch { key } => {
                 let key = MilestoneIndex(u32::from_str(key).map_err(|_| SledError::InvalidKey(key.clone()))?);
                 let value = Fetch::<MilestoneIndex, MilestoneMetadata>::fetch(storage, &key)?;
@@ -185,6 +190,22 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
             }
             SledCommand::Iterator => {
                 let iterator = AsIterator::<MilestoneIndex, MilestoneMetadata>::iter(storage)?;
+
+                for result in iterator {
+                    let (key, value) = result?;
+                    println!("Key: {:?}\nValue: {:?}\n", key, value);
+                }
+            }
+        },
+        TREE_MILESTONE_ID_TO_MILESTONE_PAYLOAD => match &tool.command {
+            SledCommand::Fetch { key } => {
+                let key = MilestoneId::from_str(key).map_err(|_| SledError::InvalidKey(key.clone()))?;
+                let value = Fetch::<MilestoneId, MilestonePayload>::fetch(storage, &key)?;
+
+                println!("Key: {:?}\nValue: {:?}\n", key, value);
+            }
+            SledCommand::Iterator => {
+                let iterator = AsIterator::<MilestoneId, MilestonePayload>::iter(storage)?;
 
                 for result in iterator {
                     let (key, value) = result?;

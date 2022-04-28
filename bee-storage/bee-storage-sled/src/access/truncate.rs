@@ -6,7 +6,12 @@
 use bee_ledger::types::{
     snapshot::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput, Unspent,
 };
-use bee_message::{address::Ed25519Address, output::OutputId, payload::milestone::MilestoneIndex, Message, MessageId};
+use bee_message::{
+    address::Ed25519Address,
+    output::OutputId,
+    payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
+    Message, MessageId,
+};
 use bee_storage::{access::Truncate, backend::StorageBackend};
 use bee_tangle::{
     message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
@@ -35,7 +40,12 @@ impl_truncate!(OutputId, ConsumedOutput, TREE_OUTPUT_ID_TO_CONSUMED_OUTPUT);
 impl_truncate!(Unspent, (), TREE_OUTPUT_ID_UNSPENT);
 impl_truncate!((Ed25519Address, OutputId), (), TREE_ED25519_ADDRESS_TO_OUTPUT_ID);
 impl_truncate!((), LedgerIndex, TREE_LEDGER_INDEX);
-impl_truncate!(MilestoneIndex, MilestoneMetadata, TREE_MILESTONE_INDEX_TO_MILESTONE);
+impl_truncate!(
+    MilestoneIndex,
+    MilestoneMetadata,
+    TREE_MILESTONE_INDEX_TO_MILESTONE_METADATA
+);
+impl_truncate!(MilestoneId, MilestonePayload, TREE_MILESTONE_ID_TO_MILESTONE_PAYLOAD);
 impl_truncate!((), SnapshotInfo, TREE_SNAPSHOT_INFO);
 impl_truncate!(
     SolidEntryPoint,
