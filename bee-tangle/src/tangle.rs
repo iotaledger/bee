@@ -3,10 +3,7 @@
 
 use std::sync::atomic::{AtomicU32, Ordering};
 
-use bee_message::{
-    milestone::{Milestone, MilestoneIndex},
-    Message, MessageId,
-};
+use bee_message::{payload::milestone::MilestoneIndex, Message, MessageId};
 use bee_runtime::resource::ResourceHandle;
 use hashbrown::HashMap;
 use log::warn;
@@ -15,7 +12,8 @@ use tokio::sync::Mutex;
 
 use crate::{
     config::TangleConfig,
-    metadata::{IndexId, MessageMetadata},
+    message_metadata::{IndexId, MessageMetadata},
+    milestone_metadata::MilestoneMetadata,
     solid_entry_point::SolidEntryPoint,
     storage::StorageBackend,
     urts::UrtsTipPool,
@@ -85,7 +83,7 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Add a milestone to the tangle.
-    pub fn add_milestone(&self, idx: MilestoneIndex, milestone: Milestone) {
+    pub fn add_milestone(&self, idx: MilestoneIndex, milestone: MilestoneMetadata) {
         let index = IndexId::new(idx, *milestone.message_id());
 
         self.update_metadata(milestone.message_id(), |metadata| {
@@ -99,7 +97,7 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Get the milestone from the tangle that corresponds to the given milestone index.
-    pub fn get_milestone(&self, index: MilestoneIndex) -> Option<Milestone> {
+    pub fn get_milestone(&self, index: MilestoneIndex) -> Option<MilestoneMetadata> {
         self.storage.fetch(&index).unwrap_or_else(|e| {
             warn!("Failed to fetch milestone {:?}", e);
             None

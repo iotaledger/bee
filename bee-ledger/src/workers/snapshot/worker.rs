@@ -4,7 +4,7 @@
 use std::{any::TypeId, collections::HashMap};
 
 use async_trait::async_trait;
-use bee_message::milestone::MilestoneIndex;
+use bee_message::payload::milestone::MilestoneIndex;
 use bee_runtime::{node::Node, worker::Worker};
 use bee_storage::{access::AsIterator, backend::StorageBackend as _, system::StorageHealth};
 use bee_tangle::{solid_entry_point::SolidEntryPoint, Tangle, TangleWorker};

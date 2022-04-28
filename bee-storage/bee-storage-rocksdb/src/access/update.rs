@@ -3,7 +3,7 @@
 
 use bee_message::MessageId;
 use bee_storage::access::Update;
-use bee_tangle::metadata::MessageMetadata;
+use bee_tangle::message_metadata::MessageMetadata;
 use packable::PackableExt;
 
 use crate::{column_families::*, storage::Storage};

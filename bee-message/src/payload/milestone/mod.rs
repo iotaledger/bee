@@ -4,6 +4,7 @@
 //! Module describing the milestone payload.
 
 mod essence;
+mod index;
 mod milestone_id;
 
 ///
@@ -20,6 +21,7 @@ use packable::{bounded::BoundedU8, prefix::VecPrefix, Packable};
 pub(crate) use self::essence::MilestoneMetadataLength;
 pub use self::{
     essence::MilestoneEssence,
+    index::MilestoneIndex,
     milestone_id::MilestoneId,
     option::{MilestoneOption, MilestoneOptions, PowMilestoneOption, ReceiptMilestoneOption},
 };
@@ -161,7 +163,8 @@ pub mod dto {
     use self::option::dto::MilestoneOptionDto;
     use super::*;
     use crate::{
-        error::dto::DtoError, milestone::MilestoneIndex, parent::Parents, signature::dto::SignatureDto, MessageId,
+        error::dto::DtoError, parent::Parents, payload::milestone::MilestoneIndex, signature::dto::SignatureDto,
+        MessageId,
     };
 
     /// The payload type to define a milestone.

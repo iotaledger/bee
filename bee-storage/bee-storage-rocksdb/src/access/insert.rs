@@ -5,18 +5,14 @@ use bee_ledger::types::{
     snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
     Unspent,
 };
-use bee_message::{
-    address::Ed25519Address,
-    milestone::{Milestone, MilestoneIndex},
-    output::OutputId,
-    Message, MessageId,
-};
+use bee_message::{address::Ed25519Address, output::OutputId, payload::milestone::MilestoneIndex, Message, MessageId};
 use bee_storage::{
     access::{Insert, InsertStrict},
     system::System,
 };
 use bee_tangle::{
-    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
+    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+    unreferenced_message::UnreferencedMessage,
 };
 use packable::PackableExt;
 
@@ -136,8 +132,12 @@ impl Insert<(), LedgerIndex> for Storage {
     }
 }
 
-impl Insert<MilestoneIndex, Milestone> for Storage {
-    fn insert(&self, index: &MilestoneIndex, milestone: &Milestone) -> Result<(), <Self as StorageBackend>::Error> {
+impl Insert<MilestoneIndex, MilestoneMetadata> for Storage {
+    fn insert(
+        &self,
+        index: &MilestoneIndex,
+        milestone: &MilestoneMetadata,
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner.put_cf(
             self.cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)?,
             index.pack_to_vec(),

@@ -3,14 +3,11 @@
 
 use std::collections::VecDeque;
 
-use bee_message::{
-    milestone::{Milestone, MilestoneIndex},
-    output::OutputId,
-    Message, MessageId,
-};
+use bee_message::{output::OutputId, payload::milestone::MilestoneIndex, Message, MessageId};
 use bee_storage::access::{Batch, Fetch};
 use bee_tangle::{
-    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage, Tangle,
+    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+    unreferenced_message::UnreferencedMessage, Tangle,
 };
 use hashbrown::{HashMap, HashSet};
 use ref_cast::RefCast;
@@ -56,7 +53,7 @@ pub fn prune_confirmed_data<S: StorageBackend>(
     let mitigation_threshold = tangle.config().below_max_depth() + EXTRA_PRUNING_DEPTH; // = BMD + 5
 
     // Get the `MessageId` of the milestone we are about to prune from the storage.
-    let prune_id = *Fetch::<MilestoneIndex, Milestone>::fetch(storage, &prune_index)
+    let prune_id = *Fetch::<MilestoneIndex, MilestoneMetadata>::fetch(storage, &prune_index)
         .map_err(|e| Error::Storage(Box::new(e)))?
         .ok_or(Error::MissingMilestone(prune_index))?
         .message_id();
@@ -360,7 +357,7 @@ fn prune_edge<S: StorageBackend>(
 }
 
 fn prune_milestone<S: StorageBackend>(storage: &S, batch: &mut S::Batch, index: MilestoneIndex) -> Result<(), Error> {
-    Batch::<MilestoneIndex, Milestone>::batch_delete(storage, batch, &index)
+    Batch::<MilestoneIndex, MilestoneMetadata>::batch_delete(storage, batch, &index)
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
     Ok(())

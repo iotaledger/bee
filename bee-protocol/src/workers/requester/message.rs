@@ -12,7 +12,7 @@ use std::{
 
 use async_priority_queue::PriorityQueue;
 use async_trait::async_trait;
-use bee_message::{milestone::MilestoneIndex, MessageId};
+use bee_message::{payload::milestone::MilestoneIndex, MessageId};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{Tangle, TangleWorker};
 use futures::StreamExt;

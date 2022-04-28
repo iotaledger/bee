@@ -26,8 +26,6 @@ pub mod address;
 pub mod constant;
 /// A module that provides types and syntactic validations of inputs.
 pub mod input;
-/// A module that provides types and syntactic validations of milestones.
-pub mod milestone;
 /// A module that provides types and syntactic validations of outputs.
 pub mod output;
 /// A module that provides types and syntactic validations of parents.

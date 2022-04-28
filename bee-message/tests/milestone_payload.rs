@@ -2,9 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::{
-    milestone::MilestoneIndex,
     parent::Parents,
-    payload::milestone::{MilestoneEssence, MilestoneOptions, MilestonePayload},
+    payload::milestone::{MilestoneEssence, MilestoneIndex, MilestoneOptions, MilestonePayload},
     signature::{Ed25519Signature, Signature},
     Error,
 };

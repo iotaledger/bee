@@ -17,9 +17,8 @@ pub(crate) use self::migrated_funds_entry::MigratedFundsAmount;
 pub use self::{migrated_funds_entry::MigratedFundsEntry, tail_transaction_hash::TailTransactionHash};
 use crate::{
     constant::TOKEN_SUPPLY,
-    milestone::MilestoneIndex,
     output::OUTPUT_COUNT_RANGE,
-    payload::{Payload, TreasuryTransactionPayload},
+    payload::{milestone::MilestoneIndex, Payload, TreasuryTransactionPayload},
     Error,
 };
 

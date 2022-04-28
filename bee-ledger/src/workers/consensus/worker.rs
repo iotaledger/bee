@@ -5,10 +5,9 @@ use std::any::TypeId;
 
 use async_trait::async_trait;
 use bee_message::{
-    milestone::MilestoneIndex,
     output::{unlock_condition::AddressUnlockCondition, BasicOutput, Output, OutputId},
     payload::{
-        milestone::{MilestoneId, ReceiptMilestoneOption},
+        milestone::{MilestoneId, MilestoneIndex, ReceiptMilestoneOption},
         transaction::TransactionId,
         Payload,
     },

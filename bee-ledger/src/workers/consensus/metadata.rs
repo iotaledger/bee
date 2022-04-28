@@ -4,7 +4,10 @@
 use std::collections::HashMap;
 
 use bee_message::{
-    milestone::MilestoneIndex, output::OutputId, payload::milestone::MilestoneId, semantic::ConflictReason, MessageId,
+    output::OutputId,
+    payload::milestone::{MilestoneId, MilestoneIndex},
+    semantic::ConflictReason,
+    MessageId,
 };
 
 use crate::types::{ConsumedOutput, CreatedOutput};

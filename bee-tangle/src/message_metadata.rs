@@ -8,7 +8,7 @@ use std::{
 };
 
 use bee_message::{
-    milestone::MilestoneIndex,
+    payload::milestone::MilestoneIndex,
     semantic::{ConflictError, ConflictReason},
     MessageId,
 };

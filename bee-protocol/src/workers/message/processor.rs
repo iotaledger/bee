@@ -12,7 +12,7 @@ use bee_message::{
     Message, MessageId,
 };
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{metadata::MessageMetadata, Tangle, TangleWorker};
+use bee_tangle::{message_metadata::MessageMetadata, Tangle, TangleWorker};
 use futures::{channel::oneshot::Sender, stream::StreamExt};
 use log::{error, info, trace};
 use tokio::sync::mpsc;

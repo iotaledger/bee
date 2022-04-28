@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_ledger::types::{ConsumedOutput, OutputDiff, Receipt};
-use bee_message::{address::Ed25519Address, milestone::MilestoneIndex, output::OutputId};
+use bee_message::{address::Ed25519Address, output::OutputId, payload::milestone::MilestoneIndex};
 use bee_storage::{
     access::{AsIterator, Fetch},
     backend,

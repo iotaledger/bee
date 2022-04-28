@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_ledger::workers::StorageBackend as LedgerStorageBackend;
-use bee_message::milestone::MilestoneIndex;
+use bee_message::payload::milestone::MilestoneIndex;
 use bee_storage::{access::Insert, backend};
 use bee_tangle::unreferenced_message::UnreferencedMessage;
 

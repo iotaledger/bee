@@ -9,8 +9,8 @@ use std::{
 };
 
 use bee_message::{
-    milestone::MilestoneIndex,
     output::{self, OutputId},
+    payload::milestone::MilestoneIndex,
 };
 use bee_storage::access::{Insert, Truncate};
 use bee_tangle::solid_entry_point::SolidEntryPoint;
