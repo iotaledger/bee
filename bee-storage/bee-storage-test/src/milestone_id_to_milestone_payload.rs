@@ -40,9 +40,11 @@ pub fn milestone_id_to_milestone_payload_access<B: StorageBackend>(storage: &B) 
     let (id, payload) = (rand_milestone_id(), rand_milestone_payload());
 
     assert!(!Exist::<MilestoneId, MilestonePayload>::exist(storage, &id).unwrap());
-    assert!(Fetch::<MilestoneId, MilestonePayload>::fetch(storage, &id)
-        .unwrap()
-        .is_none());
+    assert!(
+        Fetch::<MilestoneId, MilestonePayload>::fetch(storage, &id)
+            .unwrap()
+            .is_none()
+    );
     let results = MultiFetch::<MilestoneId, MilestonePayload>::multi_fetch(storage, &[id])
         .unwrap()
         .collect::<Vec<_>>();
@@ -67,9 +69,11 @@ pub fn milestone_id_to_milestone_payload_access<B: StorageBackend>(storage: &B) 
     Delete::<MilestoneId, MilestonePayload>::delete(storage, &id).unwrap();
 
     assert!(!Exist::<MilestoneId, MilestonePayload>::exist(storage, &id).unwrap());
-    assert!(Fetch::<MilestoneId, MilestonePayload>::fetch(storage, &id)
-        .unwrap()
-        .is_none());
+    assert!(
+        Fetch::<MilestoneId, MilestonePayload>::fetch(storage, &id)
+            .unwrap()
+            .is_none()
+    );
     let results = MultiFetch::<MilestoneId, MilestonePayload>::multi_fetch(storage, &[id])
         .unwrap()
         .collect::<Vec<_>>();
