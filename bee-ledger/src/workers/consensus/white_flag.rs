@@ -210,7 +210,8 @@ pub async fn white_flag<B: StorageBackend>(
     metadata.confirmed_merkle_proof = MerkleHasher::<Blake2b256>::new().digest(&metadata.referenced_messages);
     metadata.applied_merkle_proof = MerkleHasher::<Blake2b256>::new().digest(&metadata.included_messages);
 
-    if metadata.previous_milestone_id.is_some() && !metadata.found_previous_milestone {
+    if *metadata.milestone_index != 1 && metadata.previous_milestone_id.is_some() && !metadata.found_previous_milestone
+    {
         return Err(Error::PreviousMilestoneNotFound);
     }
 
