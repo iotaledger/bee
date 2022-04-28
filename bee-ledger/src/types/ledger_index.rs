@@ -3,7 +3,7 @@
 
 use core::ops::Deref;
 
-use bee_message::milestone::MilestoneIndex;
+use bee_message::payload::milestone::MilestoneIndex;
 
 /// A wrapper type to represent the current ledger index.
 #[derive(Debug, Clone, Copy, Default, Eq, Hash, Ord, PartialEq, PartialOrd, packable::Packable)]

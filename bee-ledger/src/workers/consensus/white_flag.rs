@@ -170,12 +170,7 @@ async fn traverse_past_cone<B: StorageBackend>(
     let mut visited = HashSet::new();
 
     while let Some(message_id) = message_ids.last() {
-        if let Some((message, meta)) = tangle
-            .get_vertex(message_id)
-            .await
-            .as_ref()
-            .and_then(|v| v.message_and_metadata().cloned())
-        {
+        if let Some((message, meta)) = tangle.get_message_and_metadata(message_id) {
             if meta.flags().is_referenced() {
                 visited.insert(*message_id);
                 message_ids.pop();
@@ -215,7 +210,8 @@ pub async fn white_flag<B: StorageBackend>(
     metadata.confirmed_merkle_proof = MerkleHasher::<Blake2b256>::new().digest(&metadata.referenced_messages);
     metadata.applied_merkle_proof = MerkleHasher::<Blake2b256>::new().digest(&metadata.included_messages);
 
-    if metadata.previous_milestone_id.is_some() && !metadata.found_previous_milestone {
+    if *metadata.milestone_index != 1 && metadata.previous_milestone_id.is_some() && !metadata.found_previous_milestone
+    {
         return Err(Error::PreviousMilestoneNotFound);
     }
 

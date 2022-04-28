@@ -4,7 +4,7 @@
 use std::net::IpAddr;
 
 use bee_ledger::types::Receipt;
-use bee_message::milestone::MilestoneIndex;
+use bee_message::payload::milestone::MilestoneIndex;
 use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;
 use warp::{filters::BoxedFilter, Filter, Rejection, Reply};

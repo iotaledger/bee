@@ -9,13 +9,14 @@ use bee_ledger::types::{
 };
 use bee_message::{
     address::Ed25519Address,
-    milestone::{Milestone, MilestoneIndex},
     output::OutputId,
+    payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
     Message, MessageId,
 };
 use bee_storage::{access::Exist, backend::StorageBackend};
 use bee_tangle::{
-    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
+    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+    unreferenced_message::UnreferencedMessage,
 };
 
 use crate::storage::Storage;
@@ -38,7 +39,8 @@ impl_exist!(OutputId, ConsumedOutput, output_id_to_consumed_output);
 impl_exist!(Unspent, (), output_id_unspent);
 impl_exist!((Ed25519Address, OutputId), (), ed25519_address_to_output_id);
 impl_exist!((), LedgerIndex, ledger_index);
-impl_exist!(MilestoneIndex, Milestone, milestone_index_to_milestone);
+impl_exist!(MilestoneIndex, MilestoneMetadata, milestone_index_to_milestone_metadata);
+impl_exist!(MilestoneId, MilestonePayload, milestone_id_to_milestone_payload);
 impl_exist!((), SnapshotInfo, snapshot_info);
 impl_exist!(SolidEntryPoint, MilestoneIndex, solid_entry_point_to_milestone_index);
 impl_exist!(MilestoneIndex, OutputDiff, milestone_index_to_output_diff);

@@ -8,15 +8,17 @@ use bee_ledger::types::{
 };
 use bee_message::{
     address::Ed25519Address,
-    milestone::{Milestone, MilestoneIndex},
     output::OutputId,
+    payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
     Message, MessageId,
 };
 use bee_storage::{access::AsIterator, system::System};
 use bee_tangle::{
-    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
+    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+    unreferenced_message::UnreferencedMessage,
 };
 use packable::PackableExt;
+use parking_lot::RwLockReadGuard;
 use rocksdb::{DBIterator, IteratorMode};
 
 use crate::{
@@ -27,13 +29,15 @@ use crate::{
 pub struct StorageIterator<'a, K, V> {
     inner: DBIterator<'a>,
     marker: PhantomData<(K, V)>,
+    _guard: Option<RwLockReadGuard<'a, ()>>,
 }
 
 impl<'a, K, V> StorageIterator<'a, K, V> {
-    fn new(inner: DBIterator<'a>) -> Self {
+    fn new(inner: DBIterator<'a>, guard: Option<RwLockReadGuard<'a, ()>>) -> Self {
         StorageIterator::<K, V> {
             inner,
             marker: PhantomData,
+            _guard: guard,
         }
     }
 }
@@ -46,6 +50,7 @@ macro_rules! impl_iter {
             fn iter(&'a self) -> Result<Self::AsIter, <Self as StorageBackend>::Error> {
                 Ok(StorageIterator::new(
                     self.inner.iterator_cf(self.cf_handle($cf)?, IteratorMode::Start),
+                    None,
                 ))
             }
         }
@@ -178,13 +183,24 @@ impl<'a> StorageIterator<'a, (), LedgerIndex> {
     }
 }
 
-impl<'a> StorageIterator<'a, MilestoneIndex, Milestone> {
-    fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (MilestoneIndex, Milestone) {
+impl<'a> StorageIterator<'a, MilestoneIndex, MilestoneMetadata> {
+    fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (MilestoneIndex, MilestoneMetadata) {
         (
             // Unpacking from storage is fine.
             MilestoneIndex::unpack_unverified(&mut key).unwrap(),
             // Unpacking from storage is fine.
-            Milestone::unpack_unverified(&mut value).unwrap(),
+            MilestoneMetadata::unpack_unverified(&mut value).unwrap(),
+        )
+    }
+}
+
+impl<'a> StorageIterator<'a, MilestoneId, MilestonePayload> {
+    fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (MilestoneId, MilestonePayload) {
+        (
+            // Unpacking from storage is fine.
+            MilestoneId::unpack_unverified(&mut key).unwrap(),
+            // Unpacking from storage is fine.
+            MilestonePayload::unpack_unverified(&mut value).unwrap(),
         )
     }
 }
@@ -271,14 +287,18 @@ impl<'a> StorageIterator<'a, (bool, TreasuryOutput), ()> {
 
 impl_iter!(u8, System, CF_SYSTEM);
 impl_iter!(MessageId, Message, CF_MESSAGE_ID_TO_MESSAGE);
-impl_iter!(MessageId, MessageMetadata, CF_MESSAGE_ID_TO_METADATA);
 impl_iter!((MessageId, MessageId), (), CF_MESSAGE_ID_TO_MESSAGE_ID);
 impl_iter!(OutputId, CreatedOutput, CF_OUTPUT_ID_TO_CREATED_OUTPUT);
 impl_iter!(OutputId, ConsumedOutput, CF_OUTPUT_ID_TO_CONSUMED_OUTPUT);
 impl_iter!(Unspent, (), CF_OUTPUT_ID_UNSPENT);
 impl_iter!((Ed25519Address, OutputId), (), CF_ED25519_ADDRESS_TO_OUTPUT_ID);
 impl_iter!((), LedgerIndex, CF_LEDGER_INDEX);
-impl_iter!(MilestoneIndex, Milestone, CF_MILESTONE_INDEX_TO_MILESTONE);
+impl_iter!(
+    MilestoneIndex,
+    MilestoneMetadata,
+    CF_MILESTONE_INDEX_TO_MILESTONE_METADATA
+);
+impl_iter!(MilestoneId, MilestonePayload, CF_MILESTONE_ID_TO_MILESTONE_PAYLOAD);
 impl_iter!((), SnapshotInfo, CF_SNAPSHOT_INFO);
 impl_iter!(SolidEntryPoint, MilestoneIndex, CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX);
 impl_iter!(MilestoneIndex, OutputDiff, CF_MILESTONE_INDEX_TO_OUTPUT_DIFF);
@@ -289,3 +309,34 @@ impl_iter!(
 );
 impl_iter!((MilestoneIndex, Receipt), (), CF_MILESTONE_INDEX_TO_RECEIPT);
 impl_iter!((bool, TreasuryOutput), (), CF_SPENT_TO_TREASURY_OUTPUT);
+
+impl<'a> AsIterator<'a, MessageId, MessageMetadata> for Storage {
+    type AsIter = StorageIterator<'a, MessageId, MessageMetadata>;
+
+    fn iter(&'a self) -> Result<Self::AsIter, <Self as StorageBackend>::Error> {
+        Ok(StorageIterator::new(
+            self.inner
+                .iterator_cf(self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?, IteratorMode::Start),
+            Some(self.locks.message_id_to_metadata.read()),
+        ))
+    }
+}
+
+/// An iterator over all key-value pairs of a column family.
+impl<'a> Iterator for StorageIterator<'a, MessageId, MessageMetadata> {
+    type Item = Result<(MessageId, MessageMetadata), <Storage as StorageBackend>::Error>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner
+            .next()
+            .map(|(key, value)| Ok(Self::unpack_key_value(&key, &value)))
+
+        // inner.status()?;
+        //
+        // if inner.valid() {
+        //     Poll::Ready(item)
+        // } else {
+        //     Poll::Ready(None)
+        // }
+    }
+}

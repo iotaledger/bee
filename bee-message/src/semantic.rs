@@ -9,9 +9,11 @@ use primitive_types::U256;
 use crate::{
     address::Address,
     error::Error,
-    milestone::MilestoneIndex,
     output::{create_inputs_commitment, ChainId, NativeTokens, Output, OutputId, TokenId, UnlockCondition},
-    payload::transaction::{RegularTransactionEssence, TransactionEssence, TransactionId},
+    payload::{
+        milestone::MilestoneIndex,
+        transaction::{RegularTransactionEssence, TransactionEssence, TransactionId},
+    },
     unlock_block::UnlockBlocks,
 };
 

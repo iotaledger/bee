@@ -669,7 +669,7 @@ pub mod dto {
         #[serde(rename = "stateIndex")]
         pub state_index: u32,
         // Metadata that can only be changed by the state controller.
-        #[serde(rename = "stateMetadata")]
+        #[serde(rename = "stateMetadata", skip_serializing_if = "String::is_empty", default)]
         pub state_metadata: String,
         // A counter that denotes the number of foundries created by this alias account.
         #[serde(rename = "foundryCounter")]
@@ -714,9 +714,11 @@ pub mod dto {
                 (&value.alias_id).try_into()?,
             )?;
             builder = builder.with_state_index(value.state_index);
-            builder = builder.with_state_metadata(
-                prefix_hex::decode(&value.state_metadata).map_err(|_| DtoError::InvalidField("state_metadata"))?,
-            );
+            if !value.state_metadata.is_empty() {
+                builder = builder.with_state_metadata(
+                    prefix_hex::decode(&value.state_metadata).map_err(|_| DtoError::InvalidField("state_metadata"))?,
+                );
+            }
             builder = builder.with_foundry_counter(value.foundry_counter);
 
             for t in &value.native_tokens {

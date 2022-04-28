@@ -8,8 +8,8 @@ use bee_ledger::types::{
 };
 use bee_message::{
     address::Ed25519Address,
-    milestone::{Milestone, MilestoneIndex},
     output::OutputId,
+    payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
     Message, MessageId,
 };
 use bee_storage::{
@@ -22,7 +22,8 @@ use bee_storage_sled::{
     trees::*,
 };
 use bee_tangle::{
-    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
+    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+    unreferenced_message::UnreferencedMessage,
 };
 use structopt::StructOpt;
 use thiserror::Error;
@@ -180,15 +181,31 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
                 }
             }
         },
-        TREE_MILESTONE_INDEX_TO_MILESTONE => match &tool.command {
+        TREE_MILESTONE_INDEX_TO_MILESTONE_METADATA => match &tool.command {
             SledCommand::Fetch { key } => {
                 let key = MilestoneIndex(u32::from_str(key).map_err(|_| SledError::InvalidKey(key.clone()))?);
-                let value = Fetch::<MilestoneIndex, Milestone>::fetch(storage, &key)?;
+                let value = Fetch::<MilestoneIndex, MilestoneMetadata>::fetch(storage, &key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             SledCommand::Iterator => {
-                let iterator = AsIterator::<MilestoneIndex, Milestone>::iter(storage)?;
+                let iterator = AsIterator::<MilestoneIndex, MilestoneMetadata>::iter(storage)?;
+
+                for result in iterator {
+                    let (key, value) = result?;
+                    println!("Key: {:?}\nValue: {:?}\n", key, value);
+                }
+            }
+        },
+        TREE_MILESTONE_ID_TO_MILESTONE_PAYLOAD => match &tool.command {
+            SledCommand::Fetch { key } => {
+                let key = MilestoneId::from_str(key).map_err(|_| SledError::InvalidKey(key.clone()))?;
+                let value = Fetch::<MilestoneId, MilestonePayload>::fetch(storage, &key)?;
+
+                println!("Key: {:?}\nValue: {:?}\n", key, value);
+            }
+            SledCommand::Iterator => {
+                let iterator = AsIterator::<MilestoneId, MilestonePayload>::iter(storage)?;
 
                 for result in iterator {
                     let (key, value) = result?;

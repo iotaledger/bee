@@ -22,8 +22,10 @@ pub const TREE_OUTPUT_ID_UNSPENT: &str = "output_id_unspent";
 pub const TREE_ED25519_ADDRESS_TO_OUTPUT_ID: &str = "ed25519_address_to_output_id";
 /// Identifier for the `LedgerIndex` tree.
 pub const TREE_LEDGER_INDEX: &str = "ledger_index";
-/// Identifier for the `MIlestoneIndex` to `Milestone` tree.
-pub const TREE_MILESTONE_INDEX_TO_MILESTONE: &str = "milestone_index_to_milestone";
+/// Identifier for the `MilestoneIndex` to `MilestoneMetadata` tree.
+pub const TREE_MILESTONE_INDEX_TO_MILESTONE_METADATA: &str = "milestone_index_to_milestone_metadata";
+/// Identifier for the `MilestoneId` to `MilestonePayload` tree.
+pub const TREE_MILESTONE_ID_TO_MILESTONE_PAYLOAD: &str = "milestone_id_to_milestone_payload";
 /// Identifier for the `SnapshotInfo` tree.
 pub const TREE_SNAPSHOT_INFO: &str = "snapshot_info";
 /// Identifier for the `SolidEntryPoint` to `MilestoneIndex` tree.

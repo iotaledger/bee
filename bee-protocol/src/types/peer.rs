@@ -9,7 +9,7 @@ use std::{
 };
 
 use bee_gossip::{Multiaddr, PeerId, PeerInfo, PeerRelation};
-use bee_message::milestone::MilestoneIndex;
+use bee_message::payload::milestone::MilestoneIndex;
 
 use crate::types::metrics::PeerMetrics;
 

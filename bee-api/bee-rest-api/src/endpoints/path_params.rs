@@ -2,7 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_gossip::PeerId;
-use bee_message::{milestone::MilestoneIndex, output::OutputId, payload::transaction::TransactionId, MessageId};
+use bee_message::{
+    output::OutputId,
+    payload::{milestone::MilestoneIndex, transaction::TransactionId},
+    MessageId,
+};
 use warp::{reject, Filter, Rejection};
 
 use crate::endpoints::rejection::CustomRejection;

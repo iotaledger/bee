@@ -7,7 +7,7 @@ mod packet_handler;
 
 use std::sync::Arc;
 
-use bee_message::milestone::MilestoneIndex;
+use bee_message::payload::milestone::MilestoneIndex;
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::Tangle;
 use futures::{channel::oneshot, future::FutureExt};
@@ -90,8 +90,7 @@ impl PeerWorker {
             &self.milestone_requester,
             &*requested_milestones,
             Some(*self.peer.id()),
-        )
-        .await;
+        );
 
         // TODO is this needed ?
         let tangle = tangle.into_weak();

@@ -1,7 +1,7 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{output::dto::OutputDto, payload::milestone::dto::MilestonePayloadDto, MessageDto};
+use bee_message::{output::dto::OutputDto, MessageDto};
 use serde::{Deserialize, Serialize};
 
 use crate::types::{
@@ -17,6 +17,8 @@ pub struct InfoResponse {
     pub version: String,
     pub status: StatusResponse,
     pub protocol: ProtocolResponse,
+    #[serde(rename = "baseToken")]
+    pub base_token: BaseTokenResponse,
     pub metrics: MetricsResponse,
     pub features: Vec<String>,
     pub plugins: Vec<String>,
@@ -66,6 +68,7 @@ pub struct ConfirmedMilestoneResponse {
 /// Protocol information about the node.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct ProtocolResponse {
+    pub version: u8,
     #[serde(rename = "networkName")]
     pub network_name: String,
     #[serde(rename = "bech32HRP")]
@@ -74,6 +77,23 @@ pub struct ProtocolResponse {
     pub min_pow_score: f64,
     #[serde(rename = "rentStructure")]
     pub rent_structure: RentStructureResponse,
+    #[serde(rename = "tokenSupply")]
+    pub token_supply: String,
+}
+
+/// Returned in [`InfoResponse`].
+/// Information about the base token.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct BaseTokenResponse {
+    pub name: String,
+    #[serde(rename = "tickerSymbol")]
+    pub ticker_symbol: String,
+    pub unit: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub subunit: Option<String>,
+    pub decimals: u8,
+    #[serde(rename = "useMetricPrefix")]
+    pub use_metric_prefix: bool,
 }
 
 /// Returned in [`InfoResponse`].
@@ -221,7 +241,13 @@ impl BodyInner for TreasuryResponse {}
 /// Response of GET /api/v2/milestone/{milestone_index}.
 /// Returns information about a milestone.
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct MilestoneResponse(pub MilestonePayloadDto);
+pub struct MilestoneResponse {
+    #[serde(rename = "index")]
+    pub milestone_index: u32,
+    #[serde(rename = "messageId")]
+    pub message_id: String,
+    pub timestamp: u32,
+}
 
 impl BodyInner for MilestoneResponse {}
 

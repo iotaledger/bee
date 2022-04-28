@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-pub use bee_message::milestone::MilestoneIndex;
+pub use bee_message::payload::milestone::MilestoneIndex;
 pub use packable::PackableExt;
 
 #[test]

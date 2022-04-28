@@ -3,10 +3,12 @@
 
 use bee_message::{
     input::TreasuryInput,
-    milestone::MilestoneIndex,
     output::TreasuryOutput,
     payload::{
-        milestone::{MilestoneEssence, MilestoneOption, MilestoneOptions, PowMilestoneOption, ReceiptMilestoneOption},
+        milestone::{
+            MilestoneEssence, MilestoneIndex, MilestoneOption, MilestoneOptions, PowMilestoneOption,
+            ReceiptMilestoneOption,
+        },
         TreasuryTransactionPayload,
     },
 };

@@ -19,12 +19,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
-## 0.2.0 - 2022-XX-XX
+## 0.4.0 - 2022-XX-XX
 
 ### Removed
 
 - All `Balance` operations;
 - All `PaddedIndex` operations;
+
+## 0.3.0 - 2022-03-17
+
+### Added
+
+- Implementation of `InsertStrict<MessageId, MessageMetadata>` for `Storage`;
+
+### Removed
+
+- Implementation of `Insert<MessageId, MessageMetadata>` for `Storage`;
+
+## 0.2.0 - 2022-03-11
+
+### Added
+
+- Implementation of `Update` for `Storage`;
 
 ## 0.1.0 - 2021-10-21
 

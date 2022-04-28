@@ -6,12 +6,11 @@ use core::str::FromStr;
 use bee_message::{
     address::{Address, Ed25519Address},
     input::TreasuryInput,
-    milestone::MilestoneIndex,
     output::TreasuryOutput,
     payload::{
         milestone::{
             option::{MigratedFundsEntry, ReceiptMilestoneOption, TailTransactionHash},
-            MilestoneId,
+            MilestoneId, MilestoneIndex,
         },
         TreasuryTransactionPayload,
     },

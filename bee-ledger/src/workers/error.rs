@@ -5,7 +5,7 @@
 
 use std::convert::Infallible;
 
-use bee_message::{milestone::MilestoneIndex, Error as MessageError, MessageId};
+use bee_message::{payload::milestone::MilestoneIndex, Error as MessageError, MessageId};
 use packable::error::UnpackError;
 
 use crate::{

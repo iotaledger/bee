@@ -8,13 +8,14 @@ use bee_ledger::types::{
 };
 use bee_message::{
     address::Ed25519Address,
-    milestone::{Milestone, MilestoneIndex},
     output::OutputId,
+    payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
     Message, MessageId,
 };
 use bee_storage::{access::Truncate, backend::StorageBackend};
 use bee_tangle::{
-    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
+    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+    unreferenced_message::UnreferencedMessage,
 };
 
 use crate::storage::Storage;
@@ -39,7 +40,8 @@ impl_truncate!(OutputId, ConsumedOutput, output_id_to_consumed_output);
 impl_truncate!(Unspent, (), output_id_unspent);
 impl_truncate!((Ed25519Address, OutputId), (), ed25519_address_to_output_id);
 impl_truncate!((), LedgerIndex, ledger_index);
-impl_truncate!(MilestoneIndex, Milestone, milestone_index_to_milestone);
+impl_truncate!(MilestoneIndex, MilestoneMetadata, milestone_index_to_milestone_metadata);
+impl_truncate!(MilestoneId, MilestonePayload, milestone_id_to_milestone_payload);
 impl_truncate!((), SnapshotInfo, snapshot_info);
 impl_truncate!(SolidEntryPoint, MilestoneIndex, solid_entry_point_to_milestone_index);
 impl_truncate!(MilestoneIndex, OutputDiff, milestone_index_to_output_diff);

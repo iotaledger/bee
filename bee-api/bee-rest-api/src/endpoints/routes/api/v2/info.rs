@@ -3,6 +3,7 @@
 
 use std::{convert::Infallible, net::IpAddr};
 
+use bee_message::constant::{PROTOCOL_VERSION, TOKEN_SUPPLY};
 use bee_protocol::workers::{config::ProtocolConfig, PeerManager};
 use bee_runtime::{node::NodeInfo, resource::ResourceHandle};
 use bee_tangle::Tangle;
@@ -21,8 +22,8 @@ use crate::{
         Bech32Hrp, NetworkId,
     },
     types::responses::{
-        ConfirmedMilestoneResponse, InfoResponse, LatestMilestoneResponse, MetricsResponse, ProtocolResponse,
-        RentStructureResponse, StatusResponse,
+        BaseTokenResponse, ConfirmedMilestoneResponse, InfoResponse, LatestMilestoneResponse, MetricsResponse,
+        ProtocolResponse, RentStructureResponse, StatusResponse,
     },
 };
 
@@ -52,11 +53,23 @@ pub(crate) fn filter<B: StorageBackend>(
         .and(with_protocol_config(protocol_config))
         .and(with_node_info(node_info))
         .and(with_peer_manager(peer_manager))
-        .and_then(info)
+        .and_then(
+            |tangle, network_id, bech32_hrp, rest_api_config, protocol_config, node_info, peer_manager| async {
+                info(
+                    tangle,
+                    network_id,
+                    bech32_hrp,
+                    rest_api_config,
+                    protocol_config,
+                    node_info,
+                    peer_manager,
+                )
+            },
+        )
         .boxed()
 }
 
-pub(crate) async fn info<B: StorageBackend>(
+pub(crate) fn info<B: StorageBackend>(
     tangle: ResourceHandle<Tangle<B>>,
     network_id: NetworkId,
     bech32_hrp: Bech32Hrp,
@@ -72,20 +85,27 @@ pub(crate) async fn info<B: StorageBackend>(
         name: node_info.name.clone(),
         version: node_info.version.clone(),
         status: StatusResponse {
-            is_healthy: health::is_healthy(&tangle, &peer_manager).await,
+            is_healthy: health::is_healthy(&tangle, &peer_manager),
             latest_milestone: LatestMilestoneResponse {
                 index: *latest_milestone_index,
-                timestamp: 0,                 // TODO: replace with correct timestamp
-                milestone_id: "".to_string(), // TODO: replace with correct milestone id
+                timestamp: tangle
+                    .get_milestone(latest_milestone_index)
+                    .map(|m| m.timestamp())
+                    .unwrap_or_default(),
+                milestone_id: "".to_string(), // TODO: replace with milestone id using milestone id mapping
             },
             confirmed_milestone: ConfirmedMilestoneResponse {
                 index: *confirmed_milestone_index,
-                timestamp: 0,                 // TODO: replace with correct timestamp
-                milestone_id: "".to_string(), // TODO: replace with correct milestone id
+                timestamp: tangle
+                    .get_milestone(confirmed_milestone_index)
+                    .map(|m| m.timestamp())
+                    .unwrap_or_default(),
+                milestone_id: "".to_string(), // TODO: replace with milestone id using milestone id mapping
             },
             pruning_index: *tangle.get_pruning_index(),
         },
         protocol: ProtocolResponse {
+            version: PROTOCOL_VERSION,
             network_name: network_id.0,
             bech32_hrp,
             min_pow_score: protocol_config.minimum_pow_score(),
@@ -94,6 +114,15 @@ pub(crate) async fn info<B: StorageBackend>(
                 v_byte_factor_key: protocol_config.byte_cost().v_byte_factor_key,
                 v_byte_factor_data: protocol_config.byte_cost().v_byte_factor_data,
             },
+            token_supply: TOKEN_SUPPLY.to_string(),
+        },
+        base_token: BaseTokenResponse {
+            name: "Shimmer".to_string(),
+            ticker_symbol: "SMR".to_string(),
+            unit: "SMR".to_string(),
+            subunit: Some("glow".to_string()),
+            decimals: 6,
+            use_metric_prefix: false,
         },
         metrics: MetricsResponse {
             messages_per_second: 0.0,            // TODO

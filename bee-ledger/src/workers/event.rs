@@ -6,8 +6,8 @@
 use std::collections::HashMap;
 
 use bee_message::{
-    milestone::MilestoneIndex,
     output::{Output, OutputId},
+    payload::milestone::MilestoneIndex,
     semantic::ConflictReason,
     MessageId,
 };

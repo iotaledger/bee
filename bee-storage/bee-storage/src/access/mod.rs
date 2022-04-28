@@ -20,14 +20,17 @@ mod iter;
 mod multi_fetch;
 /// Holds the contract for truncate access operations.
 mod truncate;
+/// Holds the contract for update access operations.
+mod update;
 
 pub use self::{
     batch::{Batch, BatchBuilder},
     delete::Delete,
     exist::Exist,
     fetch::Fetch,
-    insert::Insert,
+    insert::{Insert, InsertStrict},
     iter::AsIterator,
     multi_fetch::MultiFetch,
     truncate::Truncate,
+    update::Update,
 };
