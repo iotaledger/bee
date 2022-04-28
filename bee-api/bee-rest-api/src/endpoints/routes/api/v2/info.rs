@@ -118,12 +118,10 @@ pub(crate) fn info<B: StorageBackend>(
         },
         base_token: BaseTokenResponse {
             name: "Shimmer".to_string(),
-            #[serde(rename = "tickerSymbol")]
             ticker_symbol: "SMR".to_string(),
             unit: "SMR".to_string(),
             decimals: 6,
             subunit: "glow".to_string(),
-            #[serde(rename = "useMetricPrefix")]
             use_metric_prefix: false,
         },
         metrics: MetricsResponse {
