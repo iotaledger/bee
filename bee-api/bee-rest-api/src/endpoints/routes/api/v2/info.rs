@@ -89,7 +89,7 @@ pub(crate) fn info<B: StorageBackend>(
             latest_milestone: LatestMilestoneResponse {
                 index: *latest_milestone_index,
                 timestamp: tangle
-                    .get_milestone(latest_milestone_index)
+                    .get_milestone_metadata(latest_milestone_index)
                     .map(|m| m.timestamp())
                     .unwrap_or_default(),
                 milestone_id: "".to_string(), // TODO: replace with milestone id using milestone id mapping
@@ -97,7 +97,7 @@ pub(crate) fn info<B: StorageBackend>(
             confirmed_milestone: ConfirmedMilestoneResponse {
                 index: *confirmed_milestone_index,
                 timestamp: tangle
-                    .get_milestone(confirmed_milestone_index)
+                    .get_milestone_metadata(confirmed_milestone_index)
                     .map(|m| m.timestamp())
                     .unwrap_or_default(),
                 milestone_id: "".to_string(), // TODO: replace with milestone id using milestone id mapping

@@ -61,7 +61,7 @@ pub fn is_healthy<B: StorageBackend>(tangle: &Tangle<B>, peer_manager: &PeerMana
         return false;
     }
 
-    match tangle.get_milestone(tangle.get_latest_milestone_index()) {
+    match tangle.get_milestone_metadata(tangle.get_latest_milestone_index()) {
         Some(milestone) => {
             (SystemTime::now()
                 .duration_since(UNIX_EPOCH)
