@@ -332,13 +332,13 @@ fn prune_message_and_metadata<S: StorageBackend>(
     let mut byte_length = 0usize;
 
     if by_size {
-        // Panic: we know the message is in the database.
+        // Panic: we know the message is in the database, because the caller already made sure of that.
         let msg = Fetch::<MessageId, Message>::fetch(storage, message_id)
             .map_err(|e| PruningError::Storage(Box::new(e)))?
             .unwrap();
         byte_length += msg.packed_len();
 
-        // Panic: we know the message metadata is in the database.
+        // Panic: we know the message metadata is in the database for the same reason as above.
         let md = Fetch::<MessageId, MessageMetadata>::fetch(storage, message_id)
             .map_err(|e| PruningError::Storage(Box::new(e)))?
             .unwrap();
