@@ -40,7 +40,7 @@ pub(crate) fn milestone<B: StorageBackend>(
     milestone_index: MilestoneIndex,
     tangle: ResourceHandle<Tangle<B>>,
 ) -> Result<impl Reply, Rejection> {
-    match tangle.get_milestone(milestone_index) {
+    match tangle.get_milestone_metadata(milestone_index) {
         Some(milestone) => Ok(warp::reply::json(&MilestoneResponse {
             milestone_index: *milestone_index,
             message_id: milestone.message_id().to_string(),

@@ -3,7 +3,10 @@
 
 use std::sync::atomic::{AtomicU32, Ordering};
 
-use bee_message::{payload::milestone::MilestoneIndex, Message, MessageId};
+use bee_message::{
+    payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
+    Message, MessageId,
+};
 use bee_runtime::resource::ResourceHandle;
 use hashbrown::HashMap;
 use log::warn;
@@ -83,23 +86,43 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Add a milestone to the tangle.
-    pub fn add_milestone(&self, idx: MilestoneIndex, milestone: MilestoneMetadata) {
-        let index = IndexId::new(idx, *milestone.message_id());
+    pub fn add_milestone(
+        &self,
+        idx: MilestoneIndex,
+        milestone_metadata: MilestoneMetadata,
+        milestone_payload: MilestonePayload,
+    ) {
+        let index = IndexId::new(idx, *milestone_metadata.message_id());
 
-        self.update_metadata(milestone.message_id(), |metadata| {
+        self.update_metadata(milestone_metadata.message_id(), |metadata| {
             metadata.flags_mut().set_milestone(true);
             metadata.set_milestone_index(idx);
             metadata.set_omrsi_and_ymrsi(index, index);
         });
+        // TODO should this be batched ?
         self.storage
-            .insert(&idx, &milestone)
-            .unwrap_or_else(|e| warn!("Failed to insert milestone message {:?}", e));
+            .insert(&idx, &milestone_metadata)
+            .ok()
+            .map(|()| {
+                self.storage
+                    .insert(milestone_metadata.milestone_id(), &milestone_payload)
+                    .unwrap_or_else(|e| warn!("Failed to insert milestone message {:?}", e));
+            })
+            .unwrap_or_default()
     }
 
-    /// Get the milestone from the tangle that corresponds to the given milestone index.
-    pub fn get_milestone(&self, index: MilestoneIndex) -> Option<MilestoneMetadata> {
+    /// Get the milestone metadata from the tangle that corresponds to the given milestone index.
+    pub fn get_milestone_metadata(&self, index: MilestoneIndex) -> Option<MilestoneMetadata> {
         self.storage.fetch(&index).unwrap_or_else(|e| {
-            warn!("Failed to fetch milestone {:?}", e);
+            warn!("Failed to fetch milestone metadata {:?}", e);
+            None
+        })
+    }
+
+    /// Get the milestone payload from the tangle that corresponds to the given milestone id.
+    pub fn get_milestone(&self, id: MilestoneId) -> Option<MilestonePayload> {
+        self.storage.fetch(&id).unwrap_or_else(|e| {
+            warn!("Failed to fetch milestone payload {:?}", e);
             None
         })
     }
@@ -111,12 +134,17 @@ impl<B: StorageBackend> Tangle<B> {
 
     /// Get the message ID associated with the given milestone index from the tangle.
     pub fn get_milestone_message_id(&self, index: MilestoneIndex) -> Option<MessageId> {
-        self.get_milestone(index).map(|m| *m.message_id())
+        self.get_milestone_metadata(index).map(|m| *m.message_id())
     }
 
-    /// Return whether the tangle contains the given milestone index.
-    pub fn contains_milestone(&self, index: MilestoneIndex) -> bool {
+    /// Return whether the tangle contains the given milestone metadata.
+    pub fn contains_milestone_metadata(&self, index: MilestoneIndex) -> bool {
         self.storage.exist(&index).unwrap_or_default()
+    }
+
+    /// Return whether the tangle contains the given milestone payload.
+    pub fn contains_milestone(&self, id: MilestoneId) -> bool {
+        self.storage.exist(&id).unwrap_or_default()
     }
 
     /// Get the index of the latest milestone.

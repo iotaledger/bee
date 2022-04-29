@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::{any::TypeId, convert::Infallible};
+use std::{any::TypeId, convert::Infallible, ops::Deref};
 
 use async_trait::async_trait;
 use bee_message::{
@@ -62,7 +62,11 @@ fn validate(
         )
         .map_err(Error::InvalidMilestone)?;
 
-    Ok(MilestoneMetadata::new(message_id, milestone.essence().timestamp()))
+    Ok(MilestoneMetadata::new(
+        message_id,
+        milestone.id(),
+        milestone.essence().timestamp(),
+    ))
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -77,27 +81,30 @@ fn process<B: StorageBackend>(
     key_manager: &MilestoneKeyManager,
     bus: &Bus<'static>,
 ) {
-    if let Some(Payload::Milestone(milestone)) = message.payload() {
+    if let Some(Payload::Milestone(milestone_payload)) = message.payload() {
         metrics.milestone_payloads_inc(1);
 
-        let index = milestone.essence().index();
+        let index = milestone_payload.essence().index();
 
         if index <= tangle.get_solid_milestone_index() {
             return;
         }
 
-        match validate(message_id, &message, milestone, key_manager) {
-            Ok(milestone) => {
-                tangle.add_milestone(index, milestone.clone());
+        match validate(message_id, &message, milestone_payload, key_manager) {
+            Ok(milestone_metadata) => {
+                tangle.add_milestone(index, milestone_metadata.clone(), milestone_payload.deref().clone());
                 if index > tangle.get_latest_milestone_index() {
-                    info!("New milestone {} {}.", index, milestone.message_id());
+                    info!("New milestone {} {}.", index, milestone_metadata.message_id());
                     tangle.update_latest_milestone_index(index);
 
                     broadcast_heartbeat(tangle, peer_manager, metrics);
 
-                    bus.dispatch(LatestMilestoneChanged { index, milestone });
+                    bus.dispatch(LatestMilestoneChanged {
+                        index,
+                        milestone: milestone_metadata,
+                    });
                 } else {
-                    debug!("New milestone {} {}.", *index, milestone.message_id());
+                    debug!("New milestone {} {}.", *index, milestone_metadata.message_id());
                 }
 
                 requested_milestones.remove(&index);

@@ -37,7 +37,7 @@ pub(crate) fn request_milestone<B: StorageBackend>(
     index: MilestoneIndex,
     to: Option<PeerId>,
 ) {
-    if !requested_milestones.contains(&index) && !tangle.contains_milestone(index) {
+    if !requested_milestones.contains(&index) && !tangle.contains_milestone_metadata(index) {
         if let Err(e) = milestone_requester.send(MilestoneRequesterWorkerEvent(index, to)) {
             warn!("Requesting milestone failed: {}.", e);
         }
@@ -154,7 +154,7 @@ fn retry_requests<B: StorageBackend>(
     }
 
     for index in to_retry {
-        if tangle.contains_milestone(index) {
+        if tangle.contains_milestone_metadata(index) {
             requested_milestones.remove(&index);
         } else {
             process_request_unchecked(index, None, peer_manager, metrics);
@@ -200,7 +200,7 @@ where
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
             while let Some(MilestoneRequesterWorkerEvent(index, peer_id)) = receiver.next().await {
-                if !tangle.contains_milestone(index) {
+                if !tangle.contains_milestone_metadata(index) {
                     debug!("Requesting milestone {}.", *index);
                     process_request(index, peer_id, &peer_manager, &metrics, &requested_milestones);
                 }

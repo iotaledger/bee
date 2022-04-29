@@ -18,5 +18,5 @@ pub fn rand_milestone_id() -> MilestoneId {
 
 /// Generates a random milestone metadata.
 pub fn rand_milestone_metadata() -> MilestoneMetadata {
-    MilestoneMetadata::new(rand_message_id(), rand_number())
+    MilestoneMetadata::new(rand_message_id(), rand_milestone_id(), rand_number())
 }
