@@ -3,7 +3,7 @@
 
 use crate::output::OutputId;
 
-impl_id!(pub NftId, 20, "TODO.");
+impl_id!(pub NftId, 32, "TODO.");
 
 #[cfg(feature = "serde")]
 string_serde_impl!(NftId);

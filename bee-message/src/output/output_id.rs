@@ -3,7 +3,7 @@
 
 use core::str::FromStr;
 
-use crypto::hashes::{blake2b::Blake2b160, Digest};
+use crypto::hashes::{blake2b::Blake2b256, Digest};
 use packable::{bounded::BoundedU16, PackableExt};
 
 use crate::{output::OUTPUT_INDEX_RANGE, payload::transaction::TransactionId, Error};
@@ -49,10 +49,10 @@ impl OutputId {
         (self.transaction_id, self.index())
     }
 
-    /// Hash the [`OutputId`] with BLAKE2b-160.
+    /// Hash the [`OutputId`] with BLAKE2b-256.
     #[inline(always)]
-    pub fn hash(self) -> [u8; 20] {
-        Blake2b160::digest(&self.pack_to_vec()).into()
+    pub fn hash(self) -> [u8; 32] {
+        Blake2b256::digest(&self.pack_to_vec()).into()
     }
 }
 

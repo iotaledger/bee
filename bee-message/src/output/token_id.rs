@@ -10,7 +10,7 @@ impl_id!(pub TokenTag, 12, "TODO.");
 #[cfg(feature = "serde")]
 string_serde_impl!(TokenTag);
 
-impl_id!(pub TokenId, 38, "TODO.");
+impl_id!(pub TokenId, 50, "TODO.");
 
 #[cfg(feature = "serde")]
 string_serde_impl!(TokenId);

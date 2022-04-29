@@ -8,7 +8,7 @@ use crate::{
     output::AliasId,
 };
 
-impl_id!(pub FoundryId, 26, "Defines the unique identifier of a foundry.");
+impl_id!(pub FoundryId, 38, "Defines the unique identifier of a foundry.");
 
 #[cfg(feature = "serde")]
 string_serde_impl!(FoundryId);
