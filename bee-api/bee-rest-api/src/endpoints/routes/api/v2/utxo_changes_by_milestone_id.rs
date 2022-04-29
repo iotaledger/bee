@@ -9,7 +9,7 @@ use bee_tangle::Tangle;
 use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
 use crate::endpoints::{
-    config::ROUTE_MILESTONE_UTXO_CHANGES,
+    config::ROUTE_UTXO_CHANGES_BY_MILESTONE_ID,
     filters::{with_storage, with_tangle},
     path_params::milestone_id,
     permission::has_permission,
@@ -34,7 +34,11 @@ pub(crate) fn filter<B: StorageBackend>(
 ) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
-        .and(has_permission(ROUTE_MILESTONE_UTXO_CHANGES, public_routes, allowed_ips))
+        .and(has_permission(
+            ROUTE_UTXO_CHANGES_BY_MILESTONE_ID,
+            public_routes,
+            allowed_ips,
+        ))
         .and(with_tangle(tangle))
         .and(with_storage(storage))
         .and_then(

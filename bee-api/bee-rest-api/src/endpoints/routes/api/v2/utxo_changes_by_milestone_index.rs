@@ -11,7 +11,7 @@ use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
 use crate::{
     endpoints::{
-        config::ROUTE_MILESTONE_UTXO_CHANGES, filters::with_storage, path_params::milestone_index,
+        config::ROUTE_UTXO_CHANGES_BY_MILESTONE_INDEX, filters::with_storage, path_params::milestone_index,
         permission::has_permission, rejection::CustomRejection, storage::StorageBackend,
     },
     types::responses::UtxoChangesResponse,
@@ -19,7 +19,7 @@ use crate::{
 
 fn path() -> impl Filter<Extract = (MilestoneIndex,), Error = Rejection> + Clone {
     super::path()
-        .and(warp::path("milestones/by-index/"))
+        .and(warp::path("milestones/by-index"))
         .and(milestone_index())
         .and(warp::path("utxo-changes"))
         .and(warp::path::end())
@@ -32,7 +32,11 @@ pub(crate) fn filter<B: StorageBackend>(
 ) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
-        .and(has_permission(ROUTE_MILESTONE_UTXO_CHANGES, public_routes, allowed_ips))
+        .and(has_permission(
+            ROUTE_UTXO_CHANGES_BY_MILESTONE_INDEX,
+            public_routes,
+            allowed_ips,
+        ))
         .and(with_storage(storage))
         .and_then(|index, storage| async move { utxo_changes_by_milestone_index(index, storage) })
         .boxed()

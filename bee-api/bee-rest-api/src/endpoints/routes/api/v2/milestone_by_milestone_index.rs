@@ -10,8 +10,8 @@ use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
 use crate::{
     endpoints::{
-        config::ROUTE_MILESTONE, filters::with_tangle, path_params::milestone_index, permission::has_permission,
-        rejection::CustomRejection, storage::StorageBackend,
+        config::ROUTE_MILESTONE_BY_MILESTONE_INDEX, filters::with_tangle, path_params::milestone_index,
+        permission::has_permission, rejection::CustomRejection, storage::StorageBackend,
     },
     types::responses::MilestoneResponse,
 };
@@ -30,7 +30,11 @@ pub(crate) fn filter<B: StorageBackend>(
 ) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
-        .and(has_permission(ROUTE_MILESTONE, public_routes, allowed_ips))
+        .and(has_permission(
+            ROUTE_MILESTONE_BY_MILESTONE_INDEX,
+            public_routes,
+            allowed_ips,
+        ))
         .and(with_tangle(tangle))
         .and_then(|milestone_index, tangle| async move { milestone_by_milestone_index(milestone_index, tangle) })
         .boxed()
