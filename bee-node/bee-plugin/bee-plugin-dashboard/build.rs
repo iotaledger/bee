@@ -7,8 +7,8 @@ use sha2::{Digest, Sha256};
 use zip::ZipArchive;
 
 const RELEASE_URL: &str =
-    "https://github.com/iotaledger/node-dashboard/releases/download/v1.0.0/node-dashboard-bee-1.0.0.zip";
-const RELEASE_CHECKSUM: &str = "d61bce7d70b51ea88536b22c5341ccdc3c4651bf8e02e093a771312f3f046c30";
+    "https://github.com/iotaledger/node-dashboard/releases/download/v2.0.0-alpha7/node-dashboard-bee-2.0.0-alpha7.zip";
+const RELEASE_CHECKSUM: &str = "72e5ccf934ada48b04dca4e1f28bfd811e9cca526f3e30edb5ed77d2cdac984e";
 
 #[derive(Debug)]
 enum BuildError {
