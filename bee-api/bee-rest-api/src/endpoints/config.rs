@@ -19,8 +19,11 @@ pub(crate) const ROUTE_MESSAGE_CHILDREN: &str = "/api/v2/messages/:messageId/chi
 pub(crate) const ROUTE_MESSAGE_METADATA: &str = "/api/v2/messages/:messageId/metadata";
 pub(crate) const ROUTE_MESSAGE_RAW: &str = "/api/v2/messages/:messageId/raw";
 pub(crate) const ROUTE_MESSAGES_FIND: &str = "/api/v2/messages";
-pub(crate) const ROUTE_MILESTONE: &str = "/api/v2/milestones/:milestoneIndex";
-pub(crate) const ROUTE_MILESTONE_UTXO_CHANGES: &str = "/api/v2/milestones/:milestoneIndex/utxo-changes";
+pub(crate) const ROUTE_MILESTONE_BY_MILESTONE_ID: &str = "/api/v2/milestones/:milestoneId";
+pub(crate) const ROUTE_MILESTONE_BY_MILESTONE_INDEX: &str = "/api/v2/milestones/:milestoneIndex";
+pub(crate) const ROUTE_UTXO_CHANGES_BY_MILESTONE_ID: &str = "/api/v2/milestones/:milestoneId/utxo-changes";
+pub(crate) const ROUTE_UTXO_CHANGES_BY_MILESTONE_INDEX: &str =
+    "/api/v2/milestones/by-index/:milestoneIndex/utxo-changes";
 pub(crate) const ROUTE_OUTPUT: &str = "/api/v2/outputs/:outputId";
 pub(crate) const ROUTE_OUTPUTS_BECH32: &str = "/api/v2/addresses/:address/outputs";
 pub(crate) const ROUTE_OUTPUTS_ED25519: &str = "/api/v2/addresses/ed25519/:address/outputs";
@@ -37,7 +40,7 @@ pub(crate) const ROUTE_TRANSACTION_INCLUDED_MESSAGE: &str = "/api/v2/transaction
 pub(crate) const ROUTE_WHITE_FLAG: &str = "/api/plugins/debug/whiteflag";
 
 /// the routes that are available for public use
-pub(crate) const DEFAULT_PUBLIC_ROUTES: [&str; 21] = [
+pub(crate) const DEFAULT_PUBLIC_ROUTES: [&str; 23] = [
     ROUTE_BALANCE_BECH32,
     ROUTE_BALANCE_ED25519,
     ROUTE_HEALTH,
@@ -47,8 +50,10 @@ pub(crate) const DEFAULT_PUBLIC_ROUTES: [&str; 21] = [
     ROUTE_MESSAGE_METADATA,
     ROUTE_MESSAGE_RAW,
     ROUTE_MESSAGES_FIND,
-    ROUTE_MILESTONE,
-    ROUTE_MILESTONE_UTXO_CHANGES,
+    ROUTE_MILESTONE_BY_MILESTONE_ID,
+    ROUTE_MILESTONE_BY_MILESTONE_INDEX,
+    ROUTE_UTXO_CHANGES_BY_MILESTONE_ID,
+    ROUTE_UTXO_CHANGES_BY_MILESTONE_INDEX,
     ROUTE_OUTPUT,
     ROUTE_OUTPUTS_BECH32,
     ROUTE_OUTPUTS_ED25519,

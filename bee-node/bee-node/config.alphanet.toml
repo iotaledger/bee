@@ -95,8 +95,10 @@ public_routes         = [
     "/api/v2/receipts/:milestoneIndex",
     "/api/v2/treasury",
     "/api/v2/transactions/:transactionId/included-message",
-    "/api/v2/milestones/:milestoneIndex",
-    "/api/v2/milestones/:milestoneIndex/utxo-changes",
+    "/api/v2/milestones/:milestoneId",
+    "/api/v2/milestones/by-index/:milestoneIndex",
+    "/api/v2/milestones/:milestoneId/utxo-changes",
+    "/api/v2/milestones/by-index/:milestoneIndex/utxo-changes"
 ]
 allowed_ips = [
     "127.0.0.1",
