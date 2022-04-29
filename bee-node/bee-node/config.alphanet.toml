@@ -2,7 +2,7 @@
 
 alias      = "Bee alphanet node"
 bech32_hrp = "rms"
-network_id = "alphanet-4"
+network_id = "alphanet-5"
 
 [logger]
 [[logger.outputs]]
