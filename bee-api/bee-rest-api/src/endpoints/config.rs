@@ -40,7 +40,7 @@ pub(crate) const ROUTE_TRANSACTION_INCLUDED_MESSAGE: &str = "/api/v2/transaction
 pub(crate) const ROUTE_WHITE_FLAG: &str = "/api/plugins/debug/whiteflag";
 
 /// the routes that are available for public use
-pub(crate) const DEFAULT_PUBLIC_ROUTES: [&str; 22] = [
+pub(crate) const DEFAULT_PUBLIC_ROUTES: [&str; 23] = [
     ROUTE_BALANCE_BECH32,
     ROUTE_BALANCE_ED25519,
     ROUTE_HEALTH,
@@ -50,7 +50,8 @@ pub(crate) const DEFAULT_PUBLIC_ROUTES: [&str; 22] = [
     ROUTE_MESSAGE_METADATA,
     ROUTE_MESSAGE_RAW,
     ROUTE_MESSAGES_FIND,
-    ROUTE_MILESTONE,
+    ROUTE_MILESTONE_BY_MILESTONE_ID,
+    ROUTE_MILESTONE_BY_MILESTONE_INDEX,
     ROUTE_UTXO_CHANGES_BY_MILESTONE_ID,
     ROUTE_UTXO_CHANGES_BY_MILESTONE_INDEX,
     ROUTE_OUTPUT,
