@@ -19,7 +19,7 @@ use crate::{
 
 fn path() -> impl Filter<Extract = (MilestoneIndex,), Error = Rejection> + Clone {
     super::path()
-        .and(warp::path("milestones"))
+        .and(warp::path("milestones/by-index/"))
         .and(milestone_index())
         .and(warp::path("utxo-changes"))
         .and(warp::path::end())
