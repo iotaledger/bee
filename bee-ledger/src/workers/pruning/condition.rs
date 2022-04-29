@@ -15,7 +15,7 @@ use crate::{types::LedgerIndex, workers::pruning::config::PruningConfig};
 
 const PRUNING_BATCH_SIZE_MAX: u32 = 200;
 
-static LAST_PRUNING_BY_SIZE: AtomicU64 = AtomicU64::new(0);
+static PREVIOUS_PRUNING_BY_SIZE: AtomicU64 = AtomicU64::new(0);
 
 /// Reasons for skipping pruning.
 #[derive(Debug, thiserror::Error)]
@@ -56,11 +56,11 @@ pub(crate) fn should_prune<S: StorageBackend>(
     }
 
     let pruning_by_size = if pruning_config.db_size().enabled() {
-        let last = Duration::from_secs(LAST_PRUNING_BY_SIZE.load(Ordering::Relaxed));
+        let prev = Duration::from_secs(PREVIOUS_PRUNING_BY_SIZE.load(Ordering::Relaxed));
         // Panic: should not cause problems on properly set up hosts.
         let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
 
-        if now < last + pruning_config.db_size().cooldown_time() {
+        if now < prev + pruning_config.db_size().cooldown_time() {
             Err(PruningSkipReason::Cooldown)
         } else {
             let actual_size = {
@@ -93,7 +93,7 @@ pub(crate) fn should_prune<S: StorageBackend>(
                         log::debug!("Num bytes to prune: {num_bytes_to_prune}");
 
                         // Store the time we issued a pruning-by-size.
-                        LAST_PRUNING_BY_SIZE.store(now.as_secs(), Ordering::Relaxed);
+                        PREVIOUS_PRUNING_BY_SIZE.store(now.as_secs(), Ordering::Relaxed);
 
                         Ok(PruningTask::ByDbSize { num_bytes_to_prune })
                     }
