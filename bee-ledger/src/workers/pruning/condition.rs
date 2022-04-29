@@ -112,6 +112,8 @@ pub(crate) fn should_prune<S: StorageBackend>(
         if *ledger_index < target_index_threshold {
             Err(PruningSkipReason::BelowTargetIndexThreshold)
         } else {
+            // Panic: cannot underflow due to ledger_size >= target_index_threshold = pruning_index +
+            // milestones_to_keep.
             let target_pruning_index = *ledger_index - milestones_to_keep;
 
             Ok(PruningTask::ByIndexRange {
