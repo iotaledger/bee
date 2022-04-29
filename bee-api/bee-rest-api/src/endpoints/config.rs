@@ -20,7 +20,7 @@ pub(crate) const ROUTE_MESSAGE_METADATA: &str = "/api/v2/messages/:messageId/met
 pub(crate) const ROUTE_MESSAGE_RAW: &str = "/api/v2/messages/:messageId/raw";
 pub(crate) const ROUTE_MESSAGES_FIND: &str = "/api/v2/messages";
 pub(crate) const ROUTE_MILESTONE_BY_MILESTONE_ID: &str = "/api/v2/milestones/:milestoneId";
-pub(crate) const ROUTE_MILESTONE_BY_MILESTONE_INDEX: &str = "/api/v2/milestones/:milestoneIndex";
+pub(crate) const ROUTE_MILESTONE_BY_MILESTONE_INDEX: &str = "/api/v2/milestones/by-index/:milestoneIndex";
 pub(crate) const ROUTE_UTXO_CHANGES_BY_MILESTONE_ID: &str = "/api/v2/milestones/:milestoneId/utxo-changes";
 pub(crate) const ROUTE_UTXO_CHANGES_BY_MILESTONE_INDEX: &str =
     "/api/v2/milestones/by-index/:milestoneIndex/utxo-changes";
