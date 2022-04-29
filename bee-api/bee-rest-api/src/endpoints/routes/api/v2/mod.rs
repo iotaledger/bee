@@ -93,12 +93,12 @@ pub(crate) fn filter<B: StorageBackend>(
     .or(milestone_by_milestone_id::filter(
         public_routes.clone(),
         allowed_ips.clone(),
-        storage.clone(),
+        tangle.clone(),
     ))
     .or(milestone_by_milestone_index::filter(
         public_routes.clone(),
         allowed_ips.clone(),
-        storage.clone(),
+        tangle.clone(),
     ))
     .or(milestone_utxo_changes::filter(
         public_routes.clone(),
