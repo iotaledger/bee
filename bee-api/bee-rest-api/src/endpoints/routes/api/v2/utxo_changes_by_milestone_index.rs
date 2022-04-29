@@ -34,11 +34,11 @@ pub(crate) fn filter<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_MILESTONE_UTXO_CHANGES, public_routes, allowed_ips))
         .and(with_storage(storage))
-        .and_then(|index, storage| async move { milestone_utxo_changes(index, storage) })
+        .and_then(|index, storage| async move { utxo_changes_by_milestone_index(index, storage) })
         .boxed()
 }
 
-pub(crate) fn milestone_utxo_changes<B: StorageBackend>(
+pub(crate) fn utxo_changes_by_milestone_index<B: StorageBackend>(
     index: MilestoneIndex,
     storage: ResourceHandle<B>,
 ) -> Result<impl Reply, Rejection> {
