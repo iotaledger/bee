@@ -87,12 +87,12 @@ impl SnapshottingConfigBuilder {
 #[derive(Default, Debug, Deserialize, PartialEq)]
 #[must_use]
 pub struct SnapshotConfigBuilder {
-    #[serde(alias = "downloadUrls")]
-    download_urls: Option<Vec<DownloadUrls>>,
     #[serde(alias = "fullPath")]
     full_path: Option<PathBuf>,
     #[serde(alias = "deltaPath")]
     delta_path: Option<PathBuf>,
+    #[serde(alias = "downloadUrls")]
+    download_urls: Option<Vec<DownloadUrls>>,
     #[serde(alias = "create")]
     snapshotting: Option<SnapshottingConfigBuilder>,
 }
