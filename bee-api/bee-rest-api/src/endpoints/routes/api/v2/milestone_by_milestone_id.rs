@@ -42,6 +42,6 @@ pub(crate) fn milestone_by_milestone_id<B: StorageBackend>(
 ) -> Result<impl Reply, Rejection> {
     match tangle.get_milestone(milestone_id) {
         Some(milestone_payload) => Ok(warp::reply::json(&MilestoneResponse((&milestone_payload).into()))),
-        None => return Err(reject::custom(CustomRejection::NotFound("data not found".to_string()))),
+        None => Err(reject::custom(CustomRejection::NotFound("data not found".to_string()))),
     }
 }
