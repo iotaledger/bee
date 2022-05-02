@@ -345,20 +345,16 @@ pub mod dto {
                     .map_err(|_| DtoError::InvalidField("amount"))?,
             )?;
 
-            if !value.native_tokens.is_empty() {
-                for t in &value.native_tokens {
-                    builder = builder.add_native_token(t.try_into()?);
-                }
+            for t in &value.native_tokens {
+                builder = builder.add_native_token(t.try_into()?);
             }
 
             for b in &value.unlock_conditions {
                 builder = builder.add_unlock_condition(b.try_into()?);
             }
 
-            if !value.feature_blocks.is_empty() {
-                for b in &value.feature_blocks {
-                    builder = builder.add_feature_block(b.try_into()?);
-                }
+            for b in &value.feature_blocks {
+                builder = builder.add_feature_block(b.try_into()?);
             }
 
             Ok(builder.finish()?)
