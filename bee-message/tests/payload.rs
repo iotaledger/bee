@@ -77,8 +77,8 @@ fn milestone() {
             0,
             rand_milestone_id(),
             rand_parents(),
-            [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
-            [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
+            [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
+            [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
             vec![],
             MilestoneOptions::new(vec![]).unwrap(),
         )

@@ -207,8 +207,8 @@ pub async fn white_flag<B: StorageBackend>(
 ) -> Result<(), Error> {
     traverse_past_cone(tangle, storage, message_ids.iter().rev().copied().collect(), metadata).await?;
 
-    metadata.confirmed_merkle_proof = MerkleHasher::<Blake2b256>::new().digest(&metadata.referenced_messages);
-    metadata.applied_merkle_proof = MerkleHasher::<Blake2b256>::new().digest(&metadata.included_messages);
+    metadata.confirmed_merkle_root = MerkleHasher::<Blake2b256>::new().digest(&metadata.referenced_messages);
+    metadata.applied_merkle_root = MerkleHasher::<Blake2b256>::new().digest(&metadata.included_messages);
 
     if *metadata.milestone_index != 1 && metadata.previous_milestone_id.is_some() && !metadata.found_previous_milestone
     {
