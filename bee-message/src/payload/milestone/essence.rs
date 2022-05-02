@@ -28,15 +28,15 @@ pub struct MilestoneEssence {
     timestamp: u32,
     previous_milestone_id: MilestoneId,
     parents: Parents,
-    confirmed_merkle_proof: [u8; MilestoneEssence::MERKLE_PROOF_LENGTH],
-    applied_merkle_proof: [u8; MilestoneEssence::MERKLE_PROOF_LENGTH],
+    confirmed_merkle_root: [u8; MilestoneEssence::MERKLE_ROOT_LENGTH],
+    applied_merkle_root: [u8; MilestoneEssence::MERKLE_ROOT_LENGTH],
     metadata: BoxedSlicePrefix<u8, MilestoneMetadataLength>,
     options: MilestoneOptions,
 }
 
 impl MilestoneEssence {
-    /// Length of a milestone merkle proof.
-    pub const MERKLE_PROOF_LENGTH: usize = 32;
+    /// Length of a milestone merkle root.
+    pub const MERKLE_ROOT_LENGTH: usize = 32;
 
     /// Creates a new [`MilestoneEssence`].
     #[allow(clippy::too_many_arguments)]
@@ -45,8 +45,8 @@ impl MilestoneEssence {
         timestamp: u32,
         previous_milestone_id: MilestoneId,
         parents: Parents,
-        confirmed_merkle_proof: [u8; MilestoneEssence::MERKLE_PROOF_LENGTH],
-        applied_merkle_proof: [u8; MilestoneEssence::MERKLE_PROOF_LENGTH],
+        confirmed_merkle_root: [u8; MilestoneEssence::MERKLE_ROOT_LENGTH],
+        applied_merkle_root: [u8; MilestoneEssence::MERKLE_ROOT_LENGTH],
         metadata: Vec<u8>,
         options: MilestoneOptions,
     ) -> Result<Self, Error> {
@@ -60,8 +60,8 @@ impl MilestoneEssence {
             timestamp,
             previous_milestone_id,
             parents,
-            confirmed_merkle_proof,
-            applied_merkle_proof,
+            confirmed_merkle_root,
+            applied_merkle_root,
             metadata,
             options,
         })
@@ -87,14 +87,14 @@ impl MilestoneEssence {
         &self.parents
     }
 
-    /// Returns the confirmed merkle proof of a [`MilestoneEssence`].
-    pub fn confirmed_merkle_proof(&self) -> &[u8] {
-        &self.confirmed_merkle_proof
+    /// Returns the confirmed merkle root of a [`MilestoneEssence`].
+    pub fn confirmed_merkle_root(&self) -> &[u8] {
+        &self.confirmed_merkle_root
     }
 
-    /// Returns the applied merkle proof of a [`MilestoneEssence`].
-    pub fn applied_merkle_proof(&self) -> &[u8] {
-        &self.applied_merkle_proof
+    /// Returns the applied merkle root of a [`MilestoneEssence`].
+    pub fn applied_merkle_root(&self) -> &[u8] {
+        &self.applied_merkle_root
     }
 
     /// Returns the metadata.
@@ -121,8 +121,8 @@ impl Packable for MilestoneEssence {
         self.timestamp.pack(packer)?;
         self.previous_milestone_id.pack(packer)?;
         self.parents.pack(packer)?;
-        self.confirmed_merkle_proof.pack(packer)?;
-        self.applied_merkle_proof.pack(packer)?;
+        self.confirmed_merkle_root.pack(packer)?;
+        self.applied_merkle_root.pack(packer)?;
         self.metadata.pack(packer)?;
         self.options.pack(packer)?;
 
@@ -136,10 +136,10 @@ impl Packable for MilestoneEssence {
         let timestamp = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
         let previous_milestone_id = MilestoneId::unpack::<_, VERIFY>(unpacker).coerce()?;
         let parents = Parents::unpack::<_, VERIFY>(unpacker)?;
-        let confirmed_merkle_proof =
-            <[u8; MilestoneEssence::MERKLE_PROOF_LENGTH]>::unpack::<_, VERIFY>(unpacker).coerce()?;
-        let applied_merkle_proof =
-            <[u8; MilestoneEssence::MERKLE_PROOF_LENGTH]>::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let confirmed_merkle_root =
+            <[u8; MilestoneEssence::MERKLE_ROOT_LENGTH]>::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let applied_merkle_root =
+            <[u8; MilestoneEssence::MERKLE_ROOT_LENGTH]>::unpack::<_, VERIFY>(unpacker).coerce()?;
 
         let metadata = BoxedSlicePrefix::<u8, MilestoneMetadataLength>::unpack::<_, VERIFY>(unpacker)
             .map_packable_err(|e| Error::InvalidMilestoneMetadataLength(e.into_prefix_err().into()))?;
@@ -151,8 +151,8 @@ impl Packable for MilestoneEssence {
             timestamp,
             previous_milestone_id,
             parents,
-            confirmed_merkle_proof,
-            applied_merkle_proof,
+            confirmed_merkle_root,
+            applied_merkle_root,
             metadata,
             options,
         })
