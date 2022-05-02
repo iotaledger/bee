@@ -314,11 +314,11 @@ pub mod dto {
         // Amount of IOTA tokens held by the output.
         pub amount: String,
         // Native tokens held by the output.
-        #[serde(rename = "nativeTokens")]
+        #[serde(rename = "nativeTokens", skip_serializing_if = "Vec::is_empty", default)]
         pub native_tokens: Vec<NativeTokenDto>,
         #[serde(rename = "unlockConditions")]
         pub unlock_conditions: Vec<UnlockConditionDto>,
-        #[serde(rename = "featureBlocks")]
+        #[serde(rename = "featureBlocks", skip_serializing_if = "Vec::is_empty", default)]
         pub feature_blocks: Vec<FeatureBlockDto>,
     }
 
@@ -344,15 +344,19 @@ pub mod dto {
                     .parse::<u64>()
                     .map_err(|_| DtoError::InvalidField("amount"))?,
             )?;
+
             for t in &value.native_tokens {
                 builder = builder.add_native_token(t.try_into()?);
             }
+
             for b in &value.unlock_conditions {
                 builder = builder.add_unlock_condition(b.try_into()?);
             }
+
             for b in &value.feature_blocks {
                 builder = builder.add_feature_block(b.try_into()?);
             }
+
             Ok(builder.finish()?)
         }
     }
