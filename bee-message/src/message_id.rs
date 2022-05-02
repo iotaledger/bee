@@ -7,12 +7,5 @@ impl_id!(
     "A message identifier, the BLAKE2b-256 hash of the message bytes. See <https://www.blake2.net/> for more information."
 );
 
-impl MessageId {
-    /// Create a null [`MessageId`].
-    pub fn null() -> Self {
-        Self([0u8; MessageId::LENGTH])
-    }
-}
-
 #[cfg(feature = "serde")]
 string_serde_impl!(MessageId);
