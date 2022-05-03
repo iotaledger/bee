@@ -16,9 +16,7 @@ use bee_message::{
     unlock_block::{ReferenceUnlockBlock, SignatureUnlockBlock, UnlockBlock, UnlockBlocks},
 };
 use bee_test::rand::{
-    bytes::{rand_bytes, rand_bytes_array},
-    milestone::rand_milestone_id,
-    parents::rand_parents,
+    bytes::rand_bytes, milestone::rand_milestone_id, output::rand_inputs_commitment, parents::rand_parents,
 };
 use packable::PackableExt;
 
@@ -44,7 +42,7 @@ fn transaction() {
             .unwrap(),
     );
     let essence = TransactionEssence::Regular(
-        RegularTransactionEssence::builder(0, rand_bytes_array())
+        RegularTransactionEssence::builder(0, rand_inputs_commitment())
             .with_inputs(vec![input1, input2])
             .add_output(output)
             .finish()
