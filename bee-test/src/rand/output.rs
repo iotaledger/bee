@@ -1,6 +1,18 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+/// Module providing random feature block generation utilities.
+pub mod feature_block;
+/// Module providing random unlock condition generation utilities.
+pub mod unlock_condition;
+
+use bee_ledger::types::{ConsumedOutput, CreatedOutput, TreasuryOutput, Unspent};
+use bee_message::output::{
+    self, unlock_condition::ImmutableAliasAddressUnlockCondition, InputsCommitment, Output, OutputId,
+    SimpleTokenScheme, TokenScheme, TokenTag, OUTPUT_INDEX_RANGE,
+};
+use primitive_types::U256;
+
 use crate::rand::{
     address::rand_alias_address,
     bytes::rand_bytes_array,
@@ -17,18 +29,6 @@ use crate::rand::{
     },
     transaction::rand_transaction_id,
 };
-
-/// Module providing random feature block generation utilities.
-pub mod feature_block;
-/// Module providing random unlock condition generation utilities.
-pub mod unlock_condition;
-
-use bee_ledger::types::{ConsumedOutput, CreatedOutput, TreasuryOutput, Unspent};
-use bee_message::output::{
-    self, unlock_condition::ImmutableAliasAddressUnlockCondition, Output, OutputId, SimpleTokenScheme, TokenScheme,
-    TokenTag, OUTPUT_INDEX_RANGE,
-};
-use primitive_types::U256;
 
 /// Generates a random [`OutputId`].
 pub fn rand_output_id() -> OutputId {
@@ -139,4 +139,9 @@ pub fn rand_consumed_output() -> ConsumedOutput {
 /// Generates a random [`CreatedOutput`].
 pub fn rand_created_output() -> CreatedOutput {
     CreatedOutput::new(rand_message_id(), rand_milestone_index(), rand_number(), rand_output())
+}
+
+/// Generates a random [`InputsCommitment`].
+pub fn rand_inputs_commitment() -> InputsCommitment {
+    InputsCommitment::from(rand_bytes_array())
 }

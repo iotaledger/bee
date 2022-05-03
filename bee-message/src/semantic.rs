@@ -9,7 +9,7 @@ use primitive_types::U256;
 use crate::{
     address::Address,
     error::Error,
-    output::{create_inputs_commitment, ChainId, NativeTokens, Output, OutputId, TokenId, UnlockCondition},
+    output::{ChainId, InputsCommitment, NativeTokens, Output, OutputId, TokenId, UnlockCondition},
     payload::{
         milestone::MilestoneIndex,
         transaction::{RegularTransactionEssence, TransactionEssence, TransactionId},
@@ -115,7 +115,7 @@ pub struct ValidationContext<'a> {
     ///
     pub essence_hash: [u8; 32],
     ///
-    pub inputs_commitment: [u8; 32],
+    pub inputs_commitment: InputsCommitment,
     ///
     pub unlock_blocks: &'a UnlockBlocks,
     ///
@@ -156,7 +156,7 @@ impl<'a> ValidationContext<'a> {
             essence,
             unlock_blocks,
             essence_hash: TransactionEssence::from(essence.clone()).hash(),
-            inputs_commitment: create_inputs_commitment(inputs.clone().map(|(_, output)| output)),
+            inputs_commitment: InputsCommitment::new(inputs.clone().map(|(_, output)| output)),
             milestone_index,
             milestone_timestamp,
             input_amount: 0,

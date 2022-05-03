@@ -8,6 +8,7 @@ mod byte_cost;
 mod chain_id;
 mod foundry;
 mod foundry_id;
+mod inputs_commitment;
 mod native_token;
 mod nft;
 mod nft_id;
@@ -24,7 +25,6 @@ pub mod unlock_condition;
 
 use core::ops::RangeInclusive;
 
-use crypto::hashes::{blake2b::Blake2b256, Digest};
 use derive_more::From;
 use packable::{bounded::BoundedU64, PackableExt};
 
@@ -45,6 +45,7 @@ pub use self::{
     feature_block::{FeatureBlock, FeatureBlocks},
     foundry::{FoundryOutput, FoundryOutputBuilder},
     foundry_id::FoundryId,
+    inputs_commitment::InputsCommitment,
     native_token::{NativeToken, NativeTokens, NativeTokensBuilder},
     nft::{NftOutput, NftOutputBuilder},
     nft_id::NftId,
@@ -275,15 +276,6 @@ fn minimum_storage_deposit(config: &ByteCostConfig, address: &Address) -> u64 {
         .finish()
         .unwrap()
         .amount()
-}
-
-///
-pub fn create_inputs_commitment<'a>(inputs: impl Iterator<Item = &'a Output>) -> [u8; 32] {
-    let mut hasher = Blake2b256::new();
-
-    inputs.for_each(|output| hasher.update(output.pack_to_vec()));
-
-    hasher.finalize().into()
 }
 
 #[cfg(feature = "dto")]
