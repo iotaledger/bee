@@ -96,7 +96,7 @@ impl Address {
         match (self, unlock_block) {
             (Address::Ed25519(ed25519_address), UnlockBlock::Signature(unlock_block)) => {
                 if context.unlocked_addresses.contains(self) {
-                    return Err(ConflictReason::SemanticValidationFailed);
+                    return Err(ConflictReason::InvalidUnlockBlock);
                 }
 
                 let Signature::Ed25519(signature) = unlock_block.signature();
@@ -110,36 +110,36 @@ impl Address {
             (Address::Ed25519(_ed25519_address), UnlockBlock::Reference(_unlock_block)) => {
                 // TODO actually check that it was unlocked by the same signature.
                 if !context.unlocked_addresses.contains(self) {
-                    return Err(ConflictReason::AddressNotUnlocked);
+                    return Err(ConflictReason::InvalidUnlockBlock);
                 }
             }
             (Address::Alias(alias_address), UnlockBlock::Alias(unlock_block)) => {
                 // PANIC: indexing is fine as it is already syntactically verified that indexes reference below.
                 if let (output_id, Output::Alias(alias_output)) = inputs[unlock_block.index() as usize] {
                     if &alias_output.alias_id().or_from_output_id(output_id) != alias_address.alias_id() {
-                        return Err(ConflictReason::UnlockAddressMismatch);
+                        return Err(ConflictReason::InvalidUnlockBlock);
                     }
                     if !context.unlocked_addresses.contains(self) {
-                        return Err(ConflictReason::AddressNotUnlocked);
+                        return Err(ConflictReason::InvalidUnlockBlock);
                     }
                 } else {
-                    return Err(ConflictReason::IncorrectUnlockMethod);
+                    return Err(ConflictReason::InvalidUnlockBlock);
                 }
             }
             (Address::Nft(nft_address), UnlockBlock::Nft(unlock_block)) => {
                 // PANIC: indexing is fine as it is already syntactically verified that indexes reference below.
                 if let (output_id, Output::Nft(nft_output)) = inputs[unlock_block.index() as usize] {
                     if &nft_output.nft_id().or_from_output_id(output_id) != nft_address.nft_id() {
-                        return Err(ConflictReason::UnlockAddressMismatch);
+                        return Err(ConflictReason::InvalidUnlockBlock);
                     }
                     if !context.unlocked_addresses.contains(self) {
-                        return Err(ConflictReason::AddressNotUnlocked);
+                        return Err(ConflictReason::InvalidUnlockBlock);
                     }
                 } else {
-                    return Err(ConflictReason::IncorrectUnlockMethod);
+                    return Err(ConflictReason::InvalidUnlockBlock);
                 }
             }
-            _ => return Err(ConflictReason::IncorrectUnlockMethod),
+            _ => return Err(ConflictReason::InvalidUnlockBlock),
         }
 
         Ok(())
