@@ -13,7 +13,7 @@ use crate::output::Output;
 pub struct InputsCommitment([u8; 32]);
 
 impl InputsCommitment {
-    /// Creates a new [`InputsCommitment`] from a sequence of [`Outputs`].
+    /// Creates a new [`InputsCommitment`] from a sequence of [`Output`]s.
     pub fn new<'a>(inputs: impl Iterator<Item = &'a Output>) -> Self {
         let mut hasher = Blake2b256::new();
 
