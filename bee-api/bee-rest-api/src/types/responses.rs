@@ -203,13 +203,13 @@ pub struct OutputResponse {
     #[serde(rename = "milestoneIndexSpent", skip_serializing_if = "Option::is_none")]
     pub milestone_index_spent: Option<u32>,
     #[serde(rename = "milestoneTimestampSpent", skip_serializing_if = "Option::is_none")]
-    pub milestone_timestamp_spent: Option<u64>,
+    pub milestone_timestamp_spent: Option<u32>,
     #[serde(rename = "transactionIdSpent", skip_serializing_if = "Option::is_none")]
     pub transaction_id_spent: Option<String>,
     #[serde(rename = "milestoneIndexBooked")]
     pub milestone_index_booked: u32,
     #[serde(rename = "milestoneTimestampBooked")]
-    pub milestone_timestamp_booked: u64,
+    pub milestone_timestamp_booked: u32,
     #[serde(rename = "ledgerIndex", default)]
     pub ledger_index: u32,
     pub output: OutputDto,
