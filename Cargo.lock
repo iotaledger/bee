@@ -1858,9 +1858,9 @@ dependencies = [
 
 [[package]]
 name = "iota-crypto"
-version = "0.9.2"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "13a3db4f13f4324788e4b870fdd264895a558cb523a851a9dd77bcfa43750b24"
+checksum = "1689fd8524d3516d499a94267f593ba9c984e31762a278ef66ce60d6621d16ff"
 dependencies = [
  "bee-ternary 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "blake2",
@@ -2696,9 +2696,9 @@ dependencies = [
 
 [[package]]
 name = "packable"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7dc9526643ad02793553407dbbea8924e467e48670c5e04eddd5051435a2b4c"
+checksum = "a47762ff3c7cbf55a5b822ce505b97bbcf1617be780f71c3ee43c272dd4a1867"
 dependencies = [
  "autocfg",
  "packable-derive",
@@ -2708,9 +2708,9 @@ dependencies = [
 
 [[package]]
 name = "packable-derive"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a920d9686d0f165c5749e60d7ff1dfbfd470feabdd311d3c52f5e471dac8432"
+checksum = "f2ec4d652900dcba58871e8f421111f1459bee2d40fe0bb43df07008b17598b0"
 dependencies = [
  "proc-macro-crate",
  "proc-macro-error",
