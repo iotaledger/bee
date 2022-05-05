@@ -36,7 +36,7 @@ pub mod dto {
     use crate::signature::dto::SignatureDto;
 
     /// Defines an unlock block containing signature(s) unlocking input(s).
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct SignatureUnlockBlockDto {
         #[serde(rename = "type")]
         pub kind: u8,

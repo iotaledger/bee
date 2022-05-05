@@ -467,7 +467,7 @@ pub mod dto {
     };
 
     /// Describes an NFT output, a globally unique token with metadata attached.
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct NftOutputDto {
         #[serde(rename = "type")]
         pub kind: u8,

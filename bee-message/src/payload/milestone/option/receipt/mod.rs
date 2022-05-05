@@ -148,7 +148,7 @@ pub mod dto {
     };
 
     ///
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct ReceiptMilestoneOptionDto {
         #[serde(rename = "type")]
         pub kind: u8,

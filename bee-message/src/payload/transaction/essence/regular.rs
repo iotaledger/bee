@@ -225,7 +225,7 @@ pub mod dto {
     use crate::{error::dto::DtoError, input::dto::InputDto, output::dto::OutputDto, payload::dto::PayloadDto};
 
     /// Describes the essence data making up a transaction by defining its inputs and outputs and an optional payload.
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct RegularTransactionEssenceDto {
         #[serde(rename = "type")]
         pub kind: u8,

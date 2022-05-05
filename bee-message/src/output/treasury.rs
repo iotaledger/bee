@@ -48,7 +48,7 @@ pub mod dto {
     use crate::error::dto::DtoError;
 
     /// Describes a treasury output.
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct TreasuryOutputDto {
         #[serde(rename = "type")]
         pub kind: u8,

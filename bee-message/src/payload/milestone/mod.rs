@@ -168,7 +168,7 @@ pub mod dto {
     };
 
     /// The payload type to define a milestone.
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct MilestonePayloadDto {
         #[serde(rename = "type")]
         pub kind: u32,

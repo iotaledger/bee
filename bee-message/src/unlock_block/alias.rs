@@ -43,7 +43,7 @@ pub mod dto {
     use serde::{Deserialize, Serialize};
 
     /// Points to the unlock block of a consumed alias output.
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct AliasUnlockBlockDto {
         #[serde(rename = "type")]
         pub kind: u8,

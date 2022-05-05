@@ -245,7 +245,7 @@ pub mod dto {
     use crate::{error::dto::DtoError, payload::dto::PayloadDto};
 
     /// The message object that nodes gossip around in the network.
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct MessageDto {
         ///
         #[serde(rename = "protocolVersion")]

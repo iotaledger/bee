@@ -116,7 +116,7 @@ pub mod dto {
     use crate::{dto::U256Dto, error::dto::DtoError};
 
     /// Describes a foundry output that is controlled by an alias.
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct SimpleTokenSchemeDto {
         #[serde(rename = "type")]
         pub kind: u8,

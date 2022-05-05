@@ -312,7 +312,7 @@ pub mod dto {
         error::dto::DtoError,
     };
 
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Debug, Eq, PartialEq)]
     pub enum UnlockConditionDto {
         /// An address unlock condition.
         Address(AddressUnlockConditionDto),

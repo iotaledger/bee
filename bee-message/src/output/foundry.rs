@@ -635,7 +635,7 @@ pub mod dto {
     };
 
     /// Describes a foundry output that is controlled by an alias.
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct FoundryOutputDto {
         #[serde(rename = "type")]
         pub kind: u8,
