@@ -363,7 +363,7 @@ fn prune_edge<S: StorageBackend>(
     let mut byte_length = 0usize;
 
     if by_size {
-        byte_length += edge.0.packed_len() + edge.1.packed_len();
+        byte_length += edge.packed_len();
     }
 
     Batch::<(MessageId, MessageId), ()>::batch_delete(storage, batch, edge)

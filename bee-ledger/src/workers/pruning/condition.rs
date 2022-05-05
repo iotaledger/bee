@@ -65,11 +65,7 @@ pub(crate) fn should_prune<S: StorageBackend>(
         } else {
             let actual_size = {
                 if let Ok(size) = storage.size() {
-                    if let Some(size) = size {
-                        Ok(size)
-                    } else {
-                        Err(PruningSkipReason::SizeMetricUnavailable)
-                    }
+                    size.ok_or(PruningSkipReason::SizeMetricUnavailable)
                 } else {
                     Err(PruningSkipReason::SizeMetricUnsupported)
                 }
