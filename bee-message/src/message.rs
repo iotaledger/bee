@@ -103,7 +103,7 @@ pub struct Message {
 
 impl Message {
     /// The minimum number of bytes in a message.
-    pub const LENGTH_MIN: usize = 53;
+    pub const LENGTH_MIN: usize = 46;
     /// The maximum number of bytes in a message.
     pub const LENGTH_MAX: usize = 32768;
 
