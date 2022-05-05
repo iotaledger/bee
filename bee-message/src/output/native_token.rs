@@ -185,7 +185,7 @@ pub mod dto {
     use crate::{dto::U256Dto, error::dto::DtoError, output::token_id::dto::TokenIdDto};
 
     /// Describes a native token.
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct NativeTokenDto {
         // Identifier of the native token.
         #[serde(rename = "id")]

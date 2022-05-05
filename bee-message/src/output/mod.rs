@@ -292,7 +292,7 @@ pub mod dto {
     use crate::error::dto::DtoError;
 
     /// Describes all the different output types.
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Debug, Eq, PartialEq)]
     pub enum OutputDto {
         Treasury(TreasuryOutputDto),
         Basic(BasicOutputDto),

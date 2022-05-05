@@ -67,7 +67,7 @@ impl core::fmt::Debug for TagFeatureBlock {
 pub mod dto {
     use serde::{Deserialize, Serialize};
 
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct TagFeatureBlockDto {
         #[serde(rename = "type")]
         pub kind: u8,

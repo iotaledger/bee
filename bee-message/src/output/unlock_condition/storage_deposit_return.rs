@@ -58,7 +58,7 @@ pub mod dto {
 
     use crate::address::dto::AddressDto;
 
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct StorageDepositReturnUnlockConditionDto {
         #[serde(rename = "type")]
         pub kind: u8,

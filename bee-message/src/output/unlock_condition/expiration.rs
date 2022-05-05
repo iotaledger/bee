@@ -130,7 +130,7 @@ pub mod dto {
         payload::milestone::MilestoneIndex,
     };
 
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct ExpirationUnlockConditionDto {
         #[serde(rename = "type")]
         pub kind: u8,

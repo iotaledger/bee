@@ -64,7 +64,7 @@ pub mod dto {
     use crate::error::dto::DtoError;
 
     /// Describes an NFT address.
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct NftAddressDto {
         #[serde(rename = "type")]
         pub kind: u8,

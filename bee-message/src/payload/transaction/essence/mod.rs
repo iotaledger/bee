@@ -50,7 +50,7 @@ pub mod dto {
     use crate::error::dto::DtoError;
 
     /// Describes all the different essence types.
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     #[serde(untagged)]
     pub enum TransactionEssenceDto {
         Regular(RegularTransactionEssenceDto),
