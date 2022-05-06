@@ -63,39 +63,30 @@ pub(crate) fn should_prune<S: StorageBackend>(
         if now < prev + pruning_config.db_size().cooldown_time() {
             Err(PruningSkipReason::Cooldown)
         } else {
-            let actual_size = {
-                if let Ok(size) = storage.size() {
-                    size.ok_or(PruningSkipReason::SizeMetricUnavailable)
-                } else {
-                    Err(PruningSkipReason::SizeMetricUnsupported)
-                }
-            };
-
-            match actual_size {
-                Ok(actual_size) => {
+            storage
+                .size()
+                .map_err(|_| PruningSkipReason::SizeMetricUnsupported)
+                .and_then(|a| {
+                    let actual_size = a.ok_or(PruningSkipReason::SizeMetricUnavailable)?;
                     let threshold_size = pruning_config.db_size().target_size();
 
                     log::debug!("Storage size: actual {actual_size} threshold {threshold_size}");
 
-                    if actual_size < threshold_size {
-                        Err(PruningSkipReason::BelowTargetSizeThreshold)
-                    } else {
-                        // Panic: cannot underflow due to actual_size >= threshold_size.
-                        let excess_size = actual_size - threshold_size;
-                        let num_bytes_to_prune = excess_size
-                            + (pruning_config.db_size().threshold_percentage() as f64 / 100.0 * threshold_size as f64)
-                                as usize;
+                    let excess_size = actual_size
+                        .checked_sub(threshold_size)
+                        .ok_or(PruningSkipReason::BelowTargetSizeThreshold)?;
 
-                        log::debug!("Num bytes to prune: {num_bytes_to_prune}");
+                    let num_bytes_to_prune = excess_size
+                        + (pruning_config.db_size().threshold_percentage() as f64 / 100.0 * threshold_size as f64)
+                            as usize;
 
-                        // Store the time we issued a pruning-by-size.
-                        PREVIOUS_PRUNING_BY_SIZE.store(now.as_secs(), Ordering::Relaxed);
+                    log::debug!("Num bytes to prune: {num_bytes_to_prune}");
 
-                        Ok(PruningTask::ByDbSize { num_bytes_to_prune })
-                    }
-                }
-                Err(reason) => Err(reason),
-            }
+                    // Store the time we issued a pruning-by-size.
+                    PREVIOUS_PRUNING_BY_SIZE.store(now.as_secs(), Ordering::Relaxed);
+
+                    Ok(PruningTask::ByDbSize { num_bytes_to_prune })
+                })
         }
     } else {
         Err(PruningSkipReason::Disabled)
