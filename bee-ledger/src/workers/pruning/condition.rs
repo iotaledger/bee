@@ -66,8 +66,8 @@ pub(crate) fn should_prune<S: StorageBackend>(
             storage
                 .size()
                 .map_err(|_| PruningSkipReason::SizeMetricUnsupported)
-                .and_then(|a| {
-                    let actual_size = a.ok_or(PruningSkipReason::SizeMetricUnavailable)?;
+                .and_then(|actual_size| {
+                    let actual_size = actual_size.ok_or(PruningSkipReason::SizeMetricUnavailable)?;
                     let threshold_size = pruning_config.db_size().target_size();
 
                     log::debug!("Storage size: actual {actual_size} threshold {threshold_size}");
