@@ -32,7 +32,7 @@ impl ConsumedOutput {
     }
 
     /// Returns the milestone timestamp of the [`ConsumedOutput`].
-    pub fn milestone_timestamp(&self) -> MilestoneIndex {
-        self.milestone_index
+    pub fn milestone_timestamp(&self) -> u32 {
+        self.milestone_timestamp
     }
 }
