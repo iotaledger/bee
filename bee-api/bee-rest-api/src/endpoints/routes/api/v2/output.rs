@@ -69,8 +69,8 @@ pub(crate) async fn output<B: StorageBackend>(
         ))
     })? {
         (Ok(response), ledger_index) => match response {
-            Some(output) => {
-                let is_spent = Fetch::<OutputId, ConsumedOutput>::fetch(&*storage, &output_id).map_err(|e| {
+            Some(created_output) => {
+                let consumed_output = Fetch::<OutputId, ConsumedOutput>::fetch(&*storage, &output_id).map_err(|e| {
                     error!("unable to fetch the output: {}", e);
                     reject::custom(CustomRejection::ServiceUnavailable(
                         "unable to fetch the output".to_string(),
@@ -79,23 +79,18 @@ pub(crate) async fn output<B: StorageBackend>(
 
                 Ok(warp::reply::json(&OutputResponse {
                     metadata: OutputMetadataResponse {
-                        message_id: output.message_id().to_string(),
+                        message_id: created_output.message_id().to_string(),
                         transaction_id: output_id.transaction_id().to_string(),
                         output_index: output_id.index(),
-                        is_spent: is_spent.is_some(),
-                        // TODO
-                        milestone_index_spent: None,
-                        // TODO
-                        milestone_timestamp_spent: None,
-                        // TODO
-                        transaction_id_spent: None,
-                        // TODO
-                        milestone_index_booked: 0,
-                        // TODO
-                        milestone_timestamp_booked: 0,
+                        is_spent: consumed_output.is_some(),
+                        milestone_index_spent: consumed_output.as_ref().map(|o| *o.milestone_index()),
+                        milestone_timestamp_spent: consumed_output.as_ref().map(|o| o.milestone_timestamp()),
+                        transaction_id_spent: consumed_output.map(|o| o.target().to_string()),
+                        milestone_index_booked: *created_output.milestone_index(),
+                        milestone_timestamp_booked: created_output.milestone_timestamp(),
                         ledger_index: *ledger_index,
                     },
-                    output: output.inner().into(),
+                    output: created_output.inner().into(),
                 }))
             }
             None => Err(reject::custom(CustomRejection::NotFound(
