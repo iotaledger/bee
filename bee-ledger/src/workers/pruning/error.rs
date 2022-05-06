@@ -23,3 +23,9 @@ pub enum PruningError {
     #[error("storage operation failed due to: {0:?}")]
     Storage(Box<dyn std::error::Error + Send>),
 }
+
+impl PruningError {
+    pub(crate) fn storage(e: impl std::error::Error + Send + 'static) -> Self {
+        Self::Storage(Box::new(e))
+    }
+}

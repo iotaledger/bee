@@ -63,7 +63,7 @@ pub(crate) fn batch_prunable_confirmed_data<S: StorageBackend>(
 
     // Get the `MessageId` of the milestone we are about to prune from the storage.
     let milestone_to_prune = Fetch::<MilestoneIndex, Milestone>::fetch(storage, &prune_index)
-        .map_err(|e| PruningError::Storage(Box::new(e)))?
+        .map_err(PruningError::storage)?
         .ok_or(PruningError::MissingMilestone(prune_index))?;
 
     byte_length += prune_index.packed_len();
@@ -89,7 +89,7 @@ pub(crate) fn batch_prunable_confirmed_data<S: StorageBackend>(
 
         // Get the `Message` for `message_id`.
         let msg = match Fetch::<MessageId, Message>::fetch(storage, &message_id)
-            .map_err(|e| PruningError::Storage(Box::new(e)))?
+            .map_err(PruningError::storage)?
             .ok_or(PruningError::MissingMessage(message_id))
         {
             Ok(msg) => msg,
@@ -145,7 +145,7 @@ pub(crate) fn batch_prunable_confirmed_data<S: StorageBackend>(
 
         // Fetch its approvers from the storage.
         let approvers = Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &message_id)
-            .map_err(|e| PruningError::Storage(Box::new(e)))?
+            .map_err(PruningError::storage)?
             .ok_or(PruningError::MissingApprovers(message_id))?;
 
         // We can safely skip messages whose approvers are all part of the currently pruned cone. If we are lucky
@@ -174,7 +174,7 @@ pub(crate) fn batch_prunable_confirmed_data<S: StorageBackend>(
                 metrics.approver_cache_miss += 1;
 
                 let unvisited_md = Fetch::<MessageId, MessageMetadata>::fetch(storage, &unvisited_id)
-                    .map_err(|e| PruningError::Storage(Box::new(e)))?
+                    .map_err(PruningError::storage)?
                     .ok_or(PruningError::MissingMetadata(unvisited_id))?;
 
                 // A non-existing milestone index means that a message remained unconfirmed and therefore is neglibable
@@ -221,7 +221,7 @@ pub(crate) fn batch_prunable_unconfirmed_data<S: StorageBackend>(
     let mut metrics = UnconfirmedDataPruningMetrics::default();
 
     let unconf_msgs = match Fetch::<MilestoneIndex, Vec<UnreferencedMessage>>::fetch(storage, &prune_index)
-        .map_err(|e| PruningError::Storage(Box::new(e)))?
+        .map_err(PruningError::storage)?
     {
         Some(unconf_msgs) => {
             if unconf_msgs.is_empty() {
@@ -239,9 +239,7 @@ pub(crate) fn batch_prunable_unconfirmed_data<S: StorageBackend>(
 
     // TODO: consider using `MultiFetch`
     'next_unconf_msg: for unconf_msg_id in unconf_msgs.iter().map(|unconf_msg| unconf_msg.message_id()) {
-        match Fetch::<MessageId, MessageMetadata>::fetch(storage, unconf_msg_id)
-            .map_err(|e| PruningError::Storage(Box::new(e)))?
-        {
+        match Fetch::<MessageId, MessageMetadata>::fetch(storage, unconf_msg_id).map_err(PruningError::storage)? {
             Some(msg_meta) => {
                 if msg_meta.flags().is_referenced() {
                     metrics.were_confirmed += 1;
@@ -257,9 +255,7 @@ pub(crate) fn batch_prunable_unconfirmed_data<S: StorageBackend>(
         }
 
         // Delete those messages that remained unconfirmed.
-        match Fetch::<MessageId, Message>::fetch(storage, unconf_msg_id)
-            .map_err(|e| PruningError::Storage(Box::new(e)))?
-        {
+        match Fetch::<MessageId, Message>::fetch(storage, unconf_msg_id).map_err(PruningError::storage)? {
             Some(msg) => {
                 let payload = msg.payload().as_ref();
                 let parents = msg.parents();
@@ -334,22 +330,20 @@ fn prune_message_and_metadata<S: StorageBackend>(
     if by_size {
         // Panic: we know the message is in the database, because the caller already made sure of that.
         let msg = Fetch::<MessageId, Message>::fetch(storage, message_id)
-            .map_err(|e| PruningError::Storage(Box::new(e)))?
+            .map_err(PruningError::storage)?
             .unwrap();
         byte_length += msg.packed_len();
 
         // Panic: we know the message metadata is in the database for the same reason as above.
         let md = Fetch::<MessageId, MessageMetadata>::fetch(storage, message_id)
-            .map_err(|e| PruningError::Storage(Box::new(e)))?
+            .map_err(PruningError::storage)?
             .unwrap();
         byte_length += md.packed_len();
     }
 
-    Batch::<MessageId, Message>::batch_delete(storage, batch, message_id)
-        .map_err(|e| PruningError::Storage(Box::new(e)))?;
+    Batch::<MessageId, Message>::batch_delete(storage, batch, message_id).map_err(PruningError::storage)?;
 
-    Batch::<MessageId, MessageMetadata>::batch_delete(storage, batch, message_id)
-        .map_err(|e| PruningError::Storage(Box::new(e)))?;
+    Batch::<MessageId, MessageMetadata>::batch_delete(storage, batch, message_id).map_err(PruningError::storage)?;
 
     Ok(byte_length)
 }
@@ -366,8 +360,7 @@ fn prune_edge<S: StorageBackend>(
         byte_length += edge.packed_len();
     }
 
-    Batch::<(MessageId, MessageId), ()>::batch_delete(storage, batch, edge)
-        .map_err(|e| PruningError::Storage(Box::new(e)))?;
+    Batch::<(MessageId, MessageId), ()>::batch_delete(storage, batch, edge).map_err(PruningError::storage)?;
 
     Ok(byte_length)
 }
@@ -385,7 +378,7 @@ fn prune_indexation_data<S: StorageBackend>(
     }
 
     Batch::<(PaddedIndex, MessageId), ()>::batch_delete(storage, batch, index_message_id)
-        .map_err(|e| PruningError::Storage(Box::new(e)))?;
+        .map_err(PruningError::storage)?;
 
     Ok(byte_length)
 }
@@ -408,7 +401,7 @@ fn prune_unreferenced_message<S: StorageBackend>(
         batch,
         &(prune_index, unreferenced_message),
     )
-    .map_err(|e| PruningError::Storage(Box::new(e)))?;
+    .map_err(PruningError::storage)?;
 
     Ok(byte_length)
 }
@@ -424,13 +417,12 @@ fn prune_milestone<S: StorageBackend>(
     if by_size {
         // Panic: we know the milestone is in the database.
         let ms = Fetch::<MilestoneIndex, Milestone>::fetch(storage, &index)
-            .map_err(|e| PruningError::Storage(Box::new(e)))?
+            .map_err(PruningError::storage)?
             .unwrap();
         byte_length += ms.packed_len();
     }
 
-    Batch::<MilestoneIndex, Milestone>::batch_delete(storage, batch, &index)
-        .map_err(|e| PruningError::Storage(Box::new(e)))?;
+    Batch::<MilestoneIndex, Milestone>::batch_delete(storage, batch, &index).map_err(PruningError::storage)?;
 
     Ok(byte_length)
 }
@@ -444,7 +436,7 @@ fn prune_output_diff<S: StorageBackend>(
     let mut byte_length = 0usize;
 
     if let Some(output_diff) =
-        Fetch::<MilestoneIndex, OutputDiff>::fetch(storage, &index).map_err(|e| PruningError::Storage(Box::new(e)))?
+        Fetch::<MilestoneIndex, OutputDiff>::fetch(storage, &index).map_err(PruningError::storage)?
     {
         byte_length += index.packed_len();
         byte_length += output_diff.packed_len();
@@ -453,7 +445,7 @@ fn prune_output_diff<S: StorageBackend>(
             if by_size {
                 // Panic: we know the output is in this database table.
                 let consumed_output = Fetch::<OutputId, ConsumedOutput>::fetch(storage, consumed_output_id)
-                    .map_err(|e| PruningError::Storage(Box::new(e)))?
+                    .map_err(PruningError::storage)?
                     .unwrap();
 
                 byte_length += consumed_output_id.packed_len();
@@ -461,7 +453,7 @@ fn prune_output_diff<S: StorageBackend>(
 
                 // Panic: we know the output is in this database table.
                 let created_output = Fetch::<OutputId, CreatedOutput>::fetch(storage, consumed_output_id)
-                    .map_err(|e| PruningError::Storage(Box::new(e)))?
+                    .map_err(PruningError::storage)?
                     .unwrap();
 
                 byte_length += consumed_output_id.packed_len();
@@ -469,15 +461,14 @@ fn prune_output_diff<S: StorageBackend>(
             }
 
             Batch::<OutputId, ConsumedOutput>::batch_delete(storage, batch, consumed_output_id)
-                .map_err(|e| PruningError::Storage(Box::new(e)))?;
+                .map_err(PruningError::storage)?;
 
             Batch::<OutputId, CreatedOutput>::batch_delete(storage, batch, consumed_output_id)
-                .map_err(|e| PruningError::Storage(Box::new(e)))?;
+                .map_err(PruningError::storage)?;
         }
     }
 
-    Batch::<MilestoneIndex, OutputDiff>::batch_delete(storage, batch, &index)
-        .map_err(|e| PruningError::Storage(Box::new(e)))?;
+    Batch::<MilestoneIndex, OutputDiff>::batch_delete(storage, batch, &index).map_err(PruningError::storage)?;
 
     Ok(byte_length)
 }
@@ -492,7 +483,7 @@ fn prune_receipts<S: StorageBackend>(
 
     // Panic: Fine since Fetch of a Vec<_> always returns Some(Vec<_>).
     let receipts = Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(storage, &index)
-        .map_err(|e| PruningError::Storage(Box::new(e)))?
+        .map_err(PruningError::storage)?
         .unwrap();
 
     let mut num = 0;
@@ -503,7 +494,7 @@ fn prune_receipts<S: StorageBackend>(
         }
 
         Batch::<(MilestoneIndex, Receipt), ()>::batch_delete(storage, batch, &(index, receipt))
-            .map_err(|e| PruningError::Storage(Box::new(e)))?;
+            .map_err(PruningError::storage)?;
 
         num += 1;
     }
@@ -540,8 +531,7 @@ fn prune_seps<S: StorageBackend>(
 ) -> Result<usize, PruningError> {
     let mut num = 0;
     for sep in seps {
-        Batch::<SolidEntryPoint, MilestoneIndex>::batch_delete(storage, batch, sep)
-            .map_err(|e| PruningError::Storage(Box::new(e)))?;
+        Batch::<SolidEntryPoint, MilestoneIndex>::batch_delete(storage, batch, sep).map_err(PruningError::storage)?;
 
         num += 1;
     }
