@@ -25,6 +25,7 @@ pub(crate) const ROUTE_UTXO_CHANGES_BY_MILESTONE_ID: &str = "/api/v2/milestones/
 pub(crate) const ROUTE_UTXO_CHANGES_BY_MILESTONE_INDEX: &str =
     "/api/v2/milestones/by-index/:milestoneIndex/utxo-changes";
 pub(crate) const ROUTE_OUTPUT: &str = "/api/v2/outputs/:outputId";
+pub(crate) const ROUTE_OUTPUT_METADATA: &str = "/api/v2/outputs/:outputId/metadata";
 pub(crate) const ROUTE_OUTPUTS_BECH32: &str = "/api/v2/addresses/:address/outputs";
 pub(crate) const ROUTE_OUTPUTS_ED25519: &str = "/api/v2/addresses/ed25519/:address/outputs";
 pub(crate) const ROUTE_PEER: &str = "/api/v2/peers/:peerId";
@@ -40,7 +41,7 @@ pub(crate) const ROUTE_TRANSACTION_INCLUDED_MESSAGE: &str = "/api/v2/transaction
 pub(crate) const ROUTE_WHITE_FLAG: &str = "/api/plugins/debug/whiteflag";
 
 /// the routes that are available for public use
-pub(crate) const DEFAULT_PUBLIC_ROUTES: [&str; 23] = [
+pub(crate) const DEFAULT_PUBLIC_ROUTES: [&str; 24] = [
     ROUTE_BALANCE_BECH32,
     ROUTE_BALANCE_ED25519,
     ROUTE_HEALTH,
@@ -55,6 +56,7 @@ pub(crate) const DEFAULT_PUBLIC_ROUTES: [&str; 23] = [
     ROUTE_UTXO_CHANGES_BY_MILESTONE_ID,
     ROUTE_UTXO_CHANGES_BY_MILESTONE_INDEX,
     ROUTE_OUTPUT,
+    ROUTE_OUTPUT_METADATA,
     ROUTE_OUTPUTS_BECH32,
     ROUTE_OUTPUTS_ED25519,
     ROUTE_SUBMIT_MESSAGE,

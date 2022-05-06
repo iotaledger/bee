@@ -10,6 +10,7 @@ pub mod message_raw;
 pub mod milestone_by_milestone_id;
 pub mod milestone_by_milestone_index;
 pub mod output;
+pub mod output_metadata;
 pub mod peer;
 pub mod peers;
 pub mod receipts;
@@ -113,6 +114,12 @@ pub(crate) fn filter<B: StorageBackend>(
         storage.clone(),
     ))
     .or(output::filter(
+        public_routes.clone(),
+        allowed_ips.clone(),
+        storage.clone(),
+        consensus_worker.clone(),
+    ))
+    .or(output_metadata::filter(
         public_routes.clone(),
         allowed_ips.clone(),
         storage.clone(),
