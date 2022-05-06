@@ -24,7 +24,7 @@ use crate::{
         rejection::CustomRejection,
         storage::StorageBackend,
     },
-    types::responses::OutputResponse,
+    types::responses::{OutputMetadataResponse, OutputResponse},
 };
 
 fn path() -> impl Filter<Extract = (OutputId,), Error = Rejection> + Clone {
@@ -78,21 +78,23 @@ pub(crate) async fn output<B: StorageBackend>(
                 })?;
 
                 Ok(warp::reply::json(&OutputResponse {
-                    message_id: output.message_id().to_string(),
-                    transaction_id: output_id.transaction_id().to_string(),
-                    output_index: output_id.index(),
-                    is_spent: is_spent.is_some(),
-                    // TODO
-                    milestone_index_spent: None,
-                    // TODO
-                    milestone_timestamp_spent: None,
-                    // TODO
-                    transaction_id_spent: None,
-                    // TODO
-                    milestone_index_booked: 0,
-                    // TODO
-                    milestone_timestamp_booked: 0,
-                    ledger_index: *ledger_index,
+                    metadata: OutputMetadataResponse {
+                        message_id: output.message_id().to_string(),
+                        transaction_id: output_id.transaction_id().to_string(),
+                        output_index: output_id.index(),
+                        is_spent: is_spent.is_some(),
+                        // TODO
+                        milestone_index_spent: None,
+                        // TODO
+                        milestone_timestamp_spent: None,
+                        // TODO
+                        transaction_id_spent: None,
+                        // TODO
+                        milestone_index_booked: 0,
+                        // TODO
+                        milestone_timestamp_booked: 0,
+                        ledger_index: *ledger_index,
+                    },
                     output: output.inner().into(),
                 }))
             }

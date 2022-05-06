@@ -189,9 +189,17 @@ pub struct MessageChildrenResponse {
 impl BodyInner for MessageChildrenResponse {}
 
 /// Response of GET /api/v2/outputs/{output_id}.
-/// Returns all information about a specific output.
+/// Returns an output and its metadata.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct OutputResponse {
+    pub metadata: OutputMetadataResponse,
+    pub output: OutputDto,
+}
+
+/// Response of GET /api/v2/outputs/{output_id}/metadata.
+/// Returns an output metadata.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct OutputMetadataResponse {
     #[serde(rename = "messageId")]
     pub message_id: String,
     #[serde(rename = "transactionId")]
@@ -212,7 +220,6 @@ pub struct OutputResponse {
     pub milestone_timestamp_booked: u32,
     #[serde(rename = "ledgerIndex", default)]
     pub ledger_index: u32,
-    pub output: OutputDto,
 }
 
 impl BodyInner for OutputResponse {}
