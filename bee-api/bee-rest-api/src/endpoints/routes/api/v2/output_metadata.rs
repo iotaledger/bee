@@ -52,6 +52,26 @@ pub(crate) fn filter<B: StorageBackend>(
         .boxed()
 }
 
+pub(crate) fn create_output_metadata(
+    output_id: &OutputId,
+    created_output: &CreatedOutput,
+    consumed_output: Option<&ConsumedOutput>,
+    ledger_index: LedgerIndex,
+) -> OutputMetadataResponse {
+    OutputMetadataResponse {
+        message_id: created_output.message_id().to_string(),
+        transaction_id: output_id.transaction_id().to_string(),
+        output_index: output_id.index(),
+        is_spent: consumed_output.is_some(),
+        milestone_index_spent: consumed_output.map(|o| *o.milestone_index()),
+        milestone_timestamp_spent: consumed_output.map(|o| o.milestone_timestamp()),
+        transaction_id_spent: consumed_output.map(|o| o.target().to_string()),
+        milestone_index_booked: *created_output.milestone_index(),
+        milestone_timestamp_booked: created_output.milestone_timestamp(),
+        ledger_index: *ledger_index,
+    }
+}
+
 pub(crate) async fn output_metadata<B: StorageBackend>(
     output_id: OutputId,
     storage: ResourceHandle<B>,
@@ -78,18 +98,12 @@ pub(crate) async fn output_metadata<B: StorageBackend>(
                     ))
                 })?;
 
-                Ok(warp::reply::json(&OutputMetadataResponse {
-                    message_id: created_output.message_id().to_string(),
-                    transaction_id: output_id.transaction_id().to_string(),
-                    output_index: output_id.index(),
-                    is_spent: consumed_output.is_some(),
-                    milestone_index_spent: consumed_output.as_ref().map(|o| *o.milestone_index()),
-                    milestone_timestamp_spent: consumed_output.as_ref().map(|o| o.milestone_timestamp()),
-                    transaction_id_spent: consumed_output.map(|o| o.target().to_string()),
-                    milestone_index_booked: *created_output.milestone_index(),
-                    milestone_timestamp_booked: created_output.milestone_timestamp(),
-                    ledger_index: *ledger_index,
-                }))
+                Ok(warp::reply::json(&create_output_metadata(
+                    &output_id,
+                    &created_output,
+                    consumed_output.as_ref(),
+                    ledger_index,
+                )))
             }
             None => Err(reject::custom(CustomRejection::NotFound(
                 "output metadata not found".to_string(),

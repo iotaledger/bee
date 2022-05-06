@@ -15,6 +15,7 @@ use log::error;
 use tokio::sync::mpsc;
 use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
+use super::output_metadata::create_output_metadata;
 use crate::{
     endpoints::{
         config::ROUTE_OUTPUT,
@@ -24,7 +25,7 @@ use crate::{
         rejection::CustomRejection,
         storage::StorageBackend,
     },
-    types::responses::{OutputMetadataResponse, OutputResponse},
+    types::responses::OutputResponse,
 };
 
 fn path() -> impl Filter<Extract = (OutputId,), Error = Rejection> + Clone {
@@ -78,18 +79,12 @@ pub(crate) async fn output<B: StorageBackend>(
                 })?;
 
                 Ok(warp::reply::json(&OutputResponse {
-                    metadata: OutputMetadataResponse {
-                        message_id: created_output.message_id().to_string(),
-                        transaction_id: output_id.transaction_id().to_string(),
-                        output_index: output_id.index(),
-                        is_spent: consumed_output.is_some(),
-                        milestone_index_spent: consumed_output.as_ref().map(|o| *o.milestone_index()),
-                        milestone_timestamp_spent: consumed_output.as_ref().map(|o| o.milestone_timestamp()),
-                        transaction_id_spent: consumed_output.map(|o| o.target().to_string()),
-                        milestone_index_booked: *created_output.milestone_index(),
-                        milestone_timestamp_booked: created_output.milestone_timestamp(),
-                        ledger_index: *ledger_index,
-                    },
+                    metadata: create_output_metadata(
+                        &output_id,
+                        &created_output,
+                        consumed_output.as_ref(),
+                        ledger_index,
+                    ),
                     output: created_output.inner().into(),
                 }))
             }
