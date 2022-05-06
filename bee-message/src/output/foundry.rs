@@ -17,7 +17,7 @@ use crate::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
         ByteCost, ByteCostConfig, ChainId, FoundryId, NativeToken, NativeTokens, Output, OutputAmount,
-        OutputBuilderAmount, OutputId, StateTransitionError, StateTransitionVerifier, TokenId, TokenScheme, TokenTag,
+        OutputBuilderAmount, OutputId, StateTransitionError, StateTransitionVerifier, TokenId, TokenScheme,
     },
     semantic::{ConflictReason, ValidationContext},
     unlock_block::UnlockBlock,
@@ -30,7 +30,6 @@ pub struct FoundryOutputBuilder {
     amount: OutputBuilderAmount,
     native_tokens: Vec<NativeToken>,
     serial_number: u32,
-    token_tag: TokenTag,
     token_scheme: TokenScheme,
     unlock_conditions: Vec<UnlockCondition>,
     feature_blocks: Vec<FeatureBlock>,
@@ -42,13 +41,11 @@ impl FoundryOutputBuilder {
     pub fn new_with_amount(
         amount: u64,
         serial_number: u32,
-        token_tag: TokenTag,
         token_scheme: TokenScheme,
     ) -> Result<FoundryOutputBuilder, Error> {
         Self::new(
             OutputBuilderAmount::Amount(amount.try_into().map_err(Error::InvalidOutputAmount)?),
             serial_number,
-            token_tag,
             token_scheme,
         )
     }
@@ -58,13 +55,11 @@ impl FoundryOutputBuilder {
     pub fn new_with_minimum_storage_deposit(
         byte_cost_config: ByteCostConfig,
         serial_number: u32,
-        token_tag: TokenTag,
         token_scheme: TokenScheme,
     ) -> Result<FoundryOutputBuilder, Error> {
         Self::new(
             OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config),
             serial_number,
-            token_tag,
             token_scheme,
         )
     }
@@ -72,14 +67,12 @@ impl FoundryOutputBuilder {
     fn new(
         amount: OutputBuilderAmount,
         serial_number: u32,
-        token_tag: TokenTag,
         token_scheme: TokenScheme,
     ) -> Result<FoundryOutputBuilder, Error> {
         Ok(Self {
             amount,
             native_tokens: Vec::new(),
             serial_number,
-            token_tag,
             token_scheme,
             unlock_conditions: Vec::new(),
             feature_blocks: Vec::new(),
@@ -206,7 +199,6 @@ impl FoundryOutputBuilder {
             amount: 1u64.try_into().map_err(Error::InvalidOutputAmount)?,
             native_tokens: NativeTokens::new(self.native_tokens)?,
             serial_number: self.serial_number,
-            token_tag: self.token_tag,
             token_scheme: self.token_scheme,
             unlock_conditions,
             feature_blocks,
@@ -236,7 +228,6 @@ impl From<&FoundryOutput> for FoundryOutputBuilder {
             amount: OutputBuilderAmount::Amount(output.amount),
             native_tokens: output.native_tokens.to_vec(),
             serial_number: output.serial_number,
-            token_tag: output.token_tag,
             token_scheme: output.token_scheme.clone(),
             unlock_conditions: output.unlock_conditions.to_vec(),
             feature_blocks: output.feature_blocks.to_vec(),
@@ -255,8 +246,6 @@ pub struct FoundryOutput {
     native_tokens: NativeTokens,
     // The serial number of the foundry with respect to the controlling alias.
     serial_number: u32,
-    // Data that is always the last 12 bytes of ID of the tokens produced by this foundry.
-    token_tag: TokenTag,
     token_scheme: TokenScheme,
     unlock_conditions: UnlockConditions,
     feature_blocks: FeatureBlocks,
@@ -275,13 +264,8 @@ impl FoundryOutput {
 
     /// Creates a new [`FoundryOutput`] with a provided amount.
     #[inline(always)]
-    pub fn new_with_amount(
-        amount: u64,
-        serial_number: u32,
-        token_tag: TokenTag,
-        token_scheme: TokenScheme,
-    ) -> Result<Self, Error> {
-        FoundryOutputBuilder::new_with_amount(amount, serial_number, token_tag, token_scheme)?.finish()
+    pub fn new_with_amount(amount: u64, serial_number: u32, token_scheme: TokenScheme) -> Result<Self, Error> {
+        FoundryOutputBuilder::new_with_amount(amount, serial_number, token_scheme)?.finish()
     }
 
     /// Creates a new [`FoundryOutput`] with a provided byte cost config.
@@ -290,16 +274,9 @@ impl FoundryOutput {
     pub fn new_with_minimum_storage_deposit(
         byte_cost_config: ByteCostConfig,
         serial_number: u32,
-        token_tag: TokenTag,
         token_scheme: TokenScheme,
     ) -> Result<Self, Error> {
-        FoundryOutputBuilder::new_with_minimum_storage_deposit(
-            byte_cost_config,
-            serial_number,
-            token_tag,
-            token_scheme,
-        )?
-        .finish()
+        FoundryOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config, serial_number, token_scheme)?.finish()
     }
 
     /// Creates a new [`FoundryOutputBuilder`] with a provided amount.
@@ -307,10 +284,9 @@ impl FoundryOutput {
     pub fn build_with_amount(
         amount: u64,
         serial_number: u32,
-        token_tag: TokenTag,
         token_scheme: TokenScheme,
     ) -> Result<FoundryOutputBuilder, Error> {
-        FoundryOutputBuilder::new_with_amount(amount, serial_number, token_tag, token_scheme)
+        FoundryOutputBuilder::new_with_amount(amount, serial_number, token_scheme)
     }
 
     /// Creates a new [`FoundryOutputBuilder`] with a provided byte cost config.
@@ -319,10 +295,9 @@ impl FoundryOutput {
     pub fn build_with_minimum_storage_deposit(
         byte_cost_config: ByteCostConfig,
         serial_number: u32,
-        token_tag: TokenTag,
         token_scheme: TokenScheme,
     ) -> Result<FoundryOutputBuilder, Error> {
-        FoundryOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config, serial_number, token_tag, token_scheme)
+        FoundryOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config, serial_number, token_scheme)
     }
 
     ///
@@ -341,12 +316,6 @@ impl FoundryOutput {
     #[inline(always)]
     pub fn serial_number(&self) -> u32 {
         self.serial_number
-    }
-
-    ///
-    #[inline(always)]
-    pub fn token_tag(&self) -> &TokenTag {
-        &self.token_tag
     }
 
     ///
@@ -390,7 +359,7 @@ impl FoundryOutput {
 
     /// Returns the [`TokenId`] of the [`FoundryOutput`].
     pub fn token_id(&self) -> TokenId {
-        TokenId::build(&self.id(), &self.token_tag)
+        TokenId::from(self.id())
     }
 
     ///
@@ -459,7 +428,6 @@ impl StateTransitionVerifier for FoundryOutput {
     ) -> Result<(), StateTransitionError> {
         if current_state.alias_address() != next_state.alias_address()
             || current_state.serial_number != next_state.serial_number
-            || current_state.token_tag != next_state.token_tag
             || current_state.immutable_feature_blocks != next_state.immutable_feature_blocks
         {
             return Err(StateTransitionError::MutatedImmutableField);
@@ -558,7 +526,6 @@ impl Packable for FoundryOutput {
         self.amount.pack(packer)?;
         self.native_tokens.pack(packer)?;
         self.serial_number.pack(packer)?;
-        self.token_tag.pack(packer)?;
         self.token_scheme.pack(packer)?;
         self.unlock_conditions.pack(packer)?;
         self.feature_blocks.pack(packer)?;
@@ -573,7 +540,6 @@ impl Packable for FoundryOutput {
         let amount = OutputAmount::unpack::<_, VERIFY>(unpacker).map_packable_err(Error::InvalidOutputAmount)?;
         let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker)?;
         let serial_number = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
-        let token_tag = TokenTag::unpack::<_, VERIFY>(unpacker).coerce()?;
         let token_scheme = TokenScheme::unpack::<_, VERIFY>(unpacker)?;
 
         let unlock_conditions = UnlockConditions::unpack::<_, VERIFY>(unpacker)?;
@@ -603,7 +569,6 @@ impl Packable for FoundryOutput {
             amount,
             native_tokens,
             serial_number,
-            token_tag,
             token_scheme,
             unlock_conditions,
             feature_blocks,
@@ -629,8 +594,8 @@ pub mod dto {
     use crate::{
         error::dto::DtoError,
         output::{
-            feature_block::dto::FeatureBlockDto, native_token::dto::NativeTokenDto, token_id::dto::TokenTagDto,
-            token_scheme::dto::TokenSchemeDto, unlock_condition::dto::UnlockConditionDto,
+            feature_block::dto::FeatureBlockDto, native_token::dto::NativeTokenDto, token_scheme::dto::TokenSchemeDto,
+            unlock_condition::dto::UnlockConditionDto,
         },
     };
 
@@ -647,9 +612,6 @@ pub mod dto {
         // The serial number of the foundry with respect to the controlling alias.
         #[serde(rename = "serialNumber")]
         pub serial_number: u32,
-        // Data that is always the last 12 bytes of ID of the tokens produced by this foundry.
-        #[serde(rename = "tokenTag")]
-        pub token_tag: TokenTagDto,
         #[serde(rename = "tokenScheme")]
         pub token_scheme: TokenSchemeDto,
         #[serde(rename = "unlockConditions")]
@@ -667,7 +629,6 @@ pub mod dto {
                 amount: value.amount().to_string(),
                 native_tokens: value.native_tokens().iter().map(Into::into).collect::<_>(),
                 serial_number: value.serial_number(),
-                token_tag: TokenTagDto(value.token_tag().to_string()),
                 token_scheme: value.token_scheme().into(),
                 unlock_conditions: value.unlock_conditions().iter().map(Into::into).collect::<_>(),
                 feature_blocks: value.feature_blocks().iter().map(Into::into).collect::<_>(),
@@ -686,7 +647,6 @@ pub mod dto {
                     .parse::<u64>()
                     .map_err(|_| DtoError::InvalidField("amount"))?,
                 value.serial_number,
-                (&value.token_tag).try_into()?,
                 (&value.token_scheme).try_into()?,
             )?;
 

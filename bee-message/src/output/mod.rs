@@ -51,7 +51,7 @@ pub use self::{
     nft_id::NftId,
     output_id::OutputId,
     state_transition::{StateTransitionError, StateTransitionVerifier},
-    token_id::{TokenId, TokenTag},
+    token_id::TokenId,
     token_scheme::{SimpleTokenScheme, TokenScheme},
     treasury::TreasuryOutput,
     unlock_condition::{UnlockCondition, UnlockConditions},

@@ -9,7 +9,7 @@ use primitive_types::U256;
 use crate::{
     address::Address,
     error::Error,
-    output::{ChainId, InputsCommitment, NativeTokens, Output, OutputId, TokenId, UnlockCondition},
+    output::{ChainId, FoundryId, InputsCommitment, NativeTokens, Output, OutputId, TokenId, UnlockCondition},
     payload::{
         milestone::MilestoneIndex,
         transaction::{RegularTransactionEssence, TransactionEssence, TransactionId},
@@ -328,15 +328,11 @@ pub fn semantic_validation(
         return Ok(ConflictReason::CreatedConsumedAmountMismatch);
     }
 
-    let mut native_token_ids = HashMap::new();
+    let mut native_token_ids = HashSet::new();
 
     // Validation of input native tokens.
     for (token_id, _input_amount) in context.input_native_tokens.iter() {
-        if let Some(token_tag) = native_token_ids.insert(token_id.foundry_id(), token_id.token_tag()) {
-            if token_tag != token_id.token_tag() {
-                return Ok(ConflictReason::InvalidNativeTokens);
-            }
-        }
+        native_token_ids.insert(token_id);
     }
 
     // Validation of output native tokens.
@@ -346,16 +342,12 @@ pub fn semantic_validation(
         if output_amount > &input_amount
             && !context
                 .output_chains
-                .contains_key(&ChainId::from(token_id.foundry_id()))
+                .contains_key(&ChainId::from(FoundryId::from(*token_id)))
         {
             return Ok(ConflictReason::InvalidNativeTokens);
         }
 
-        if let Some(token_tag) = native_token_ids.insert(token_id.foundry_id(), token_id.token_tag()) {
-            if token_tag != token_id.token_tag() {
-                return Ok(ConflictReason::InvalidNativeTokens);
-            }
-        }
+        native_token_ids.insert(token_id);
     }
 
     if native_token_ids.len() > NativeTokens::COUNT_MAX as usize {
