@@ -12,6 +12,7 @@ use packable::{
 };
 
 use crate::{
+    constant::PROTOCOL_VERSION,
     parent::Parents,
     payload::milestone::{MilestoneId, MilestoneIndex, MilestoneOptions},
     Error,
@@ -26,6 +27,7 @@ pub(crate) type MilestoneMetadataLength = BoundedU16<{ u16::MIN }, { u16::MAX }>
 pub struct MilestoneEssence {
     index: MilestoneIndex,
     timestamp: u32,
+    protocol_version: u8,
     previous_milestone_id: MilestoneId,
     parents: Parents,
     confirmed_merkle_root: [u8; MilestoneEssence::MERKLE_ROOT_LENGTH],
@@ -58,6 +60,7 @@ impl MilestoneEssence {
         Ok(Self {
             index,
             timestamp,
+            protocol_version: PROTOCOL_VERSION,
             previous_milestone_id,
             parents,
             confirmed_merkle_root,
@@ -119,6 +122,7 @@ impl Packable for MilestoneEssence {
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         self.index.pack(packer)?;
         self.timestamp.pack(packer)?;
+        self.protocol_version.pack(packer)?;
         self.previous_milestone_id.pack(packer)?;
         self.parents.pack(packer)?;
         self.confirmed_merkle_root.pack(packer)?;
@@ -134,6 +138,15 @@ impl Packable for MilestoneEssence {
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let index = MilestoneIndex::unpack::<_, VERIFY>(unpacker).coerce()?;
         let timestamp = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let protocol_version = u8::unpack::<_, VERIFY>(unpacker).coerce()?;
+
+        if VERIFY && protocol_version != PROTOCOL_VERSION {
+            return Err(UnpackError::Packable(Error::ProtocolVersionMismatch {
+                expected: PROTOCOL_VERSION,
+                actual: protocol_version,
+            }));
+        }
+
         let previous_milestone_id = MilestoneId::unpack::<_, VERIFY>(unpacker).coerce()?;
         let parents = Parents::unpack::<_, VERIFY>(unpacker)?;
         let confirmed_merkle_root =
@@ -149,6 +162,7 @@ impl Packable for MilestoneEssence {
         Ok(Self {
             index,
             timestamp,
+            protocol_version,
             previous_milestone_id,
             parents,
             confirmed_merkle_root,
