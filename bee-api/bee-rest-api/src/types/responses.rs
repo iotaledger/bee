@@ -11,7 +11,7 @@ use crate::types::{
 
 /// Response of GET /api/v2/info.
 /// Returns general information about the node.
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct InfoResponse {
     pub name: String,
     pub version: String,
@@ -28,7 +28,7 @@ impl BodyInner for InfoResponse {}
 
 /// Returned in [`InfoResponse`].
 /// Status information about the node.
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct StatusResponse {
     #[serde(rename = "isHealthy")]
     pub is_healthy: bool,
@@ -42,7 +42,7 @@ pub struct StatusResponse {
 
 /// Returned in [`StatusResponse`].
 /// Information about the latest milestone.
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct LatestMilestoneResponse {
     #[serde(rename = "index")]
     pub index: u32,
@@ -54,7 +54,7 @@ pub struct LatestMilestoneResponse {
 
 /// Returned in [`StatusResponse`].
 /// Information about the confirmed milestone.
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct ConfirmedMilestoneResponse {
     #[serde(rename = "index")]
     pub index: u32,
@@ -66,7 +66,7 @@ pub struct ConfirmedMilestoneResponse {
 
 /// Returned in [`InfoResponse`].
 /// Protocol information about the node.
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ProtocolResponse {
     pub version: u8,
     #[serde(rename = "networkName")]
@@ -83,7 +83,7 @@ pub struct ProtocolResponse {
 
 /// Returned in [`InfoResponse`].
 /// Information about the base token.
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct BaseTokenResponse {
     pub name: String,
     #[serde(rename = "tickerSymbol")]
@@ -98,7 +98,7 @@ pub struct BaseTokenResponse {
 
 /// Returned in [`InfoResponse`].
 /// Rent information about the node.
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct RentStructureResponse {
     #[serde(rename = "vByteCost")]
     pub v_byte_cost: u64,
@@ -110,7 +110,7 @@ pub struct RentStructureResponse {
 
 /// Returned in [`InfoResponse`].
 /// Metric information about the node.
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct MetricsResponse {
     #[serde(rename = "messagesPerSecond")]
     pub messages_per_second: f64,
@@ -122,7 +122,7 @@ pub struct MetricsResponse {
 
 /// Response of GET /api/v2/tips.
 /// Returns non-lazy tips.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct TipsResponse {
     #[serde(rename = "tipMessageIds")]
     pub tip_message_ids: Vec<String>,
@@ -132,7 +132,7 @@ impl BodyInner for TipsResponse {}
 
 /// Response of POST /api/v2/messages.
 /// Returns the message identifier of the submitted message.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct SubmitMessageResponse {
     #[serde(rename = "messageId")]
     pub message_id: String,
@@ -142,14 +142,14 @@ impl BodyInner for SubmitMessageResponse {}
 
 /// Response of GET /api/v2/messages/{message_id}.
 /// Returns a specific message.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct MessageResponse(pub MessageDto);
 
 impl BodyInner for MessageResponse {}
 
 /// Response of GET /api/v2/messages/{message_id}/metadata.
 /// Returns the metadata of a message.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct MessageMetadataResponse {
     #[serde(rename = "messageId")]
     pub message_id: String,
@@ -175,7 +175,7 @@ impl BodyInner for MessageMetadataResponse {}
 
 /// Response of GET /api/v2/messages/{message_id}/children.
 /// Returns all children of a specific message.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct MessageChildrenResponse {
     #[serde(rename = "messageId")]
     pub message_id: String,
@@ -190,7 +190,7 @@ impl BodyInner for MessageChildrenResponse {}
 
 /// Response of GET /api/v2/outputs/{output_id}.
 /// Returns all information about a specific output.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct OutputResponse {
     #[serde(rename = "messageId")]
     pub message_id: String,
@@ -203,13 +203,13 @@ pub struct OutputResponse {
     #[serde(rename = "milestoneIndexSpent", skip_serializing_if = "Option::is_none")]
     pub milestone_index_spent: Option<u32>,
     #[serde(rename = "milestoneTimestampSpent", skip_serializing_if = "Option::is_none")]
-    pub milestone_timestamp_spent: Option<u64>,
+    pub milestone_timestamp_spent: Option<u32>,
     #[serde(rename = "transactionIdSpent", skip_serializing_if = "Option::is_none")]
     pub transaction_id_spent: Option<String>,
     #[serde(rename = "milestoneIndexBooked")]
     pub milestone_index_booked: u32,
     #[serde(rename = "milestoneTimestampBooked")]
-    pub milestone_timestamp_booked: u64,
+    pub milestone_timestamp_booked: u32,
     #[serde(rename = "ledgerIndex", default)]
     pub ledger_index: u32,
     pub output: OutputDto,
@@ -220,7 +220,7 @@ impl BodyInner for OutputResponse {}
 /// Response of:
 /// * GET /api/v2/receipts/{milestone_index}, returns all stored receipts for the given milestone index.
 /// * GET /api/v2/receipts, returns all stored receipts, independent of a milestone index.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct ReceiptsResponse {
     pub receipts: Vec<ReceiptDto>,
 }
@@ -229,7 +229,7 @@ impl BodyInner for ReceiptsResponse {}
 
 /// Response of GET /api/v2/treasury.
 /// Returns all information about the treasury.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct TreasuryResponse {
     #[serde(rename = "milestoneId")]
     pub milestone_id: String,
@@ -240,14 +240,14 @@ impl BodyInner for TreasuryResponse {}
 
 /// Response of GET /api/v2/milestone/{milestone_index}.
 /// Returns information about a milestone.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct MilestoneResponse(pub MilestonePayloadDto);
 
 impl BodyInner for MilestoneResponse {}
 
 /// Response of GET /api/v2/milestone/{milestone_index}/utxo-changes.
 /// Returns all UTXO changes that happened at a specific milestone.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct UtxoChangesResponse {
     pub index: u32,
     #[serde(rename = "createdOutputs")]
@@ -260,28 +260,28 @@ impl BodyInner for UtxoChangesResponse {}
 
 /// Response of GET /api/v2/peers.
 /// Returns information about all peers of the node.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct PeersResponse(pub Vec<PeerDto>);
 
 impl BodyInner for PeersResponse {}
 
 /// Response of POST /api/v2/peers.
 /// Returns information about the added peer.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct AddPeerResponse(pub PeerDto);
 
 impl BodyInner for AddPeerResponse {}
 
 /// Response of GET /api/v2/peer/{peer_id}.
 /// Returns information about a specific peer of the node.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct PeerResponse(pub PeerDto);
 
 impl BodyInner for PeerResponse {}
 
 /// Response of GET /api/plugins/debug/whiteflag.
 /// Returns the computed merkle tree hash for the given white flag traversal.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct WhiteFlagResponse {
     #[serde(rename = "merkleTreeHash")]
     pub merkle_tree_hash: String,

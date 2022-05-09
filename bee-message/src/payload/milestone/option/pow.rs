@@ -101,7 +101,7 @@ pub mod dto {
     use crate::error::dto::DtoError;
 
     ///
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct PowMilestoneOptionDto {
         #[serde(rename = "type")]
         pub kind: u8,

@@ -70,7 +70,7 @@ pub mod dto {
     use crate::error::dto::DtoError;
 
     /// Defines an Ed25519 signature.
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct Ed25519SignatureDto {
         #[serde(rename = "type")]
         pub kind: u8,

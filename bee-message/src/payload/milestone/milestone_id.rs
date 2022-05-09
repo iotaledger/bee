@@ -7,12 +7,5 @@ impl_id!(
     "A milestone identifier, the BLAKE2b-256 hash of the milestone bytes. See <https://www.blake2.net/> for more information."
 );
 
-impl MilestoneId {
-    /// Create a null [`MilestoneId`].
-    pub fn null() -> Self {
-        Self([0u8; MilestoneId::LENGTH])
-    }
-}
-
 #[cfg(feature = "serde")]
 string_serde_impl!(MilestoneId);

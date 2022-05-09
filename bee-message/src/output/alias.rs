@@ -653,7 +653,7 @@ pub mod dto {
     };
 
     /// Describes an alias account in the ledger that can be controlled by the state and governance controllers.
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct AliasOutputDto {
         #[serde(rename = "type")]
         pub kind: u8,

@@ -105,7 +105,7 @@ pub mod dto {
     use crate::{error::dto::DtoError, unlock_block::dto::UnlockBlockDto};
 
     /// The payload type to define a value transaction.
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct TransactionPayloadDto {
         #[serde(rename = "type")]
         pub kind: u32,

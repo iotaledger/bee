@@ -69,7 +69,7 @@ pub mod dto {
     use super::*;
     use crate::{address::dto::AddressDto, error::dto::DtoError};
 
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct MigratedFundsEntryDto {
         #[serde(rename = "tailTransactionHash")]
         pub tail_transaction_hash: String,

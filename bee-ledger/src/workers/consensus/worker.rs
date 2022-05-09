@@ -104,19 +104,19 @@ where
 
     white_flag(tangle, storage, message.parents(), &mut metadata).await?;
 
-    if metadata.confirmed_merkle_proof != milestone.essence().confirmed_merkle_proof() {
-        return Err(Error::ConfirmedMerkleProofMismatch(
+    if metadata.confirmed_merkle_root != milestone.essence().confirmed_merkle_root() {
+        return Err(Error::ConfirmedMerkleRootMismatch(
             milestone.essence().index(),
-            prefix_hex::encode(metadata.confirmed_merkle_proof),
-            prefix_hex::encode(milestone.essence().confirmed_merkle_proof()),
+            prefix_hex::encode(metadata.confirmed_merkle_root),
+            prefix_hex::encode(milestone.essence().confirmed_merkle_root()),
         ));
     }
 
-    if metadata.applied_merkle_proof != milestone.essence().applied_merkle_proof() {
-        return Err(Error::AppliedMerkleProofMismatch(
+    if metadata.applied_merkle_root != milestone.essence().applied_merkle_root() {
+        return Err(Error::AppliedMerkleRootMismatch(
             milestone.essence().index(),
-            prefix_hex::encode(metadata.applied_merkle_proof),
-            prefix_hex::encode(milestone.essence().applied_merkle_proof()),
+            prefix_hex::encode(metadata.applied_merkle_root),
+            prefix_hex::encode(milestone.essence().applied_merkle_root()),
         ));
     }
 

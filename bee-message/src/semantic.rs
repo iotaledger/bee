@@ -9,7 +9,7 @@ use primitive_types::U256;
 use crate::{
     address::Address,
     error::Error,
-    output::{create_inputs_commitment, ChainId, NativeTokens, Output, OutputId, TokenId, UnlockCondition},
+    output::{ChainId, InputsCommitment, NativeTokens, Output, OutputId, TokenId, UnlockCondition},
     payload::{
         milestone::MilestoneIndex,
         transaction::{RegularTransactionEssence, TransactionEssence, TransactionId},
@@ -60,28 +60,20 @@ pub enum ConflictReason {
     CreatedConsumedAmountMismatch = 4,
     /// The unlock block signature is invalid.
     InvalidSignature = 5,
-    /// The created native tokens amount does not match the consumed native tokens amount.
-    CreatedConsumedNativeTokensAmountMismatch = 6,
-    /// The milestone index timelock was no satisfied.
-    TimelockMilestoneIndex = 7,
-    /// The unix timelock was no satisfied.
-    TimelockUnix = 8,
-    /// The sender was not verified.
-    UnverifiedSender = 9,
-    /// An incorrect unlock method was used.
-    IncorrectUnlockMethod = 10,
-    /// The inputs commitments do not match.
-    InputsCommitmentsMismatch = 11,
+    /// The configured timelock is not yet expired.
+    TimelockNotExpired = 6,
+    /// The given native tokens are invalid.
+    InvalidNativeTokens = 7,
     /// Storage deposit return mismatch.
-    StorageDepositReturnMismatch = 12,
-    /// Unlock and address types mismatch.
-    UnlockAddressMismatch = 13,
-    /// The address was not previously unlocked.
-    AddressNotUnlocked = 14,
-    /// Too many native tokens.
-    TooManyNativeTokens = 15,
-    /// Non unique token id for founfry.
-    NonUniqueTokenIdForFoundry = 16,
+    StorageDepositReturnUnfulfilled = 8,
+    /// An invalid unlock block was used.
+    InvalidUnlockBlock = 9,
+    /// The inputs commitments do not match.
+    InputsCommitmentsMismatch = 10,
+    /// The sender was not verified.
+    UnverifiedSender = 11,
+    /// The chain state transition is invalid.
+    InvalidChainStateTransition = 12,
     /// The semantic validation failed for a reason not covered by the previous variants.
     SemanticValidationFailed = 255,
 }
@@ -103,17 +95,13 @@ impl TryFrom<u8> for ConflictReason {
             3 => Self::InputUtxoNotFound,
             4 => Self::CreatedConsumedAmountMismatch,
             5 => Self::InvalidSignature,
-            6 => Self::CreatedConsumedNativeTokensAmountMismatch,
-            7 => Self::TimelockMilestoneIndex,
-            8 => Self::TimelockUnix,
-            9 => Self::UnverifiedSender,
-            10 => Self::IncorrectUnlockMethod,
-            11 => Self::InputsCommitmentsMismatch,
-            12 => Self::StorageDepositReturnMismatch,
-            13 => Self::UnlockAddressMismatch,
-            14 => Self::AddressNotUnlocked,
-            15 => Self::TooManyNativeTokens,
-            16 => Self::NonUniqueTokenIdForFoundry,
+            6 => Self::TimelockNotExpired,
+            7 => Self::InvalidNativeTokens,
+            8 => Self::StorageDepositReturnUnfulfilled,
+            9 => Self::InvalidUnlockBlock,
+            10 => Self::InputsCommitmentsMismatch,
+            11 => Self::UnverifiedSender,
+            12 => Self::InvalidChainStateTransition,
             255 => Self::SemanticValidationFailed,
             x => return Err(Self::Error::InvalidConflict(x)),
         })
@@ -127,7 +115,7 @@ pub struct ValidationContext<'a> {
     ///
     pub essence_hash: [u8; 32],
     ///
-    pub inputs_commitment: [u8; 32],
+    pub inputs_commitment: InputsCommitment,
     ///
     pub unlock_blocks: &'a UnlockBlocks,
     ///
@@ -168,7 +156,7 @@ impl<'a> ValidationContext<'a> {
             essence,
             unlock_blocks,
             essence_hash: TransactionEssence::from(essence.clone()).hash(),
-            inputs_commitment: create_inputs_commitment(inputs.clone().map(|(_, output)| output)),
+            inputs_commitment: InputsCommitment::new(inputs.clone().map(|(_, output)| output)),
             milestone_index,
             milestone_timestamp,
             input_amount: 0,
@@ -248,11 +236,10 @@ pub fn semantic_validation(
         }
 
         if let Some(timelock) = unlock_conditions.timelock() {
-            if *timelock.milestone_index() != 0 && context.milestone_index < timelock.milestone_index() {
-                return Ok(ConflictReason::TimelockMilestoneIndex);
-            }
-            if timelock.timestamp() != 0 && context.milestone_timestamp < timelock.timestamp() {
-                return Ok(ConflictReason::TimelockUnix);
+            if (*timelock.milestone_index() != 0 && context.milestone_index < timelock.milestone_index())
+                || (timelock.timestamp() != 0 && context.milestone_timestamp < timelock.timestamp())
+            {
+                return Ok(ConflictReason::TimelockNotExpired);
             }
         }
 
@@ -329,10 +316,10 @@ pub fn semantic_validation(
     for (return_address, return_amount) in context.storage_deposit_returns.iter() {
         if let Some(deposit_amount) = context.simple_deposits.get(return_address) {
             if deposit_amount < return_amount {
-                return Ok(ConflictReason::StorageDepositReturnMismatch);
+                return Ok(ConflictReason::StorageDepositReturnUnfulfilled);
             }
         } else {
-            return Ok(ConflictReason::StorageDepositReturnMismatch);
+            return Ok(ConflictReason::StorageDepositReturnUnfulfilled);
         }
     }
 
@@ -347,7 +334,7 @@ pub fn semantic_validation(
     for (token_id, _input_amount) in context.input_native_tokens.iter() {
         if let Some(token_tag) = native_token_ids.insert(token_id.foundry_id(), token_id.token_tag()) {
             if token_tag != token_id.token_tag() {
-                return Ok(ConflictReason::NonUniqueTokenIdForFoundry);
+                return Ok(ConflictReason::InvalidNativeTokens);
             }
         }
     }
@@ -361,18 +348,18 @@ pub fn semantic_validation(
                 .output_chains
                 .contains_key(&ChainId::from(token_id.foundry_id()))
         {
-            return Ok(ConflictReason::CreatedConsumedNativeTokensAmountMismatch);
+            return Ok(ConflictReason::InvalidNativeTokens);
         }
 
         if let Some(token_tag) = native_token_ids.insert(token_id.foundry_id(), token_id.token_tag()) {
             if token_tag != token_id.token_tag() {
-                return Ok(ConflictReason::NonUniqueTokenIdForFoundry);
+                return Ok(ConflictReason::InvalidNativeTokens);
             }
         }
     }
 
     if native_token_ids.len() > NativeTokens::COUNT_MAX as usize {
-        return Ok(ConflictReason::TooManyNativeTokens);
+        return Ok(ConflictReason::InvalidNativeTokens);
     }
 
     // Validation of state transitions and destructions.
@@ -384,7 +371,7 @@ pub fn semantic_validation(
         )
         .is_err()
         {
-            return Ok(ConflictReason::SemanticValidationFailed);
+            return Ok(ConflictReason::InvalidChainStateTransition);
         }
     }
 
@@ -393,7 +380,7 @@ pub fn semantic_validation(
         if context.input_chains.get(chain_id).is_none()
             && Output::verify_state_transition(None, Some(next_state), &context).is_err()
         {
-            return Ok(ConflictReason::SemanticValidationFailed);
+            return Ok(ConflictReason::InvalidChainStateTransition);
         }
     }
 

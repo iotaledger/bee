@@ -69,7 +69,7 @@ pub mod dto {
     use crate::error::dto::DtoError;
 
     /// The payload type to define a tagged data payload.
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct TaggedDataPayloadDto {
         #[serde(rename = "type")]
         pub kind: u32,

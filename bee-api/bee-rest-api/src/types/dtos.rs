@@ -8,7 +8,7 @@ use bee_protocol::types::peer::Peer;
 use serde::{Deserialize, Serialize};
 
 /// Describes a peer.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct PeerDto {
     pub id: String,
     #[serde(rename = "multiAddresses")]
@@ -65,14 +65,14 @@ impl From<&Peer> for PeerDto {
 }
 
 /// Returns all information about the gossip stream with the peer.
-#[derive(Clone, Debug, Serialize, Deserialize, Default)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, Default)]
 pub struct GossipDto {
     pub heartbeat: HeartbeatDto,
     pub metrics: MetricsDto,
 }
 
 /// Describes the relation with the peer.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub enum RelationDto {
     #[serde(rename = "known")]
     Known,
@@ -83,7 +83,7 @@ pub enum RelationDto {
 }
 
 /// Describes the heartbeat of a node.
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
 pub struct HeartbeatDto {
     #[serde(rename = "solidMilestoneIndex")]
     pub solid_milestone_index: u32,
@@ -98,7 +98,7 @@ pub struct HeartbeatDto {
 }
 
 /// Describes metrics of a gossip stream.
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
 pub struct MetricsDto {
     #[serde(rename = "newMessages")]
     pub new_messages: u64,
@@ -125,7 +125,7 @@ pub struct MetricsDto {
 }
 
 /// Describes a receipt.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct ReceiptDto {
     pub receipt: ReceiptMilestoneOptionDto,
     #[serde(rename = "milestoneIndex")]
@@ -142,7 +142,7 @@ impl From<Receipt> for ReceiptDto {
 }
 
 /// Describes the ledger inclusion state of a transaction.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub enum LedgerInclusionStateDto {
     #[serde(rename = "conflicting")]
     Conflicting,

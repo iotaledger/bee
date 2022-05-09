@@ -49,7 +49,7 @@ pub mod dto {
     use super::*;
     use crate::error::dto::DtoError;
 
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct TokenTagDto(pub String);
 
     impl From<&TokenTag> for TokenTagDto {
@@ -70,7 +70,7 @@ pub mod dto {
     }
 
     /// Describes a token id.
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct TokenIdDto(pub String);
 
     impl From<&TokenId> for TokenIdDto {

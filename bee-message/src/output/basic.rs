@@ -307,7 +307,7 @@ pub mod dto {
     };
 
     /// Describes a basic output.
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct BasicOutputDto {
         #[serde(rename = "type")]
         pub kind: u8,

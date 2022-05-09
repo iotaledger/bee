@@ -9,25 +9,25 @@ use packable::{bounded::BoundedU16, prefix::BoxedSlicePrefix, Packable};
 use crate::{
     constant::TOKEN_SUPPLY,
     input::{Input, INPUT_COUNT_RANGE},
-    output::{NativeTokens, Output, OUTPUT_COUNT_RANGE},
+    output::{InputsCommitment, NativeTokens, Output, OUTPUT_COUNT_RANGE},
     payload::{OptionalPayload, Payload},
     Error,
 };
 
 /// A builder to build a [`RegularTransactionEssence`].
-#[derive(Debug, Default)]
+#[derive(Debug)]
 #[must_use]
 pub struct RegularTransactionEssenceBuilder {
     network_id: u64,
     inputs: Vec<Input>,
-    inputs_commitment: [u8; 32],
+    inputs_commitment: InputsCommitment,
     outputs: Vec<Output>,
     payload: Option<Payload>,
 }
 
 impl RegularTransactionEssenceBuilder {
     /// Creates a new [`RegularTransactionEssenceBuilder`].
-    pub fn new(network_id: u64, inputs_commitment: [u8; 32]) -> Self {
+    pub fn new(network_id: u64, inputs_commitment: InputsCommitment) -> Self {
         Self {
             network_id,
             inputs: Vec::new(),
@@ -113,7 +113,7 @@ pub struct RegularTransactionEssence {
     #[packable(unpack_error_with = |e| e.unwrap_item_err_or_else(|p| Error::InvalidInputCount(p.into())))]
     inputs: BoxedSlicePrefix<Input, InputCount>,
     /// BLAKE2b-256 hash of the serialized outputs referenced in inputs by their OutputId.
-    inputs_commitment: [u8; 32],
+    inputs_commitment: InputsCommitment,
     #[packable(verify_with = verify_outputs)]
     #[packable(unpack_error_with = |e| e.unwrap_item_err_or_else(|p| Error::InvalidOutputCount(p.into())))]
     outputs: BoxedSlicePrefix<Output, OutputCount>,
@@ -126,7 +126,7 @@ impl RegularTransactionEssence {
     pub const KIND: u8 = 1;
 
     /// Creates a new [`RegularTransactionEssenceBuilder`] to build a [`RegularTransactionEssence`].
-    pub fn builder(network_id: u64, inputs_commitment: [u8; 32]) -> RegularTransactionEssenceBuilder {
+    pub fn builder(network_id: u64, inputs_commitment: InputsCommitment) -> RegularTransactionEssenceBuilder {
         RegularTransactionEssenceBuilder::new(network_id, inputs_commitment)
     }
 
@@ -141,7 +141,7 @@ impl RegularTransactionEssence {
     }
 
     /// Returns the inputs commitment of a [`RegularTransactionEssence`].
-    pub fn inputs_commitment(&self) -> &[u8; 32] {
+    pub fn inputs_commitment(&self) -> &InputsCommitment {
         &self.inputs_commitment
     }
 
@@ -217,13 +217,15 @@ fn verify_payload<const VERIFY: bool>(payload: &OptionalPayload) -> Result<(), E
 #[cfg(feature = "dto")]
 #[allow(missing_docs)]
 pub mod dto {
+    use core::str::FromStr;
+
     use serde::{Deserialize, Serialize};
 
     use super::*;
     use crate::{error::dto::DtoError, input::dto::InputDto, output::dto::OutputDto, payload::dto::PayloadDto};
 
     /// Describes the essence data making up a transaction by defining its inputs and outputs and an optional payload.
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct RegularTransactionEssenceDto {
         #[serde(rename = "type")]
         pub kind: u8,
@@ -243,7 +245,7 @@ pub mod dto {
                 kind: RegularTransactionEssence::KIND,
                 network_id: value.network_id().to_string(),
                 inputs: value.inputs().iter().map(Into::into).collect::<Vec<_>>(),
-                inputs_commitment: prefix_hex::encode(value.inputs_commitment()),
+                inputs_commitment: value.inputs_commitment().to_string(),
                 outputs: value.outputs().iter().map(Into::into).collect::<Vec<_>>(),
                 payload: match value.payload() {
                     Some(Payload::TaggedData(i)) => Some(PayloadDto::TaggedData(Box::new(i.as_ref().into()))),
@@ -274,7 +276,7 @@ pub mod dto {
                     .network_id
                     .parse::<u64>()
                     .map_err(|_| DtoError::InvalidField("networkId"))?,
-                prefix_hex::decode(&value.inputs_commitment).map_err(Error::HexError)?,
+                InputsCommitment::from_str(&value.inputs_commitment)?,
             )
             .with_inputs(inputs)
             .with_outputs(outputs);
