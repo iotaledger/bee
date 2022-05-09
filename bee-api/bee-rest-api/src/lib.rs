@@ -7,9 +7,6 @@
 
 #![cfg_attr(doc_cfg, feature(doc_cfg))]
 
-extern crate axum;
-extern crate bee_message;
-
 #[cfg(feature = "endpoints")]
 pub mod endpoints;
 pub mod types;
