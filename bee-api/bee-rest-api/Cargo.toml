@@ -64,11 +64,11 @@ endpoints = [
   "warp",
 ]
 peer = [ "bee-protocol" ]
-trace = [ 
-  "bee-common/trace", 
-  "bee-gossip/trace", 
-  "bee-protocol/trace", 
-  "bee-tangle/trace", 
-  "trace-tools/tokio-console", 
+trace = [
+  "bee-common/trace",
+  "bee-gossip/trace",
+  "bee-protocol/trace",
+  "bee-tangle/trace",
+  "trace-tools/tokio-console",
   "tracing",
 ]
