@@ -21,6 +21,7 @@ use bee_message::{
 use bee_pow::providers::{miner::MinerBuilder, NonceProviderBuilder};
 use bee_protocol::workers::{MessageSubmitterError, MessageSubmitterWorkerEvent};
 use futures::channel::oneshot;
+use lazy_static::lazy_static;
 use log::error;
 use packable::PackableExt;
 use serde_json::Value;
@@ -29,6 +30,10 @@ use crate::{
     endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode},
     types::responses::SubmitMessageResponse,
 };
+
+lazy_static! {
+    static ref BYTE_CONTENT_TYPE: HeaderValue = HeaderValue::from_str("application/vnd.iota.serializer-v1").unwrap();
+}
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/messages", post(submit_message::<B>))
@@ -40,7 +45,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<Response, ApiError> {
     if let Some(value) = headers.get(axum::http::header::CONTENT_TYPE) {
-        if value.eq(&"application/octet-stream".parse::<HeaderValue>().unwrap()) {
+        if value.eq(&*BYTE_CONTENT_TYPE) {
             submit_message_raw::<B>(bytes.to_vec(), args.clone()).await
         } else {
             submit_message_json::<B>(
