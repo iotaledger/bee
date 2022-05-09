@@ -80,7 +80,7 @@ pub(crate) async fn info<B: StorageBackend>(Extension(args): Extension<ApiArgsFu
             token_supply: TOKEN_SUPPLY.to_string(),
         },
         base_token: BaseTokenResponse {
-            name: "Shimmer".to_string(),
+            name: "Shimmer".to_string(), // TODO: don't hardcode
             ticker_symbol: "SMR".to_string(),
             unit: "SMR".to_string(),
             subunit: Some("glow".to_string()),

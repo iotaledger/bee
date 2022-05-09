@@ -27,20 +27,20 @@ pub(crate) async fn add_peer<B: StorageBackend>(
     Json(value): Json<Value>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
-    let multi_address_json = &value["multiAddress"];
+    let multiaddress_json = &value["multiAddress"];
     let alias_json = &value["alias"];
 
-    let mut multi_address = multi_address_json
+    let mut multiaddress = multiaddress_json
         .as_str()
         .ok_or(ApiError::BadRequest("invalid multiaddress"))?
         .parse::<Multiaddr>()
         .map_err(|_| ApiError::BadRequest("invalid multiaddress"))?;
 
-    let peer_id = match multi_address.pop() {
+    let peer_id = match multiaddress.pop() {
         Some(Protocol::P2p(multihash)) => PeerId::from_multihash(multihash)
             .map_err(|_| ApiError::BadRequest("invalid multiaddress: can not parse peer id"))?,
         _ => {
-            return Err(ApiError::BadRequest("invalid multiaddress: invalid protocol"));
+            return Err(ApiError::BadRequest("invalid multiaddress: can not parse peer id"));
         }
     };
 
@@ -63,7 +63,7 @@ pub(crate) async fn add_peer<B: StorageBackend>(
 
             if let Err(e) = args.network_command_sender.send(AddPeer {
                 peer_id,
-                multiaddr: multi_address.clone(),
+                multiaddr: multiaddress.clone(),
                 alias: alias.clone(),
                 relation: PeerRelation::Known,
             }) {
@@ -74,7 +74,7 @@ pub(crate) async fn add_peer<B: StorageBackend>(
             Ok(Json(AddPeerResponse(PeerDto {
                 id: peer_id.to_string(),
                 alias,
-                multi_addresses: vec![multi_address.to_string()],
+                multi_addresses: vec![multiaddress.to_string()],
                 relation: RelationDto::Known,
                 connected: false,
                 gossip: None,
