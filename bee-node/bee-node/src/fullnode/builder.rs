@@ -395,8 +395,6 @@ fn initialize_api<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> FullNod
         dashboard_username: config.dashboard.auth().user().to_owned(),
     };
 
-    
-
     bee_rest_api::endpoints::init_full_node::<FullNode<S>>(init_config, builder)
 }
 
