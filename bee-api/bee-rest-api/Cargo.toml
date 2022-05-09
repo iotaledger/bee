@@ -29,7 +29,7 @@ bech32 = { version = "0.8.1", default-features = false, optional = true }
 digest = { version = "0.9.0", default-features = false, optional = true }
 futures = { version = "0.3.17", default-features = false, optional = true }
 hex = { version = "0.4.3", default-features = false }
-iota-crypto = { version = "0.9.1", default-features = false, features = [ "blake2b" ], optional = true }
+iota-crypto = { version = "0.10.0", default-features = false, features = [ "blake2b" ], optional = true }
 lazy_static = {version = "1.4.0", default-features = false }
 log = { version = "0.4.14", default-features = false, optional = true }
 multiaddr = { version = "0.13.0", default-features = false }
@@ -64,11 +64,11 @@ endpoints = [
   "warp",
 ]
 peer = [ "bee-protocol" ]
-trace = [ 
-  "bee-common/trace", 
-  "bee-gossip/trace", 
-  "bee-protocol/trace", 
-  "bee-tangle/trace", 
-  "trace-tools/tokio-console", 
+trace = [
+  "bee-common/trace",
+  "bee-gossip/trace",
+  "bee-protocol/trace",
+  "bee-tangle/trace",
+  "trace-tools/tokio-console",
   "tracing",
 ]

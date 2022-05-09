@@ -13,7 +13,7 @@ homepage = "https://www.iota.org"
 [dependencies]
 bee-ternary = { version = "0.6.0", default-features = false }
 
-iota-crypto = { version = "0.9.2", default-features = false, features = [ "blake2b", "digest", "curl-p" ] }
+iota-crypto = { version = "0.10.0", default-features = false, features = [ "blake2b", "digest", "curl-p" ] }
 thiserror = { version = "1.0.30", default-features = false }
 trace-tools = { version = "0.3.0", default-features = false, optional = true }
 tracing = { version = "0.1.29", default-features = false, optional = true }
