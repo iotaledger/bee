@@ -28,7 +28,7 @@ bee-tangle = { version = "0.3.0", path = "../../bee-tangle", default-features = 
 
 async-trait = { version = "0.1.51", default-features = false, optional = true }
 auth-helper = { version = "0.2.0", default-features = false }
-axum = { version = "0.5.4", default-features = false, features = [ "json", "headers" ], optional = true }
+axum = { version = "0.5.4", default-features = false, features = [ "json", "headers", "original-uri" ], optional = true }
 base64 = { version = "0.13.0", default-features = false }
 bech32 = { version = "0.8.1", default-features = false, optional = true }
 digest = { version = "0.9.0", default-features = false, optional = true }

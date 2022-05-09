@@ -12,12 +12,8 @@ use std::{any::TypeId, ops::Deref, sync::Arc};
 
 use async_trait::async_trait;
 use axum::{
-    extract::{extractor_middleware, Extension},
-    handler::Handler,
-    http::StatusCode,
-    response::IntoResponse,
-    routing::get,
-    Router,
+    extract::Extension, handler::Handler, http::StatusCode, middleware::from_extractor, response::IntoResponse,
+    routing::get, Router,
 };
 use bee_gossip::{Keypair, NetworkCommandSender, PeerId};
 use bee_ledger::workers::consensus::{ConsensusWorker, ConsensusWorkerCommand};
@@ -153,7 +149,7 @@ where
 
             let app = Router::new()
                 .merge(filter_all::<N::Backend>())
-                .route_layer(extractor_middleware::<Auth<N::Backend>>())
+                .route_layer(from_extractor::<Auth<N::Backend>>())
                 .layer(Extension(args.clone()))
                 .fallback(fallback.into_service());
 
