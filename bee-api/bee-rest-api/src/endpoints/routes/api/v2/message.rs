@@ -18,11 +18,11 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/messages/:message_id", get(message::<B>))
 }
 
-pub(crate) async fn message<B: StorageBackend>(
+pub(crate) fn message<B: StorageBackend>(
     Path(message_id): Path<MessageId>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
-    match args.tangle.get(&message_id).await.map(|m| (*m).clone()) {
+    match tangle.get(&message_id) {
         Some(message) => Ok(Json(MessageResponse(MessageDto::from(&message)))),
         None => Err(ApiError::NotFound),
     }

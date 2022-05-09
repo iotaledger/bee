@@ -16,11 +16,11 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/messages/:message_id/raw", get(message_raw::<B>))
 }
 
-pub(crate) async fn message_raw<B: StorageBackend>(
+pub(crate) fn message_raw<B: StorageBackend>(
     Path(message_id): Path<MessageId>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
-    match args.tangle.get(&message_id).await.map(|m| (*m).clone()) {
+    match args.tangle.get(&message_id) {
         Some(message) => Ok(message.pack_to_vec()),
         None => Err(ApiError::NotFound),
     }

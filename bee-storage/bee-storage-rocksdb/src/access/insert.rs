@@ -7,13 +7,17 @@ use bee_ledger::types::{
 };
 use bee_message::{
     address::Ed25519Address,
-    milestone::{Milestone, MilestoneIndex},
     output::OutputId,
+    payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
     Message, MessageId,
 };
-use bee_storage::{access::Insert, system::System};
+use bee_storage::{
+    access::{Insert, InsertStrict},
+    system::System,
+};
 use bee_tangle::{
-    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
+    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+    unreferenced_message::UnreferencedMessage,
 };
 use packable::PackableExt;
 
@@ -43,17 +47,21 @@ impl Insert<MessageId, Message> for Storage {
     }
 }
 
-impl Insert<MessageId, MessageMetadata> for Storage {
-    fn insert(
+impl InsertStrict<MessageId, MessageMetadata> for Storage {
+    fn insert_strict(
         &self,
         message_id: &MessageId,
         metadata: &MessageMetadata,
     ) -> Result<(), <Self as StorageBackend>::Error> {
-        self.inner.put_cf(
+        let guard = self.locks.message_id_to_metadata.read();
+
+        self.inner.merge_cf(
             self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?,
             message_id,
             metadata.pack_to_vec(),
         )?;
+
+        drop(guard);
 
         Ok(())
     }
@@ -129,12 +137,28 @@ impl Insert<(), LedgerIndex> for Storage {
     }
 }
 
-impl Insert<MilestoneIndex, Milestone> for Storage {
-    fn insert(&self, index: &MilestoneIndex, milestone: &Milestone) -> Result<(), <Self as StorageBackend>::Error> {
+impl Insert<MilestoneIndex, MilestoneMetadata> for Storage {
+    fn insert(
+        &self,
+        index: &MilestoneIndex,
+        milestone: &MilestoneMetadata,
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner.put_cf(
-            self.cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)?,
+            self.cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE_METADATA)?,
             index.pack_to_vec(),
             milestone.pack_to_vec(),
+        )?;
+
+        Ok(())
+    }
+}
+
+impl Insert<MilestoneId, MilestonePayload> for Storage {
+    fn insert(&self, id: &MilestoneId, payload: &MilestonePayload) -> Result<(), <Self as StorageBackend>::Error> {
+        self.inner.put_cf(
+            self.cf_handle(CF_MILESTONE_ID_TO_MILESTONE_PAYLOAD)?,
+            id.pack_to_vec(),
+            payload.pack_to_vec(),
         )?;
 
         Ok(())

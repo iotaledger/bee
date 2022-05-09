@@ -17,7 +17,7 @@ impl NftAddress {
     /// The [`Address`](crate::address::Address) kind of an NFT address.
     pub const KIND: u8 = 16;
     /// The length of a [`NftAddress`].
-    pub const LENGTH: usize = 20;
+    pub const LENGTH: usize = NftId::LENGTH;
 
     /// Creates a new [`NftAddress`].
     #[inline(always)]
@@ -64,7 +64,7 @@ pub mod dto {
     use crate::error::dto::DtoError;
 
     /// Describes an NFT address.
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct NftAddressDto {
         #[serde(rename = "type")]
         pub kind: u8,

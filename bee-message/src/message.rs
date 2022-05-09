@@ -103,7 +103,7 @@ pub struct Message {
 
 impl Message {
     /// The minimum number of bytes in a message.
-    pub const LENGTH_MIN: usize = 53;
+    pub const LENGTH_MIN: usize = 46;
     /// The maximum number of bytes in a message.
     pub const LENGTH_MAX: usize = 32768;
 
@@ -245,7 +245,7 @@ pub mod dto {
     use crate::{error::dto::DtoError, payload::dto::PayloadDto};
 
     /// The message object that nodes gossip around in the network.
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct MessageDto {
         ///
         #[serde(rename = "protocolVersion")]

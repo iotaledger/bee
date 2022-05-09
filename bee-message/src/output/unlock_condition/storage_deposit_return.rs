@@ -5,7 +5,7 @@ use core::ops::RangeInclusive;
 
 use packable::bounded::BoundedU64;
 
-use crate::{address::Address, constant::IOTA_SUPPLY, Error};
+use crate::{address::Address, constant::TOKEN_SUPPLY, Error};
 
 pub(crate) type StorageDepositAmount = BoundedU64<
     { *StorageDepositReturnUnlockCondition::AMOUNT_RANGE.start() },
@@ -27,7 +27,7 @@ impl StorageDepositReturnUnlockCondition {
     /// The [`UnlockCondition`](crate::output::UnlockCondition) kind of a [`StorageDepositReturnUnlockCondition`].
     pub const KIND: u8 = 1;
     /// Valid amounts for a [`StorageDepositReturnUnlockCondition`].
-    pub const AMOUNT_RANGE: RangeInclusive<u64> = 1..=IOTA_SUPPLY;
+    pub const AMOUNT_RANGE: RangeInclusive<u64> = 1..=TOKEN_SUPPLY;
 
     /// Creates a new [`StorageDepositReturnUnlockCondition`].
     #[inline(always)]
@@ -58,7 +58,7 @@ pub mod dto {
 
     use crate::address::dto::AddressDto;
 
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct StorageDepositReturnUnlockConditionDto {
         #[serde(rename = "type")]
         pub kind: u8,

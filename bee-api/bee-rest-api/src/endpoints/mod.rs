@@ -41,7 +41,7 @@ use crate::endpoints::{auth::Auth, error::ApiError, routes::filter_all};
 
 pub(crate) const CONFIRMED_THRESHOLD: u32 = 5;
 
-pub async fn init_full_node<N: Node>(init_config: InitConfigFullNode, node_builder: N::Builder) -> N::Builder
+pub fn init_full_node<N: Node>(init_config: InitConfigFullNode, node_builder: N::Builder) -> N::Builder
 where
     N::Backend: StorageBackend,
 {

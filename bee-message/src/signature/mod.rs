@@ -46,7 +46,7 @@ pub mod dto {
     use crate::error::dto::DtoError;
 
     /// Describes all the different signature types.
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     #[serde(untagged)]
     pub enum SignatureDto {
         Ed25519(Ed25519SignatureDto),

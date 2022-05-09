@@ -43,7 +43,7 @@ pub mod dto {
     use serde::{Deserialize, Serialize};
 
     /// Points to the unlock block of a consumed NFT output.
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct NftUnlockBlockDto {
         #[serde(rename = "type")]
         pub kind: u8,

@@ -5,10 +5,9 @@ use std::any::TypeId;
 
 use async_trait::async_trait;
 use bee_message::{
-    milestone::MilestoneIndex,
     output::{unlock_condition::AddressUnlockCondition, BasicOutput, Output, OutputId},
     payload::{
-        milestone::{MilestoneId, ReceiptMilestoneOption},
+        milestone::{MilestoneId, MilestoneIndex, ReceiptMilestoneOption},
         transaction::TransactionId,
         Payload,
     },
@@ -55,7 +54,7 @@ pub struct ConsensusWorker {
     pub tx: mpsc::UnboundedSender<ConsensusWorkerCommand>,
 }
 
-pub(crate) async fn migration_from_milestone(
+pub(crate) fn migration_from_milestone(
     milestone_index: MilestoneIndex,
     milestone_id: MilestoneId,
     receipt: &ReceiptMilestoneOption,
@@ -83,7 +82,6 @@ where
 {
     let message = tangle
         .get(&message_id)
-        .await
         .ok_or(Error::MilestoneMessageNotFound(message_id))?;
 
     let milestone = match message.payload() {
@@ -106,19 +104,19 @@ where
 
     white_flag(tangle, storage, message.parents(), &mut metadata).await?;
 
-    if metadata.confirmed_merkle_proof != milestone.essence().confirmed_merkle_proof() {
-        return Err(Error::ConfirmedMerkleProofMismatch(
+    if metadata.confirmed_merkle_root != milestone.essence().confirmed_merkle_root() {
+        return Err(Error::ConfirmedMerkleRootMismatch(
             milestone.essence().index(),
-            prefix_hex::encode(metadata.confirmed_merkle_proof),
-            prefix_hex::encode(milestone.essence().confirmed_merkle_proof()),
+            prefix_hex::encode(metadata.confirmed_merkle_root),
+            prefix_hex::encode(milestone.essence().confirmed_merkle_root()),
         ));
     }
 
-    if metadata.applied_merkle_proof != milestone.essence().applied_merkle_proof() {
-        return Err(Error::AppliedMerkleProofMismatch(
+    if metadata.applied_merkle_root != milestone.essence().applied_merkle_root() {
+        return Err(Error::AppliedMerkleRootMismatch(
             milestone.essence().index(),
-            prefix_hex::encode(metadata.applied_merkle_proof),
-            prefix_hex::encode(milestone.essence().applied_merkle_proof()),
+            prefix_hex::encode(metadata.applied_merkle_root),
+            prefix_hex::encode(milestone.essence().applied_merkle_root()),
         ));
     }
 
@@ -159,15 +157,12 @@ where
             *receipt_migrated_at = *receipt_migrated_at + 1;
         }
 
-        Some(
-            migration_from_milestone(
-                milestone.essence().index(),
-                milestone_id,
-                receipt,
-                storage::fetch_unspent_treasury_output(storage)?,
-            )
-            .await?,
-        )
+        Some(migration_from_milestone(
+            milestone.essence().index(),
+            milestone_id,
+            receipt,
+            storage::fetch_unspent_treasury_output(storage)?,
+        )?)
     } else {
         None
     };
@@ -184,36 +179,30 @@ where
     tangle.update_confirmed_milestone_index(milestone.essence().index());
 
     for message_id in metadata.excluded_no_transaction_messages.iter() {
-        tangle
-            .update_metadata(message_id, |message_metadata| {
-                message_metadata.set_conflict(ConflictReason::None);
-                message_metadata.reference(milestone.essence().timestamp());
-            })
-            .await;
+        tangle.update_metadata(message_id, |message_metadata| {
+            message_metadata.set_conflict(ConflictReason::None);
+            message_metadata.reference(milestone.essence().timestamp());
+        });
         bus.dispatch(MessageReferenced {
             message_id: *message_id,
         });
     }
 
     for (message_id, conflict) in metadata.excluded_conflicting_messages.iter() {
-        tangle
-            .update_metadata(message_id, |message_metadata| {
-                message_metadata.set_conflict(*conflict);
-                message_metadata.reference(milestone.essence().timestamp());
-            })
-            .await;
+        tangle.update_metadata(message_id, |message_metadata| {
+            message_metadata.set_conflict(*conflict);
+            message_metadata.reference(milestone.essence().timestamp());
+        });
         bus.dispatch(MessageReferenced {
             message_id: *message_id,
         });
     }
 
     for message_id in metadata.included_messages.iter() {
-        tangle
-            .update_metadata(message_id, |message_metadata| {
-                message_metadata.set_conflict(ConflictReason::None);
-                message_metadata.reference(milestone.essence().timestamp());
-            })
-            .await;
+        tangle.update_metadata(message_id, |message_metadata| {
+            message_metadata.set_conflict(ConflictReason::None);
+            message_metadata.reference(milestone.essence().timestamp());
+        });
         bus.dispatch(MessageReferenced {
             message_id: *message_id,
         });

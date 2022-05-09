@@ -8,13 +8,14 @@ use bee_ledger::types::{
 };
 use bee_message::{
     address::Ed25519Address,
-    milestone::{Milestone, MilestoneIndex},
     output::OutputId,
+    payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
     Message, MessageId,
 };
 use bee_storage::{access::Fetch, backend::StorageBackend, system::System};
 use bee_tangle::{
-    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
+    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+    unreferenced_message::UnreferencedMessage,
 };
 use packable::PackableExt;
 
@@ -124,14 +125,25 @@ impl Fetch<(), LedgerIndex> for Storage {
     }
 }
 
-impl Fetch<MilestoneIndex, Milestone> for Storage {
-    fn fetch(&self, index: &MilestoneIndex) -> Result<Option<Milestone>, <Self as StorageBackend>::Error> {
+impl Fetch<MilestoneIndex, MilestoneMetadata> for Storage {
+    fn fetch(&self, index: &MilestoneIndex) -> Result<Option<MilestoneMetadata>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .open_tree(TREE_MILESTONE_INDEX_TO_MILESTONE)?
+            .open_tree(TREE_MILESTONE_INDEX_TO_MILESTONE_METADATA)?
             .get(index.pack_to_vec())?
             // Unpacking from storage is fine.
-            .map(|v| Milestone::unpack_unverified(&mut v.as_ref()).unwrap()))
+            .map(|v| MilestoneMetadata::unpack_unverified(&mut v.as_ref()).unwrap()))
+    }
+}
+
+impl Fetch<MilestoneId, MilestonePayload> for Storage {
+    fn fetch(&self, id: &MilestoneId) -> Result<Option<MilestonePayload>, <Self as StorageBackend>::Error> {
+        Ok(self
+            .inner
+            .open_tree(TREE_MILESTONE_ID_TO_MILESTONE_PAYLOAD)?
+            .get(id.pack_to_vec())?
+            // Unpacking from storage is fine.
+            .map(|v| MilestonePayload::unpack_unverified(&mut v.as_ref()).unwrap()))
     }
 }
 

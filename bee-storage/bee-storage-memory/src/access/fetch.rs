@@ -8,13 +8,14 @@ use bee_ledger::types::{
 };
 use bee_message::{
     address::Ed25519Address,
-    milestone::{Milestone, MilestoneIndex},
     output::OutputId,
+    payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
     Message, MessageId,
 };
 use bee_storage::{access::Fetch, backend::StorageBackend, system::System};
 use bee_tangle::{
-    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
+    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+    unreferenced_message::UnreferencedMessage,
 };
 
 use crate::storage::Storage;
@@ -37,7 +38,8 @@ impl_fetch!(OutputId, CreatedOutput, output_id_to_created_output);
 impl_fetch!(OutputId, ConsumedOutput, output_id_to_consumed_output);
 impl_fetch!(Ed25519Address, Vec<OutputId>, ed25519_address_to_output_id);
 impl_fetch!((), LedgerIndex, ledger_index);
-impl_fetch!(MilestoneIndex, Milestone, milestone_index_to_milestone);
+impl_fetch!(MilestoneIndex, MilestoneMetadata, milestone_index_to_milestone_metadata);
+impl_fetch!(MilestoneId, MilestonePayload, milestone_id_to_milestone_payload);
 impl_fetch!((), SnapshotInfo, snapshot_info);
 impl_fetch!(SolidEntryPoint, MilestoneIndex, solid_entry_point_to_milestone_index);
 impl_fetch!(MilestoneIndex, OutputDiff, milestone_index_to_output_diff);

@@ -11,8 +11,8 @@ pub mod message;
 pub mod message_children;
 pub mod message_metadata;
 pub mod message_raw;
-pub mod milestone;
-pub mod milestone_utxo_changes;
+pub mod milestone_by_milestone_id;
+pub mod milestone_by_milestone_index;
 pub mod output;
 pub mod peer;
 pub mod peers;
@@ -23,6 +23,8 @@ pub mod submit_message;
 pub mod tips;
 pub mod transaction_included_message;
 pub mod treasury;
+pub mod utxo_changes_by_milestone_id;
+pub mod utxo_changes_by_milestone_index;
 
 pub(crate) const MAX_RESPONSE_RESULTS: usize = 1000;
 

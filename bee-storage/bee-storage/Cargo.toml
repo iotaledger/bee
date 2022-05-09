@@ -1,6 +1,6 @@
 [package]
 name = "bee-storage"
-version = "0.9.0"
+version = "0.12.0"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "A general purpose storage backend crate with key value abstraction API"
@@ -17,6 +17,6 @@ all-features = true
 rustdoc-args = [ "--cfg", "doc_cfg" ]
 
 [dependencies]
-packable = { version = "0.3.1", default-features = false, features = [ "serde" ] }
+packable = { version = "0.3.2", default-features = false, features = [ "serde" ] }
 serde = { version = "1.0.130", features = [ "derive" ], default-features = false }
 thiserror = { version = "1.0.30", default-features = false }

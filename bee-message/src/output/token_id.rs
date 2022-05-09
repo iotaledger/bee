@@ -10,7 +10,7 @@ impl_id!(pub TokenTag, 12, "TODO.");
 #[cfg(feature = "serde")]
 string_serde_impl!(TokenTag);
 
-impl_id!(pub TokenId, 38, "TODO.");
+impl_id!(pub TokenId, 50, "TODO.");
 
 #[cfg(feature = "serde")]
 string_serde_impl!(TokenId);
@@ -49,7 +49,7 @@ pub mod dto {
     use super::*;
     use crate::error::dto::DtoError;
 
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct TokenTagDto(pub String);
 
     impl From<&TokenTag> for TokenTagDto {
@@ -70,7 +70,7 @@ pub mod dto {
     }
 
     /// Describes a token id.
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct TokenIdDto(pub String);
 
     impl From<&TokenId> for TokenIdDto {

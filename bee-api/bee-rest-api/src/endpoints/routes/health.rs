@@ -19,7 +19,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/health", get(health::<B>))
 }
 
-pub(crate) async fn health<B: StorageBackend>(
+pub(crate) fn health<B: StorageBackend>(
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, Infallible> {
     if is_healthy(&args.tangle, &args.peer_manager).await {
@@ -29,7 +29,7 @@ pub(crate) async fn health<B: StorageBackend>(
     }
 }
 
-pub async fn is_healthy<B: StorageBackend>(tangle: &Tangle<B>, peer_manager: &PeerManager) -> bool {
+pub fn is_healthy<B: StorageBackend>(tangle: &Tangle<B>, peer_manager: &PeerManager) -> bool {
     if !tangle.is_confirmed_threshold(HEALTH_CONFIRMED_THRESHOLD) {
         return false;
     }
@@ -38,7 +38,7 @@ pub async fn is_healthy<B: StorageBackend>(tangle: &Tangle<B>, peer_manager: &Pe
         return false;
     }
 
-    match tangle.get_milestone(tangle.get_latest_milestone_index()).await {
+    match tangle.get_milestone_metadata(tangle.get_latest_milestone_index()) {
         Some(milestone) => {
             (SystemTime::now()
                 .duration_since(UNIX_EPOCH)

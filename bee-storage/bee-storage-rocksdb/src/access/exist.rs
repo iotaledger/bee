@@ -7,13 +7,14 @@ use bee_ledger::types::{
 };
 use bee_message::{
     address::Ed25519Address,
-    milestone::{Milestone, MilestoneIndex},
     output::OutputId,
+    payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
     Message, MessageId,
 };
 use bee_storage::access::Exist;
 use bee_tangle::{
-    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
+    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+    unreferenced_message::UnreferencedMessage,
 };
 use packable::PackableExt;
 
@@ -26,17 +27,23 @@ impl Exist<MessageId, Message> for Storage {
     fn exist(&self, message_id: &MessageId) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .get_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?, message_id)?
+            .get_pinned_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?, message_id)?
             .is_some())
     }
 }
 
 impl Exist<MessageId, MessageMetadata> for Storage {
     fn exist(&self, message_id: &MessageId) -> Result<bool, <Self as StorageBackend>::Error> {
-        Ok(self
+        let guard = self.locks.message_id_to_metadata.read();
+
+        let exists = self
             .inner
-            .get_cf(self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?, message_id)?
-            .is_some())
+            .get_pinned_cf(self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?, message_id)?
+            .is_some();
+
+        drop(guard);
+
+        Ok(exists)
     }
 }
 
@@ -47,7 +54,7 @@ impl Exist<(MessageId, MessageId), ()> for Storage {
 
         Ok(self
             .inner
-            .get_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE_ID)?, key)?
+            .get_pinned_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE_ID)?, key)?
             .is_some())
     }
 }
@@ -56,7 +63,7 @@ impl Exist<OutputId, CreatedOutput> for Storage {
     fn exist(&self, output_id: &OutputId) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .get_cf(self.cf_handle(CF_OUTPUT_ID_TO_CREATED_OUTPUT)?, output_id.pack_to_vec())?
+            .get_pinned_cf(self.cf_handle(CF_OUTPUT_ID_TO_CREATED_OUTPUT)?, output_id.pack_to_vec())?
             .is_some())
     }
 }
@@ -65,7 +72,7 @@ impl Exist<OutputId, ConsumedOutput> for Storage {
     fn exist(&self, output_id: &OutputId) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .get_cf(
+            .get_pinned_cf(
                 self.cf_handle(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT)?,
                 output_id.pack_to_vec(),
             )?
@@ -77,7 +84,7 @@ impl Exist<Unspent, ()> for Storage {
     fn exist(&self, unspent: &Unspent) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .get_cf(self.cf_handle(CF_OUTPUT_ID_UNSPENT)?, unspent.pack_to_vec())?
+            .get_pinned_cf(self.cf_handle(CF_OUTPUT_ID_UNSPENT)?, unspent.pack_to_vec())?
             .is_some())
     }
 }
@@ -92,22 +99,37 @@ impl Exist<(Ed25519Address, OutputId), ()> for Storage {
 
         Ok(self
             .inner
-            .get_cf(self.cf_handle(CF_ED25519_ADDRESS_TO_OUTPUT_ID)?, key)?
+            .get_pinned_cf(self.cf_handle(CF_ED25519_ADDRESS_TO_OUTPUT_ID)?, key)?
             .is_some())
     }
 }
 
 impl Exist<(), LedgerIndex> for Storage {
     fn exist(&self, (): &()) -> Result<bool, <Self as StorageBackend>::Error> {
-        Ok(self.inner.get_cf(self.cf_handle(CF_LEDGER_INDEX)?, [0x00u8])?.is_some())
+        Ok(self
+            .inner
+            .get_pinned_cf(self.cf_handle(CF_LEDGER_INDEX)?, [0x00u8])?
+            .is_some())
     }
 }
 
-impl Exist<MilestoneIndex, Milestone> for Storage {
+impl Exist<MilestoneIndex, MilestoneMetadata> for Storage {
     fn exist(&self, index: &MilestoneIndex) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .get_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)?, index.pack_to_vec())?
+            .get_pinned_cf(
+                self.cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE_METADATA)?,
+                index.pack_to_vec(),
+            )?
+            .is_some())
+    }
+}
+
+impl Exist<MilestoneId, MilestonePayload> for Storage {
+    fn exist(&self, id: &MilestoneId) -> Result<bool, <Self as StorageBackend>::Error> {
+        Ok(self
+            .inner
+            .get_pinned_cf(self.cf_handle(CF_MILESTONE_ID_TO_MILESTONE_PAYLOAD)?, id.pack_to_vec())?
             .is_some())
     }
 }
@@ -116,7 +138,7 @@ impl Exist<(), SnapshotInfo> for Storage {
     fn exist(&self, (): &()) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .get_cf(self.cf_handle(CF_SNAPSHOT_INFO)?, [0x00u8])?
+            .get_pinned_cf(self.cf_handle(CF_SNAPSHOT_INFO)?, [0x00u8])?
             .is_some())
     }
 }
@@ -125,7 +147,7 @@ impl Exist<SolidEntryPoint, MilestoneIndex> for Storage {
     fn exist(&self, sep: &SolidEntryPoint) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .get_cf(
+            .get_pinned_cf(
                 self.cf_handle(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)?,
                 sep.pack_to_vec(),
             )?
@@ -137,7 +159,7 @@ impl Exist<MilestoneIndex, OutputDiff> for Storage {
     fn exist(&self, index: &MilestoneIndex) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .get_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF)?, index.pack_to_vec())?
+            .get_pinned_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF)?, index.pack_to_vec())?
             .is_some())
     }
 }
@@ -152,7 +174,7 @@ impl Exist<(MilestoneIndex, UnreferencedMessage), ()> for Storage {
 
         Ok(self
             .inner
-            .get_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE)?, key)?
+            .get_pinned_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE)?, key)?
             .is_some())
     }
 }
@@ -164,7 +186,7 @@ impl Exist<(MilestoneIndex, Receipt), ()> for Storage {
 
         Ok(self
             .inner
-            .get_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_RECEIPT)?, key)?
+            .get_pinned_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_RECEIPT)?, key)?
             .is_some())
     }
 }
@@ -176,7 +198,7 @@ impl Exist<(bool, TreasuryOutput), ()> for Storage {
 
         Ok(self
             .inner
-            .get_cf(self.cf_handle(CF_SPENT_TO_TREASURY_OUTPUT)?, key)?
+            .get_pinned_cf(self.cf_handle(CF_SPENT_TO_TREASURY_OUTPUT)?, key)?
             .is_some())
     }
 }

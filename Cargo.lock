@@ -361,7 +361,7 @@ dependencies = [
 
 [[package]]
 name = "bee-node"
-version = "1.0.0-alpha.3"
+version = "1.0.0-alpha.4"
 dependencies = [
  "anymap",
  "async-trait",
@@ -475,7 +475,7 @@ dependencies = [
 name = "bee-pow"
 version = "0.2.0"
 dependencies = [
- "bee-ternary 0.5.2",
+ "bee-ternary 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "bee-test",
  "iota-crypto",
  "thiserror",
@@ -561,7 +561,7 @@ dependencies = [
 
 [[package]]
 name = "bee-storage"
-version = "0.9.0"
+version = "0.12.0"
 dependencies = [
  "packable",
  "serde",
@@ -570,7 +570,7 @@ dependencies = [
 
 [[package]]
 name = "bee-storage-memory"
-version = "0.1.0"
+version = "0.4.0"
 dependencies = [
  "bee-ledger",
  "bee-message",
@@ -584,14 +584,14 @@ dependencies = [
 
 [[package]]
 name = "bee-storage-null"
-version = "0.1.0"
+version = "0.3.0"
 dependencies = [
  "bee-storage",
 ]
 
 [[package]]
 name = "bee-storage-rocksdb"
-version = "0.5.0"
+version = "0.8.0"
 dependencies = [
  "bee-ledger",
  "bee-message",
@@ -601,6 +601,7 @@ dependencies = [
  "bee-test",
  "num_cpus",
  "packable",
+ "parking_lot 0.12.0",
  "rocksdb",
  "serde",
  "thiserror",
@@ -608,7 +609,7 @@ dependencies = [
 
 [[package]]
 name = "bee-storage-sled"
-version = "0.4.0"
+version = "0.7.0"
 dependencies = [
  "bee-ledger",
  "bee-message",
@@ -625,7 +626,7 @@ dependencies = [
 
 [[package]]
 name = "bee-storage-test"
-version = "0.3.0"
+version = "0.6.0"
 dependencies = [
  "bee-ledger",
  "bee-message",
@@ -657,16 +658,6 @@ dependencies = [
  "thiserror",
  "tokio",
  "tokio-stream",
-]
-
-[[package]]
-name = "bee-ternary"
-version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e8479555c8e9bf3cad36daf16e6a2f77771774e977276a08df4d8ac5f1dda66"
-dependencies = [
- "autocfg",
- "num-traits",
 ]
 
 [[package]]
@@ -1924,11 +1915,11 @@ dependencies = [
 
 [[package]]
 name = "iota-crypto"
-version = "0.9.1"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8c98a3248cde6b42cb479a52089fe4fc20d12de51b8edd923294cd5240ec89b0"
+checksum = "1689fd8524d3516d499a94267f593ba9c984e31762a278ef66ce60d6621d16ff"
 dependencies = [
- "bee-ternary 0.5.2",
+ "bee-ternary 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "blake2",
  "digest 0.9.0",
  "ed25519-zebra",
@@ -2768,9 +2759,9 @@ dependencies = [
 
 [[package]]
 name = "packable"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7dc9526643ad02793553407dbbea8924e467e48670c5e04eddd5051435a2b4c"
+checksum = "a47762ff3c7cbf55a5b822ce505b97bbcf1617be780f71c3ee43c272dd4a1867"
 dependencies = [
  "autocfg",
  "packable-derive",
@@ -2780,9 +2771,9 @@ dependencies = [
 
 [[package]]
 name = "packable-derive"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a920d9686d0f165c5749e60d7ff1dfbfd470feabdd311d3c52f5e471dac8432"
+checksum = "f2ec4d652900dcba58871e8f421111f1459bee2d40fe0bb43df07008b17598b0"
 dependencies = [
  "proc-macro-crate",
  "proc-macro-error",

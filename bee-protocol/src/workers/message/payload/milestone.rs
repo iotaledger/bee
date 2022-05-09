@@ -1,11 +1,10 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::{any::TypeId, convert::Infallible};
+use std::{any::TypeId, convert::Infallible, ops::Deref};
 
 use async_trait::async_trait;
 use bee_message::{
-    milestone::Milestone,
     payload::{
         milestone::{MilestonePayload, MilestoneValidationError},
         Payload,
@@ -13,7 +12,7 @@ use bee_message::{
     Message, MessageId,
 };
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{event::LatestMilestoneChanged, MessageRef, Tangle, TangleWorker};
+use bee_tangle::{event::LatestMilestoneChanged, milestone_metadata::MilestoneMetadata, Tangle, TangleWorker};
 use futures::{future::FutureExt, stream::StreamExt};
 use log::{debug, error, info};
 use tokio::sync::mpsc;
@@ -36,7 +35,7 @@ pub(crate) enum Error {
 
 pub(crate) struct MilestonePayloadWorkerEvent {
     pub(crate) message_id: MessageId,
-    pub(crate) message: MessageRef,
+    pub(crate) message: Message,
 }
 
 pub(crate) struct MilestonePayloadWorker {
@@ -48,7 +47,7 @@ fn validate(
     message: &Message,
     milestone: &MilestonePayload,
     key_manager: &MilestoneKeyManager,
-) -> Result<Milestone, Error> {
+) -> Result<MilestoneMetadata, Error> {
     if !message.parents().eq(milestone.essence().parents()) {
         return Err(Error::MessageMilestoneParentsMismatch);
     }
@@ -63,14 +62,18 @@ fn validate(
         )
         .map_err(Error::InvalidMilestone)?;
 
-    Ok(Milestone::new(message_id, milestone.essence().timestamp()))
+    Ok(MilestoneMetadata::new(
+        message_id,
+        milestone.id(),
+        milestone.essence().timestamp(),
+    ))
 }
 
 #[allow(clippy::too_many_arguments)]
-async fn process<B: StorageBackend>(
+fn process<B: StorageBackend>(
     tangle: &Tangle<B>,
     message_id: MessageId,
-    message: MessageRef,
+    message: Message,
     peer_manager: &PeerManager,
     metrics: &NodeMetrics,
     requested_milestones: &RequestedMilestones,
@@ -78,27 +81,30 @@ async fn process<B: StorageBackend>(
     key_manager: &MilestoneKeyManager,
     bus: &Bus<'static>,
 ) {
-    if let Some(Payload::Milestone(milestone)) = message.payload() {
+    if let Some(Payload::Milestone(milestone_payload)) = message.payload() {
         metrics.milestone_payloads_inc(1);
 
-        let index = milestone.essence().index();
+        let index = milestone_payload.essence().index();
 
         if index <= tangle.get_solid_milestone_index() {
             return;
         }
 
-        match validate(message_id, &message, milestone, key_manager) {
-            Ok(milestone) => {
-                tangle.add_milestone(index, milestone.clone()).await;
+        match validate(message_id, &message, milestone_payload, key_manager) {
+            Ok(milestone_metadata) => {
+                tangle.add_milestone(index, milestone_metadata.clone(), milestone_payload.deref().clone());
                 if index > tangle.get_latest_milestone_index() {
-                    info!("New milestone {} {}.", index, milestone.message_id());
+                    info!("New milestone {} {}.", index, milestone_metadata.message_id());
                     tangle.update_latest_milestone_index(index);
 
                     broadcast_heartbeat(tangle, peer_manager, metrics);
 
-                    bus.dispatch(LatestMilestoneChanged { index, milestone });
+                    bus.dispatch(LatestMilestoneChanged {
+                        index,
+                        milestone: milestone_metadata,
+                    });
                 } else {
-                    debug!("New milestone {} {}.", *index, milestone.message_id());
+                    debug!("New milestone {} {}.", *index, milestone_metadata.message_id());
                 }
 
                 requested_milestones.remove(&index);
@@ -165,8 +171,7 @@ where
                     &milestone_solidifier,
                     &key_manager,
                     &bus,
-                )
-                .await;
+                );
             }
 
             // Before the worker completely stops, the receiver needs to be drained for milestone payloads to be
@@ -186,8 +191,7 @@ where
                     &milestone_solidifier,
                     &key_manager,
                     &bus,
-                )
-                .await;
+                );
                 count += 1;
             }
 

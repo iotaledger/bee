@@ -3,7 +3,7 @@
 
 use crate::output::OutputId;
 
-impl_id!(pub AliasId, 20, "TODO.");
+impl_id!(pub AliasId, 32, "TODO.");
 
 #[cfg(feature = "serde")]
 string_serde_impl!(AliasId);
@@ -29,7 +29,7 @@ pub mod dto {
     use super::*;
     use crate::error::dto::DtoError;
 
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct AliasIdDto(pub String);
 
     impl From<&AliasId> for AliasIdDto {

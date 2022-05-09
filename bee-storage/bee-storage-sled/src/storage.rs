@@ -27,7 +27,7 @@ pub enum Error {
     UnhealthyStorage(StorageHealth),
 }
 
-pub(crate) const STORAGE_VERSION: StorageVersion = StorageVersion(0);
+pub(crate) const STORAGE_VERSION: StorageVersion = StorageVersion(1);
 
 /// The sled database.
 pub struct Storage {

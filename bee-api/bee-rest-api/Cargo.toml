@@ -23,7 +23,7 @@ bee-message = { version = "0.2.0", path = "../../bee-message", default-features 
 bee-pow = { version = "0.2.0", path = "../../bee-pow", default-features = false }
 bee-protocol = { version = "0.2.2", path = "../../bee-protocol", default-features = false, optional = true }
 bee-runtime = { version = "0.1.1-alpha", path = "../../bee-runtime", default-features = false, optional = true  }
-bee-storage = { version = "0.9.0", path = "../../bee-storage/bee-storage", default-features = false, optional = true }
+bee-storage = { version = "0.12.0", path = "../../bee-storage/bee-storage", default-features = false, optional = true }
 bee-tangle = { version = "0.3.0", path = "../../bee-tangle", default-features = false, optional = true }
 
 async-trait = { version = "0.1.51", default-features = false, optional = true }
@@ -33,12 +33,12 @@ base64 = { version = "0.13.0", default-features = false}
 bech32 = { version = "0.8.1", default-features = false, optional = true }
 digest = { version = "0.9.0", default-features = false, optional = true }
 futures = { version = "0.3.17", default-features = false, optional = true }
-iota-crypto = { version = "0.9.1", default-features = false, features = [ "blake2b" ], optional = true }
+iota-crypto = { version = "0.10.0", default-features = false, features = [ "blake2b" ], optional = true }
 lazy_static = {version = "1.4.0", default-features = false }
 log = { version = "0.4.14", default-features = false, optional = true }
 multiaddr = { version = "0.13.0", default-features = false }
 num_cpus = { version = "1.13.0", default-features = false, optional = true }
-packable = { version = "0.3.1", default-features = false }
+packable = { version = "0.3.2", default-features = false }
 prefix-hex = { version = "0.2.0", default-features = false }
 primitive-types = { version = "0.10.1", default-features = false, features = [ "serde" ] }
 regex = { version = "1.5.4", default-features = false }

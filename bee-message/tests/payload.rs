@@ -6,10 +6,9 @@ use core::str::FromStr;
 use bee_message::{
     address::{Address, Ed25519Address},
     input::{Input, TreasuryInput, UtxoInput},
-    milestone::MilestoneIndex,
     output::{unlock_condition::AddressUnlockCondition, BasicOutput, Output, TreasuryOutput},
     payload::{
-        milestone::{option::MilestoneOptions, MilestoneEssence, MilestonePayload},
+        milestone::{option::MilestoneOptions, MilestoneEssence, MilestoneIndex, MilestonePayload},
         transaction::{RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayload},
         Payload, TaggedDataPayload, TreasuryTransactionPayload,
     },
@@ -17,9 +16,7 @@ use bee_message::{
     unlock_block::{ReferenceUnlockBlock, SignatureUnlockBlock, UnlockBlock, UnlockBlocks},
 };
 use bee_test::rand::{
-    bytes::{rand_bytes, rand_bytes_array},
-    milestone::rand_milestone_id,
-    parents::rand_parents,
+    bytes::rand_bytes, milestone::rand_milestone_id, output::rand_inputs_commitment, parents::rand_parents,
 };
 use packable::PackableExt;
 
@@ -45,7 +42,7 @@ fn transaction() {
             .unwrap(),
     );
     let essence = TransactionEssence::Regular(
-        RegularTransactionEssence::builder(0, rand_bytes_array())
+        RegularTransactionEssence::builder(0, rand_inputs_commitment())
             .with_inputs(vec![input1, input2])
             .add_output(output)
             .finish()
@@ -78,8 +75,8 @@ fn milestone() {
             0,
             rand_milestone_id(),
             rand_parents(),
-            [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
-            [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
+            [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
+            [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
             vec![],
             MilestoneOptions::new(vec![]).unwrap(),
         )

@@ -3,7 +3,7 @@
 
 use std::{io::Read, path::Path};
 
-use bee_message::milestone::MilestoneIndex;
+use bee_message::payload::milestone::MilestoneIndex;
 use bytes::Buf;
 use futures::{future::join_all, StreamExt};
 use log::{debug, info, warn};

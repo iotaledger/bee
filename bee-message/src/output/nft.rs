@@ -194,6 +194,11 @@ impl NftOutputBuilder {
 
         Ok(output)
     }
+
+    /// Finishes the [`NftOutputBuilder`] into an [`Output`].
+    pub fn finish_output(self) -> Result<Output, Error> {
+        Ok(Output::Nft(self.finish()?))
+    }
 }
 
 impl From<&NftOutput> for NftOutputBuilder {
@@ -462,23 +467,23 @@ pub mod dto {
     };
 
     /// Describes an NFT output, a globally unique token with metadata attached.
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct NftOutputDto {
         #[serde(rename = "type")]
         pub kind: u8,
         // Amount of IOTA tokens held by the output.
         pub amount: String,
         // Native tokens held by the output.
-        #[serde(rename = "nativeTokens")]
+        #[serde(rename = "nativeTokens", skip_serializing_if = "Vec::is_empty", default)]
         pub native_tokens: Vec<NativeTokenDto>,
         // Unique identifier of the NFT.
         #[serde(rename = "nftId")]
         pub nft_id: NftIdDto,
         #[serde(rename = "unlockConditions")]
         pub unlock_conditions: Vec<UnlockConditionDto>,
-        #[serde(rename = "featureBlocks")]
+        #[serde(rename = "featureBlocks", skip_serializing_if = "Vec::is_empty", default)]
         pub feature_blocks: Vec<FeatureBlockDto>,
-        #[serde(rename = "immutableFeatureBlocks")]
+        #[serde(rename = "immutableFeatureBlocks", skip_serializing_if = "Vec::is_empty", default)]
         pub immutable_feature_blocks: Vec<FeatureBlockDto>,
     }
 
@@ -511,12 +516,15 @@ pub mod dto {
             for t in &value.native_tokens {
                 builder = builder.add_native_token(t.try_into()?);
             }
+
             for b in &value.unlock_conditions {
                 builder = builder.add_unlock_condition(b.try_into()?);
             }
+
             for b in &value.feature_blocks {
                 builder = builder.add_feature_block(b.try_into()?);
             }
+
             for b in &value.immutable_feature_blocks {
                 builder = builder.add_immutable_feature_block(b.try_into()?);
             }

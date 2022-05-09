@@ -3,7 +3,7 @@
 
 use core::mem::size_of;
 
-use crate::{milestone::MilestoneIndex, output::OutputId, MessageId};
+use crate::{output::OutputId, payload::milestone::MilestoneIndex, MessageId};
 
 const DEFAULT_BYTE_COST: u64 = 500;
 const DEFAULT_BYTE_COST_FACTOR_KEY: u64 = 10;

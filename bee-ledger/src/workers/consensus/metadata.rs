@@ -4,7 +4,10 @@
 use std::collections::HashMap;
 
 use bee_message::{
-    milestone::MilestoneIndex, output::OutputId, payload::milestone::MilestoneId, semantic::ConflictReason, MessageId,
+    output::OutputId,
+    payload::milestone::{MilestoneId, MilestoneIndex},
+    semantic::ConflictReason,
+    MessageId,
 };
 
 use crate::types::{ConsumedOutput, CreatedOutput};
@@ -31,10 +34,10 @@ pub struct WhiteFlagMetadata {
     pub(crate) created_outputs: HashMap<OutputId, CreatedOutput>,
     /// The outputs consumed within the confirmed milestone.
     pub(crate) consumed_outputs: HashMap<OutputId, (CreatedOutput, ConsumedOutput)>,
-    /// The confirmed merkle proof of the milestone.
-    pub(crate) confirmed_merkle_proof: Vec<u8>,
-    /// The applied merkle proof of the milestone.
-    pub(crate) applied_merkle_proof: Vec<u8>,
+    /// The confirmed merkle root of the milestone.
+    pub(crate) confirmed_merkle_root: Vec<u8>,
+    /// The applied merkle root of the milestone.
+    pub(crate) applied_merkle_root: Vec<u8>,
 }
 
 impl WhiteFlagMetadata {
@@ -55,18 +58,18 @@ impl WhiteFlagMetadata {
             included_messages: Vec::new(),
             created_outputs: HashMap::new(),
             consumed_outputs: HashMap::new(),
-            confirmed_merkle_proof: Vec::new(),
-            applied_merkle_proof: Vec::new(),
+            confirmed_merkle_root: Vec::new(),
+            applied_merkle_root: Vec::new(),
         }
     }
 
-    /// Returns the confirmed merkle proof of a [`WhiteFlagMetadata`].
-    pub fn confirmed_merkle_proof(&self) -> &[u8] {
-        &self.confirmed_merkle_proof
+    /// Returns the confirmed merkle root of a [`WhiteFlagMetadata`].
+    pub fn confirmed_merkle_root(&self) -> &[u8] {
+        &self.confirmed_merkle_root
     }
 
-    /// Returns the applied merkle proof of a [`WhiteFlagMetadata`].
-    pub fn applied_merkle_proof(&self) -> &[u8] {
-        &self.applied_merkle_proof
+    /// Returns the applied merkle root of a [`WhiteFlagMetadata`].
+    pub fn applied_merkle_root(&self) -> &[u8] {
+        &self.applied_merkle_root
     }
 }

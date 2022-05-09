@@ -59,7 +59,7 @@ pub mod dto {
     use crate::error::dto::DtoError;
 
     /// Describes an input which references an unspent treasury output to consume.
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct TreasuryInputDto {
         #[serde(rename = "type")]
         pub kind: u8,

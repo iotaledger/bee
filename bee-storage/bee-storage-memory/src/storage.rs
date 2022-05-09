@@ -10,17 +10,18 @@ use bee_ledger::types::{
 };
 use bee_message::{
     address::Ed25519Address,
-    milestone::{Milestone, MilestoneIndex},
     output::OutputId,
+    payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
     Message, MessageId,
 };
 use bee_storage::{
     access::{Fetch, Insert},
     backend::StorageBackend,
-    system::{StorageHealth, StorageVersion, System, SYSTEM_HEALTH_KEY, SYSTEM_VERSION_KEY},
+    system::{StorageHealth, StorageVersion, System, SYSTEM_HEALTH_KEY},
 };
 use bee_tangle::{
-    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
+    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+    unreferenced_message::UnreferencedMessage,
 };
 use thiserror::Error;
 
@@ -46,8 +47,6 @@ impl<T> From<PoisonError<T>> for Error {
     }
 }
 
-pub(crate) const STORAGE_VERSION: StorageVersion = StorageVersion(0);
-
 /// An in-memory database.
 #[derive(Default)]
 pub struct Storage {
@@ -65,7 +64,8 @@ pub(crate) struct InnerStorage {
     pub(crate) output_id_unspent: Table<Unspent, ()>,
     pub(crate) ed25519_address_to_output_id: VecBinTable<Ed25519Address, OutputId>,
     pub(crate) ledger_index: SingletonTable<LedgerIndex>,
-    pub(crate) milestone_index_to_milestone: Table<MilestoneIndex, Milestone>,
+    pub(crate) milestone_index_to_milestone_metadata: Table<MilestoneIndex, MilestoneMetadata>,
+    pub(crate) milestone_id_to_milestone_payload: Table<MilestoneId, MilestonePayload>,
     pub(crate) snapshot_info: SingletonTable<SnapshotInfo>,
     pub(crate) solid_entry_point_to_milestone_index: Table<SolidEntryPoint, MilestoneIndex>,
     pub(crate) milestone_index_to_output_diff: Table<MilestoneIndex, OutputDiff>,
@@ -88,22 +88,6 @@ impl StorageBackend for Storage {
 
     fn start(_: Self::Config) -> Result<Self, Self::Error> {
         let storage = Self::new();
-
-        match Fetch::<u8, System>::fetch(&storage, &SYSTEM_VERSION_KEY)? {
-            Some(System::Version(version)) => {
-                if version != STORAGE_VERSION {
-                    return Err(Error::VersionMismatch(version, STORAGE_VERSION));
-                }
-            }
-            None => Insert::<u8, System>::insert(&storage, &SYSTEM_VERSION_KEY, &System::Version(STORAGE_VERSION))?,
-            _ => panic!("Another system value was inserted on the version key."),
-        }
-
-        if let Some(health) = storage.get_health()? {
-            if health != StorageHealth::Healthy {
-                return Err(Self::Error::UnhealthyStorage(health));
-            }
-        }
 
         storage.set_health(StorageHealth::Idle)?;
 

@@ -12,7 +12,7 @@ pub mod input;
 /// Module providing random message generation utilities.
 pub mod message;
 /// Module providing random message metadata generation utilities.
-pub mod metadata;
+pub mod message_metadata;
 /// Module providing random milestone generation utilities.
 pub mod milestone;
 /// Module providing random milestone option generation utilities.

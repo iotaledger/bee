@@ -41,7 +41,7 @@ pub mod dto {
 
     /// References a previous unlock block in order to substitute the duplication of the same unlock block data for
     /// inputs which unlock through the same data.
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct ReferenceUnlockBlockDto {
         #[serde(rename = "type")]
         pub kind: u8,

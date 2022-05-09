@@ -103,6 +103,7 @@ pub enum Error {
     MissingStateControllerUnlockCondition,
     NativeTokensNotUniqueSorted,
     NativeTokensNullAmount,
+    NativeTokensOverflow,
     NonZeroStateIndexOrFoundryCounter,
     ParentsNotUniqueSorted,
     ProtocolVersionMismatch { expected: u8, actual: u8 },
@@ -277,6 +278,7 @@ impl fmt::Display for Error {
             Error::MissingStateControllerUnlockCondition => write!(f, "missing state controller unlock condition"),
             Error::NativeTokensNotUniqueSorted => write!(f, "native tokens are not unique and/or sorted"),
             Error::NativeTokensNullAmount => write!(f, "native tokens null amount"),
+            Error::NativeTokensOverflow => write!(f, "native tokens overflow"),
             Error::NonZeroStateIndexOrFoundryCounter => {
                 write!(f, "non zero state index or foundry counter while alias ID is all zero")
             }

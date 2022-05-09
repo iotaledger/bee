@@ -69,7 +69,7 @@ where
                     request.index.into()
                 };
 
-                if let Some(message) = tangle.get_milestone_message(index).await {
+                if let Some(message) = tangle.get_milestone_message(index) {
                     Sender::<MessagePacket>::send(
                         &MessagePacket::new(message.pack_to_vec()),
                         &peer_id,

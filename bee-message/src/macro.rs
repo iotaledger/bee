@@ -30,6 +30,11 @@ macro_rules! impl_id {
                 Self::from(bytes)
             }
 
+            #[doc = concat!("Creates a null [`", stringify!($ty),"`].")]
+            pub fn null() -> Self {
+                Self::from([0u8; $name::LENGTH])
+            }
+
             #[doc = concat!("Checks if the [`", stringify!($ty),"`] is null.")]
             pub fn is_null(&self) -> bool {
                 self.0.iter().all(|&b| b == 0)

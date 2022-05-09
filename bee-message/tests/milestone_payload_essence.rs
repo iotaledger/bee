@@ -3,10 +3,12 @@
 
 use bee_message::{
     input::TreasuryInput,
-    milestone::MilestoneIndex,
     output::TreasuryOutput,
     payload::{
-        milestone::{MilestoneEssence, MilestoneOption, MilestoneOptions, PowMilestoneOption, ReceiptMilestoneOption},
+        milestone::{
+            MilestoneEssence, MilestoneIndex, MilestoneOption, MilestoneOptions, PowMilestoneOption,
+            ReceiptMilestoneOption,
+        },
         TreasuryTransactionPayload,
     },
 };
@@ -22,8 +24,8 @@ use packable::PackableExt;
 //             0,
 //             rand_milestone_id(),
 //             rand_parents(),
-//             [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
-//             [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
+//             [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
+//             [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
 //             0,
 //             4242,
 //             vec![],
@@ -42,8 +44,8 @@ use packable::PackableExt;
 //             0,
 //             rand_milestone_id(),
 //             rand_parents(),
-//             [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
-//             [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
+//             [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
+//             [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
 //             4000,
 //             4241,
 //             vec![],
@@ -61,8 +63,8 @@ fn new_valid() {
             0,
             rand_milestone_id(),
             rand_parents(),
-            [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
-            [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
+            [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
+            [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
             vec![],
             MilestoneOptions::new(vec![]).unwrap(),
         )
@@ -76,8 +78,8 @@ fn getters() {
     let timestamp = rand::number::rand_number::<u32>();
     let previous_milestone_id = rand_milestone_id();
     let parents = rand_parents();
-    let confirmed_merkle_proof = [0; MilestoneEssence::MERKLE_PROOF_LENGTH];
-    let applied_merkle_proof = [0; MilestoneEssence::MERKLE_PROOF_LENGTH];
+    let confirmed_merkle_root = [0; MilestoneEssence::MERKLE_ROOT_LENGTH];
+    let applied_merkle_root = [0; MilestoneEssence::MERKLE_ROOT_LENGTH];
     let next_pow_score = 0;
     let next_pow_score_milestone_index = 0;
     let receipt = ReceiptMilestoneOption::new(
@@ -102,8 +104,8 @@ fn getters() {
         timestamp,
         previous_milestone_id,
         parents.clone(),
-        confirmed_merkle_proof,
-        applied_merkle_proof,
+        confirmed_merkle_root,
+        applied_merkle_root,
         vec![],
         options,
     )
@@ -113,8 +115,8 @@ fn getters() {
     assert_eq!(milestone_payload.timestamp(), timestamp);
     assert_eq!(milestone_payload.previous_milestone_id(), &previous_milestone_id);
     assert_eq!(*milestone_payload.parents(), parents);
-    assert_eq!(milestone_payload.confirmed_merkle_proof(), confirmed_merkle_proof);
-    assert_eq!(milestone_payload.applied_merkle_proof(), applied_merkle_proof);
+    assert_eq!(milestone_payload.confirmed_merkle_root(), confirmed_merkle_root);
+    assert_eq!(milestone_payload.applied_merkle_root(), applied_merkle_root);
     assert_eq!(
         milestone_payload.options().pow().unwrap().next_pow_score(),
         next_pow_score
@@ -137,8 +139,8 @@ fn pack_unpack_valid() {
         0,
         rand_milestone_id(),
         rand_parents(),
-        [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
-        [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
+        [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
+        [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
         vec![],
         MilestoneOptions::new(vec![]).unwrap(),
     )

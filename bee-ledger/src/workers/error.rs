@@ -5,7 +5,7 @@
 
 use std::convert::Infallible;
 
-use bee_message::{milestone::MilestoneIndex, Error as MessageError, MessageId};
+use bee_message::{payload::milestone::MilestoneIndex, Error as MessageError, MessageId};
 use packable::error::UnpackError;
 
 use crate::{
@@ -39,10 +39,10 @@ pub enum Error {
     NoMilestonePayload,
     #[error("non contiguous milestones: tried to confirm {0} on top of {1}")]
     NonContiguousMilestones(u32, u32),
-    #[error("confirmed merkle proof mismatch on milestone {0}: computed {1} != provided {2}")]
-    ConfirmedMerkleProofMismatch(MilestoneIndex, String, String),
-    #[error("applied merkle proof mismatch on milestone {0}: computed {1} != provided {2}")]
-    AppliedMerkleProofMismatch(MilestoneIndex, String, String),
+    #[error("confirmed merkle root mismatch on milestone {0}: computed {1} != provided {2}")]
+    ConfirmedMerkleRootMismatch(MilestoneIndex, String, String),
+    #[error("applied merkle root mismatch on milestone {0}: computed {1} != provided {2}")]
+    AppliedMerkleRootMismatch(MilestoneIndex, String, String),
     #[error("invalid messages count: referenced ({0}) != no transaction ({1}) + conflicting ({2}) + included ({3})")]
     InvalidMessagesCount(usize, usize, usize, usize),
     #[error("invalid ledger unspent state: {0}")]

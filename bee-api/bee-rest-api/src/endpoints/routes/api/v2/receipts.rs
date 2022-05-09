@@ -21,7 +21,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/receipts", get(receipts::<B>))
 }
 
-pub(crate) async fn receipts<B: StorageBackend>(
+pub(crate) fn receipts<B: StorageBackend>(
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
     let mut receipts_dto = Vec::new();

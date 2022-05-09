@@ -2,9 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::{
-    milestone::MilestoneIndex,
     parent::Parents,
-    payload::milestone::{MilestoneEssence, MilestoneOptions, MilestonePayload},
+    payload::milestone::{MilestoneEssence, MilestoneIndex, MilestoneOptions, MilestonePayload},
     signature::{Ed25519Signature, Signature},
     Error,
 };
@@ -25,8 +24,8 @@ fn new_valid() {
                 0,
                 rand_milestone_id(),
                 rand_parents(),
-                [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
-                [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
+                [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
+                [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
                 vec![],
                 MilestoneOptions::new(vec![]).unwrap(),
             )
@@ -46,8 +45,8 @@ fn new_invalid_no_signature() {
                 0,
                 rand_milestone_id(),
                 rand_parents(),
-                [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
-                [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
+                [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
+                [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
                 vec![],
                 MilestoneOptions::new(vec![]).unwrap(),
             )
@@ -67,8 +66,8 @@ fn new_invalid_too_many_signatures() {
                 0,
                 rand_milestone_id(),
                 rand_parents(),
-                [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
-                [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
+                [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
+                [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
                 vec![],
                 MilestoneOptions::new(vec![]).unwrap(),
             )
@@ -89,8 +88,8 @@ fn packed_len() {
             0,
             rand_milestone_id(),
             Parents::new(rand_message_ids(4)).unwrap(),
-            [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
-            [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
+            [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
+            [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
             vec![0x2a, 0x2a, 0x2a, 0x2a, 0x2a],
             MilestoneOptions::new(vec![]).unwrap(),
         )
@@ -114,8 +113,8 @@ fn pack_unpack_valid() {
             0,
             rand_milestone_id(),
             rand_parents(),
-            [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
-            [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
+            [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
+            [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
             vec![],
             MilestoneOptions::new(vec![]).unwrap(),
         )
@@ -137,8 +136,8 @@ fn getters() {
         rand::number::rand_number::<u32>(),
         rand_milestone_id(),
         rand_parents(),
-        [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
-        [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
+        [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
+        [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
         vec![],
         MilestoneOptions::new(vec![]).unwrap(),
     )

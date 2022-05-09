@@ -8,6 +8,7 @@ mod byte_cost;
 mod chain_id;
 mod foundry;
 mod foundry_id;
+mod inputs_commitment;
 mod native_token;
 mod nft;
 mod nft_id;
@@ -24,7 +25,6 @@ pub mod unlock_condition;
 
 use core::ops::RangeInclusive;
 
-use crypto::hashes::{blake2b::Blake2b256, Digest};
 use derive_more::From;
 use packable::{bounded::BoundedU64, PackableExt};
 
@@ -45,7 +45,8 @@ pub use self::{
     feature_block::{FeatureBlock, FeatureBlocks},
     foundry::{FoundryOutput, FoundryOutputBuilder},
     foundry_id::FoundryId,
-    native_token::{NativeToken, NativeTokens},
+    inputs_commitment::InputsCommitment,
+    native_token::{NativeToken, NativeTokens, NativeTokensBuilder},
     nft::{NftOutput, NftOutputBuilder},
     nft_id::NftId,
     output_id::OutputId,
@@ -55,7 +56,7 @@ pub use self::{
     treasury::TreasuryOutput,
     unlock_condition::{UnlockCondition, UnlockConditions},
 };
-use crate::{address::Address, constant::IOTA_SUPPLY, semantic::ValidationContext, Error};
+use crate::{address::Address, constant::TOKEN_SUPPLY, semantic::ValidationContext, Error};
 
 /// The maximum number of outputs of a transaction.
 pub const OUTPUT_COUNT_MAX: u16 = 128;
@@ -103,7 +104,7 @@ pub enum Output {
 
 impl Output {
     /// Valid amounts for an [`Output`].
-    pub const AMOUNT_RANGE: RangeInclusive<u64> = 1..=IOTA_SUPPLY;
+    pub const AMOUNT_RANGE: RangeInclusive<u64> = 1..=TOKEN_SUPPLY;
 
     /// Return the output kind of an [`Output`].
     pub fn kind(&self) -> u8 {
@@ -277,15 +278,6 @@ fn minimum_storage_deposit(config: &ByteCostConfig, address: &Address) -> u64 {
         .amount()
 }
 
-///
-pub fn create_inputs_commitment<'a>(inputs: impl Iterator<Item = &'a Output>) -> [u8; 32] {
-    let mut hasher = Blake2b256::new();
-
-    inputs.for_each(|output| hasher.update(output.pack_to_vec()));
-
-    hasher.finalize().into()
-}
-
 #[cfg(feature = "dto")]
 #[allow(missing_docs)]
 pub mod dto {
@@ -300,7 +292,7 @@ pub mod dto {
     use crate::error::dto::DtoError;
 
     /// Describes all the different output types.
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Debug, Eq, PartialEq)]
     pub enum OutputDto {
         Treasury(TreasuryOutputDto),
         Basic(BasicOutputDto),

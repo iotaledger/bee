@@ -12,7 +12,7 @@ use bee_message::{
     Message, MessageId,
 };
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{metadata::MessageMetadata, Tangle, TangleWorker};
+use bee_tangle::{message_metadata::MessageMetadata, Tangle, TangleWorker};
 use futures::{channel::oneshot::Sender, stream::StreamExt};
 use log::{error, info, trace};
 use tokio::sync::mpsc;
@@ -36,6 +36,7 @@ use crate::{
 pub(crate) struct ProcessorWorkerEvent {
     pub(crate) from: Option<PeerId>,
     pub(crate) message_packet: MessagePacket,
+    pub(crate) pow_score: f64,
     pub(crate) notifier: Option<Sender<Result<MessageId, MessageSubmitterError>>>,
 }
 
@@ -46,6 +47,7 @@ pub(crate) struct ProcessorWorker {
 #[derive(Clone)]
 pub(crate) struct ProcessorWorkerConfig {
     pub(crate) network_id: u64,
+    pub(crate) minimum_pow_score: f64,
     pub(crate) byte_cost: ByteCostConfig,
 }
 
@@ -113,6 +115,7 @@ where
                     'next_event: while let Ok(ProcessorWorkerEvent {
                         from,
                         message_packet,
+                        pow_score,
                         notifier,
                     }) = rx.recv().await
                     {
@@ -133,6 +136,24 @@ where
                                     message.protocol_version(),
                                     PROTOCOL_VERSION
                                 ),
+                                &metrics,
+                                notifier,
+                            );
+                            continue;
+                        }
+
+                        if let Some(Payload::Milestone(_)) = message.payload() {
+                            if message.nonce() != 0 {
+                                notify_invalid_message(
+                                    format!("Non-zero milestone nonce: {}.", message.nonce()),
+                                    &metrics,
+                                    notifier,
+                                );
+                                continue;
+                            }
+                        } else if pow_score < config.minimum_pow_score {
+                            notify_invalid_message(
+                                format!("Insufficient pow score: {} < {}.", pow_score, config.minimum_pow_score),
                                 &metrics,
                                 notifier,
                             );
@@ -168,11 +189,8 @@ where
                         }
 
                         let message_id = message.id();
-                        let metadata = MessageMetadata::arrived();
 
-                        let message = if let Some(message) = tangle.insert(message, message_id, metadata).await {
-                            message
-                        } else {
+                        if tangle.contains(&message_id) {
                             metrics.known_messages_inc();
                             if let Some(ref peer_id) = from {
                                 peer_manager
@@ -182,7 +200,17 @@ where
                                     .unwrap_or_default();
                             }
                             continue 'next_event;
-                        };
+                        } else {
+                            let metadata = MessageMetadata::arrived();
+                            // There is no data race here even if the `Message` and
+                            // `MessageMetadata` are inserted between the call to `tangle.contains`
+                            // and here because:
+                            // - Both `Message`s are the same because they have the same hash.
+                            // - `MessageMetadata` is not overwritten.
+                            // - Some extra code is executing due to not calling `continue` but
+                            // this does not create inconsistencies.
+                            tangle.insert(&message, &message_id, &metadata);
+                        }
 
                         // Send the propagation event ASAP to allow the propagator to do its thing
                         if let Err(e) = propagator.send(PropagatorWorkerEvent(message_id)) {
@@ -220,13 +248,9 @@ where
                             }
                         };
 
-                        if payload_worker
-                            .send(PayloadWorkerEvent {
-                                message_id,
-                                message: message.clone(),
-                            })
-                            .is_err()
-                        {
+                        let parent_message_ids = message.parents().to_vec();
+
+                        if payload_worker.send(PayloadWorkerEvent { message_id, message }).is_err() {
                             error!("Sending message {} to payload worker failed.", message_id);
                         }
 
@@ -237,7 +261,7 @@ where
                         // TODO: boolean values are false at this point in time? trigger event from another location?
                         bus.dispatch(VertexCreated {
                             message_id,
-                            parent_message_ids: message.parents().to_vec(),
+                            parent_message_ids,
                             is_solid: false,
                             is_referenced: false,
                             is_conflicting: false,

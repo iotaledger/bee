@@ -149,7 +149,7 @@ impl<S: NodeStorageBackend> NodeBuilder<FullNode<S>> for FullNodeBuilder<S> {
         let (autopeering_rx, builder) = initialize_autopeering(builder).await?;
         let builder = initialize_ledger(builder);
         let builder = initialize_protocol(builder, gossip_rx, autopeering_rx);
-        let builder = initialize_api(builder).await;
+        let builder = initialize_api(builder);
         let builder = initialize_tangle(builder);
 
         // Start the version checker.
@@ -373,7 +373,7 @@ fn create_local_autopeering_entity<S: NodeStorageBackend>(
 }
 
 /// Initializes the API.
-async fn initialize_api<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> FullNodeBuilder<S> {
+fn initialize_api<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> FullNodeBuilder<S> {
     log::info!("Initializing REST API...");
 
     let config = builder.config();
@@ -395,7 +395,7 @@ async fn initialize_api<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> F
         dashboard_username: config.dashboard.auth().user().to_owned(),
     };
 
-    let builder = bee_rest_api::endpoints::init_full_node::<FullNode<S>>(init_config, builder).await;
+    let builder = bee_rest_api::endpoints::init_full_node::<FullNode<S>>(init_config, builder);
 
     builder
 }

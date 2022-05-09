@@ -5,7 +5,7 @@ use core::ops::RangeInclusive;
 
 use packable::bounded::BoundedU64;
 
-use crate::{constant::IOTA_SUPPLY, Error};
+use crate::{constant::TOKEN_SUPPLY, Error};
 
 pub(crate) type TreasuryOutputAmount =
     BoundedU64<{ *TreasuryOutput::AMOUNT_RANGE.start() }, { *TreasuryOutput::AMOUNT_RANGE.end() }>;
@@ -22,7 +22,7 @@ impl TreasuryOutput {
     /// The [`Output`](crate::output::Output) kind of a [`TreasuryOutput`].
     pub const KIND: u8 = 2;
     /// The allowed range of the amount of a [`TreasuryOutput`].
-    pub const AMOUNT_RANGE: RangeInclusive<u64> = 0..=IOTA_SUPPLY;
+    pub const AMOUNT_RANGE: RangeInclusive<u64> = 0..=TOKEN_SUPPLY;
 
     /// Creates a new [`TreasuryOutput`].
     pub fn new(amount: u64) -> Result<Self, Error> {
@@ -48,7 +48,7 @@ pub mod dto {
     use crate::error::dto::DtoError;
 
     /// Describes a treasury output.
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct TreasuryOutputDto {
         #[serde(rename = "type")]
         pub kind: u8,

@@ -7,15 +7,15 @@
 
 use std::collections::HashSet;
 
-use bee_message::MessageId;
+use bee_message::{Message, MessageId};
 
-use crate::{metadata::MessageMetadata, storage::StorageBackend, tangle::Tangle, MessageRef};
+use crate::{message_metadata::MessageMetadata, storage::StorageBackend, tangle::Tangle};
 
 /// A Tangle walker that - given a starting vertex - visits all of its ancestors that are connected through
 /// either the *parent1* or the *parent2* edge. The walk continues as long as the visited vertices match a certain
 /// condition. For each visited vertex customized logic can be applied depending on the availability of the
 /// vertex. Each traversed vertex provides read access to its associated data and metadata.
-pub async fn visit_parents_depth_first<Match, Apply, ElseApply, MissingApply, B: StorageBackend>(
+pub fn visit_parents_depth_first<Match, Apply, ElseApply, MissingApply, B: StorageBackend>(
     tangle: &Tangle<B>,
     root: MessageId,
     matches: Match,
@@ -23,9 +23,9 @@ pub async fn visit_parents_depth_first<Match, Apply, ElseApply, MissingApply, B:
     mut else_apply: ElseApply,
     mut missing_apply: MissingApply,
 ) where
-    Match: Fn(MessageId, MessageRef, MessageMetadata) -> bool,
-    Apply: FnMut(&MessageId, &MessageRef, &MessageMetadata),
-    ElseApply: FnMut(&MessageId, &MessageRef, &MessageMetadata),
+    Match: Fn(&MessageId, &Message, &MessageMetadata) -> bool,
+    Apply: FnMut(&MessageId, &Message, &MessageMetadata),
+    ElseApply: FnMut(&MessageId, &Message, &MessageMetadata),
     MissingApply: FnMut(&MessageId),
 {
     let mut parents = vec![root];
@@ -33,14 +33,10 @@ pub async fn visit_parents_depth_first<Match, Apply, ElseApply, MissingApply, B:
 
     while let Some(message_id) = parents.pop() {
         if visited.insert(message_id) {
-            let msg_meta = tangle
-                .get_vertex(&message_id)
-                .await
-                .as_ref()
-                .and_then(|v| v.message_and_metadata().cloned());
+            let msg_meta = tangle.get_message_and_metadata(&message_id);
             match msg_meta {
                 Some((msg, meta)) => {
-                    if matches(message_id, msg.clone(), meta) {
+                    if matches(&message_id, &msg, &meta) {
                         apply(&message_id, &msg, &meta);
 
                         parents.extend_from_slice(msg.parents());

@@ -16,10 +16,9 @@ use packable::{bounded::BoundedU16, prefix::VecPrefix, Packable, PackableExt};
 pub(crate) use self::migrated_funds_entry::MigratedFundsAmount;
 pub use self::{migrated_funds_entry::MigratedFundsEntry, tail_transaction_hash::TailTransactionHash};
 use crate::{
-    constant::IOTA_SUPPLY,
-    milestone::MilestoneIndex,
+    constant::TOKEN_SUPPLY,
     output::OUTPUT_COUNT_RANGE,
-    payload::{Payload, TreasuryTransactionPayload},
+    payload::{milestone::MilestoneIndex, Payload, TreasuryTransactionPayload},
     Error,
 };
 
@@ -120,7 +119,7 @@ fn verify_funds<const VERIFY: bool>(funds: &[MigratedFundsEntry]) -> Result<(), 
             .checked_add(funds.amount())
             .ok_or_else(|| Error::InvalidReceiptFundsSum(funds_sum as u128 + funds.amount() as u128))?;
 
-        if funds_sum > IOTA_SUPPLY {
+        if funds_sum > TOKEN_SUPPLY {
             return Err(Error::InvalidReceiptFundsSum(funds_sum as u128));
         }
     }
@@ -149,7 +148,7 @@ pub mod dto {
     };
 
     ///
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct ReceiptMilestoneOptionDto {
         #[serde(rename = "type")]
         pub kind: u8,

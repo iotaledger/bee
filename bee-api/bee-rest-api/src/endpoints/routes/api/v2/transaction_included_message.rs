@@ -21,7 +21,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
     )
 }
 
-pub(crate) async fn transaction_included_message<B: StorageBackend>(
+pub(crate) fn transaction_included_message<B: StorageBackend>(
     Path(transaction_id): Path<TransactionId>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
@@ -34,7 +34,7 @@ pub(crate) async fn transaction_included_message<B: StorageBackend>(
     })?;
 
     match fetched {
-        Some(output) => message::message(Path(*output.message_id()), Extension(args)).await,
+        Some(output) => message::message(Path(*output.message_id()), Extension(args)),
         None => Err(ApiError::NotFound),
     }
 }

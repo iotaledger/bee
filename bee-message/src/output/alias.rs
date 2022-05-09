@@ -237,6 +237,11 @@ impl AliasOutputBuilder {
 
         Ok(output)
     }
+
+    /// Finishes the [`AliasOutputBuilder`] into an [`Output`].
+    pub fn finish_output(self) -> Result<Output, Error> {
+        Ok(Output::Alias(self.finish()?))
+    }
 }
 
 impl From<&AliasOutput> for AliasOutputBuilder {
@@ -648,14 +653,14 @@ pub mod dto {
     };
 
     /// Describes an alias account in the ledger that can be controlled by the state and governance controllers.
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct AliasOutputDto {
         #[serde(rename = "type")]
         pub kind: u8,
         // Amount of IOTA tokens held by the output.
         pub amount: String,
         // Native tokens held by the output.
-        #[serde(rename = "nativeTokens")]
+        #[serde(rename = "nativeTokens", skip_serializing_if = "Vec::is_empty", default)]
         pub native_tokens: Vec<NativeTokenDto>,
         // Unique identifier of the alias.
         #[serde(rename = "aliasId")]
@@ -664,7 +669,7 @@ pub mod dto {
         #[serde(rename = "stateIndex")]
         pub state_index: u32,
         // Metadata that can only be changed by the state controller.
-        #[serde(rename = "stateMetadata")]
+        #[serde(rename = "stateMetadata", skip_serializing_if = "String::is_empty", default)]
         pub state_metadata: String,
         // A counter that denotes the number of foundries created by this alias account.
         #[serde(rename = "foundryCounter")]
@@ -673,10 +678,10 @@ pub mod dto {
         #[serde(rename = "unlockConditions")]
         pub unlock_conditions: Vec<UnlockConditionDto>,
         //
-        #[serde(rename = "featureBlocks")]
+        #[serde(rename = "featureBlocks", skip_serializing_if = "Vec::is_empty", default)]
         pub feature_blocks: Vec<FeatureBlockDto>,
         //
-        #[serde(rename = "immutableFeatureBlocks")]
+        #[serde(rename = "immutableFeatureBlocks", skip_serializing_if = "Vec::is_empty", default)]
         pub immutable_feature_blocks: Vec<FeatureBlockDto>,
     }
 
@@ -708,24 +713,33 @@ pub mod dto {
                     .map_err(|_| DtoError::InvalidField("amount"))?,
                 (&value.alias_id).try_into()?,
             )?;
+
             builder = builder.with_state_index(value.state_index);
-            builder = builder.with_state_metadata(
-                prefix_hex::decode(&value.state_metadata).map_err(|_| DtoError::InvalidField("state_metadata"))?,
-            );
+
+            if !value.state_metadata.is_empty() {
+                builder = builder.with_state_metadata(
+                    prefix_hex::decode(&value.state_metadata).map_err(|_| DtoError::InvalidField("state_metadata"))?,
+                );
+            }
+
             builder = builder.with_foundry_counter(value.foundry_counter);
 
             for t in &value.native_tokens {
                 builder = builder.add_native_token(t.try_into()?);
             }
+
             for b in &value.unlock_conditions {
                 builder = builder.add_unlock_condition(b.try_into()?);
             }
+
             for b in &value.feature_blocks {
                 builder = builder.add_feature_block(b.try_into()?);
             }
+
             for b in &value.immutable_feature_blocks {
                 builder = builder.add_immutable_feature_block(b.try_into()?);
             }
+
             Ok(builder.finish()?)
         }
     }

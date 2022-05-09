@@ -23,7 +23,7 @@ pub use self::{
     state_controller_address::StateControllerAddressUnlockCondition,
     storage_deposit_return::StorageDepositReturnUnlockCondition, timelock::TimelockUnlockCondition,
 };
-use crate::{address::Address, create_bitflags, milestone::MilestoneIndex, Error};
+use crate::{address::Address, create_bitflags, payload::milestone::MilestoneIndex, Error};
 
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From, Packable)]
@@ -312,7 +312,7 @@ pub mod dto {
         error::dto::DtoError,
     };
 
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Debug, Eq, PartialEq)]
     pub enum UnlockConditionDto {
         /// An address unlock condition.
         Address(AddressUnlockConditionDto),

@@ -4,6 +4,7 @@
 //! Module describing the milestone payload.
 
 mod essence;
+mod index;
 mod milestone_id;
 
 ///
@@ -20,6 +21,7 @@ use packable::{bounded::BoundedU8, prefix::VecPrefix, Packable};
 pub(crate) use self::essence::MilestoneMetadataLength;
 pub use self::{
     essence::MilestoneEssence,
+    index::MilestoneIndex,
     milestone_id::MilestoneId,
     option::{MilestoneOption, MilestoneOptions, PowMilestoneOption, ReceiptMilestoneOption},
 };
@@ -161,26 +163,29 @@ pub mod dto {
     use self::option::dto::MilestoneOptionDto;
     use super::*;
     use crate::{
-        error::dto::DtoError, milestone::MilestoneIndex, parent::Parents, signature::dto::SignatureDto, MessageId,
+        error::dto::DtoError, parent::Parents, payload::milestone::MilestoneIndex, signature::dto::SignatureDto,
+        MessageId,
     };
 
     /// The payload type to define a milestone.
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct MilestonePayloadDto {
         #[serde(rename = "type")]
         pub kind: u32,
         pub index: u32,
         pub timestamp: u32,
-        #[serde(rename = "lastMilestoneId")]
+        #[serde(rename = "previousMilestoneId")]
         pub previous_milestone_id: String,
         #[serde(rename = "parentMessageIds")]
         pub parents: Vec<String>,
-        #[serde(rename = "confirmedMerkleProof")]
-        pub confirmed_merkle_proof: String,
-        #[serde(rename = "appliedMerkleProof")]
-        pub applied_merkle_proof: String,
-        pub metadata: String,
+        #[serde(rename = "confirmedMerkleRoot")]
+        pub confirmed_merkle_root: String,
+        #[serde(rename = "appliedMerkleRoot")]
+        pub applied_merkle_root: String,
+        #[serde(skip_serializing_if = "Vec::is_empty", default)]
         pub options: Vec<MilestoneOptionDto>,
+        #[serde(skip_serializing_if = "String::is_empty", default)]
+        pub metadata: String,
         pub signatures: Vec<SignatureDto>,
     }
 
@@ -192,8 +197,8 @@ pub mod dto {
                 timestamp: value.essence().timestamp(),
                 previous_milestone_id: value.essence().previous_milestone_id().to_string(),
                 parents: value.essence().parents().iter().map(|p| p.to_string()).collect(),
-                confirmed_merkle_proof: prefix_hex::encode(value.essence().confirmed_merkle_proof()),
-                applied_merkle_proof: prefix_hex::encode(value.essence().applied_merkle_proof()),
+                confirmed_merkle_root: prefix_hex::encode(value.essence().confirmed_merkle_root()),
+                applied_merkle_root: prefix_hex::encode(value.essence().applied_merkle_root()),
                 metadata: prefix_hex::encode(value.essence().metadata()),
                 options: value.essence().options().iter().map(Into::into).collect::<_>(),
                 signatures: value.signatures().iter().map(From::from).collect(),
@@ -207,10 +212,14 @@ pub mod dto {
         fn try_from(value: &MilestonePayloadDto) -> Result<Self, Self::Error> {
             let essence = {
                 let index = value.index;
+
                 let timestamp = value.timestamp;
+
                 let previous_milestone_id = MilestoneId::from_str(&value.previous_milestone_id)
                     .map_err(|_| DtoError::InvalidField("lastMilestoneId"))?;
+
                 let mut parent_ids = Vec::new();
+
                 for msg_id in &value.parents {
                     parent_ids.push(
                         msg_id
@@ -218,11 +227,13 @@ pub mod dto {
                             .map_err(|_| DtoError::InvalidField("parentMessageIds"))?,
                     );
                 }
-                let confirmed_merkle_proof = prefix_hex::decode(&value.confirmed_merkle_proof)
-                    .map_err(|_| DtoError::InvalidField("confirmedMerkleProof"))?;
-                let applied_merkle_proof = prefix_hex::decode(&value.applied_merkle_proof)
-                    .map_err(|_| DtoError::InvalidField("appliedMerkleProof"))?;
-                let metadata = prefix_hex::decode(&value.metadata).map_err(|_| DtoError::InvalidField("metadata"))?;
+
+                let confirmed_merkle_root = prefix_hex::decode(&value.confirmed_merkle_root)
+                    .map_err(|_| DtoError::InvalidField("confirmedMerkleRoot"))?;
+
+                let applied_merkle_root = prefix_hex::decode(&value.applied_merkle_root)
+                    .map_err(|_| DtoError::InvalidField("appliedMerkleRoot"))?;
+
                 let options = MilestoneOptions::try_from(
                     value
                         .options
@@ -231,17 +242,24 @@ pub mod dto {
                         .collect::<Result<Vec<_>, _>>()?,
                 )?;
 
+                let metadata = if !value.metadata.is_empty() {
+                    prefix_hex::decode(&value.metadata).map_err(|_| DtoError::InvalidField("metadata"))?
+                } else {
+                    Vec::new()
+                };
+
                 MilestoneEssence::new(
                     MilestoneIndex(index),
                     timestamp,
                     previous_milestone_id,
                     Parents::new(parent_ids)?,
-                    confirmed_merkle_proof,
-                    applied_merkle_proof,
+                    confirmed_merkle_root,
+                    applied_merkle_root,
                     metadata,
                     options,
                 )?
             };
+
             let mut signatures = Vec::new();
             for v in &value.signatures {
                 signatures.push(v.try_into().map_err(|_| DtoError::InvalidField("signatures"))?)

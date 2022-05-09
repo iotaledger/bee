@@ -9,13 +9,18 @@ use bee_ledger::types::{
 };
 use bee_message::{
     address::Ed25519Address,
-    milestone::{Milestone, MilestoneIndex},
     output::OutputId,
+    payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
     Message, MessageId,
 };
-use bee_storage::{access::Insert, backend::StorageBackend, system::System};
+use bee_storage::{
+    access::{Insert, InsertStrict},
+    backend::StorageBackend,
+    system::System,
+};
 use bee_tangle::{
-    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
+    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+    unreferenced_message::UnreferencedMessage,
 };
 use packable::PackableExt;
 
@@ -39,15 +44,19 @@ impl Insert<MessageId, Message> for Storage {
     }
 }
 
-impl Insert<MessageId, MessageMetadata> for Storage {
-    fn insert(
+impl InsertStrict<MessageId, MessageMetadata> for Storage {
+    fn insert_strict(
         &self,
         message_id: &MessageId,
         metadata: &MessageMetadata,
     ) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
             .open_tree(TREE_MESSAGE_ID_TO_METADATA)?
-            .insert(message_id, metadata.pack_to_vec())?;
+            .update_and_fetch(message_id, |old_metadata| {
+                old_metadata
+                    .map(|b| b.to_vec())
+                    .or_else(|| Some(metadata.pack_to_vec()))
+            })?;
 
         Ok(())
     }
@@ -121,11 +130,25 @@ impl Insert<(), LedgerIndex> for Storage {
     }
 }
 
-impl Insert<MilestoneIndex, Milestone> for Storage {
-    fn insert(&self, index: &MilestoneIndex, milestone: &Milestone) -> Result<(), <Self as StorageBackend>::Error> {
+impl Insert<MilestoneIndex, MilestoneMetadata> for Storage {
+    fn insert(
+        &self,
+        index: &MilestoneIndex,
+        milestone: &MilestoneMetadata,
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
-            .open_tree(TREE_MILESTONE_INDEX_TO_MILESTONE)?
+            .open_tree(TREE_MILESTONE_INDEX_TO_MILESTONE_METADATA)?
             .insert(index.pack_to_vec(), milestone.pack_to_vec())?;
+
+        Ok(())
+    }
+}
+
+impl Insert<MilestoneId, MilestonePayload> for Storage {
+    fn insert(&self, id: &MilestoneId, payload: &MilestonePayload) -> Result<(), <Self as StorageBackend>::Error> {
+        self.inner
+            .open_tree(TREE_MILESTONE_ID_TO_MILESTONE_PAYLOAD)?
+            .insert(id.pack_to_vec(), payload.pack_to_vec())?;
 
         Ok(())
     }

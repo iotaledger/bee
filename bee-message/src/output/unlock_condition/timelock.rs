@@ -9,7 +9,7 @@ use packable::{
     Packable,
 };
 
-use crate::{milestone::MilestoneIndex, Error};
+use crate::{payload::milestone::MilestoneIndex, Error};
 
 /// Defines a milestone index and/or unix timestamp until which the output can not be unlocked.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From)]
@@ -92,10 +92,10 @@ pub mod dto {
 
     use crate::{
         dto::{is_zero, is_zero_milestone},
-        milestone::MilestoneIndex,
+        payload::milestone::MilestoneIndex,
     };
 
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct TimelockUnlockConditionDto {
         #[serde(rename = "type")]
         pub kind: u8,

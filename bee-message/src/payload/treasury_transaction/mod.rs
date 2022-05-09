@@ -81,7 +81,7 @@ pub mod dto {
     };
 
     /// The payload type to define a treasury transaction.
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct TreasuryTransactionPayloadDto {
         #[serde(rename = "type")]
         pub kind: u32,

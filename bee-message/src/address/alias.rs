@@ -17,7 +17,7 @@ impl AliasAddress {
     /// The [`Address`](crate::address::Address) kind of an [`AliasAddress`].
     pub const KIND: u8 = 8;
     /// The length of an [`AliasAddress`].
-    pub const LENGTH: usize = 20;
+    pub const LENGTH: usize = AliasId::LENGTH;
 
     /// Creates a new [`AliasAddress`].
     #[inline(always)]
@@ -64,7 +64,7 @@ pub mod dto {
     use crate::error::dto::DtoError;
 
     /// Describes an alias address.
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct AliasAddressDto {
         #[serde(rename = "type")]
         pub kind: u8,

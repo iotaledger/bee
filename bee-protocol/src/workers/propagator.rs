@@ -4,9 +4,9 @@
 use std::{any::TypeId, convert::Infallible};
 
 use async_trait::async_trait;
-use bee_message::{milestone::MilestoneIndex, MessageId};
+use bee_message::{payload::milestone::MilestoneIndex, MessageId};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{metadata::IndexId, solid_entry_point::SolidEntryPoint, Tangle, TangleWorker};
+use bee_tangle::{message_metadata::IndexId, solid_entry_point::SolidEntryPoint, Tangle, TangleWorker};
 use futures::{future::FutureExt, stream::StreamExt};
 use log::*;
 use ref_cast::RefCast;
@@ -37,7 +37,7 @@ async fn propagate<B: StorageBackend>(
             continue 'outer;
         }
 
-        if let Some(message) = tangle.get(message_id).await {
+        if let Some(message) = tangle.get(message_id) {
             // If one of the parents is not yet solid, we skip the current message.
             for parent in message.parents().iter() {
                 if !tangle.is_solid_message(parent).await {
@@ -64,12 +64,10 @@ async fn propagate<B: StorageBackend>(
                     // SAFETY: 'unwrap' is safe, see explanation above.
                     None => tangle
                         .get_metadata(parent)
-                        .await
                         .map(|parent_md| {
-                            (
-                                parent_md.omrsi().expect("solid msg with unset omrsi"),
-                                parent_md.ymrsi().expect("solid msg with unset ymrsi"),
-                            )
+                            parent_md
+                                .omrsi_and_ymrsi()
+                                .expect("solid msg with unset omrsi and ymrsi")
                         })
                         .unwrap(),
                 };
@@ -90,16 +88,14 @@ async fn propagate<B: StorageBackend>(
                     if metadata.flags().is_milestone() {
                         metadata.milestone_index()
                     } else {
-                        metadata.set_omrsi(*child_omrsi);
-                        metadata.set_ymrsi(*child_ymrsi);
+                        metadata.set_omrsi_and_ymrsi(*child_omrsi, *child_ymrsi);
                         None
                     }
                 })
-                .await
                 .expect("Failed to fetch metadata.");
 
             // Try to propagate as far as possible into the future.
-            if let Some(msg_children) = tangle.get_children(message_id).await {
+            if let Some(msg_children) = tangle.get_children(message_id) {
                 for child in msg_children {
                     children.push(child);
                 }

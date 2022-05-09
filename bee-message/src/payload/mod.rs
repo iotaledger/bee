@@ -183,7 +183,7 @@ pub mod dto {
     use crate::error::dto::DtoError;
 
     /// Describes all the different payload types.
-    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     #[serde(untagged)]
     pub enum PayloadDto {
         Transaction(Box<TransactionPayloadDto>),

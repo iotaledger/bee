@@ -2,7 +2,7 @@
 
 alias      = "Bee alphanet node"
 bech32_hrp = "rms"
-network_id = "alphanet-2"
+network_id = "alphanet-5"
 
 [logger]
 [[logger.outputs]]
@@ -115,7 +115,6 @@ path = "./storage/alphanet/tangle"
 
 [tangle]
 below_max_depth = 15
-num_partitions  = 16
 
 [mqtt]
 address = "tcp://localhost:1883"

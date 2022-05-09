@@ -138,7 +138,7 @@ pub(crate) async fn submit_message_json<B: StorageBackend>(
         .into_response())
 }
 
-pub(crate) async fn build_message<B: StorageBackend>(
+pub(crate) fn build_message<B: StorageBackend>(
     parents: Vec<MessageId>,
     payload: Option<Payload>,
     nonce: Option<u64>,
