@@ -10,8 +10,8 @@ use std::{
 use libp2p::{
     core::upgrade::OutboundUpgrade,
     swarm::{
-        protocols_handler::{
-            InboundUpgradeSend, KeepAlive, ProtocolsHandler, ProtocolsHandlerEvent, ProtocolsHandlerUpgrErr,
+        handler::{
+            ConnectionHandler, ConnectionHandlerEvent, ConnectionHandlerUpgrErr, InboundUpgradeSend, KeepAlive,
             SubstreamProtocol,
         },
         NegotiatedSubstream,
@@ -31,7 +31,7 @@ pub struct GossipProtocolHandler {
     keep_alive: KeepAlive,
 
     /// All events produced by this handler.
-    events: VecDeque<ProtocolsHandlerEvent<IotaGossipProtocolUpgrade, (), IotaGossipHandlerEvent, io::Error>>,
+    events: VecDeque<ConnectionHandlerEvent<IotaGossipProtocolUpgrade, (), IotaGossipHandlerEvent, io::Error>>,
 }
 
 #[derive(Debug)]
@@ -49,7 +49,7 @@ impl GossipProtocolHandler {
     }
 }
 
-impl ProtocolsHandler for GossipProtocolHandler {
+impl ConnectionHandler for GossipProtocolHandler {
     type InEvent = IotaGossipHandlerInEvent;
     type OutEvent = IotaGossipHandlerEvent;
     type Error = io::Error;
@@ -83,7 +83,7 @@ impl ProtocolsHandler for GossipProtocolHandler {
 
         // We only send the upgrade request if this handler belongs to an outbound connection.
         if origin == Origin::Outbound {
-            let send_request = ProtocolsHandlerEvent::OutboundSubstreamRequest {
+            let send_request = ConnectionHandlerEvent::OutboundSubstreamRequest {
                 protocol: SubstreamProtocol::new(IotaGossipProtocolUpgrade::new(self.info.clone()), ()),
             };
 
@@ -97,7 +97,7 @@ impl ProtocolsHandler for GossipProtocolHandler {
     ///
     /// Injects the output of a successful upgrade on a new inbound substream.
     fn inject_fully_negotiated_inbound(&mut self, new_inbound: NegotiatedSubstream, _: Self::InboundOpenInfo) {
-        let negotiated_inbound = ProtocolsHandlerEvent::Custom(IotaGossipHandlerEvent::UpgradeCompleted {
+        let negotiated_inbound = ConnectionHandlerEvent::Custom(IotaGossipHandlerEvent::UpgradeCompleted {
             substream: Box::new(new_inbound),
         });
 
@@ -113,7 +113,7 @@ impl ProtocolsHandler for GossipProtocolHandler {
     /// The second argument is the information that was previously passed to
     /// [`ProtocolsHandlerEvent::OutboundSubstreamRequest`].
     fn inject_fully_negotiated_outbound(&mut self, new_outbound: NegotiatedSubstream, _: Self::OutboundOpenInfo) {
-        let negotiated_outbound = ProtocolsHandlerEvent::Custom(IotaGossipHandlerEvent::UpgradeCompleted {
+        let negotiated_outbound = ConnectionHandlerEvent::Custom(IotaGossipHandlerEvent::UpgradeCompleted {
             substream: Box::new(new_outbound),
         });
 
@@ -135,7 +135,7 @@ impl ProtocolsHandler for GossipProtocolHandler {
     fn inject_dial_upgrade_error(
         &mut self,
         _: Self::OutboundOpenInfo,
-        e: ProtocolsHandlerUpgrErr<<Self::OutboundProtocol as OutboundUpgrade<NegotiatedSubstream>>::Error>,
+        e: ConnectionHandlerUpgrErr<<Self::OutboundProtocol as OutboundUpgrade<NegotiatedSubstream>>::Error>,
     ) {
         debug!("gossip handler: outbound upgrade error: {:?}", e);
 
@@ -149,7 +149,7 @@ impl ProtocolsHandler for GossipProtocolHandler {
     fn inject_listen_upgrade_error(
         &mut self,
         _: Self::InboundOpenInfo,
-        e: ProtocolsHandlerUpgrErr<<Self::InboundProtocol as InboundUpgradeSend>::Error>,
+        e: ConnectionHandlerUpgrErr<<Self::InboundProtocol as InboundUpgradeSend>::Error>,
     ) {
         debug!("gossip handler: inbound upgrade error: {:?}", e);
 
@@ -196,7 +196,7 @@ impl ProtocolsHandler for GossipProtocolHandler {
     fn poll(
         &mut self,
         _: &mut Context<'_>,
-    ) -> Poll<ProtocolsHandlerEvent<Self::OutboundProtocol, Self::OutboundOpenInfo, Self::OutEvent, Self::Error>> {
+    ) -> Poll<ConnectionHandlerEvent<Self::OutboundProtocol, Self::OutboundOpenInfo, Self::OutEvent, Self::Error>> {
         if let Some(event) = self.events.pop_front() {
             Poll::Ready(event)
         } else {

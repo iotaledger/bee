@@ -4,7 +4,7 @@
 use std::io;
 
 use libp2p::{
-    swarm::{NegotiatedSubstream, ProtocolsHandlerUpgrErr},
+    swarm::{ConnectionHandlerUpgrErr, NegotiatedSubstream},
     Multiaddr, PeerId,
 };
 
@@ -30,7 +30,7 @@ pub enum IotaGossipEvent {
     /// An error occured during negotiation.
     UpgradeError {
         peer_id: PeerId,
-        error: ProtocolsHandlerUpgrErr<io::Error>,
+        error: ConnectionHandlerUpgrErr<io::Error>,
     },
 }
 
@@ -52,6 +52,6 @@ pub enum IotaGossipHandlerEvent {
     /// An errror occured during the upgrade.
     UpgradeError {
         peer_id: PeerId,
-        error: ProtocolsHandlerUpgrErr<io::Error>,
+        error: ConnectionHandlerUpgrErr<io::Error>,
     },
 }

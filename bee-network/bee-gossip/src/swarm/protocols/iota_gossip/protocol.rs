@@ -8,7 +8,7 @@ use std::{
 
 use libp2p::{
     core::{connection::ConnectionId, ConnectedPoint},
-    swarm::{IntoProtocolsHandler, NetworkBehaviour, NetworkBehaviourAction, NotifyHandler, PollParameters},
+    swarm::{IntoConnectionHandler, NetworkBehaviour, NetworkBehaviourAction, NotifyHandler, PollParameters},
     Multiaddr, PeerId,
 };
 use log::debug;
@@ -71,7 +71,7 @@ impl Default for IotaGossipProtocol {
 }
 
 impl NetworkBehaviour for IotaGossipProtocol {
-    type ProtocolsHandler = GossipProtocolHandler;
+    type ConnectionHandler = GossipProtocolHandler;
     type OutEvent = IotaGossipEvent;
 
     /// **libp2p docs**:
@@ -88,7 +88,7 @@ impl NetworkBehaviour for IotaGossipProtocol {
     /// spawned (ie. the objects returned by `new_handler`) can communicate by passing messages.
     /// Messages sent from the handler to the behaviour are injected with `inject_event`, and
     /// the behaviour can send a message to the handler by making `poll` return `SendEvent`.
-    fn new_handler(&mut self) -> Self::ProtocolsHandler {
+    fn new_handler(&mut self) -> Self::ConnectionHandler {
         self.num_handlers += 1;
         debug!("gossip protocol: new handler ({}).", self.num_handlers);
 
@@ -123,9 +123,13 @@ impl NetworkBehaviour for IotaGossipProtocol {
         conn_id: &ConnectionId,
         endpoint: &ConnectedPoint,
         _failed_addresses: Option<&Vec<Multiaddr>>,
+        _other_established: usize,
     ) {
         let (peer_addr, origin) = match endpoint {
-            ConnectedPoint::Dialer { address } => (address.clone(), Origin::Outbound),
+            ConnectedPoint::Dialer {
+                address,
+                role_override: _,
+            } => (address.clone(), Origin::Outbound),
             ConnectedPoint::Listener { send_back_addr, .. } => (send_back_addr.clone(), Origin::Inbound),
         };
 
@@ -154,18 +158,6 @@ impl NetworkBehaviour for IotaGossipProtocol {
         };
 
         self.events.push_back(notify_handler);
-    }
-
-    /// **libp2p docs**:
-    ///
-    /// Indicate to the behaviour that we connected to the node with the given peer id.
-    ///
-    /// This node now has a handler (as spawned by `new_handler`) running in the background.
-    ///
-    /// This method is only called when the first connection to the peer is established, preceded by
-    /// [`inject_connection_established`](NetworkBehaviour::inject_connection_established).
-    fn inject_connected(&mut self, peer_id: &PeerId) {
-        debug!("gossip protocol: {} connected.", alias!(peer_id));
     }
 
     /// **libp2p docs**:
@@ -216,22 +208,10 @@ impl NetworkBehaviour for IotaGossipProtocol {
         peer_id: &PeerId,
         _: &ConnectionId,
         _: &ConnectedPoint,
-        _: <Self::ProtocolsHandler as IntoProtocolsHandler>::Handler,
+        _: <Self::ConnectionHandler as IntoConnectionHandler>::Handler,
+        _remaining_established: usize,
     ) {
         debug!("gossip behaviour: connection with {} closed.", alias!(peer_id));
-    }
-
-    /// **libp2p docs**:
-    ///
-    /// Indicates to the behaviour that we disconnected from the node with the given peer id.
-    ///
-    /// There is no handler running anymore for this node. Any event that has been sent to it may
-    /// or may not have been processed by the handler.
-    ///
-    /// This method is only called when the last established connection to the peer is closed,
-    /// preceded by [`inject_connection_closed`](NetworkBehaviour::inject_connection_closed).
-    fn inject_disconnected(&mut self, peer_id: &PeerId) {
-        debug!("gossip behaviour: {} disconnected.", alias!(peer_id));
     }
 
     /// **libp2p docs**:
