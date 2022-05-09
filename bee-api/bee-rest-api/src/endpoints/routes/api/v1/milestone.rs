@@ -31,19 +31,14 @@ pub(crate) fn milestone<B: StorageBackend>(
     milestone_index: MilestoneIndex,
     args: ApiArgsFullNode<B>,
 ) -> Result<impl Reply, Rejection> {
-    match args.tangle.get_milestone_message_id(milestone_index) {
-        Some(message_id) => match args.tangle.get_metadata(&message_id) {
-            Some(metadata) => Ok(warp::reply::json(&SuccessBody::new(MilestoneResponse {
-                milestone_index: *milestone_index,
-                message_id: message_id.to_string(),
-                timestamp: metadata.arrival_timestamp(),
-            }))),
-            None => Err(reject::custom(CustomRejection::NotFound(
-                "can not find metadata for milestone".to_string(),
-            ))),
-        },
+    match args.tangle.get_milestone(milestone_index) {
+        Some(milestone) => Ok(warp::reply::json(&SuccessBody::new(MilestoneResponse {
+            milestone_index: *milestone_index,
+            message_id: milestone.message_id().to_string(),
+            timestamp: milestone.timestamp(),
+        }))),
         None => Err(reject::custom(CustomRejection::NotFound(
-            "can not find milestone".to_string(),
+            "cannot find milestone".to_string(),
         ))),
     }
 }
