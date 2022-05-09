@@ -18,7 +18,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/messages/:message_id/metadata", get(message_metadata::<B>))
 }
 
-pub(crate) fn message_metadata<B: StorageBackend>(
+pub(crate) async fn message_metadata<B: StorageBackend>(
     Path(message_id): Path<MessageId>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
@@ -26,7 +26,7 @@ pub(crate) fn message_metadata<B: StorageBackend>(
         return Err(ApiError::ServiceUnavailable("the node is not synchronized"));
     }
 
-    match tangle.get_message_and_metadata(&message_id) {
+    match args.tangle.get_message_and_metadata(&message_id) {
         Some((message, metadata)) => {
             // TODO: access constants from URTS
             let ymrsi_delta = 8;

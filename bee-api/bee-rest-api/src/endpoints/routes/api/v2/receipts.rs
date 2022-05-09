@@ -8,7 +8,7 @@ use axum::{
     Router,
 };
 use bee_ledger::types::Receipt;
-use bee_message::milestone::MilestoneIndex;
+use bee_message::payload::milestone::MilestoneIndex;
 use bee_storage::access::AsIterator;
 use log::error;
 
@@ -21,7 +21,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/receipts", get(receipts::<B>))
 }
 
-pub(crate) fn receipts<B: StorageBackend>(
+pub(crate) async fn receipts<B: StorageBackend>(
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
     let mut receipts_dto = Vec::new();

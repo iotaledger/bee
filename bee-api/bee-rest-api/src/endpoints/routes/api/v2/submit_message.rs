@@ -126,7 +126,7 @@ pub(crate) async fn submit_message_json<B: StorageBackend>(
         if parsed_nonce == 0 { None } else { Some(parsed_nonce) }
     };
 
-    let message = build_message(parents, payload, nonce, args.clone()).await?;
+    let message = build_message(parents, payload, nonce, args.clone())?;
     let message_id = forward_to_message_submitter(message.pack_to_vec(), args).await?;
 
     Ok((

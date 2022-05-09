@@ -7,6 +7,7 @@ use axum::{
     routing::get,
     Router,
 };
+use bee_message::constant::{PROTOCOL_VERSION, TOKEN_SUPPLY};
 
 use crate::{
     endpoints::{routes::health, storage::StorageBackend, ApiArgsFullNode},
@@ -20,9 +21,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/info", get(info::<B>))
 }
 
-pub(crate) fn info<B: StorageBackend>(
-    Extension(args): Extension<ApiArgsFullNode<B>>
-) -> Result<impl Reply, Infallible> {
+pub(crate) async fn info<B: StorageBackend>(Extension(args): Extension<ApiArgsFullNode<B>>) -> impl IntoResponse {
     let (latest_milestone_index, latest_milestone_metadata) = {
         let latest_milestone_index = args.tangle.get_latest_milestone_index();
         (
@@ -43,7 +42,7 @@ pub(crate) fn info<B: StorageBackend>(
         name: args.node_info.name.clone(),
         version: args.node_info.version.clone(),
         status: StatusResponse {
-            is_healthy: health::is_healthy(&tangle, &peer_manager),
+            is_healthy: health::is_healthy(&args.tangle, &args.peer_manager),
             // TODO: In future, the snapshot might make all data for the `latest_milestone` available.
             latest_milestone: LatestMilestoneResponse {
                 index: *latest_milestone_index,
@@ -66,7 +65,7 @@ pub(crate) fn info<B: StorageBackend>(
                     .map(|m| m.milestone_id().to_string())
                     .unwrap_or_default(),
             },
-            pruning_index: *tangle.get_pruning_index(),
+            pruning_index: *args.tangle.get_pruning_index(),
         },
         protocol: ProtocolResponse {
             version: PROTOCOL_VERSION,

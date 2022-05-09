@@ -18,7 +18,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/messages/:message_id/children", get(message_children::<B>))
 }
 
-pub(crate) fn message_children<B: StorageBackend>(
+pub(crate) async fn message_children<B: StorageBackend>(
     Path(message_id): Path<MessageId>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {

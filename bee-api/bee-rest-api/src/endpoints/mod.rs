@@ -48,7 +48,7 @@ where
     node_builder.with_worker_cfg::<ApiWorkerFullNode>(init_config)
 }
 
-pub async fn init_entry_node<N: Node>(init_config: InitConfigEntryNode, node_builder: N::Builder) -> N::Builder
+pub fn init_entry_node<N: Node>(init_config: InitConfigEntryNode, node_builder: N::Builder) -> N::Builder
 where
     N::Backend: StorageBackend,
 {

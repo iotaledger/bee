@@ -14,7 +14,7 @@ use axum::{
     Router,
 };
 use bee_ledger::workers::consensus::{self, WhiteFlagMetadata};
-use bee_message::{milestone::MilestoneIndex, MessageId};
+use bee_message::{payload::milestone::MilestoneIndex, MessageId};
 use bee_protocol::workers::{event::MessageSolidified, request_message};
 use futures::channel::oneshot;
 use serde_json::Value;

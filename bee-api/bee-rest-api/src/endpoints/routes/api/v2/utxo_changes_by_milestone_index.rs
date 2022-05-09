@@ -8,7 +8,7 @@ use axum::{
     Router,
 };
 use bee_ledger::types::OutputDiff;
-use bee_message::{milestone::MilestoneIndex, output::OutputId};
+use bee_message::{output::OutputId, payload::milestone::MilestoneIndex};
 use bee_storage::access::Fetch;
 use log::error;
 
@@ -20,11 +20,11 @@ use crate::{
 pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route(
         "/milestones/by-index/:milestone_index/utxo-changes",
-        get(milestone_utxo_changes::<B>),
+        get(utxo_changes_by_milestone_index::<B>),
     )
 }
 
-pub(crate) fn milestone_utxo_changes<B: StorageBackend>(
+pub(crate) async fn utxo_changes_by_milestone_index<B: StorageBackend>(
     Path(milestone_index): Path<MilestoneIndex>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
