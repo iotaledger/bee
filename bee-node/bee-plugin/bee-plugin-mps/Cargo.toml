@@ -15,5 +15,5 @@ bee-plugin = { version = "0.1.0", path = "../bee-plugin", default-features = fal
 bee-protocol = { version = "0.2.0", path = "../../../bee-protocol", default-features = false, features = [ "workers" ] }
 bee-runtime = { version = "0.1.1-alpha", path = "../../../bee-runtime", default-features = false }
 
-async-trait = { version = "0.1.51", default-features = false }
-log = { version = "0.4.14", default-features = false }
+async-trait = { version = "0.1.53", default-features = false }
+log = { version = "0.4.17", default-features = false }
