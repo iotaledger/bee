@@ -17,8 +17,8 @@ use crate::{
     },
     parent::ParentCount,
     payload::{
-        InputCount, MigratedFundsAmount, MilestoneMetadataLength, MilestoneOptionCount, OutputCount, ReceiptFundsCount,
-        SignatureCount, TagLength, TaggedDataLength,
+        milestone::BinaryParametersLength, InputCount, MigratedFundsAmount, MilestoneMetadataLength,
+        MilestoneOptionCount, OutputCount, ReceiptFundsCount, SignatureCount, TagLength, TaggedDataLength,
     },
     unlock_block::{UnlockBlockCount, UnlockBlockIndex},
 };
@@ -47,6 +47,7 @@ pub enum Error {
     InsufficientStorageDepositAmount { amount: u64, required: u64 },
     StorageDepositReturnExceedsOutputAmount { deposit: u64, amount: u64 },
     InsufficientStorageDepositReturnAmount { deposit: u64, required: u64 },
+    InvalidBinaryParametersLength(<BinaryParametersLength as TryFrom<usize>>::Error),
     InvalidEssenceKind(u8),
     InvalidFeatureBlockCount(<FeatureBlockCount as TryFrom<usize>>::Error),
     InvalidFeatureBlockKind(u8),
@@ -70,7 +71,6 @@ pub enum Error {
     InvalidParentCount(<ParentCount as TryFrom<usize>>::Error),
     InvalidPayloadKind(u32),
     InvalidPayloadLength { expected: usize, actual: usize },
-    InvalidPowScoreValues { nps: u32, npsmi: u32 },
     InvalidReceiptFundsCount(<ReceiptFundsCount as TryFrom<usize>>::Error),
     InvalidReceiptFundsSum(u128),
     InvalidReferenceIndex(<UnlockBlockIndex as TryFrom<u16>>::Error),
@@ -157,6 +157,9 @@ impl fmt::Display for Error {
             Error::InvalidAddress => write!(f, "invalid address provided"),
             Error::InvalidAddressKind(k) => write!(f, "invalid address kind: {}", k),
             Error::InvalidAliasIndex(index) => write!(f, "invalid alias index: {}", index),
+            Error::InvalidBinaryParametersLength(length) => {
+                write!(f, "invalid binary parameters length {length}")
+            }
             Error::InvalidControllerKind(k) => write!(f, "invalid controller kind: {}", k),
             Error::InvalidStorageDepositAmount(amount) => {
                 write!(f, "invalid storage deposit amount: {}", amount)
@@ -213,11 +216,6 @@ impl fmt::Display for Error {
             Error::InvalidPayloadLength { expected, actual } => {
                 write!(f, "invalid payload length: expected {}, got {}", expected, actual)
             }
-            Error::InvalidPowScoreValues { nps, npsmi } => write!(
-                f,
-                "invalid pow score values: next pow score {} and next pow score milestone index {}",
-                nps, npsmi
-            ),
             Error::InvalidReceiptFundsCount(count) => write!(f, "invalid receipt funds count: {}", count),
             Error::InvalidReceiptFundsSum(sum) => write!(f, "invalid receipt amount sum: {sum}"),
             Error::InvalidReferenceIndex(index) => write!(f, "invalid reference index: {}", index),

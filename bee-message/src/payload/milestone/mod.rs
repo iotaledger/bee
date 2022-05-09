@@ -18,13 +18,13 @@ use iterator_sorted::is_unique_sorted;
 pub(crate) use option::{MigratedFundsAmount, MilestoneOptionCount, ReceiptFundsCount};
 use packable::{bounded::BoundedU8, prefix::VecPrefix, Packable};
 
-pub(crate) use self::essence::MilestoneMetadataLength;
 pub use self::{
     essence::MilestoneEssence,
     index::MilestoneIndex,
     milestone_id::MilestoneId,
-    option::{MilestoneOption, MilestoneOptions, PowMilestoneOption, ReceiptMilestoneOption},
+    option::{MilestoneOption, MilestoneOptions, ParametersMilestoneOption, ReceiptMilestoneOption},
 };
+pub(crate) use self::{essence::MilestoneMetadataLength, option::BinaryParametersLength};
 use crate::{constant::PROTOCOL_VERSION, signature::Signature, Error};
 
 #[derive(Debug)]
