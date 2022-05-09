@@ -1,10 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use axum::Router;
-
-use crate::endpoints::storage::StorageBackend;
-
 pub mod add_peer;
 pub mod info;
 pub mod message;
@@ -25,6 +21,10 @@ pub mod transaction_included_message;
 pub mod treasury;
 pub mod utxo_changes_by_milestone_id;
 pub mod utxo_changes_by_milestone_index;
+
+use axum::Router;
+
+use crate::endpoints::storage::StorageBackend;
 
 pub(crate) const MAX_RESPONSE_RESULTS: usize = 1000;
 

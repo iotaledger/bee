@@ -276,8 +276,6 @@ fn initialize_api(builder: EntryNodeBuilder) -> EntryNodeBuilder {
         rest_api_config: config.rest_api.clone(),
     };
 
-    
-
     bee_rest_api::endpoints::init_entry_node::<EntryNode>(init_config, builder)
 }
 
