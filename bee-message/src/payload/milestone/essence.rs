@@ -80,6 +80,11 @@ impl MilestoneEssence {
         self.timestamp
     }
 
+    /// Returns the protocol version of a [`MilestoneEssence`].
+    pub fn protocol_version(&self) -> u8 {
+        self.protocol_version
+    }
+
     /// Returns the previous milestone ID of a [`MilestoneEssence`].
     pub fn previous_milestone_id(&self) -> &MilestoneId {
         &self.previous_milestone_id
