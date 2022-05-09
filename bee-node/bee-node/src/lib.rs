@@ -7,8 +7,6 @@
 
 #![cfg_attr(doc_cfg, feature(doc_cfg))]
 
-extern crate bee_rest_api;
-
 mod cli;
 mod config;
 mod core;
