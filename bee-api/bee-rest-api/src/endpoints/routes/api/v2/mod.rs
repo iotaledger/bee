@@ -3,13 +3,13 @@
 
 pub mod add_peer;
 pub mod info;
-pub mod message;
-pub mod message_children;
-pub mod message_metadata;
-pub mod message_raw;
+pub mod messages;
+pub mod messages_children;
+pub mod messages_metadata;
+pub mod messages_raw;
 pub mod milestone_by_milestone_id;
 pub mod milestone_by_milestone_index;
-pub mod output;
+pub mod outputs;
 pub mod peer;
 pub mod peers;
 pub mod receipts;
@@ -33,13 +33,13 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
         "/v2",
         add_peer::filter::<B>()
             .merge(info::filter::<B>())
-            .merge(message::filter::<B>())
-            .merge(message_children::filter::<B>())
-            .merge(message_metadata::filter::<B>())
-            .merge(message_raw::filter::<B>())
+            .merge(messages::filter::<B>())
+            .merge(messages_children::filter::<B>())
+            .merge(messages_metadata::filter::<B>())
+            .merge(messages_raw::filter::<B>())
             .merge(milestone_by_milestone_id::filter::<B>())
             .merge(milestone_by_milestone_index::filter::<B>())
-            .merge(output::filter::<B>())
+            .merge(outputs::filter::<B>())
             .merge(peer::filter::<B>())
             .merge(peers::filter::<B>())
             .merge(receipts::filter::<B>())

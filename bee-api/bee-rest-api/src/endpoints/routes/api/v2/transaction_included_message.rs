@@ -12,7 +12,7 @@ use bee_message::{output::OutputId, payload::transaction::TransactionId};
 use bee_storage::access::Fetch;
 use log::error;
 
-use crate::endpoints::{error::ApiError, routes::api::v2::message, storage::StorageBackend, ApiArgsFullNode};
+use crate::endpoints::{error::ApiError, routes::api::v2::messages, storage::StorageBackend, ApiArgsFullNode};
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route(
@@ -34,7 +34,7 @@ pub(crate) async fn transaction_included_message<B: StorageBackend>(
     })?;
 
     match fetched {
-        Some(output) => message::message(Path(*output.message_id()), Extension(args)).await,
+        Some(output) => messages::message(Path(*output.message_id()), Extension(args)).await,
         None => Err(ApiError::NotFound),
     }
 }
