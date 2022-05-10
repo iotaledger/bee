@@ -111,7 +111,7 @@ impl ConnectionHandler for GossipProtocolHandler {
     /// Injects the output of a successful upgrade on a new outbound substream.
     ///
     /// The second argument is the information that was previously passed to
-    /// [`ProtocolsHandlerEvent::OutboundSubstreamRequest`].
+    /// [`ConnectionHandlerEvent::OutboundSubstreamRequest`].
     fn inject_fully_negotiated_outbound(&mut self, new_outbound: NegotiatedSubstream, _: Self::OutboundOpenInfo) {
         let negotiated_outbound = ConnectionHandlerEvent::Custom(IotaGossipHandlerEvent::UpgradeCompleted {
             substream: Box::new(new_outbound),
@@ -168,7 +168,7 @@ impl ConnectionHandler for GossipProtocolHandler {
     /// Returns until when the connection should be kept alive.
     ///
     /// This method is called by the `Swarm` after each invocation of
-    /// [`ProtocolsHandler::poll`] to determine if the connection and the associated
+    /// [`ConnectionHandler::poll`] to determine if the connection and the associated
     /// `ProtocolsHandler`s should be kept alive as far as this handler is concerned
     /// and if so, for how long.
     ///
@@ -182,7 +182,7 @@ impl ConnectionHandler for GossipProtocolHandler {
     /// be kept alive until the next call to this method.
     ///
     /// > **Note**: The connection is always closed and the handler destroyed
-    /// > when [`ProtocolsHandler::poll`] returns an error. Furthermore, the
+    /// > when [`ConnectionHandler::poll`] returns an error. Furthermore, the
     /// > connection may be closed for reasons outside of the control
     /// > of the handler.
     fn connection_keep_alive(&self) -> KeepAlive {
