@@ -39,8 +39,6 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
             .merge(message_raw::filter::<B>())
             .merge(milestone_by_milestone_id::filter::<B>())
             .merge(milestone_by_milestone_index::filter::<B>())
-            .merge(utxo_changes_by_milestone_id::filter::<B>())
-            .merge(utxo_changes_by_milestone_index::filter::<B>())
             .merge(output::filter::<B>())
             .merge(peer::filter::<B>())
             .merge(peers::filter::<B>())
@@ -50,6 +48,8 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
             .merge(submit_message::filter::<B>())
             .merge(tips::filter::<B>())
             .merge(transaction_included_message::filter::<B>())
-            .merge(treasury::filter::<B>()),
+            .merge(treasury::filter::<B>())
+            .merge(utxo_changes_by_milestone_id::filter::<B>())
+            .merge(utxo_changes_by_milestone_index::filter::<B>()),
     )
 }
