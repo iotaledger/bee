@@ -24,7 +24,7 @@ use serde_json::Value;
 
 use crate::{
     endpoints::{
-        error::ApiError, routes::api::v2::messages::BYTE_CONTENT_TYPE, storage::StorageBackend, ApiArgsFullNode,
+        error::ApiError, routes::api::v2::messages::BYTE_CONTENT_HEADER, storage::StorageBackend, ApiArgsFullNode,
     },
     types::responses::SubmitMessageResponse,
 };
