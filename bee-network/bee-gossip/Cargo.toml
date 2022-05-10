@@ -46,8 +46,8 @@ bee-runtime = { version = "0.1.1-alpha", path = "../../bee-runtime", default-fea
 async-trait = { version = "0.1.51", default-features = false, optional = true }
 futures = { version = "0.3.17", default-features = false, optional = true }
 hashbrown = { version = "0.12.0", default-features = false, features = [ "ahash", "inline-more" ] }
-libp2p = { version = "0.41.0", default-features = false, optional = true }
-libp2p-core = { version = "0.30.0", default-features = false }
+libp2p = { version = "0.44.0", default-features = false, optional = true }
+libp2p-core = { version = "0.32.1", default-features = false }
 log = { version = "0.4.14", default-features = false, optional = true }
 once_cell = { version = "1.8.0", default-features = false, optional = true }
 rand = { version = "0.8.5", default-features = false, optional = true }

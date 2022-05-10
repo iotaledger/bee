@@ -4,12 +4,9 @@
 use std::time::Duration;
 
 use libp2p::{
-    core::{
-        connection::ConnectionLimits,
-        upgrade::{self, SelectUpgrade},
-    },
+    core::upgrade::{self, SelectUpgrade},
     dns, identity, mplex, noise,
-    swarm::SwarmBuilder,
+    swarm::{ConnectionLimits, SwarmBuilder},
     tcp, yamux, Swarm, Transport,
 };
 
