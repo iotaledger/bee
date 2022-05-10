@@ -17,11 +17,11 @@ use crate::endpoints::{error::ApiError, routes::api::v2::messages, storage::Stor
 pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route(
         "/transactions/:transaction_id/included-message",
-        get(transaction_included_message::<B>),
+        get(transactions_included_message::<B>),
     )
 }
 
-pub(crate) async fn transaction_included_message<B: StorageBackend>(
+pub(crate) async fn transactions_included_message<B: StorageBackend>(
     Path(transaction_id): Path<TransactionId>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
@@ -34,7 +34,7 @@ pub(crate) async fn transaction_included_message<B: StorageBackend>(
     })?;
 
     match fetched {
-        Some(output) => messages::message(Path(*output.message_id()), Extension(args)).await,
+        Some(output) => messages::messages(Path(*output.message_id()), Extension(args)).await,
         None => Err(ApiError::NotFound),
     }
 }

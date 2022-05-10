@@ -36,10 +36,10 @@ lazy_static! {
 }
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
-    Router::new().route("/messages", post(submit_message::<B>))
+    Router::new().route("/messages", post(messages_submit::<B>))
 }
 
-pub(crate) async fn submit_message<B: StorageBackend>(
+pub(crate) async fn messages_submit<B: StorageBackend>(
     bytes: Bytes,
     headers: HeaderMap,
     Extension(args): Extension<ApiArgsFullNode<B>>,

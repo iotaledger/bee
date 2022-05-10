@@ -10,14 +10,14 @@ use axum::{
 use bee_message::payload::milestone::MilestoneId;
 
 use crate::endpoints::{
-    error::ApiError, routes::api::v2::milestone_by_milestone_index, storage::StorageBackend, ApiArgsFullNode,
+    error::ApiError, routes::api::v2::milestones_by_milestone_index, storage::StorageBackend, ApiArgsFullNode,
 };
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
-    Router::new().route("/milestones/:milestone_id", get(milestone_by_milestone_id::<B>))
+    Router::new().route("/milestones/:milestone_id", get(milestones_by_milestone_id::<B>))
 }
 
-pub(crate) async fn milestone_by_milestone_id<B: StorageBackend>(
+pub(crate) async fn milestones_by_milestone_id<B: StorageBackend>(
     Path(milestone_id): Path<MilestoneId>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
@@ -26,5 +26,5 @@ pub(crate) async fn milestone_by_milestone_id<B: StorageBackend>(
         None => return Err(ApiError::NotFound),
     };
 
-    milestone_by_milestone_index::milestone_by_milestone_index(Path(milestone_index), Extension(args)).await
+    milestones_by_milestone_index::milestones_by_milestone_index(Path(milestone_index), Extension(args)).await
 }

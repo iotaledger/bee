@@ -20,10 +20,10 @@ use crate::{
 };
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
-    Router::new().route("/peers", post(add_peer::<B>))
+    Router::new().route("/peers", post(peers_add::<B>))
 }
 
-pub(crate) async fn add_peer<B: StorageBackend>(
+pub(crate) async fn peers_add<B: StorageBackend>(
     Json(value): Json<Value>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {

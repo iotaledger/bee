@@ -14,10 +14,10 @@ use log::error;
 use crate::endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode};
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
-    Router::new().route("/peers/:peer_id", delete(remove_peer::<B>))
+    Router::new().route("/peers/:peer_id", delete(peers_remove::<B>))
 }
 
-pub(crate) async fn remove_peer<B: StorageBackend>(
+pub(crate) async fn peers_remove<B: StorageBackend>(
     Path(peer_id): Path<String>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {

@@ -16,11 +16,11 @@ use crate::{
 pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route(
         "/milestones/by-index/:milestone_index",
-        get(milestone_by_milestone_index::<B>),
+        get(milestones_by_milestone_index::<B>),
     )
 }
 
-pub(crate) async fn milestone_by_milestone_index<B: StorageBackend>(
+pub(crate) async fn milestones_by_milestone_index<B: StorageBackend>(
     Path(milestone_index): Path<MilestoneIndex>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {

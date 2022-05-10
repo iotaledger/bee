@@ -15,10 +15,10 @@ use crate::{
 };
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
-    Router::new().route("/messages/:message_id", get(message::<B>))
+    Router::new().route("/messages/:message_id", get(messages::<B>))
 }
 
-pub(crate) async fn message<B: StorageBackend>(
+pub(crate) async fn messages<B: StorageBackend>(
     Path(message_id): Path<MessageId>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
