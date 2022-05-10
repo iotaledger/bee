@@ -9,9 +9,9 @@ pub mod messages_submit;
 pub mod milestones_by_milestone_id;
 pub mod milestones_by_milestone_index;
 pub mod outputs;
-pub mod peer;
 pub mod peers;
 pub mod peers_add;
+pub mod peers_all;
 pub mod peers_remove;
 pub mod receipts;
 pub mod receipts_at;
@@ -38,9 +38,9 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
             .merge(milestones_by_milestone_id::filter::<B>())
             .merge(milestones_by_milestone_index::filter::<B>())
             .merge(outputs::filter::<B>())
-            .merge(peer::filter::<B>())
             .merge(peers::filter::<B>())
             .merge(peers_add::filter::<B>())
+            .merge(peers_all::filter::<B>())
             .merge(peers_remove::filter::<B>())
             .merge(receipts::filter::<B>())
             .merge(receipts_at::filter::<B>())

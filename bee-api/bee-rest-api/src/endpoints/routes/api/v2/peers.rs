@@ -2,27 +2,33 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use axum::{
-    extract::{Extension, Json},
+    extract::{Extension, Json, Path},
     response::IntoResponse,
     routing::get,
     Router,
 };
+use bee_gossip::PeerId;
 
 use crate::{
-    endpoints::{storage::StorageBackend, ApiArgsFullNode},
-    types::{dtos::PeerDto, responses::PeersResponse},
+    endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode},
+    types::{dtos::PeerDto, responses::PeerResponse},
 };
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
-    Router::new().route("/peers", get(peers::<B>))
+    Router::new().route("/peers/:peer_id", get(peers::<B>))
 }
 
-async fn peers<B: StorageBackend>(Extension(args): Extension<ApiArgsFullNode<B>>) -> impl IntoResponse {
-    let mut peers = Vec::new();
+async fn peers<B: StorageBackend>(
+    Path(peer_id): Path<String>,
+    Extension(args): Extension<ApiArgsFullNode<B>>,
+) -> Result<impl IntoResponse, ApiError> {
+    let peer_id = peer_id
+        .parse::<PeerId>()
+        .map_err(|_| ApiError::BadRequest("invalid peer id"))?;
 
-    for peer in args.peer_manager.get_all() {
-        peers.push(PeerDto::from(peer.as_ref()));
-    }
-
-    Json(PeersResponse(peers))
+    args.peer_manager
+        .get_map(&peer_id, |peer_entry| {
+            Ok(Json(PeerResponse(PeerDto::from(peer_entry.0.as_ref()))))
+        })
+        .unwrap_or(Err(ApiError::NotFound))
 }
