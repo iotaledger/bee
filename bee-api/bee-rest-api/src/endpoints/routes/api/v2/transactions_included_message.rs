@@ -34,7 +34,7 @@ async fn transactions_included_message<B: StorageBackend>(
     })?;
 
     match fetched {
-        Some(output) => messages::messages(Path(*output.message_id()), Extension(args)).await,
+        Some(output) => messages::messages_json(*output.message_id(), args).await,
         None => Err(ApiError::NotFound),
     }
 }

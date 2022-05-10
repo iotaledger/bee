@@ -99,6 +99,6 @@ async fn info<B: StorageBackend>(Extension(args): Extension<ApiArgsFullNode<B>>)
             }
             features
         },
-        plugins: Vec::new(), // TODO: add actual plugin that the node supports
+        plugins: Vec::new(), // TODO: add actual plugins that the node supports
     })
 }

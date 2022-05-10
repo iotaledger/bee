@@ -3,27 +3,67 @@
 
 use axum::{
     extract::{Extension, Json, Path},
-    response::IntoResponse,
+    http::header::{HeaderMap, HeaderValue},
+    response::{IntoResponse, Response},
     routing::get,
     Router,
 };
 use bee_message::{MessageDto, MessageId};
+use lazy_static::lazy_static;
+use packable::PackableExt;
 
 use crate::{
     endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode},
     types::responses::MessageResponse,
 };
 
+lazy_static! {
+    pub(crate) static ref BYTE_CONTENT_HEADER: HeaderValue =
+        HeaderValue::from_str("application/vnd.iota.serializer-v1").unwrap();
+}
+
 pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/messages/:message_id", get(messages::<B>))
 }
 
-pub(crate) async fn messages<B: StorageBackend>(
+async fn messages<B: StorageBackend>(
+    headers: HeaderMap,
     Path(message_id): Path<MessageId>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
+) -> Result<Response, ApiError> {
+    if let Some(value) = headers.get(axum::http::header::CONTENT_TYPE) {
+        if value.eq(&*BYTE_CONTENT_HEADER) {
+            return messages_raw::<B>(message_id.clone(), args.clone())
+                .await
+                .map(|r| r.into_response());
+        } else {
+            messages_json::<B>(message_id.clone(), args.clone())
+                .await
+                .map(|r| r.into_response())
+        }
+    } else {
+        messages_json::<B>(message_id.clone(), args.clone())
+            .await
+            .map(|r| r.into_response())
+    }
+}
+
+pub(crate) async fn messages_json<B: StorageBackend>(
+    message_id: MessageId,
+    args: ApiArgsFullNode<B>,
 ) -> Result<impl IntoResponse, ApiError> {
     match args.tangle.get(&message_id) {
         Some(message) => Ok(Json(MessageResponse(MessageDto::from(&message)))),
+        None => Err(ApiError::NotFound),
+    }
+}
+
+async fn messages_raw<B: StorageBackend>(
+    message_id: MessageId,
+    args: ApiArgsFullNode<B>,
+) -> Result<impl IntoResponse, ApiError> {
+    match args.tangle.get(&message_id) {
+        Some(message) => Ok(message.pack_to_vec()),
         None => Err(ApiError::NotFound),
     }
 }

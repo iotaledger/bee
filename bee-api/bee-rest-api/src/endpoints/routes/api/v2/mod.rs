@@ -5,7 +5,6 @@ pub mod info;
 pub mod messages;
 pub mod messages_children;
 pub mod messages_metadata;
-pub mod messages_raw;
 pub mod messages_submit;
 pub mod milestones_by_milestone_id;
 pub mod milestones_by_milestone_index;
@@ -35,7 +34,6 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
             .merge(messages::filter::<B>())
             .merge(messages_children::filter::<B>())
             .merge(messages_metadata::filter::<B>())
-            .merge(messages_raw::filter::<B>())
             .merge(messages_submit::filter::<B>())
             .merge(milestones_by_milestone_id::filter::<B>())
             .merge(milestones_by_milestone_index::filter::<B>())

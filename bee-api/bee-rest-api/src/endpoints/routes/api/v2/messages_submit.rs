@@ -4,10 +4,7 @@
 use axum::{
     body::Bytes,
     extract::{Extension, Json},
-    http::{
-        header::{HeaderMap, HeaderValue},
-        StatusCode,
-    },
+    http::{header::HeaderMap, StatusCode},
     response::{IntoResponse, Response},
     routing::post,
     Router,
@@ -21,19 +18,16 @@ use bee_message::{
 use bee_pow::providers::{miner::MinerBuilder, NonceProviderBuilder};
 use bee_protocol::workers::{MessageSubmitterError, MessageSubmitterWorkerEvent};
 use futures::channel::oneshot;
-use lazy_static::lazy_static;
 use log::error;
 use packable::PackableExt;
 use serde_json::Value;
 
 use crate::{
-    endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode},
+    endpoints::{
+        error::ApiError, routes::api::v2::messages::BYTE_CONTENT_TYPE, storage::StorageBackend, ApiArgsFullNode,
+    },
     types::responses::SubmitMessageResponse,
 };
-
-lazy_static! {
-    static ref BYTE_CONTENT_TYPE: HeaderValue = HeaderValue::from_str("application/vnd.iota.serializer-v1").unwrap();
-}
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/messages", post(messages_submit::<B>))
