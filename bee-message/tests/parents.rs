@@ -42,19 +42,25 @@ fn new_invalid_more_than_max() {
 }
 
 #[test]
-fn new_invalid_not_sorted() {
-    let mut inner = rand_message_ids(8);
-    inner.reverse();
+fn new_not_sorted() {
+    let mut inner_1 = rand_message_ids(8);
+    let inner_2 = inner_1.clone();
+    inner_1.reverse();
 
-    assert!(matches!(Parents::new(inner), Err(Error::ParentsNotUniqueSorted)));
+    let parents = Parents::new(inner_1).unwrap();
+
+    assert_eq!(*parents.to_vec(), inner_2);
 }
 
 #[test]
-fn new_invalid_not_unique() {
-    let mut inner = rand_message_ids(7);
-    inner.push(*inner.last().unwrap());
+fn new_not_unique() {
+    let mut inner_1 = rand_message_ids(7);
+    let inner_2 = inner_1.clone();
+    inner_1.push(*inner_1.last().unwrap());
 
-    assert!(matches!(Parents::new(inner), Err(Error::ParentsNotUniqueSorted)));
+    let parents = Parents::new(inner_1).unwrap();
+
+    assert_eq!(*parents.to_vec(), inner_2);
 }
 
 #[test]

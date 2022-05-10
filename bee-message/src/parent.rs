@@ -8,7 +8,7 @@ use core::ops::RangeInclusive;
 
 use derive_more::Deref;
 use iterator_sorted::is_unique_sorted;
-use packable::{bounded::BoundedU8, prefix::BoxedSlicePrefix, Packable};
+use packable::{bounded::BoundedU8, prefix::BoxedSlicePrefix, Packable, PackableExt};
 
 use crate::{Error, MessageId};
 
@@ -32,8 +32,9 @@ impl Parents {
     pub const COUNT_RANGE: RangeInclusive<u8> = 1..=8;
 
     /// Creates new [`Parents`].
-    pub fn new(inner: Vec<MessageId>) -> Result<Self, Error> {
-        verify_parents::<true>(&inner)?;
+    pub fn new(mut inner: Vec<MessageId>) -> Result<Self, Error> {
+        inner.sort_unstable_by_key(|a| a.pack_to_vec());
+        inner.dedup();
 
         Ok(Self(
             inner.into_boxed_slice().try_into().map_err(Error::InvalidParentCount)?,
