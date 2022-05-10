@@ -4,7 +4,7 @@
 use std::env;
 
 use auth_helper::password::{self, Error as GeneratorError};
-use rpassword::read_password_from_tty;
+use rpassword::prompt_password;
 use structopt::StructOpt;
 use thiserror::Error;
 
@@ -27,9 +27,9 @@ pub fn exec(_tool: &PasswordTool) -> Result<(), PasswordError> {
     let password = if let Ok(env_password) = env::var("BEE_TOOL_PASSWORD") {
         env_password
     } else {
-        let password = read_password_from_tty(Some("Password: "))?;
+        let password = prompt_password("Password: ")?;
 
-        if password != read_password_from_tty(Some("Re-enter password: "))? {
+        if password != prompt_password("Re-enter password: ")? {
             return Err(PasswordError::NonMatching);
         }
 

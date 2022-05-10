@@ -20,7 +20,7 @@ rustdoc-args = [ "--cfg", "doc_cfg" ]
 bee-ternary = { version = "0.6.0", default-features = false }
 
 iota-crypto = { version = "0.10.0", default-features = false, features = [ "blake2b", "digest", "curl-p" ] }
-thiserror = { version = "1.0.30", default-features = false }
+thiserror = { version = "1.0.31", default-features = false }
 
 [dev-dependencies]
 bee-test = { path = "../bee-test", default-features = false }

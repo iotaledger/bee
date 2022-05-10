@@ -20,25 +20,25 @@ bee-runtime = { version = "0.1.1-alpha", path = "../../../bee-runtime", default-
 bee-storage = { version = "0.12.0", path = "../../../bee-storage/bee-storage", default-features = false }
 bee-tangle = { version = "0.3.0", path = "../../../bee-tangle", default-features = false }
 
-async-trait = { version = "0.1.51", default-features = false }
+async-trait = { version = "0.1.53", default-features = false }
 auth-helper = { version = "0.2.0", default-features = false }
 cap = { version = "0.1.0", default-features = false }
-futures = { version = "0.3.17", default-features = false }
+futures = { version = "0.3.21", default-features = false }
 hex = { version = "0.4.3", default-features = false }
-log = { version = "0.4.14", default-features = false }
+log = { version = "0.4.17", default-features = false }
 mime_guess = { version = "2.0.3", default-features = false }
-multiaddr = { version = "0.13.0", default-features = false }
+multiaddr = { version = "0.14.0", default-features = false }
 rust-embed = { version = "6.2.0", default-features = false, features = [ "interpolate-folder-path" ] }
-serde = { version = "1.0.130", default-features = false, features = [ "derive" ] }
-serde_json = { version = "1.0.68", default-features = false }
+serde = { version = "1.0.137", default-features = false, features = [ "derive" ] }
+serde_json = { version = "1.0.81", default-features = false }
 serde_repr = { version = "0.1.7", default-features = false }
-tokio = { version = "1.12.0", default-features = false, features = [ "signal", "rt", "macros", "rt-multi-thread" ] }
-tokio-stream = { version = "0.1.7", default-features = false }
-warp = { version = "0.3.1", default-features = false }
+tokio = { version = "1.18.2", default-features = false, features = [ "signal", "rt", "macros", "rt-multi-thread" ] }
+tokio-stream = { version = "0.1.8", default-features = false }
+warp = { version = "0.3.2", default-features = false }
 warp-reverse-proxy = { version = "0.4.0", default-features = false }
 
 [build-dependencies]
-reqwest = { version = "0.11.5", default-features = false, features = [ "blocking", "default-tls", "json" ] }
+reqwest = { version = "0.11.10", default-features = false, features = [ "blocking", "default-tls", "json" ] }
 sha2 = { version = "0.9.6", default-features = false }
 tempfile = { version = "3.3.0", default-features = false }
 zip = { version = "0.5.13", default-features = false, features = [ "bzip2", "deflate" ] }
