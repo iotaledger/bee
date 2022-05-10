@@ -20,51 +20,58 @@ rustdoc-args = [ "--cfg", "doc_cfg" ]
 bee-gossip = { version = "0.6.0", path = "../../bee-network/bee-gossip", default-features = false, optional = true }
 bee-ledger = { version = "0.7.0", path = "../../bee-ledger", default-features = false }
 bee-message = { version = "0.2.0", path = "../../bee-message", default-features = false, features = [ "dto" ] }
-bee-pow = { version = "0.2.0", path = "../../bee-pow", default-features = false }
+bee-pow = { version = "0.2.0", path = "../../bee-pow", default-features = false, optional = true }
 bee-protocol = { version = "0.2.2", path = "../../bee-protocol", default-features = false, optional = true }
 bee-runtime = { version = "0.1.1-alpha", path = "../../bee-runtime", default-features = false, optional = true  }
 bee-storage = { version = "0.12.0", path = "../../bee-storage/bee-storage", default-features = false, optional = true }
 bee-tangle = { version = "0.3.0", path = "../../bee-tangle", default-features = false, optional = true }
 
 async-trait = { version = "0.1.53", default-features = false, optional = true }
-auth-helper = { version = "0.2.0", default-features = false }
+auth-helper = { version = "0.2.0", default-features = false, optional = true }
 axum = { version = "0.5.4", default-features = false, features = [ "json", "headers", "original-uri" ], optional = true }
-base64 = { version = "0.13.0", default-features = false }
+base64 = { version = "0.13.0", default-features = false, optional = true }
 bech32 = { version = "0.8.1", default-features = false, optional = true }
 digest = { version = "0.10.3", default-features = false, optional = true }
 futures = { version = "0.3.21", default-features = false, optional = true }
 iota-crypto = { version = "0.10.0", default-features = false, features = [ "blake2b" ], optional = true }
-lazy_static = {version = "1.4.0", default-features = false }
+lazy_static = {version = "1.4.0", default-features = false, optional = true }
 log = { version = "0.4.17", default-features = false, optional = true }
-multiaddr = { version = "0.14.0", default-features = false }
+multiaddr = { version = "0.14.0", default-features = false, optional = true }
 num_cpus = { version = "1.13.1", default-features = false, optional = true }
-packable = { version = "0.3.2", default-features = false }
-prefix-hex = { version = "0.4.0", default-features = false }
-primitive-types = { version = "0.10.1", default-features = false, features = [ "serde" ] }
-regex = { version = "1.5.4", default-features = false }
+packable = { version = "0.3.2", default-features = false, optional = true }
+prefix-hex = { version = "0.4.0", default-features = false, optional = true }
+regex = { version = "1.5.4", default-features = false, optional = true }
 serde = { version = "1.0.137", default-features = false, features = [ "derive" ] }
-serde_json = { version = "1.0.81", default-features = false, features = [ "alloc" ] }
+serde_json = { version = "1.0.81", default-features = false, features = [ "alloc" ], optional = true }
 thiserror = { version = "1.0.31", default-features = false }
 tokio = { version = "1.18.2", default-features = false, optional = true }
-warp = { version = "0.3.2", default-features = false, optional = true }
 
 [features]
 default = [ "peer" ]
 dashboard = []
 endpoints = [
   "bee-gossip",
+  "bee-pow",
   "bee-protocol/workers",
   "bee-runtime",
   "bee-storage",
   "bee-tangle",
   "async-trait",
+  "auth-helper",
+  "axum",
+  "base64",
   "bech32",
   "digest",
   "futures",
   "iota-crypto",
+  "lazy_static",
   "log",
+  "multiaddr",
   "num_cpus",
+  "packable",
+  "prefix-hex",
+  "regex",
+  "serde_json",
   "tokio",
-  "axum"
 ]
 peer = [ "bee-protocol" ]
