@@ -33,16 +33,16 @@ async fn messages<B: StorageBackend>(
 ) -> Result<Response, ApiError> {
     if let Some(value) = headers.get(axum::http::header::CONTENT_TYPE) {
         if value.eq(&*BYTE_CONTENT_HEADER) {
-            return messages_raw::<B>(message_id.clone(), args.clone())
+            return messages_raw::<B>(message_id, args.clone())
                 .await
                 .map(|r| r.into_response());
         } else {
-            messages_json::<B>(message_id.clone(), args.clone())
+            messages_json::<B>(message_id, args.clone())
                 .await
                 .map(|r| r.into_response())
         }
     } else {
-        messages_json::<B>(message_id.clone(), args.clone())
+        messages_json::<B>(message_id, args.clone())
             .await
             .map(|r| r.into_response())
     }
