@@ -25,7 +25,6 @@ bech32 = { version = "0.8.1", default-features = false }
 bitflags = { version = "1.3.2", default-features = false }
 bytemuck = { version = "1.9.1", default-features = false }
 derive_more = { version = "0.99.17", default-features = false, features = [ "from", "as_ref", "deref", "deref_mut" ] }
-digest = { version = "0.10.3", default-features = false }
 hashbrown = { version = "0.12.1", default-features = false, features = [ "ahash", "inline-more" ] }
 hex = { version = "0.4.3", default-features = false, features = [ "alloc" ] }
 iota-crypto = { version = "0.10.0", default-features = false, features = [ "ed25519", "blake2b" ] }
