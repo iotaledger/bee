@@ -39,7 +39,7 @@ async fn messages_submit<B: StorageBackend>(
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<Response, ApiError> {
     if let Some(value) = headers.get(axum::http::header::CONTENT_TYPE) {
-        if value.eq(&*BYTE_CONTENT_TYPE) {
+        if value.eq(&*BYTE_CONTENT_HEADER) {
             submit_message_raw::<B>(bytes.to_vec(), args.clone()).await
         } else {
             submit_message_json::<B>(
