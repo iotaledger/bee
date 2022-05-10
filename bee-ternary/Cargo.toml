@@ -18,7 +18,7 @@ rustdoc-args = [ "--cfg", "doc_cfg" ]
 
 [dependencies]
 num-traits = { version = "0.2.14", default-features = false }
-serde = { version = "1.0.130", default-features = false, optional = true }
+serde = { version = "1.0.137", default-features = false, optional = true }
 
 [build-dependencies]
 autocfg = { version = "1.1.0", default-features = false }

@@ -43,24 +43,24 @@ full = [
 [dependencies]
 bee-runtime = { version = "0.1.1-alpha", path = "../../bee-runtime", default-features = false, optional = true }
 
-async-trait = { version = "0.1.51", default-features = false, optional = true }
-futures = { version = "0.3.17", default-features = false, optional = true }
-hashbrown = { version = "0.12.0", default-features = false, features = [ "ahash", "inline-more" ] }
+async-trait = { version = "0.1.53", default-features = false, optional = true }
+futures = { version = "0.3.21", default-features = false, optional = true }
+hashbrown = { version = "0.12.1", default-features = false, features = [ "ahash", "inline-more" ] }
 libp2p = { version = "0.44.0", default-features = false, optional = true }
 libp2p-core = { version = "0.32.1", default-features = false }
-log = { version = "0.4.14", default-features = false, optional = true }
+log = { version = "0.4.17", default-features = false, optional = true }
 once_cell = { version = "1.8.0", default-features = false, optional = true }
 rand = { version = "0.8.5", default-features = false, optional = true }
-serde = { version = "1.0.130", default-features = false, features = [ "derive" ], optional = true }
-thiserror = { version = "1.0.30", default-features = false, optional = true }
-tokio = { version = "1.17.0", default-features = false, features = [ "macros", "rt", "time" ], optional = true }
-tokio-stream = { version = "0.1.7", default-features = false, features = [ "time" ], optional = true }
+serde = { version = "1.0.137", default-features = false, features = [ "derive" ], optional = true }
+thiserror = { version = "1.0.31", default-features = false, optional = true }
+tokio = { version = "1.18.2", default-features = false, features = [ "macros", "rt", "time" ], optional = true }
+tokio-stream = { version = "0.1.8", default-features = false, features = [ "time" ], optional = true }
 
 [dev-dependencies]
 fern = { version = "0.6.0", default-features = false }
 hex = { version = "0.4.3", default-features = false, features = [ "alloc" ] }
 serial_test = { version = "0.5.1", default-features = false }
-tokio = { version = "1.17.0", default-features = false, features = [ "io-std", "io-util", "macros", "rt", "rt-multi-thread", "signal", "time" ] }
+tokio = { version = "1.18.2", default-features = false, features = [ "io-std", "io-util", "macros", "rt", "rt-multi-thread", "signal", "time" ] }
 
 [[example]]
 name = "chat"
