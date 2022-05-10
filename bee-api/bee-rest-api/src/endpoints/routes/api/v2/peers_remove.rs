@@ -17,7 +17,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/peers/:peer_id", delete(peers_remove::<B>))
 }
 
-pub(crate) async fn peers_remove<B: StorageBackend>(
+async fn peers_remove<B: StorageBackend>(
     Path(peer_id): Path<String>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {

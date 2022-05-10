@@ -21,7 +21,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
     )
 }
 
-pub(crate) async fn transactions_included_message<B: StorageBackend>(
+async fn transactions_included_message<B: StorageBackend>(
     Path(transaction_id): Path<TransactionId>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {

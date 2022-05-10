@@ -19,7 +19,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/treasury", get(treasury::<B>))
 }
 
-pub(crate) async fn treasury<B: StorageBackend>(
+async fn treasury<B: StorageBackend>(
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
     let treasury = storage::fetch_unspent_treasury_output(&*args.storage).map_err(|e| {

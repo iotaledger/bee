@@ -39,7 +39,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/messages", post(messages_submit::<B>))
 }
 
-pub(crate) async fn messages_submit<B: StorageBackend>(
+async fn messages_submit<B: StorageBackend>(
     bytes: Bytes,
     headers: HeaderMap,
     Extension(args): Extension<ApiArgsFullNode<B>>,

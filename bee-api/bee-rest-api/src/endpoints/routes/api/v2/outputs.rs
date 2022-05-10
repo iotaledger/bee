@@ -25,7 +25,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/outputs/:output_id", get(outputs::<B>))
 }
 
-pub(crate) async fn outputs<B: StorageBackend>(
+async fn outputs<B: StorageBackend>(
     Path(output_id): Path<OutputId>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {

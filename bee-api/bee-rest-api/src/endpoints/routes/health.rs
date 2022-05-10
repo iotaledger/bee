@@ -19,7 +19,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/health", get(health::<B>))
 }
 
-pub(crate) async fn health<B: StorageBackend>(
+async fn health<B: StorageBackend>(
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, Infallible> {
     if is_healthy(&args.tangle, &args.peer_manager) {

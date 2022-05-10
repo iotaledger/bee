@@ -18,7 +18,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/tips", get(tips::<B>))
 }
 
-pub(crate) async fn tips<B: StorageBackend>(
+async fn tips<B: StorageBackend>(
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
     if !args.tangle.is_confirmed_threshold(CONFIRMED_THRESHOLD) {

@@ -21,7 +21,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/info", get(info::<B>))
 }
 
-pub(crate) async fn info<B: StorageBackend>(Extension(args): Extension<ApiArgsFullNode<B>>) -> impl IntoResponse {
+async fn info<B: StorageBackend>(Extension(args): Extension<ApiArgsFullNode<B>>) -> impl IntoResponse {
     let (latest_milestone_index, latest_milestone_metadata) = {
         let latest_milestone_index = args.tangle.get_latest_milestone_index();
         (

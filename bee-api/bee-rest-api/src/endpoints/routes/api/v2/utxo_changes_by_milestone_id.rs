@@ -20,7 +20,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
     )
 }
 
-pub(crate) async fn utxo_changes_by_milestone_id<B: StorageBackend>(
+async fn utxo_changes_by_milestone_id<B: StorageBackend>(
     Path(milestone_id): Path<MilestoneId>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {

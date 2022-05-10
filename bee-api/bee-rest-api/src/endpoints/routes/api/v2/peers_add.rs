@@ -23,7 +23,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/peers", post(peers_add::<B>))
 }
 
-pub(crate) async fn peers_add<B: StorageBackend>(
+async fn peers_add<B: StorageBackend>(
     Json(value): Json<Value>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {

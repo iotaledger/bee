@@ -17,7 +17,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/milestones/:milestone_id", get(milestones_by_milestone_id::<B>))
 }
 
-pub(crate) async fn milestones_by_milestone_id<B: StorageBackend>(
+async fn milestones_by_milestone_id<B: StorageBackend>(
     Path(milestone_id): Path<MilestoneId>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {

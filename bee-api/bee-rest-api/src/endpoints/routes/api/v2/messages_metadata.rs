@@ -18,7 +18,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/messages/:message_id/metadata", get(messages_metadata::<B>))
 }
 
-pub(crate) async fn messages_metadata<B: StorageBackend>(
+async fn messages_metadata<B: StorageBackend>(
     Path(message_id): Path<MessageId>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {

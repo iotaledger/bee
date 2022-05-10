@@ -21,7 +21,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/receipts/:milestone_index", get(receipts_at::<B>))
 }
 
-pub(crate) async fn receipts_at<B: StorageBackend>(
+async fn receipts_at<B: StorageBackend>(
     Path(milestone_index): Path<MilestoneIndex>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
