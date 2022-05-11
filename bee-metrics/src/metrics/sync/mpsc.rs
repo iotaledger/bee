@@ -10,8 +10,7 @@ use std::{
     task::{Context, Poll},
 };
 
-use futures::stream::StreamExt;
-use futures_core::stream::Stream;
+use futures::stream::{Stream, StreamExt};
 use prometheus_client::{
     encoding::text::{EncodeMetric, Encoder},
     metrics::{counter::Counter, MetricType},
