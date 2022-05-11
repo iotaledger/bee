@@ -22,7 +22,7 @@ module.exports = {
                 path: path.resolve(__dirname, 'docs'),
                 routeBasePath: 'bee',
                 sidebarPath: path.resolve(__dirname, 'sidebars.js'),
-                editUrl: 'https://github.com/iotaledger/bee/edit/mainnet-develop',
+                editUrl: 'https://github.com/iotaledger/bee/edit/production',
                 remarkPlugins: [require('remark-code-import'), require('remark-import-partial')],
             }
         ],
