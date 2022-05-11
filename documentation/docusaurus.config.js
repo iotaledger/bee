@@ -10,13 +10,13 @@ module.exports = {
             '@docusaurus/plugin-content-docs',
             {
                 id: 'bee',
-                path: path.resolve(__dirname, './docs'),
+                path: path.resolve(__dirname, 'docs'),
                 routeBasePath: 'bee',
-                sidebarPath: path.resolve(__dirname, './sidebars.js'),
+                sidebarPath: path.resolve(__dirname, 'sidebars.js'),
                 editUrl: 'https://github.com/iotaledger/bee/edit/mainnet-develop',
                 remarkPlugins: [require('remark-code-import'), require('remark-import-partial')],
             }
         ],
     ],
-    staticDirectories: [path.resolve(__dirname, './static')],
+    staticDirectories: [path.resolve(__dirname, 'static')],
 };
