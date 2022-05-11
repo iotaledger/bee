@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use axum::{
-    extract::{Extension, Json, Path},
+    extract::{Extension, Json},
     response::IntoResponse,
     routing::get,
     Router,
@@ -10,7 +10,9 @@ use axum::{
 use bee_message::{payload::Payload, semantic::ConflictReason, MessageId};
 
 use crate::{
-    endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode, CONFIRMED_THRESHOLD},
+    endpoints::{
+        error::ApiError, extractors::path::CustomPath, storage::StorageBackend, ApiArgsFullNode, CONFIRMED_THRESHOLD,
+    },
     types::{dtos::LedgerInclusionStateDto, responses::MessageMetadataResponse},
 };
 
@@ -19,7 +21,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
 }
 
 async fn messages_metadata<B: StorageBackend>(
-    Path(message_id): Path<MessageId>,
+    CustomPath(message_id): CustomPath<MessageId>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
     if !args.tangle.is_confirmed_threshold(CONFIRMED_THRESHOLD) {

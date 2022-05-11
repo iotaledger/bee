@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use axum::{
-    extract::{Extension, Json, Path},
+    extract::{Extension, Json},
     response::IntoResponse,
     routing::get,
     Router,
@@ -10,7 +10,7 @@ use axum::{
 use bee_gossip::PeerId;
 
 use crate::{
-    endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode},
+    endpoints::{error::ApiError, extractors::path::CustomPath, storage::StorageBackend, ApiArgsFullNode},
     types::{dtos::PeerDto, responses::PeerResponse},
 };
 
@@ -19,7 +19,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
 }
 
 async fn peers<B: StorageBackend>(
-    Path(peer_id): Path<String>,
+    CustomPath(peer_id): CustomPath<String>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
     let peer_id = peer_id

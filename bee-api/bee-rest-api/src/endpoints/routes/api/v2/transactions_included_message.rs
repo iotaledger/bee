@@ -1,18 +1,15 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use axum::{
-    extract::{Extension, Path},
-    response::IntoResponse,
-    routing::get,
-    Router,
-};
+use axum::{extract::Extension, response::IntoResponse, routing::get, Router};
 use bee_ledger::types::CreatedOutput;
 use bee_message::{output::OutputId, payload::transaction::TransactionId};
 use bee_storage::access::Fetch;
 use log::error;
 
-use crate::endpoints::{error::ApiError, routes::api::v2::messages, storage::StorageBackend, ApiArgsFullNode};
+use crate::endpoints::{
+    error::ApiError, extractors::path::CustomPath, routes::api::v2::messages, storage::StorageBackend, ApiArgsFullNode,
+};
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route(
@@ -22,7 +19,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
 }
 
 async fn transactions_included_message<B: StorageBackend>(
-    Path(transaction_id): Path<TransactionId>,
+    CustomPath(transaction_id): CustomPath<TransactionId>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
     // Safe to unwrap since 0 is a valid index;

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use axum::{
-    extract::{Extension, Json, Path},
+    extract::{Extension, Json},
     response::IntoResponse,
     routing::get,
     Router,
@@ -13,7 +13,7 @@ use bee_storage::access::Fetch;
 use log::error;
 
 use crate::{
-    endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode},
+    endpoints::{error::ApiError, extractors::path::CustomPath, storage::StorageBackend, ApiArgsFullNode},
     types::responses::UtxoChangesResponse,
 };
 
@@ -25,7 +25,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
 }
 
 pub(crate) async fn utxo_changes_by_milestone_index<B: StorageBackend>(
-    Path(milestone_index): Path<MilestoneIndex>,
+    CustomPath(milestone_index): CustomPath<MilestoneIndex>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
     let fetched = Fetch::<MilestoneIndex, OutputDiff>::fetch(&*args.storage, &milestone_index)

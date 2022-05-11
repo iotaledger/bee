@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use axum::{
-    extract::{Extension, Json, Path},
+    extract::{Extension, Json},
     response::IntoResponse,
     routing::get,
     Router,
@@ -10,7 +10,10 @@ use axum::{
 use bee_message::MessageId;
 
 use crate::{
-    endpoints::{error::ApiError, routes::api::v2::MAX_RESPONSE_RESULTS, storage::StorageBackend, ApiArgsFullNode},
+    endpoints::{
+        error::ApiError, extractors::path::CustomPath, routes::api::v2::MAX_RESPONSE_RESULTS, storage::StorageBackend,
+        ApiArgsFullNode,
+    },
     types::responses::MessageChildrenResponse,
 };
 
@@ -19,7 +22,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
 }
 
 async fn messages_children<B: StorageBackend>(
-    Path(message_id): Path<MessageId>,
+    CustomPath(message_id): CustomPath<MessageId>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
     let all_children = Vec::from_iter(args.tangle.get_children(&message_id).unwrap_or_default());

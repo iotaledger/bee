@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use axum::{
-    extract::{Extension, Json, Path},
+    extract::{Extension, Json},
     http::header::{HeaderMap, HeaderValue},
     response::{IntoResponse, Response},
     routing::get,
@@ -13,7 +13,7 @@ use lazy_static::lazy_static;
 use packable::PackableExt;
 
 use crate::{
-    endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode},
+    endpoints::{error::ApiError, extractors::path::CustomPath, storage::StorageBackend, ApiArgsFullNode},
     types::responses::MessageResponse,
 };
 
@@ -28,7 +28,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
 
 async fn messages<B: StorageBackend>(
     headers: HeaderMap,
-    Path(message_id): Path<MessageId>,
+    CustomPath(message_id): CustomPath<MessageId>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<Response, ApiError> {
     if let Some(value) = headers.get(axum::http::header::CONTENT_TYPE) {

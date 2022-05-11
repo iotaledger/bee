@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use axum::{
-    extract::{Extension, Json, Path},
+    extract::{Extension, Json},
     response::IntoResponse,
     routing::get,
     Router,
@@ -17,7 +17,7 @@ use futures::channel::oneshot;
 use log::error;
 
 use crate::{
-    endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode},
+    endpoints::{error::ApiError, extractors::path::CustomPath, storage::StorageBackend, ApiArgsFullNode},
     types::responses::OutputResponse,
 };
 
@@ -26,7 +26,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
 }
 
 async fn outputs<B: StorageBackend>(
-    Path(output_id): Path<OutputId>,
+    CustomPath(output_id): CustomPath<OutputId>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
     let (cmd_tx, cmd_rx) = oneshot::channel::<(Result<Option<CreatedOutput>, Error>, LedgerIndex)>();

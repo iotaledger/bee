@@ -17,6 +17,7 @@ pub enum ApiError {
     InternalError,
     Forbidden,
     // Errors from dependent crates which should be exposed to the user
+    InvalidPathProvided(String),
     InvalidJsonProvided(serde_json::Error),
     InvalidMessageSubmitted(bee_protocol::workers::MessageSubmitterError),
     InvalidMessage(bee_message::Error),
@@ -32,6 +33,7 @@ impl IntoResponse for ApiError {
             ApiError::ServiceUnavailable(s) => (StatusCode::SERVICE_UNAVAILABLE, s.to_string()),
             ApiError::InternalError => (StatusCode::INTERNAL_SERVER_ERROR, "internal server error".to_string()),
             ApiError::Forbidden => (StatusCode::FORBIDDEN, "access forbidden".to_string()),
+            ApiError::InvalidPathProvided(e) => (StatusCode::BAD_REQUEST, e.to_string()),
             ApiError::InvalidJsonProvided(e) => (StatusCode::BAD_REQUEST, e.to_string()),
             ApiError::InvalidMessageSubmitted(e) => (StatusCode::BAD_REQUEST, e.to_string()),
             ApiError::InvalidMessage(e) => (StatusCode::BAD_REQUEST, e.to_string()),

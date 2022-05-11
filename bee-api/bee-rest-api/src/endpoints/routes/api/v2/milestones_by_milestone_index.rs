@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 use axum::{
-    extract::{Extension, Json, Path},
+    extract::{Extension, Json},
     response::IntoResponse,
     routing::get,
     Router,
@@ -9,7 +9,7 @@ use axum::{
 use bee_message::payload::milestone::MilestoneIndex;
 
 use crate::{
-    endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode},
+    endpoints::{error::ApiError, extractors::path::CustomPath, storage::StorageBackend, ApiArgsFullNode},
     types::responses::MilestoneResponse,
 };
 
@@ -21,7 +21,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
 }
 
 pub(crate) async fn milestones_by_milestone_index<B: StorageBackend>(
-    Path(milestone_index): Path<MilestoneIndex>,
+    CustomPath(milestone_index): CustomPath<MilestoneIndex>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
     let milestone_id = match args.tangle.get_milestone_metadata(milestone_index) {
