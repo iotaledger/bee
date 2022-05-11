@@ -1,8 +1,6 @@
-//! Run with
-//!
-//! ```not_rust
-//! cd examples && cargo run -p example-customize-path-rejection
-//! ```
+// Copyright 2020-2022 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use axum::{
     async_trait,
     extract::{rejection::PathRejection, FromRequest, RequestParts},
