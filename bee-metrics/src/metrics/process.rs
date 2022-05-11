@@ -1,9 +1,8 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! Module containing some predefined useful metrics.
+//! Useful metrics when working with processes.
 
-pub use prometheus_client::metrics::{counter, gauge};
 use prometheus_client::{
     encoding::text::{EncodeMetric, Encoder},
     metrics::{gauge::Gauge, MetricType},

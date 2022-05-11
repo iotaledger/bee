@@ -3,7 +3,7 @@
 
 use std::sync::Arc;
 
-use bee_metrics::{metrics::ProcessMetrics, serve_metrics, Registry};
+use bee_metrics::{metrics::process::ProcessMetrics, serve_metrics, Registry};
 use tokio::time::Duration;
 
 async fn update_memory_usage(memory_usage: ProcessMetrics) {
