@@ -31,7 +31,7 @@ async fn messages<B: StorageBackend>(
     CustomPath(message_id): CustomPath<MessageId>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<Response, ApiError> {
-    if let Some(value) = headers.get(axum::http::header::CONTENT_TYPE) {
+    if let Some(value) = headers.get(axum::http::header::ACCEPT) {
         if value.eq(&*BYTE_CONTENT_HEADER) {
             return messages_raw::<B>(message_id, args.clone())
                 .await
