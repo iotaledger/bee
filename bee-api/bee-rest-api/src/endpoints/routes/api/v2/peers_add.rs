@@ -12,7 +12,7 @@ use log::error;
 use serde_json::Value;
 
 use crate::{
-    endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode},
+    endpoints::{error::ApiError, extractors::json::CustomJson, storage::StorageBackend, ApiArgsFullNode},
     types::{
         dtos::{PeerDto, RelationDto},
         responses::AddPeerResponse,
@@ -24,7 +24,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
 }
 
 async fn peers_add<B: StorageBackend>(
-    Json(value): Json<Value>,
+    CustomJson(value): CustomJson<Value>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
     let multiaddress_json = &value["multiAddress"];

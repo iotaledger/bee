@@ -29,9 +29,9 @@ where
             Err(rejection) => {
                 let err = match rejection {
                     PathRejection::FailedToDeserializePathParams(inner) => {
-                        ApiError::InvalidPathProvided(inner.into_kind().to_string())
+                        ApiError::InvalidPath(inner.into_kind().to_string())
                     }
-                    PathRejection::MissingPathParams(error) => ApiError::InvalidPathProvided(error.to_string()),
+                    PathRejection::MissingPathParams(error) => ApiError::InvalidPath(error.to_string()),
                     _ => {
                         error!("unhandled path rejection: {}", rejection);
                         ApiError::InternalError

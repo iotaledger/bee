@@ -43,14 +43,14 @@ async fn messages_submit<B: StorageBackend>(
             submit_message_raw::<B>(bytes.to_vec(), args.clone()).await
         } else {
             submit_message_json::<B>(
-                serde_json::from_slice(&bytes.to_vec()).map_err(ApiError::InvalidJsonProvided)?,
+                serde_json::from_slice(&bytes.to_vec()).map_err(|e| ApiError::InvalidJson(e.to_string()))?,
                 args.clone(),
             )
             .await
         }
     } else {
         submit_message_json::<B>(
-            serde_json::from_slice(&bytes.to_vec()).map_err(ApiError::InvalidJsonProvided)?,
+            serde_json::from_slice(&bytes.to_vec()).map_err(|e| ApiError::InvalidJson(e.to_string()))?,
             args.clone(),
         )
         .await
@@ -109,8 +109,8 @@ pub(crate) async fn submit_message_json<B: StorageBackend>(
     let payload = if payload_json.is_null() {
         None
     } else {
-        let payload_dto =
-            serde_json::from_value::<PayloadDto>(payload_json.clone()).map_err(ApiError::InvalidJsonProvided)?;
+        let payload_dto = serde_json::from_value::<PayloadDto>(payload_json.clone())
+            .map_err(|e| ApiError::InvalidJson(e.to_string()))?;
         Some(Payload::try_from(&payload_dto).map_err(ApiError::InvalidDto)?)
     };
 
