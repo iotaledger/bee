@@ -13,8 +13,8 @@ mod tlv;
 use std::ops::Range;
 
 pub(crate) use self::{
-    block::MessagePacket,
-    block_request::MessageRequestPacket,
+    block::BlockPacket,
+    block_request::BlockRequestPacket,
     header::{HeaderPacket, HEADER_SIZE},
     heartbeat::HeartbeatPacket,
     milestone_request::MilestoneRequestPacket,

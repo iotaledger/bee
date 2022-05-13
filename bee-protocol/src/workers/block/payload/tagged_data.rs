@@ -58,7 +58,7 @@ where
                 count += 1;
             }
 
-            debug!("Drained {} messages.", count);
+            debug!("Drained {} blocks.", count);
 
             info!("Stopped.");
         });

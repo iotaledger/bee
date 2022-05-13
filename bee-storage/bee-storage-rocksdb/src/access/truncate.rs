@@ -86,7 +86,7 @@ impl_truncate!((bool, TreasuryOutput), (), CF_SPENT_TO_TREASURY_OUTPUT);
 
 impl Truncate<BlockId, BlockMetadata> for Storage {
     fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-        let guard = self.locks.message_id_to_metadata.read();
+        let guard = self.locks.block_id_to_metadata.read();
 
         let cf_handle = self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?;
 

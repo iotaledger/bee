@@ -29,13 +29,13 @@ use crate::{
 
 #[derive(Debug)]
 pub(crate) enum Error {
-    MessageMilestoneParentsMismatch,
+    BlockMilestoneParentsMismatch,
     InvalidMilestone(MilestoneValidationError),
 }
 
 pub(crate) struct MilestonePayloadWorkerEvent {
-    pub(crate) message_id: BlockId,
-    pub(crate) message: Block,
+    pub(crate) block_id: BlockId,
+    pub(crate) block: Block,
 }
 
 pub(crate) struct MilestonePayloadWorker {
@@ -43,13 +43,13 @@ pub(crate) struct MilestonePayloadWorker {
 }
 
 fn validate(
-    message_id: BlockId,
-    message: &Block,
+    block_id: BlockId,
+    block: &Block,
     milestone: &MilestonePayload,
     key_manager: &MilestoneKeyManager,
 ) -> Result<MilestoneMetadata, Error> {
-    if !message.parents().eq(milestone.essence().parents()) {
-        return Err(Error::MessageMilestoneParentsMismatch);
+    if !block.parents().eq(milestone.essence().parents()) {
+        return Err(Error::BlockMilestoneParentsMismatch);
     }
 
     milestone
@@ -63,7 +63,7 @@ fn validate(
         .map_err(Error::InvalidMilestone)?;
 
     Ok(MilestoneMetadata::new(
-        message_id,
+        block_id,
         milestone.id(),
         milestone.essence().timestamp(),
     ))
@@ -72,8 +72,8 @@ fn validate(
 #[allow(clippy::too_many_arguments)]
 fn process<B: StorageBackend>(
     tangle: &Tangle<B>,
-    message_id: BlockId,
-    message: Block,
+    block_id: BlockId,
+    block: Block,
     peer_manager: &PeerManager,
     metrics: &NodeMetrics,
     requested_milestones: &RequestedMilestones,
@@ -81,7 +81,7 @@ fn process<B: StorageBackend>(
     key_manager: &MilestoneKeyManager,
     bus: &Bus<'static>,
 ) {
-    if let Some(Payload::Milestone(milestone_payload)) = message.payload() {
+    if let Some(Payload::Milestone(milestone_payload)) = block.payload() {
         metrics.milestone_payloads_inc(1);
 
         let index = milestone_payload.essence().index();
@@ -90,11 +90,11 @@ fn process<B: StorageBackend>(
             return;
         }
 
-        match validate(message_id, &message, milestone_payload, key_manager) {
+        match validate(block_id, &block, milestone_payload, key_manager) {
             Ok(milestone_metadata) => {
                 tangle.add_milestone(index, milestone_metadata.clone(), milestone_payload.deref().clone());
                 if index > tangle.get_latest_milestone_index() {
-                    info!("New milestone {} {}.", index, milestone_metadata.message_id());
+                    info!("New milestone {} {}.", index, milestone_metadata.block_id());
                     tangle.update_latest_milestone_index(index);
 
                     broadcast_heartbeat(tangle, peer_manager, metrics);
@@ -104,7 +104,7 @@ fn process<B: StorageBackend>(
                         milestone: milestone_metadata,
                     });
                 } else {
-                    debug!("New milestone {} {}.", *index, milestone_metadata.message_id());
+                    debug!("New milestone {} {}.", *index, milestone_metadata.block_id());
                 }
 
                 requested_milestones.remove(&index);
@@ -113,12 +113,12 @@ fn process<B: StorageBackend>(
                     error!("Sending solidification event failed: {}.", e);
                 }
             }
-            Err(e) => debug!("Invalid milestone message {}: {:?}.", message_id, e),
+            Err(e) => debug!("Invalid milestone block {}: {:?}.", block_id, e),
         }
     } else {
         error!(
-            "Missing or invalid payload for message {}: expected milestone payload.",
-            message_id
+            "Missing or invalid payload for block {}: expected milestone payload.",
+            block_id
         );
     }
 }
@@ -160,11 +160,11 @@ where
 
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
-            while let Some(MilestonePayloadWorkerEvent { message_id, message }) = receiver.next().await {
+            while let Some(MilestonePayloadWorkerEvent { block_id, block }) = receiver.next().await {
                 process(
                     &tangle,
-                    message_id,
-                    message,
+                    block_id,
+                    block,
                     &peer_manager,
                     &metrics,
                     &requested_milestones,
@@ -180,11 +180,11 @@ where
             let (_, mut receiver) = receiver.split();
             let mut count: usize = 0;
 
-            while let Some(Some(MilestonePayloadWorkerEvent { message_id, message })) = receiver.next().now_or_never() {
+            while let Some(Some(MilestonePayloadWorkerEvent { block_id, block })) = receiver.next().now_or_never() {
                 process(
                     &tangle,
-                    message_id,
-                    message,
+                    block_id,
+                    block,
                     &peer_manager,
                     &metrics,
                     &requested_milestones,
@@ -195,7 +195,7 @@ where
                 count += 1;
             }
 
-            debug!("Drained {} messages.", count);
+            debug!("Drained {} blocks.", count);
 
             info!("Stopped.");
         });

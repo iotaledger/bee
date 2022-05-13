@@ -11,10 +11,10 @@ use packable::PackableExt;
 use crate::{storage::Storage, trees::*};
 
 impl Update<BlockId, BlockMetadata> for Storage {
-    fn update(&self, message_id: &BlockId, mut f: impl FnMut(&mut BlockMetadata)) -> Result<(), Self::Error> {
+    fn update(&self, block_id: &BlockId, mut f: impl FnMut(&mut BlockMetadata)) -> Result<(), Self::Error> {
         self.inner
             .open_tree(TREE_MESSAGE_ID_TO_METADATA)?
-            .fetch_and_update(message_id, move |opt_bytes| {
+            .fetch_and_update(block_id, move |opt_bytes| {
                 opt_bytes.map(|mut bytes| {
                     // Unpacking from storage is fine.
                     let mut metadata = BlockMetadata::unpack_unverified(&mut bytes).unwrap();

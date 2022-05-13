@@ -106,7 +106,7 @@ pub(crate) fn api_routes(
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     let allowed_routes = warp::get()
         .and(warp::path!("api" / "v2" / "info" / ..))
-        .or(warp::get().and(warp::path!("api" / "v2" / "messages" / ..)))
+        .or(warp::get().and(warp::path!("api" / "v2" / "blocks" / ..)))
         .or(warp::get().and(warp::path!("api" / "v2" / "outputs" / ..)))
         .or(warp::get().and(warp::path!("api" / "v2" / "addresses" / ..)))
         .or(warp::get().and(warp::path!("api" / "v2" / "milestones" / ..)))

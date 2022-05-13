@@ -61,8 +61,8 @@ fn signed_range_to_trits() {
         let converted_num = i64::try_from(buf.as_slice()).unwrap();
         assert_eq!(converted_num, num, "num {}, trits {}", num, buf.as_slice());
     }
-    let message = format!("\nconvert_range_to_trits Elapsed: {}\n", now.elapsed().as_secs_f64());
-    io::stdout().write_all(message.as_bytes()).unwrap();
+    let block = format!("\nconvert_range_to_trits Elapsed: {}\n", now.elapsed().as_secs_f64());
+    io::stdout().write_all(block.as_bytes()).unwrap();
 }
 
 #[test]
@@ -73,8 +73,8 @@ fn unsigned_range_to_trits() {
         let converted_num = u64::try_from(buf.as_slice()).unwrap();
         assert_eq!(converted_num, num, "num {}, trits {}", num, buf.as_slice());
     }
-    let message = format!("\nconvert_range_to_trits Elapsed: {}\n", now.elapsed().as_secs_f64());
-    io::stdout().write_all(message.as_bytes()).unwrap();
+    let block = format!("\nconvert_range_to_trits Elapsed: {}\n", now.elapsed().as_secs_f64());
+    io::stdout().write_all(block.as_bytes()).unwrap();
 }
 
 #[test]

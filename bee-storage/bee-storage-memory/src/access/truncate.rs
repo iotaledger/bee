@@ -32,9 +32,9 @@ macro_rules! impl_truncate {
     };
 }
 
-impl_truncate!(BlockId, Block, message_id_to_message);
-impl_truncate!(BlockId, BlockMetadata, message_id_to_metadata);
-impl_truncate!((BlockId, BlockId), (), message_id_to_message_id);
+impl_truncate!(BlockId, Block, block_id_to_block);
+impl_truncate!(BlockId, BlockMetadata, block_id_to_metadata);
+impl_truncate!((BlockId, BlockId), (), block_id_to_block_id);
 impl_truncate!(OutputId, CreatedOutput, output_id_to_created_output);
 impl_truncate!(OutputId, ConsumedOutput, output_id_to_consumed_output);
 impl_truncate!(Unspent, (), output_id_unspent);

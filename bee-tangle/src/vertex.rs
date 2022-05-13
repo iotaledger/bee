@@ -5,11 +5,11 @@ use std::sync::Arc;
 
 use bee_block::{Block, BlockId};
 
-use crate::{metadata::BlockMetadata, MessageRef, VecSet};
+use crate::{metadata::BlockMetadata, BlockRef, VecSet};
 
 #[derive(Clone)]
 pub struct Vertex {
-    message: Option<(MessageRef, BlockMetadata)>,
+    block: Option<(BlockRef, BlockMetadata)>,
     children: (VecSet<BlockId>, bool), // Exhaustive flag
     eviction_blocks: isize,
 }
@@ -17,38 +17,38 @@ pub struct Vertex {
 impl Vertex {
     pub fn empty() -> Self {
         Self {
-            message: None,
+            block: None,
             children: (VecSet::default(), false),
             eviction_blocks: 0,
         }
     }
 
-    pub fn new(message: Message, metadata: BlockMetadata) -> Self {
+    pub fn new(block: Block, metadata: BlockMetadata) -> Self {
         Self {
-            message: Some((MessageRef(Arc::new(message)), metadata)),
+            block: Some((BlockRef(Arc::new(block)), metadata)),
             children: (VecSet::default(), false),
             eviction_blocks: 0,
         }
     }
 
     pub fn parents(&self) -> Option<impl Iterator<Item = &BlockId> + '_> {
-        self.message().map(|m| m.parents().iter())
+        self.block().map(|m| m.parents().iter())
     }
 
-    pub fn message_and_metadata(&self) -> Option<&(MessageRef, BlockMetadata)> {
-        self.message.as_ref()
+    pub fn block_and_metadata(&self) -> Option<&(BlockRef, BlockMetadata)> {
+        self.block.as_ref()
     }
 
-    pub fn message(&self) -> Option<&MessageRef> {
-        self.message_and_metadata().map(|(m, _)| m)
+    pub fn block(&self) -> Option<&BlockRef> {
+        self.block_and_metadata().map(|(m, _)| m)
     }
 
     pub fn metadata(&self) -> Option<&BlockMetadata> {
-        self.message_and_metadata().map(|(_, m)| m)
+        self.block_and_metadata().map(|(_, m)| m)
     }
 
     pub fn metadata_mut(&mut self) -> Option<&mut BlockMetadata> {
-        self.message.as_mut().map(|(_, m)| m)
+        self.block.as_mut().map(|(_, m)| m)
     }
 
     pub fn add_child(&mut self, child: BlockId) {
@@ -68,8 +68,8 @@ impl Vertex {
         self.children.1 = true;
     }
 
-    pub(crate) fn insert_message_and_metadata(&mut self, message: Message, metadata: BlockMetadata) {
-        self.message = Some((MessageRef(Arc::new(message)), metadata));
+    pub(crate) fn insert_block_and_metadata(&mut self, block: Block, metadata: BlockMetadata) {
+        self.block = Some((BlockRef(Arc::new(block)), metadata));
     }
 
     pub(crate) fn prevent_eviction(&mut self) {

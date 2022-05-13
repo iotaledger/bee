@@ -39,9 +39,9 @@ pub(crate) async fn tips<B: StorageBackend>(tangle: ResourceHandle<Tangle<B>>) -
             "the node is not synchronized".to_string(),
         )));
     }
-    match tangle.get_messages_to_approve().await {
+    match tangle.get_blocks_to_approve().await {
         Some(tips) => Ok(warp::reply::json(&TipsResponse {
-            tip_message_ids: tips.iter().map(BlockId::to_string).collect(),
+            tip_block_ids: tips.iter().map(BlockId::to_string).collect(),
         })),
         None => Err(reject::custom(CustomRejection::ServiceUnavailable(
             "tip pool is empty".to_string(),

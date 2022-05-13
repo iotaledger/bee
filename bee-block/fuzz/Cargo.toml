@@ -67,8 +67,8 @@ test = false
 doc = false
 
 [[bin]]
-name = "fuzz_message"
-path = "fuzz_targets/fuzz_message.rs"
+name = "fuzz_block"
+path = "fuzz_targets/fuzz_block.rs"
 test = false
 doc = false
 

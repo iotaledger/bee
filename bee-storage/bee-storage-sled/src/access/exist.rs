@@ -23,20 +23,20 @@ use packable::PackableExt;
 use crate::{storage::Storage, trees::*};
 
 impl Exist<BlockId, Block> for Storage {
-    fn exist(&self, message_id: &BlockId) -> Result<bool, <Self as StorageBackend>::Error> {
+    fn exist(&self, block_id: &BlockId) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_MESSAGE_ID_TO_MESSAGE)?
-            .contains_key(message_id)?)
+            .contains_key(block_id)?)
     }
 }
 
 impl Exist<BlockId, BlockMetadata> for Storage {
-    fn exist(&self, message_id: &BlockId) -> Result<bool, <Self as StorageBackend>::Error> {
+    fn exist(&self, block_id: &BlockId) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_MESSAGE_ID_TO_METADATA)?
-            .contains_key(message_id)?)
+            .contains_key(block_id)?)
     }
 }
 

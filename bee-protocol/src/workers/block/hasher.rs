@@ -18,7 +18,7 @@ use crate::{
     workers::{
         block::{BlockSubmitterError, HashCache, ProcessorWorker, ProcessorWorkerEvent},
         config::ProtocolConfig,
-        packets::MessagePacket,
+        packets::BlockPacket,
         storage::StorageBackend,
         MetricsWorker, PeerManager, PeerManagerResWorker,
     },
@@ -26,7 +26,7 @@ use crate::{
 
 pub(crate) struct HasherWorkerEvent {
     pub(crate) from: Option<PeerId>,
-    pub(crate) message_packet: MessagePacket,
+    pub(crate) block_packet: BlockPacket,
     pub(crate) notifier: Option<Sender<Result<BlockId, BlockSubmitterError>>>,
 }
 
@@ -57,7 +57,7 @@ where
         let metrics = node.resource::<NodeMetrics>();
         let peer_manager = node.resource::<PeerManager>();
 
-        let mut cache = HashCache::new(config.workers.message_worker_cache);
+        let mut cache = HashCache::new(config.workers.block_worker_cache);
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
@@ -67,37 +67,37 @@ where
 
             while let Some(HasherWorkerEvent {
                 from,
-                message_packet,
+                block_packet,
                 notifier,
             }) = receiver.next().await
             {
-                if !cache.insert(&message_packet.bytes) {
-                    // If the message was already received, we skip it and poll again.
-                    trace!("Message already received.");
+                if !cache.insert(&block_packet.bytes) {
+                    // If the block was already received, we skip it and poll again.
+                    trace!("Block already received.");
 
                     if let Some(notifier) = notifier {
-                        if let Err(e) = notifier.send(Err(BlockSubmitterError("message already received".to_string())))
+                        if let Err(e) = notifier.send(Err(BlockSubmitterError("block already received".to_string())))
                         {
                             error!("failed to send error: {:?}.", e);
                         }
                     }
 
-                    metrics.known_messages_inc();
+                    metrics.known_blocks_inc();
                     if let Some(peer_id) = from {
                         peer_manager
                             .get_map(&peer_id, |peer| {
-                                peer.0.metrics().known_messages_inc();
+                                peer.0.metrics().known_blocks_inc();
                             })
                             .unwrap_or_default();
                     }
                     continue;
                 }
 
-                let pow_score = pow.score(&message_packet.bytes);
+                let pow_score = pow.score(&block_packet.bytes);
 
                 if let Err(e) = processor_worker.send(ProcessorWorkerEvent {
                     from,
-                    message_packet,
+                    block_packet,
                     pow_score,
                     notifier,
                 }) {

@@ -10,14 +10,14 @@ use packable::PackableExt;
 use warp::{filters::BoxedFilter, http::Response, reject, Filter, Rejection, Reply};
 
 use crate::endpoints::{
-    config::ROUTE_MESSAGE_RAW, filters::with_tangle, path_params::message_id, permission::has_permission,
+    config::ROUTE_MESSAGE_RAW, filters::with_tangle, path_params::block_id, permission::has_permission,
     rejection::CustomRejection, storage::StorageBackend,
 };
 
 fn path() -> impl Filter<Extract = (BlockId,), Error = warp::Rejection> + Clone {
     super::path()
-        .and(warp::path("messages"))
-        .and(message_id())
+        .and(warp::path("blocks"))
+        .and(block_id())
         .and(warp::path("raw"))
         .and(warp::path::end())
 }
@@ -31,20 +31,20 @@ pub(crate) fn filter<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_MESSAGE_RAW, public_routes, allowed_ips))
         .and(with_tangle(tangle))
-        .and_then(|message_id, tangle| async move { message_raw(message_id, tangle) })
+        .and_then(|block_id, tangle| async move { block_raw(block_id, tangle) })
         .boxed()
 }
 
-pub fn message_raw<B: StorageBackend>(
-    message_id: BlockId,
+pub fn block_raw<B: StorageBackend>(
+    block_id: BlockId,
     tangle: ResourceHandle<Tangle<B>>,
 ) -> Result<impl Reply, Rejection> {
-    match tangle.get(&message_id) {
-        Some(message) => Ok(Response::builder()
+    match tangle.get(&block_id) {
+        Some(block) => Ok(Response::builder()
             .header("Content-Type", "application/octet-stream")
-            .body(message.pack_to_vec())),
+            .body(block.pack_to_vec())),
         None => Err(reject::custom(CustomRejection::NotFound(
-            "can not find message".to_string(),
+            "can not find block".to_string(),
         ))),
     }
 }

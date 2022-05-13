@@ -22,11 +22,11 @@ pub(super) fn output_id() -> impl Filter<Extract = (OutputId,), Error = Rejectio
     })
 }
 
-pub(super) fn message_id() -> impl Filter<Extract = (BlockId,), Error = Rejection> + Copy {
+pub(super) fn block_id() -> impl Filter<Extract = (BlockId,), Error = Rejection> + Copy {
     warp::path::param().and_then(|value: String| async move {
         value
             .parse::<BlockId>()
-            .map_err(|_| reject::custom(CustomRejection::BadRequest("invalid message id".to_string())))
+            .map_err(|_| reject::custom(CustomRejection::BadRequest("invalid block id".to_string())))
     })
 }
 

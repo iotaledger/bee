@@ -10,8 +10,8 @@ use bee_block::BlockId;
 pub struct UnreferencedBlock(BlockId);
 
 impl From<BlockId> for UnreferencedBlock {
-    fn from(message_id: BlockId) -> Self {
-        Self(message_id)
+    fn from(block_id: BlockId) -> Self {
+        Self(block_id)
     }
 }
 
@@ -25,12 +25,12 @@ impl Deref for UnreferencedBlock {
 
 impl UnreferencedBlock {
     /// Create a new [`UnreferencedBlock`].
-    pub fn new(message_id: BlockId) -> Self {
-        message_id.into()
+    pub fn new(block_id: BlockId) -> Self {
+        block_id.into()
     }
 
-    /// Get the message ID of this unreferenced message.
-    pub fn message_id(&self) -> &BlockId {
+    /// Get the block ID of this unreferenced block.
+    pub fn block_id(&self) -> &BlockId {
         &self.0
     }
 }

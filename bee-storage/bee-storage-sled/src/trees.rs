@@ -7,11 +7,11 @@
 //! Each tree can be accessed using the `sled::Db::open_tree` method with one of the identifiers found here.
 
 /// Identifier for the `BlockId` to `Block` tree.
-pub const TREE_MESSAGE_ID_TO_MESSAGE: &str = "message_id_to_message";
+pub const TREE_MESSAGE_ID_TO_MESSAGE: &str = "block_id_to_block";
 /// Identifier for the `BlockId` to `BlockMetadata` tree.
-pub const TREE_MESSAGE_ID_TO_METADATA: &str = "message_id_to_metadata";
+pub const TREE_MESSAGE_ID_TO_METADATA: &str = "block_id_to_metadata";
 /// Identifier for the `BlockId` to `Vec<BlockId>` tree.
-pub const TREE_MESSAGE_ID_TO_MESSAGE_ID: &str = "message_id_to_message_id";
+pub const TREE_MESSAGE_ID_TO_MESSAGE_ID: &str = "block_id_to_block_id";
 /// Identifier for the `OutputId` to `CreatedOutput` tree.
 pub const TREE_OUTPUT_ID_TO_CREATED_OUTPUT: &str = "output_id_to_created_output";
 /// Identifier for the `OutputId` to `ConsumedOutput` tree.

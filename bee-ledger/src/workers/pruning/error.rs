@@ -14,11 +14,11 @@ pub enum Error {
     MissingSnapshotInfo,
     #[error("missing milestone {0}")]
     MissingMilestone(MilestoneIndex),
-    #[error("missing message {0}")]
+    #[error("missing block {0}")]
     MissingBlock(BlockId),
-    #[error("missing metadata for message {0}")]
+    #[error("missing metadata for block {0}")]
     MissingMetadata(BlockId),
-    #[error("missing approvers for message {0}")]
+    #[error("missing approvers for block {0}")]
     MissingApprovers(BlockId),
     #[error("storage operation failed due to: {0:?}")]
     Storage(Box<dyn std::error::Error + Send>),

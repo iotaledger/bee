@@ -33,22 +33,22 @@ impl Fetch<u8, System> for Storage {
 }
 
 impl Fetch<BlockId, Block> for Storage {
-    fn fetch(&self, message_id: &BlockId) -> Result<Option<Block>, <Self as StorageBackend>::Error> {
+    fn fetch(&self, block_id: &BlockId) -> Result<Option<Block>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .get_pinned_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?, message_id)?
+            .get_pinned_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?, block_id)?
             // Unpacking from storage is fine.
             .map(|v| Block::unpack_unverified(&mut &*v).unwrap()))
     }
 }
 
 impl Fetch<BlockId, BlockMetadata> for Storage {
-    fn fetch(&self, message_id: &BlockId) -> Result<Option<BlockMetadata>, <Self as StorageBackend>::Error> {
-        let guard = self.locks.message_id_to_metadata.read();
+    fn fetch(&self, block_id: &BlockId) -> Result<Option<BlockMetadata>, <Self as StorageBackend>::Error> {
+        let guard = self.locks.block_id_to_metadata.read();
 
         let metadata = self
             .inner
-            .get_pinned_cf(self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?, message_id)?
+            .get_pinned_cf(self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?, block_id)?
             // Unpacking from storage is fine.
             .map(|v| BlockMetadata::unpack_unverified(&mut &*v).unwrap());
 

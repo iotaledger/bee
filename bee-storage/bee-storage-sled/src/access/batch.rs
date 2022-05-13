@@ -71,18 +71,18 @@ impl Batch<BlockId, Block> for Storage {
     fn batch_insert(
         &self,
         batch: &mut Self::Batch,
-        message_id: &BlockId,
-        message: &Block,
+        block_id: &BlockId,
+        block: &Block,
     ) -> Result<(), <Self as StorageBackend>::Error> {
         batch.value_buf.clear();
         // Packing to bytes can't fail.
-        message.pack(&mut batch.value_buf).unwrap();
+        block.pack(&mut batch.value_buf).unwrap();
 
         batch
             .inner
             .entry(TREE_MESSAGE_ID_TO_MESSAGE)
             .or_default()
-            .insert(message_id.as_ref(), batch.value_buf.as_slice());
+            .insert(block_id.as_ref(), batch.value_buf.as_slice());
 
         Ok(())
     }
@@ -90,13 +90,13 @@ impl Batch<BlockId, Block> for Storage {
     fn batch_delete(
         &self,
         batch: &mut Self::Batch,
-        message_id: &BlockId,
+        block_id: &BlockId,
     ) -> Result<(), <Self as StorageBackend>::Error> {
         batch
             .inner
             .entry(TREE_MESSAGE_ID_TO_MESSAGE)
             .or_default()
-            .remove(message_id.as_ref());
+            .remove(block_id.as_ref());
 
         Ok(())
     }
@@ -106,7 +106,7 @@ impl Batch<BlockId, BlockMetadata> for Storage {
     fn batch_insert(
         &self,
         batch: &mut Self::Batch,
-        message_id: &BlockId,
+        block_id: &BlockId,
         metadata: &BlockMetadata,
     ) -> Result<(), <Self as StorageBackend>::Error> {
         batch.value_buf.clear();
@@ -117,7 +117,7 @@ impl Batch<BlockId, BlockMetadata> for Storage {
             .inner
             .entry(TREE_MESSAGE_ID_TO_METADATA)
             .or_default()
-            .insert(message_id.as_ref(), batch.value_buf.as_slice());
+            .insert(block_id.as_ref(), batch.value_buf.as_slice());
 
         Ok(())
     }
@@ -125,13 +125,13 @@ impl Batch<BlockId, BlockMetadata> for Storage {
     fn batch_delete(
         &self,
         batch: &mut Self::Batch,
-        message_id: &BlockId,
+        block_id: &BlockId,
     ) -> Result<(), <Self as StorageBackend>::Error> {
         batch
             .inner
             .entry(TREE_MESSAGE_ID_TO_METADATA)
             .or_default()
-            .remove(message_id.as_ref());
+            .remove(block_id.as_ref());
 
         Ok(())
     }

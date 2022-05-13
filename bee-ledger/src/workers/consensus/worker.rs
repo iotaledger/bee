@@ -73,18 +73,18 @@ async fn confirm<N: Node>(
     tangle: &Tangle<N::Backend>,
     storage: &N::Backend,
     bus: &Bus<'static>,
-    message_id: BlockId,
+    block_id: BlockId,
     ledger_index: &mut LedgerIndex,
     receipt_migrated_at: &mut MilestoneIndex,
 ) -> Result<(), Error>
 where
     N::Backend: StorageBackend,
 {
-    let message = tangle
-        .get(&message_id)
-        .ok_or(Error::MilestoneBlockNotFound(message_id))?;
+    let block = tangle
+        .get(&block_id)
+        .ok_or(Error::MilestoneBlockNotFound(block_id))?;
 
-    let milestone = match message.payload() {
+    let milestone = match block.payload() {
         Some(Payload::Milestone(milestone)) => milestone,
         _ => return Err(Error::NoMilestonePayload),
     };
@@ -102,7 +102,7 @@ where
         Some(*milestone.essence().previous_milestone_id()),
     );
 
-    white_flag(tangle, storage, message.parents(), &mut metadata).await?;
+    white_flag(tangle, storage, block.parents(), &mut metadata).await?;
 
     if metadata.confirmed_merkle_root != milestone.essence().confirmed_merkle_root() {
         return Err(Error::ConfirmedMerkleRootMismatch(
@@ -128,7 +128,7 @@ where
             metadata.created_outputs.insert(
                 OutputId::new(transaction_id, index as u16)?,
                 CreatedOutput::new(
-                    message_id,
+                    block_id,
                     milestone.essence().index(),
                     milestone.essence().timestamp() as u32,
                     Output::from(
@@ -178,56 +178,56 @@ where
     *ledger_index = LedgerIndex(milestone.essence().index());
     tangle.update_confirmed_milestone_index(milestone.essence().index());
 
-    for message_id in metadata.excluded_no_transaction_messages.iter() {
-        tangle.update_metadata(message_id, |block_metadata| {
+    for block_id in metadata.excluded_no_transaction_blocks.iter() {
+        tangle.update_metadata(block_id, |block_metadata| {
             block_metadata.set_conflict(ConflictReason::None);
             block_metadata.reference(milestone.essence().timestamp());
         });
         bus.dispatch(BlockReferenced {
-            message_id: *message_id,
+            block_id: *block_id,
         });
     }
 
-    for (message_id, conflict) in metadata.excluded_conflicting_messages.iter() {
-        tangle.update_metadata(message_id, |block_metadata| {
+    for (block_id, conflict) in metadata.excluded_conflicting_blocks.iter() {
+        tangle.update_metadata(block_id, |block_metadata| {
             block_metadata.set_conflict(*conflict);
             block_metadata.reference(milestone.essence().timestamp());
         });
         bus.dispatch(BlockReferenced {
-            message_id: *message_id,
+            block_id: *block_id,
         });
     }
 
-    for message_id in metadata.included_messages.iter() {
-        tangle.update_metadata(message_id, |block_metadata| {
+    for block_id in metadata.included_blocks.iter() {
+        tangle.update_metadata(block_id, |block_metadata| {
             block_metadata.set_conflict(ConflictReason::None);
             block_metadata.reference(milestone.essence().timestamp());
         });
         bus.dispatch(BlockReferenced {
-            message_id: *message_id,
+            block_id: *block_id,
         });
     }
 
     info!(
         "Confirmed milestone {}: referenced {}, no transaction {}, conflicting {}, included {}, consumed {}, created {}, receipt {}.",
         milestone.essence().index(),
-        metadata.referenced_messages.len(),
-        metadata.excluded_no_transaction_messages.len(),
-        metadata.excluded_conflicting_messages.len(),
-        metadata.included_messages.len(),
+        metadata.referenced_blocks.len(),
+        metadata.excluded_no_transaction_blocks.len(),
+        metadata.excluded_conflicting_blocks.len(),
+        metadata.included_blocks.len(),
         metadata.consumed_outputs.len(),
         metadata.created_outputs.len(),
         milestone.essence().options().receipt().is_some()
     );
 
     bus.dispatch(MilestoneConfirmed {
-        message_id,
+        block_id,
         index: milestone.essence().index(),
         timestamp: milestone.essence().timestamp(),
-        referenced_messages: metadata.referenced_messages.len(),
-        excluded_no_transaction_messages: metadata.excluded_no_transaction_messages,
-        excluded_conflicting_messages: metadata.excluded_conflicting_messages,
-        included_messages: metadata.included_messages,
+        referenced_blocks: metadata.referenced_blocks.len(),
+        excluded_no_transaction_blocks: metadata.excluded_no_transaction_blocks,
+        excluded_conflicting_blocks: metadata.excluded_conflicting_blocks,
+        included_blocks: metadata.included_blocks,
         consumed_outputs: metadata.consumed_outputs.len(),
         created_outputs: metadata.created_outputs.len(),
         receipt: migration.is_some(),
@@ -242,7 +242,7 @@ where
 
     for (output_id, (created_output, _consumed_output)) in metadata.consumed_outputs.iter() {
         bus.dispatch(OutputConsumed {
-            message_id: *created_output.message_id(),
+            block_id: *created_output.block_id(),
             output_id: *output_id,
             output: created_output.inner().clone(),
         });
@@ -320,18 +320,18 @@ where
 
             while let Some(event) = receiver.next().await {
                 match event {
-                    ConsensusWorkerCommand::ConfirmMilestone(message_id) => {
+                    ConsensusWorkerCommand::ConfirmMilestone(block_id) => {
                         if let Err(e) = confirm::<N>(
                             &tangle,
                             &storage,
                             &bus,
-                            message_id,
+                            block_id,
                             &mut ledger_index,
                             &mut receipt_migrated_at,
                         )
                         .await
                         {
-                            error!("Confirmation error on {}: {}.", message_id, e);
+                            error!("Confirmation error on {}: {}.", block_id, e);
                             panic!("Aborting due to unexpected ledger error.");
                         }
 

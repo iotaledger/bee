@@ -27,7 +27,7 @@ BINARIES=""
 for file in \
   $( \
     RUSTFLAGS="-Zinstrument-coverage" \
-      cargo +nightly test --tests --all --all-features --no-run --message-format=json \
+      cargo +nightly test --tests --all --all-features --no-run --block-format=json \
         | jq -r "select(.profile.test == true) | .filenames[]" \
         | grep -v dSYM - \
   ); \

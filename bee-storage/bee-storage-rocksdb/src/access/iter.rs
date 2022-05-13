@@ -317,7 +317,7 @@ impl<'a> AsIterator<'a, BlockId, BlockMetadata> for Storage {
         Ok(StorageIterator::new(
             self.inner
                 .iterator_cf(self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?, IteratorMode::Start),
-            Some(self.locks.message_id_to_metadata.read()),
+            Some(self.locks.block_id_to_metadata.read()),
         ))
     }
 }

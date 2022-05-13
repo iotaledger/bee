@@ -16,7 +16,7 @@ use tokio_stream::wrappers::UnboundedReceiverStream;
 use crate::{
     types::metrics::NodeMetrics,
     workers::{
-        packets::{MessagePacket, MessageRequestPacket},
+        packets::{BlockPacket, BlockRequestPacket},
         peer::PeerManager,
         sender::Sender,
         storage::StorageBackend,
@@ -24,17 +24,17 @@ use crate::{
     },
 };
 
-pub(crate) struct MessageResponderWorkerEvent {
+pub(crate) struct BlockResponderWorkerEvent {
     pub(crate) peer_id: PeerId,
-    pub(crate) request: MessageRequestPacket,
+    pub(crate) request: BlockRequestPacket,
 }
 
-pub(crate) struct MessageResponderWorker {
-    pub(crate) tx: UnboundedSender<MessageResponderWorkerEvent>,
+pub(crate) struct BlockResponderWorker {
+    pub(crate) tx: UnboundedSender<BlockResponderWorkerEvent>,
 }
 
 #[async_trait]
-impl<N: Node> Worker<N> for MessageResponderWorker
+impl<N: Node> Worker<N> for BlockResponderWorker
 where
     N::Backend: StorageBackend,
 {
@@ -62,10 +62,10 @@ where
 
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
-            while let Some(MessageResponderWorkerEvent { peer_id, request }) = receiver.next().await {
-                if let Some(message) = tangle.get(&request.message_id) {
-                    Sender::<MessagePacket>::send(
-                        &MessagePacket::new(message.pack_to_vec()),
+            while let Some(BlockResponderWorkerEvent { peer_id, request }) = receiver.next().await {
+                if let Some(block) = tangle.get(&request.block_id) {
+                    Sender::<BlockPacket>::send(
+                        &BlockPacket::new(block.pack_to_vec()),
                         &peer_id,
                         &peer_manager,
                         &metrics,

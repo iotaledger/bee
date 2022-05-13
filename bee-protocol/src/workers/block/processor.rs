@@ -21,21 +21,21 @@ use tokio_stream::wrappers::UnboundedReceiverStream;
 use crate::{
     types::metrics::NodeMetrics,
     workers::{
-        block::submitter::{notify_invalid_message, notify_message},
-        event::{MessageProcessed, VertexCreated},
-        packets::MessagePacket,
+        block::submitter::{notify_invalid_block, notify_block},
+        event::{BlockProcessed, VertexCreated},
+        packets::BlockPacket,
         peer::PeerManager,
-        requester::request_message,
+        requester::request_block,
         storage::StorageBackend,
-        BlockSubmitterError, BroadcasterWorker, BroadcasterWorkerEvent, MessageRequesterWorker, MetricsWorker,
+        BlockSubmitterError, BroadcasterWorker, BroadcasterWorkerEvent, BlockRequesterWorker, MetricsWorker,
         PayloadWorker, PayloadWorkerEvent, PeerManagerResWorker, PropagatorWorker, PropagatorWorkerEvent,
-        RequestedMessages, UnreferencedBlockInserterWorker, UnreferencedBlockInserterWorkerEvent,
+        RequestedBlocks, UnreferencedBlockInserterWorker, UnreferencedBlockInserterWorkerEvent,
     },
 };
 
 pub(crate) struct ProcessorWorkerEvent {
     pub(crate) from: Option<PeerId>,
-    pub(crate) message_packet: MessagePacket,
+    pub(crate) block_packet: BlockPacket,
     pub(crate) pow_score: f64,
     pub(crate) notifier: Option<Sender<Result<BlockId, BlockSubmitterError>>>,
 }
@@ -64,7 +64,7 @@ where
             TypeId::of::<TangleWorker>(),
             TypeId::of::<PropagatorWorker>(),
             TypeId::of::<BroadcasterWorker>(),
-            TypeId::of::<MessageRequesterWorker>(),
+            TypeId::of::<BlockRequesterWorker>(),
             TypeId::of::<MetricsWorker>(),
             TypeId::of::<PeerManagerResWorker>(),
             TypeId::of::<PayloadWorker>(),
@@ -78,12 +78,12 @@ where
 
         let propagator = node.worker::<PropagatorWorker>().unwrap().tx.clone();
         let broadcaster = node.worker::<BroadcasterWorker>().unwrap().tx.clone();
-        let message_requester = node.worker::<MessageRequesterWorker>().unwrap().clone();
+        let block_requester = node.worker::<BlockRequesterWorker>().unwrap().clone();
         let payload_worker = node.worker::<PayloadWorker>().unwrap().tx.clone();
         let unreferenced_inserted_worker = node.worker::<UnreferencedBlockInserterWorker>().unwrap().tx.clone();
 
         let tangle = node.resource::<Tangle<N::Backend>>();
-        let requested_messages = node.resource::<RequestedMessages>();
+        let requested_blocks = node.resource::<RequestedBlocks>();
         let metrics = node.resource::<NodeMetrics>();
         let peer_manager = node.resource::<PeerManager>();
         let bus = node.bus();
@@ -101,11 +101,11 @@ where
                 let rx = rx.clone();
                 let propagator = propagator.clone();
                 let broadcaster = broadcaster.clone();
-                let message_requester = message_requester.clone();
+                let block_requester = block_requester.clone();
                 let payload_worker = payload_worker.clone();
                 let unreferenced_inserted_worker = unreferenced_inserted_worker.clone();
                 let tangle = tangle.clone();
-                let requested_messages = requested_messages.clone();
+                let requested_blocks = requested_blocks.clone();
                 let metrics = metrics.clone();
                 let peer_manager = peer_manager.clone();
                 let bus = bus.clone();
@@ -114,26 +114,26 @@ where
                 tokio::spawn(async move {
                     'next_event: while let Ok(ProcessorWorkerEvent {
                         from,
-                        message_packet,
+                        block_packet,
                         pow_score,
                         notifier,
                     }) = rx.recv().await
                     {
-                        trace!("Processing received message...");
+                        trace!("Processing received block...");
 
-                        let message = match Block::unpack_strict(&mut &message_packet.bytes[..]) {
-                            Ok(message) => message,
+                        let block = match Block::unpack_strict(&mut &block_packet.bytes[..]) {
+                            Ok(block) => block,
                             Err(e) => {
-                                notify_invalid_message(format!("Invalid message: {:?}.", e), &metrics, notifier);
+                                notify_invalid_block(format!("Invalid block: {:?}.", e), &metrics, notifier);
                                 continue;
                             }
                         };
 
-                        if message.protocol_version() != PROTOCOL_VERSION {
-                            notify_invalid_message(
+                        if block.protocol_version() != PROTOCOL_VERSION {
+                            notify_invalid_block(
                                 format!(
                                     "Incompatible protocol version {} != {}.",
-                                    message.protocol_version(),
+                                    block.protocol_version(),
                                     PROTOCOL_VERSION
                                 ),
                                 &metrics,
@@ -142,17 +142,17 @@ where
                             continue;
                         }
 
-                        if let Some(Payload::Milestone(_)) = message.payload() {
-                            if message.nonce() != 0 {
-                                notify_invalid_message(
-                                    format!("Non-zero milestone nonce: {}.", message.nonce()),
+                        if let Some(Payload::Milestone(_)) = block.payload() {
+                            if block.nonce() != 0 {
+                                notify_invalid_block(
+                                    format!("Non-zero milestone nonce: {}.", block.nonce()),
                                     &metrics,
                                     notifier,
                                 );
                                 continue;
                             }
                         } else if pow_score < config.minimum_pow_score {
-                            notify_invalid_message(
+                            notify_invalid_block(
                                 format!("Insufficient pow score: {} < {}.", pow_score, config.minimum_pow_score),
                                 &metrics,
                                 notifier,
@@ -160,11 +160,11 @@ where
                             continue;
                         }
 
-                        if let Some(Payload::Transaction(transaction)) = message.payload() {
+                        if let Some(Payload::Transaction(transaction)) = block.payload() {
                             let TransactionEssence::Regular(essence) = transaction.essence();
 
                             if essence.network_id() != config.network_id {
-                                notify_invalid_message(
+                                notify_invalid_block(
                                     format!(
                                         "Incompatible network ID {} != {}.",
                                         essence.network_id(),
@@ -178,7 +178,7 @@ where
 
                             for (i, output) in essence.outputs().iter().enumerate() {
                                 if let Err(error) = output.verify_storage_deposit(&config.byte_cost) {
-                                    notify_invalid_message(
+                                    notify_invalid_block(
                                         format!("Invalid output i={i}: {}", error),
                                         &metrics,
                                         notifier,
@@ -188,78 +188,78 @@ where
                             }
                         }
 
-                        let message_id = message.id();
+                        let block_id = block.id();
 
-                        if tangle.contains(&message_id) {
-                            metrics.known_messages_inc();
+                        if tangle.contains(&block_id) {
+                            metrics.known_blocks_inc();
                             if let Some(ref peer_id) = from {
                                 peer_manager
                                     .get_map(peer_id, |peer| {
-                                        (*peer).0.metrics().known_messages_inc();
+                                        (*peer).0.metrics().known_blocks_inc();
                                     })
                                     .unwrap_or_default();
                             }
                             continue 'next_event;
                         } else {
                             let metadata = BlockMetadata::arrived();
-                            // There is no data race here even if the `Message` and
+                            // There is no data race here even if the `Block` and
                             // `BlockMetadata` are inserted between the call to `tangle.contains`
                             // and here because:
-                            // - Both `Message`s are the same because they have the same hash.
+                            // - Both `Block`s are the same because they have the same hash.
                             // - `BlockMetadata` is not overwritten.
                             // - Some extra code is executing due to not calling `continue` but
                             // this does not create inconsistencies.
-                            tangle.insert(&message, &message_id, &metadata);
+                            tangle.insert(&block, &block_id, &metadata);
                         }
 
                         // Send the propagation event ASAP to allow the propagator to do its thing
-                        if let Err(e) = propagator.send(PropagatorWorkerEvent(message_id)) {
-                            error!("Failed to send message id {} to propagator: {:?}.", message_id, e);
+                        if let Err(e) = propagator.send(PropagatorWorkerEvent(block_id)) {
+                            error!("Failed to send block id {} to propagator: {:?}.", block_id, e);
                         }
 
-                        match requested_messages.remove(&message_id) {
-                            // Message was requested.
+                        match requested_blocks.remove(&block_id) {
+                            // Block was requested.
                             Some((index, instant)) => {
                                 latency_num += 1;
                                 latency_sum += (Instant::now() - instant).as_millis() as u64;
-                                metrics.messages_average_latency_set(latency_sum / latency_num);
+                                metrics.blocks_average_latency_set(latency_sum / latency_num);
 
-                                for parent in message.parents().iter() {
-                                    request_message(&tangle, &message_requester, &*requested_messages, *parent, index)
+                                for parent in block.parents().iter() {
+                                    request_block(&tangle, &block_requester, &*requested_blocks, *parent, index)
                                         .await;
                                 }
                             }
-                            // Message was not requested.
+                            // Block was not requested.
                             None => {
                                 if let Err(e) = broadcaster.send(BroadcasterWorkerEvent {
                                     source: from,
-                                    message: message_packet,
+                                    block: block_packet,
                                 }) {
-                                    error!("Broadcasting message failed: {}.", e);
+                                    error!("Broadcasting block failed: {}.", e);
                                 }
                                 if let Err(e) = unreferenced_inserted_worker.send(UnreferencedBlockInserterWorkerEvent(
-                                    message_id,
+                                    block_id,
                                     tangle.get_latest_milestone_index(),
                                 )) {
-                                    error!("Sending message to unreferenced inserter failed: {}.", e);
+                                    error!("Sending block to unreferenced inserter failed: {}.", e);
                                 }
                             }
                         };
 
-                        let parent_message_ids = message.parents().to_vec();
+                        let parent_block_ids = block.parents().to_vec();
 
-                        if payload_worker.send(PayloadWorkerEvent { message_id, message }).is_err() {
-                            error!("Sending message {} to payload worker failed.", message_id);
+                        if payload_worker.send(PayloadWorkerEvent { block_id, block }).is_err() {
+                            error!("Sending block {} to payload worker failed.", block_id);
                         }
 
-                        notify_message(message_id, notifier);
+                        notify_block(block_id, notifier);
 
-                        bus.dispatch(MessageProcessed { message_id });
+                        bus.dispatch(BlockProcessed { block_id });
 
                         // TODO: boolean values are false at this point in time? trigger event from another location?
                         bus.dispatch(VertexCreated {
-                            message_id,
-                            parent_message_ids,
+                            block_id,
+                            parent_block_ids,
                             is_solid: false,
                             is_referenced: false,
                             is_conflicting: false,
@@ -268,7 +268,7 @@ where
                             is_selected: false,
                         });
 
-                        metrics.new_messages_inc();
+                        metrics.new_blocks_inc();
                     }
                 });
             }

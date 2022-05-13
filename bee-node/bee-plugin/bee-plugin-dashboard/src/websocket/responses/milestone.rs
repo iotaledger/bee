@@ -11,8 +11,8 @@ use crate::websocket::{
 
 #[derive(Clone, Debug, Serialize)]
 pub(crate) struct MilestoneResponse {
-    #[serde(rename = "messageID")] // shouldn't it be messageId to be consistent with the REST API?
-    message_id: String,
+    #[serde(rename = "blockID")] // shouldn't it be blockId to be consistent with the REST API?
+    block_id: String,
     index: u32,
 }
 
@@ -20,7 +20,7 @@ pub(crate) fn forward(latest_milestone: LatestMilestoneChanged) -> WsEvent {
     WsEvent::new(
         WsTopic::Milestone,
         WsEventInner::Milestone(MilestoneResponse {
-            message_id: latest_milestone.milestone.message_id().to_string(),
+            block_id: latest_milestone.milestone.block_id().to_string(),
             index: *latest_milestone.index,
         }),
     )

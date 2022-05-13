@@ -5,15 +5,15 @@ use bee_block::{semantic::ConflictReason, Block, BlockId};
 use bee_runtime::resource::ResourceHandle;
 use bee_storage_null::Storage as NullStorage;
 use bee_tangle::{block_metadata::BlockMetadata, config::TangleConfig, Tangle};
-use bee_test::rand::{block::rand_message, block_metadata::rand_block_metadata, number::rand_number};
+use bee_test::rand::{block::rand_block, block_metadata::rand_block_metadata, number::rand_number};
 use criterion::*;
 use rand::seq::SliceRandom;
 
 fn random_input() -> (Block, BlockId, BlockMetadata) {
-    let message = rand_message();
-    let id = message.id();
+    let block = rand_block();
+    let id = block.id();
 
-    (message, id, rand_block_metadata())
+    (block, id, rand_block_metadata())
 }
 
 fn update_metadata(tangle: &Tangle<NullStorage>, id: &BlockId, timestamp: u32) {
@@ -31,7 +31,7 @@ fn insert_bench(c: &mut Criterion) {
     c.bench_function("insert", |b| {
         b.iter_batched(
             random_input,
-            |(message, id, metadata)| tangle.insert(&message, &id, &metadata),
+            |(block, id, metadata)| tangle.insert(&block, &id, &metadata),
             BatchSize::SmallInput,
         );
     });
@@ -45,8 +45,8 @@ fn update_metadata_bench(c: &mut Criterion) {
     let data = (0..1000).map(|_| random_input());
     let mut ids = vec![];
 
-    for (message, id, metadata) in data {
-        tangle.insert(&message, &id, &metadata);
+    for (block, id, metadata) in data {
+        tangle.insert(&block, &id, &metadata);
         ids.push(id);
     }
 

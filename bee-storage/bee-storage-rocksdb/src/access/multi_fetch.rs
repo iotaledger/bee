@@ -86,7 +86,7 @@ impl<'a> MultiFetch<'a, BlockId, BlockMetadata> for Storage {
                 .multi_get_cf(keys.iter().map(|k| (cf, k.pack_to_vec())))
                 .into_iter(),
             marker: PhantomData,
-            _guard: Some(self.locks.message_id_to_metadata.read()),
+            _guard: Some(self.locks.block_id_to_metadata.read()),
         })
     }
 }

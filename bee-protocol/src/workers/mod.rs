@@ -26,10 +26,10 @@ use bee_runtime::node::{Node, NodeBuilder};
 
 use self::peer::PeerManagerConfig;
 pub use self::{
-    block::{BlockSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent},
+    block::{BlockSubmitterError, BlockSubmitterWorker, BlockSubmitterWorkerEvent},
     metrics::MetricsWorker,
     peer::{PeerManager, PeerManagerResWorker},
-    requester::{request_message, MessageRequesterWorker, RequestedMessages, RequestedMilestones},
+    requester::{request_block, BlockRequesterWorker, RequestedBlocks, RequestedMilestones},
 };
 pub(crate) use self::{
     block::{
@@ -45,7 +45,7 @@ pub(crate) use self::{
     propagator::{PropagatorWorker, PropagatorWorkerEvent},
     requester::{MilestoneRequesterWorker, MilestoneRequesterWorkerEvent},
     responder::{
-        MessageResponderWorker, MessageResponderWorkerEvent, MilestoneResponderWorker, MilestoneResponderWorkerEvent,
+        BlockResponderWorker, BlockResponderWorkerEvent, MilestoneResponderWorker, MilestoneResponderWorkerEvent,
     },
     solidifier::{MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent},
     status::StatusWorker,
@@ -75,9 +75,9 @@ where
             minimum_pow_score: config.minimum_pow_score,
             byte_cost: config.byte_cost.clone(),
         })
-        .with_worker::<MessageResponderWorker>()
+        .with_worker::<BlockResponderWorker>()
         .with_worker::<MilestoneResponderWorker>()
-        .with_worker::<MessageRequesterWorker>()
+        .with_worker::<BlockRequesterWorker>()
         .with_worker::<MilestoneRequesterWorker>()
         .with_worker::<PayloadWorker>()
         .with_worker::<TransactionPayloadWorker>()
@@ -91,6 +91,6 @@ where
         .with_worker::<IndexUpdaterWorker>()
         .with_worker_cfg::<StatusWorker>(config.workers.status_interval)
         .with_worker::<HeartbeaterWorker>()
-        .with_worker::<MessageSubmitterWorker>()
+        .with_worker::<BlockSubmitterWorker>()
         .with_worker::<UnreferencedBlockInserterWorker>()
 }

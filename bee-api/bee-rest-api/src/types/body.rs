@@ -22,7 +22,7 @@ impl<T: BodyInner> ErrorBody<T> {
 #[derive(Clone, Debug, Serialize)]
 pub struct DefaultErrorResponse {
     pub code: String,
-    pub message: String,
+    pub block: String,
 }
 
 impl BodyInner for DefaultErrorResponse {}

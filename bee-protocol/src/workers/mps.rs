@@ -45,11 +45,11 @@ impl<N: Node> Worker<N> for MpsWorker {
             let mut total_outgoing = 0u64;
 
             while ticker.next().await.is_some() {
-                let incoming = metrics.messages_received();
-                let new = metrics.new_messages();
-                let known = metrics.known_messages();
-                let invalid = metrics.invalid_messages();
-                let outgoing = metrics.messages_sent();
+                let incoming = metrics.blocks_received();
+                let new = metrics.new_blocks();
+                let known = metrics.known_blocks();
+                let invalid = metrics.invalid_blocks();
+                let outgoing = metrics.blocks_sent();
 
                 bus.dispatch(MpsMetricsUpdated {
                     incoming: incoming - total_incoming,

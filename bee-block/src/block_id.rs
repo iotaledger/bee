@@ -4,7 +4,7 @@
 impl_id!(
     pub BlockId,
     32,
-    "A message identifier, the BLAKE2b-256 hash of the message bytes. See <https://www.blake2.net/> for more information."
+    "A block identifier, the BLAKE2b-256 hash of the block bytes. See <https://www.blake2.net/> for more information."
 );
 
 #[cfg(feature = "serde")]

@@ -9,7 +9,7 @@ use std::net::IpAddr;
 use bee_gossip::NetworkCommandSender;
 use bee_ledger::workers::consensus::ConsensusWorkerCommand;
 use bee_protocol::workers::{
-    config::ProtocolConfig, MessageRequesterWorker, MessageSubmitterWorkerEvent, PeerManager, RequestedMessages,
+    config::ProtocolConfig, BlockRequesterWorker, BlockSubmitterWorkerEvent, PeerManager, RequestedBlocks,
 };
 use bee_runtime::{event::Bus, node::NodeInfo, resource::ResourceHandle};
 use bee_tangle::Tangle;
@@ -28,7 +28,7 @@ pub(crate) fn filter<B: StorageBackend>(
     allowed_ips: Box<[IpAddr]>,
     tangle: ResourceHandle<Tangle<B>>,
     storage: ResourceHandle<B>,
-    message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
+    block_submitter: mpsc::UnboundedSender<BlockSubmitterWorkerEvent>,
     network_id: NetworkId,
     bech32_hrp: Bech32Hrp,
     rest_api_config: RestApiConfig,
@@ -37,8 +37,8 @@ pub(crate) fn filter<B: StorageBackend>(
     network_command_sender: ResourceHandle<NetworkCommandSender>,
     node_info: ResourceHandle<NodeInfo>,
     bus: ResourceHandle<Bus<'static>>,
-    message_requester: MessageRequesterWorker,
-    requested_messages: ResourceHandle<RequestedMessages>,
+    block_requester: BlockRequesterWorker,
+    requested_blocks: ResourceHandle<RequestedBlocks>,
     consensus_worker: mpsc::UnboundedSender<ConsensusWorkerCommand>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     v2::filter(
@@ -46,7 +46,7 @@ pub(crate) fn filter<B: StorageBackend>(
         allowed_ips.clone(),
         tangle.clone(),
         storage.clone(),
-        message_submitter,
+        block_submitter,
         network_id,
         bech32_hrp,
         rest_api_config.clone(),
@@ -62,8 +62,8 @@ pub(crate) fn filter<B: StorageBackend>(
         storage,
         tangle,
         bus,
-        message_requester,
-        requested_messages,
+        block_requester,
+        requested_blocks,
         rest_api_config,
     ))
 }

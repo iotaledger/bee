@@ -4,4 +4,4 @@
 #[macro_use]
 mod access;
 
-impl_access_test!(message_id_to_message_access_sled, message_id_to_message_access);
+impl_access_test!(block_id_to_block_access_sled, block_id_to_block_access);

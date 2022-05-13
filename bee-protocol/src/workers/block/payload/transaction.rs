@@ -20,8 +20,8 @@ use crate::{
 };
 
 pub(crate) struct TransactionPayloadWorkerEvent {
-    pub(crate) message_id: BlockId,
-    pub(crate) message: Block,
+    pub(crate) block_id: BlockId,
+    pub(crate) block: Block,
 }
 
 pub(crate) struct TransactionPayloadWorker {
@@ -29,17 +29,17 @@ pub(crate) struct TransactionPayloadWorker {
 }
 
 fn process(
-    message_id: BlockId,
-    message: Block,
+    block_id: BlockId,
+    block: Block,
     tagged_data_payload_worker: &mpsc::UnboundedSender<TaggedDataPayloadWorkerEvent>,
     metrics: &NodeMetrics,
 ) {
-    let transaction = if let Some(Payload::Transaction(transaction)) = message.payload() {
+    let transaction = if let Some(Payload::Transaction(transaction)) = block.payload() {
         transaction
     } else {
         error!(
-            "Missing or invalid payload for message {}: expected transaction payload.",
-            message_id
+            "Missing or invalid payload for block {}: expected transaction payload.",
+            block_id
         );
         return;
     };
@@ -53,7 +53,7 @@ fn process(
             .send(TaggedDataPayloadWorkerEvent {})
             .is_err()
         {
-            error!("Sending message {} to tagged data payload worker failed.", message_id);
+            error!("Sending block {} to tagged data payload worker failed.", block_id);
         }
     }
 }
@@ -82,8 +82,8 @@ where
 
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
-            while let Some(TransactionPayloadWorkerEvent { message_id, message }) = receiver.next().await {
-                process(message_id, message, &tagged_data_payload_worker, &metrics);
+            while let Some(TransactionPayloadWorkerEvent { block_id, block }) = receiver.next().await {
+                process(block_id, block, &tagged_data_payload_worker, &metrics);
             }
 
             // Before the worker completely stops, the receiver needs to be drained for transaction payloads to be
@@ -92,13 +92,13 @@ where
             let (_, mut receiver) = receiver.split();
             let mut count: usize = 0;
 
-            while let Some(Some(TransactionPayloadWorkerEvent { message_id, message })) = receiver.next().now_or_never()
+            while let Some(Some(TransactionPayloadWorkerEvent { block_id, block })) = receiver.next().now_or_never()
             {
-                process(message_id, message, &tagged_data_payload_worker, &metrics);
+                process(block_id, block, &tagged_data_payload_worker, &metrics);
                 count += 1;
             }
 
-            debug!("Drained {} messages.", count);
+            debug!("Drained {} blocks.", count);
 
             info!("Stopped.");
         });

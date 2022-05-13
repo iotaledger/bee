@@ -5,6 +5,6 @@ mod block;
 mod milestone;
 
 pub(crate) use self::{
-    block::{MessageResponderWorker, MessageResponderWorkerEvent},
+    block::{BlockResponderWorker, BlockResponderWorkerEvent},
     milestone::{MilestoneResponderWorker, MilestoneResponderWorkerEvent},
 };

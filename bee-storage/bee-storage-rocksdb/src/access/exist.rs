@@ -24,21 +24,21 @@ use crate::{
 };
 
 impl Exist<BlockId, Block> for Storage {
-    fn exist(&self, message_id: &BlockId) -> Result<bool, <Self as StorageBackend>::Error> {
+    fn exist(&self, block_id: &BlockId) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .get_pinned_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?, message_id)?
+            .get_pinned_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?, block_id)?
             .is_some())
     }
 }
 
 impl Exist<BlockId, BlockMetadata> for Storage {
-    fn exist(&self, message_id: &BlockId) -> Result<bool, <Self as StorageBackend>::Error> {
-        let guard = self.locks.message_id_to_metadata.read();
+    fn exist(&self, block_id: &BlockId) -> Result<bool, <Self as StorageBackend>::Error> {
+        let guard = self.locks.block_id_to_metadata.read();
 
         let exists = self
             .inner
-            .get_pinned_cf(self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?, message_id)?
+            .get_pinned_cf(self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?, block_id)?
             .is_some();
 
         drop(guard);

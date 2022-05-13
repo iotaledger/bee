@@ -24,20 +24,20 @@ use crate::{
 };
 
 impl Delete<BlockId, Block> for Storage {
-    fn delete(&self, message_id: &BlockId) -> Result<(), <Self as StorageBackend>::Error> {
+    fn delete(&self, block_id: &BlockId) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
-            .delete_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?, message_id)?;
+            .delete_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?, block_id)?;
 
         Ok(())
     }
 }
 
 impl Delete<BlockId, BlockMetadata> for Storage {
-    fn delete(&self, message_id: &BlockId) -> Result<(), <Self as StorageBackend>::Error> {
-        let guard = self.locks.message_id_to_metadata.read();
+    fn delete(&self, block_id: &BlockId) -> Result<(), <Self as StorageBackend>::Error> {
+        let guard = self.locks.block_id_to_metadata.read();
 
         self.inner
-            .delete_cf(self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?, message_id)?;
+            .delete_cf(self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?, block_id)?;
 
         drop(guard);
 

@@ -25,12 +25,12 @@ impl From<MilestoneConfirmed> for WsEvent {
 impl From<MilestoneConfirmed> for ConfirmedInfoResponse {
     fn from(val: MilestoneConfirmed) -> Self {
         Self {
-            id: val.message_id.to_string(),
+            id: val.block_id.to_string(),
             excluded_ids: val
-                .excluded_no_transaction_messages
+                .excluded_no_transaction_blocks
                 .into_iter()
                 .chain(
-                    val.excluded_conflicting_messages
+                    val.excluded_conflicting_blocks
                         .into_iter()
                         .map(|v| v.0)
                         .collect::<Vec<BlockId>>(),

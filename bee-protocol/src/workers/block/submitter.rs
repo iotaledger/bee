@@ -17,16 +17,16 @@ use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use crate::{
     types::metrics::NodeMetrics,
-    workers::{packets::MessagePacket, storage::StorageBackend, HasherWorker, HasherWorkerEvent},
+    workers::{packets::BlockPacket, storage::StorageBackend, HasherWorker, HasherWorkerEvent},
 };
 
-pub(crate) fn notify_invalid_message(
+pub(crate) fn notify_invalid_block(
     error: String,
     metrics: &NodeMetrics,
     notifier: Option<Sender<Result<BlockId, BlockSubmitterError>>>,
 ) {
     trace!("{}", error);
-    metrics.invalid_messages_inc();
+    metrics.invalid_blocks_inc();
 
     if let Some(notifier) = notifier {
         if let Err(e) = notifier.send(Err(BlockSubmitterError(error))) {
@@ -35,10 +35,10 @@ pub(crate) fn notify_invalid_message(
     }
 }
 
-pub(crate) fn notify_message(message_id: BlockId, notifier: Option<Sender<Result<BlockId, BlockSubmitterError>>>) {
+pub(crate) fn notify_block(block_id: BlockId, notifier: Option<Sender<Result<BlockId, BlockSubmitterError>>>) {
     if let Some(notifier) = notifier {
-        if let Err(e) = notifier.send(Ok(message_id)) {
-            error!("Failed to send message id: {:?}.", e);
+        if let Err(e) = notifier.send(Ok(block_id)) {
+            error!("Failed to send block id: {:?}.", e);
         }
     }
 }
@@ -52,17 +52,17 @@ impl fmt::Display for BlockSubmitterError {
     }
 }
 
-pub struct MessageSubmitterWorkerEvent {
-    pub message: Vec<u8>,
+pub struct BlockSubmitterWorkerEvent {
+    pub block: Vec<u8>,
     pub notifier: Sender<Result<BlockId, BlockSubmitterError>>,
 }
 
-pub struct MessageSubmitterWorker {
-    pub tx: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
+pub struct BlockSubmitterWorker {
+    pub tx: mpsc::UnboundedSender<BlockSubmitterWorkerEvent>,
 }
 
 #[async_trait]
-impl<N: Node> Worker<N> for MessageSubmitterWorker
+impl<N: Node> Worker<N> for BlockSubmitterWorker
 where
     N::Backend: StorageBackend,
 {
@@ -83,10 +83,10 @@ where
 
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
-            while let Some(MessageSubmitterWorkerEvent { message, notifier }) = receiver.next().await {
+            while let Some(BlockSubmitterWorkerEvent { block, notifier }) = receiver.next().await {
                 let event = HasherWorkerEvent {
                     from: None,
-                    message_packet: MessagePacket::new(message),
+                    block_packet: BlockPacket::new(block),
                     notifier: Some(notifier),
                 };
                 if let Err(e) = hasher.send(event) {

@@ -14,8 +14,8 @@ use tokio::sync::{RwLock, RwLockMappedWriteGuard, RwLockReadGuard, RwLockWriteGu
 
 use crate::vertex::Vertex;
 
-fn equivalent_id(message_id: &BlockId) -> impl Fn(&(BlockId, Vertex)) -> bool + '_ {
-    move |(k, _)| message_id.eq(k)
+fn equivalent_id(block_id: &BlockId) -> impl Fn(&(BlockId, Vertex)) -> bool + '_ {
+    move |(k, _)| block_id.eq(k)
 }
 
 type Table = RwLock<RawTable<(BlockId, Vertex)>>;
@@ -37,14 +37,14 @@ impl Vertices {
         }
     }
 
-    fn make_hash(&self, message_id: &BlockId) -> u64 {
+    fn make_hash(&self, block_id: &BlockId) -> u64 {
         let mut state = self.hash_builder.build_hasher();
-        message_id.hash(&mut state);
+        block_id.hash(&mut state);
         state.finish()
     }
 
     fn make_hasher(&self) -> impl Fn(&(BlockId, Vertex)) -> u64 + '_ {
-        move |(message_id, _)| self.make_hash(message_id)
+        move |(block_id, _)| self.make_hash(block_id)
     }
 
     fn get_table(&self, hash: u64) -> &Table {
@@ -53,22 +53,22 @@ impl Vertices {
         unsafe { self.tables.get_unchecked(index) }
     }
 
-    pub(crate) async fn get(&self, message_id: &BlockId) -> Option<RwLockReadGuard<'_, Vertex>> {
-        let hash = self.make_hash(message_id);
+    pub(crate) async fn get(&self, block_id: &BlockId) -> Option<RwLockReadGuard<'_, Vertex>> {
+        let hash = self.make_hash(block_id);
         let table = self.get_table(hash).read().await;
 
-        RwLockReadGuard::try_map(table, |table| match table.get(hash, equivalent_id(message_id)) {
+        RwLockReadGuard::try_map(table, |table| match table.get(hash, equivalent_id(block_id)) {
             Some((_, v)) => Some(v),
             None => None,
         })
         .ok()
     }
 
-    pub(crate) async fn get_mut(&self, message_id: &BlockId) -> Option<RwLockMappedWriteGuard<'_, Vertex>> {
-        let hash = self.make_hash(message_id);
+    pub(crate) async fn get_mut(&self, block_id: &BlockId) -> Option<RwLockMappedWriteGuard<'_, Vertex>> {
+        let hash = self.make_hash(block_id);
         let table = self.get_table(hash).write().await;
 
-        RwLockWriteGuard::try_map(table, |table| match table.get_mut(hash, equivalent_id(message_id)) {
+        RwLockWriteGuard::try_map(table, |table| match table.get_mut(hash, equivalent_id(block_id)) {
             Some((_, v)) => Some(v),
             None => None,
         })
@@ -110,15 +110,15 @@ impl Vertices {
         None
     }
 
-    pub(crate) async fn get_mut_or_empty(&self, message_id: BlockId) -> RwLockMappedWriteGuard<'_, Vertex> {
-        let hash = self.make_hash(&message_id);
+    pub(crate) async fn get_mut_or_empty(&self, block_id: BlockId) -> RwLockMappedWriteGuard<'_, Vertex> {
+        let hash = self.make_hash(&block_id);
         let table = self.get_table(hash).write().await;
 
         RwLockWriteGuard::map(table, |table| {
-            let bucket = if let Some(bucket) = table.find(hash, equivalent_id(&message_id)) {
+            let bucket = if let Some(bucket) = table.find(hash, equivalent_id(&block_id)) {
                 bucket
             } else {
-                let bucket = table.insert(hash, (message_id, Vertex::empty()), self.make_hasher());
+                let bucket = table.insert(hash, (block_id, Vertex::empty()), self.make_hasher());
                 self.len.fetch_add(1, Ordering::Relaxed);
 
                 bucket

@@ -55,8 +55,8 @@ pub fn rand_milestone_payload() -> MilestonePayload {
     MilestonePayload::new(essence, signatures).unwrap()
 }
 
-/// Generates a random payload for a message.
-pub fn rand_payload_for_message() -> Payload {
+/// Generates a random payload for a block.
+pub fn rand_payload_for_block() -> Payload {
     // TODO complete
     rand_tagged_data_payload().into()
 }

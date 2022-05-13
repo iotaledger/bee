@@ -94,8 +94,8 @@ pub fn milestone_index_to_receipt_access<B: StorageBackend>(storage: &B) {
     let mut count = 0;
 
     for result in iter {
-        let ((index, message_id), _) = result.unwrap();
-        assert!(receipts.get(&index).unwrap().contains(&message_id));
+        let ((index, block_id), _) = result.unwrap();
+        assert!(receipts.get(&index).unwrap().contains(&block_id));
         count += 1;
     }
 

@@ -38,8 +38,8 @@ macro_rules! impl_insert {
 }
 
 impl_insert!(u8, System, system);
-impl_insert!(BlockId, Block, message_id_to_message);
-impl_insert!((BlockId, BlockId), (), message_id_to_message_id);
+impl_insert!(BlockId, Block, block_id_to_block);
+impl_insert!((BlockId, BlockId), (), block_id_to_block_id);
 impl_insert!(OutputId, CreatedOutput, output_id_to_created_output);
 impl_insert!(OutputId, ConsumedOutput, output_id_to_consumed_output);
 impl_insert!(Unspent, (), output_id_unspent);
@@ -62,8 +62,8 @@ impl InsertStrict<BlockId, BlockMetadata> for Storage {
     fn insert_strict(&self, k: &BlockId, v: &BlockMetadata) -> Result<(), <Self as StorageBackend>::Error> {
         let mut guard = self.inner.write()?;
 
-        if !guard.message_id_to_metadata.exist(k) {
-            guard.message_id_to_metadata.insert(k, v);
+        if !guard.block_id_to_metadata.exist(k) {
+            guard.block_id_to_metadata.insert(k, v);
         }
 
         drop(guard);

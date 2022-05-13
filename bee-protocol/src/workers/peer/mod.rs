@@ -21,13 +21,13 @@ use crate::{
     types::{metrics::NodeMetrics, peer::Peer},
     workers::{
         packets::{
-            tlv_from_bytes, HeaderPacket, HeartbeatPacket, MessagePacket, MessageRequestPacket, MilestoneRequestPacket,
+            tlv_from_bytes, HeaderPacket, HeartbeatPacket, BlockPacket, BlockRequestPacket, MilestoneRequestPacket,
             Packet, TlvError,
         },
         peer::packet_handler::PacketHandler,
         requester::request_latest_milestone,
         storage::StorageBackend,
-        HasherWorkerEvent, MessageResponderWorkerEvent, MilestoneRequesterWorkerEvent, MilestoneResponderWorkerEvent,
+        HasherWorkerEvent, BlockResponderWorkerEvent, MilestoneRequesterWorkerEvent, MilestoneResponderWorkerEvent,
         RequestedMilestones,
     },
 };
@@ -48,7 +48,7 @@ pub struct PeerWorker {
     peer: Arc<Peer>,
     metrics: ResourceHandle<NodeMetrics>,
     hasher: mpsc::UnboundedSender<HasherWorkerEvent>,
-    message_responder: mpsc::UnboundedSender<MessageResponderWorkerEvent>,
+    block_responder: mpsc::UnboundedSender<BlockResponderWorkerEvent>,
     milestone_responder: mpsc::UnboundedSender<MilestoneResponderWorkerEvent>,
     milestone_requester: mpsc::UnboundedSender<MilestoneRequesterWorkerEvent>,
 }
@@ -58,7 +58,7 @@ impl PeerWorker {
         peer: Arc<Peer>,
         metrics: ResourceHandle<NodeMetrics>,
         hasher: mpsc::UnboundedSender<HasherWorkerEvent>,
-        message_responder: mpsc::UnboundedSender<MessageResponderWorkerEvent>,
+        block_responder: mpsc::UnboundedSender<BlockResponderWorkerEvent>,
         milestone_responder: mpsc::UnboundedSender<MilestoneResponderWorkerEvent>,
         milestone_requester: mpsc::UnboundedSender<MilestoneRequesterWorkerEvent>,
     ) -> Self {
@@ -66,7 +66,7 @@ impl PeerWorker {
             peer,
             metrics,
             hasher,
-            message_responder,
+            block_responder,
             milestone_responder,
             milestone_requester,
         }
@@ -128,32 +128,32 @@ impl PeerWorker {
                 self.peer.metrics().milestone_requests_received_inc();
                 self.metrics.milestone_requests_received_inc();
             }
-            MessagePacket::ID => {
-                trace!("[{}] Reading MessagePacket...", self.peer.alias());
+            BlockPacket::ID => {
+                trace!("[{}] Reading BlockPacket...", self.peer.alias());
 
-                let packet = tlv_from_bytes::<MessagePacket>(header, bytes)?;
+                let packet = tlv_from_bytes::<BlockPacket>(header, bytes)?;
 
                 let _ = self.hasher.send(HasherWorkerEvent {
                     from: Some(*self.peer.id()),
-                    message_packet: packet,
+                    block_packet: packet,
                     notifier: None,
                 });
 
-                self.peer.metrics().messages_received_inc();
-                self.metrics.messages_received_inc();
+                self.peer.metrics().blocks_received_inc();
+                self.metrics.blocks_received_inc();
             }
-            MessageRequestPacket::ID => {
-                trace!("[{}] Reading MessageRequestPacket...", self.peer.alias());
+            BlockRequestPacket::ID => {
+                trace!("[{}] Reading BlockRequestPacket...", self.peer.alias());
 
-                let packet = tlv_from_bytes::<MessageRequestPacket>(header, bytes)?;
+                let packet = tlv_from_bytes::<BlockRequestPacket>(header, bytes)?;
 
-                let _ = self.message_responder.send(MessageResponderWorkerEvent {
+                let _ = self.block_responder.send(BlockResponderWorkerEvent {
                     peer_id: *self.peer.id(),
                     request: packet,
                 });
 
-                self.peer.metrics().message_requests_received_inc();
-                self.metrics.message_requests_received_inc();
+                self.peer.metrics().block_requests_received_inc();
+                self.metrics.block_requests_received_inc();
             }
             HeartbeatPacket::ID => {
                 trace!("[{}] Reading HeartbeatPacket...", self.peer.alias());

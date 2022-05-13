@@ -8,6 +8,6 @@ pub(crate) use self::milestone::{
     request_latest_milestone, request_milestone, MilestoneRequesterWorker, MilestoneRequesterWorkerEvent,
 };
 pub use self::{
-    block::{request_message, MessageRequesterWorker, MessageRequesterWorkerEvent, RequestedMessages},
+    block::{request_block, BlockRequesterWorker, BlockRequesterWorkerEvent, RequestedBlocks},
     milestone::RequestedMilestones,
 };

@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! The payload module defines the core data types for representing message payloads.
+//! The payload module defines the core data types for representing block payloads.
 
 pub mod milestone;
 pub mod tagged_data;
@@ -33,7 +33,7 @@ pub use self::{
 };
 use crate::Error;
 
-/// A generic payload that can represent different types defining message payloads.
+/// A generic payload that can represent different types defining block payloads.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(
     feature = "serde",

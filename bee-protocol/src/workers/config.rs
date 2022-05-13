@@ -28,8 +28,8 @@ struct ProtocolCoordinatorConfigBuilder {
 #[derive(Default, Deserialize, PartialEq)]
 #[must_use]
 struct ProtocolWorkersConfigBuilder {
-    #[serde(alias = "messageWorkerCache")]
-    message_worker_cache: Option<usize>,
+    #[serde(alias = "blockWorkerCache")]
+    block_worker_cache: Option<usize>,
     #[serde(alias = "statusInterval")]
     status_interval: Option<u64>,
     #[serde(alias = "milestoneSyncCount")]
@@ -72,9 +72,9 @@ impl ProtocolConfigBuilder {
         self
     }
 
-    /// Sets the message worker cache of the `ProtocolConfigBuilder`.
-    pub fn message_worker_cache(mut self, message_worker_cache: usize) -> Self {
-        self.workers.message_worker_cache.replace(message_worker_cache);
+    /// Sets the block worker cache of the `ProtocolConfigBuilder`.
+    pub fn block_worker_cache(mut self, block_worker_cache: usize) -> Self {
+        self.workers.block_worker_cache.replace(block_worker_cache);
         self
     }
 
@@ -108,9 +108,9 @@ impl ProtocolConfigBuilder {
                 }),
             },
             workers: ProtocolWorkersConfig {
-                message_worker_cache: self
+                block_worker_cache: self
                     .workers
-                    .message_worker_cache
+                    .block_worker_cache
                     .unwrap_or(DEFAULT_MESSAGE_WORKER_CACHE),
                 status_interval: self.workers.status_interval.unwrap_or(DEFAULT_STATUS_INTERVAL),
                 milestone_sync_count: self
@@ -133,7 +133,7 @@ pub struct ProtocolCoordinatorConfig {
 /// Configuration for the protocol workers.
 #[derive(Clone)]
 pub struct ProtocolWorkersConfig {
-    pub(crate) message_worker_cache: usize,
+    pub(crate) block_worker_cache: usize,
     pub(crate) status_interval: u64,
     pub(crate) milestone_sync_count: u32,
 }

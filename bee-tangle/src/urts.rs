@@ -17,10 +17,10 @@ enum Score {
     Lazy,
 }
 
-// C1: the maximum allowed delta value for the YMRSI of a given message in relation to the current SMI before it
+// C1: the maximum allowed delta value for the YMRSI of a given block in relation to the current SMI before it
 // gets lazy.
 const YMRSI_DELTA: u32 = 8;
-// C2: the maximum allowed delta value between OMRSI of a given message in relation to the current SMI before it
+// C2: the maximum allowed delta value between OMRSI of a given block in relation to the current SMI before it
 // gets semi-lazy.
 const OMRSI_DELTA: u32 = 13;
 // If the amount of non-lazy tips exceed this limit, remove the parent(s) of the inserted tip to compensate for the
@@ -67,14 +67,14 @@ impl UrtsTipPool {
     pub(crate) async fn insert<B: StorageBackend>(
         &mut self,
         tangle: &Tangle<B>,
-        message_id: BlockId,
+        block_id: BlockId,
         parents: Vec<BlockId>,
     ) {
-        if let Score::NonLazy = self.tip_score::<B>(tangle, &message_id).await {
-            self.non_lazy_tips.insert(message_id);
-            self.tips.insert(message_id, TipMetadata::new());
+        if let Score::NonLazy = self.tip_score::<B>(tangle, &block_id).await {
+            self.non_lazy_tips.insert(block_id);
+            self.tips.insert(block_id, TipMetadata::new());
             for parent in &parents {
-                self.add_child(*parent, message_id);
+                self.add_child(*parent, block_id);
                 self.check_retention_rules_for_parent(parent);
             }
         }
@@ -139,18 +139,18 @@ impl UrtsTipPool {
         debug!("Non-lazy tips {}", self.non_lazy_tips.len());
     }
 
-    async fn tip_score<B: StorageBackend>(&self, tangle: &Tangle<B>, message_id: &BlockId) -> Score {
+    async fn tip_score<B: StorageBackend>(&self, tangle: &Tangle<B>, block_id: &BlockId) -> Score {
         // in case the tip was pruned by the node, consider tip as lazy
-        if !tangle.contains(message_id) {
+        if !tangle.contains(block_id) {
             Score::Lazy
         } else {
             let smi = *tangle.get_solid_milestone_index();
 
             // The tip pool only works with solid tips. Therefore, all tips added to the pool can be considered to
             // solid. The solid flag will be set together with omrsi and ymrsi values. Therefore, when a
-            // message is solid, omrsi and ymrsi values are available. Therefore, unwrapping here is fine.
+            // block is solid, omrsi and ymrsi values are available. Therefore, unwrapping here is fine.
             let (omrsi, ymrsi) = tangle
-                .omrsi_and_ymrsi(message_id)
+                .omrsi_and_ymrsi(block_id)
                 .await
                 .map(|(o, y)| (*o.index(), *y.index()))
                 .unwrap();

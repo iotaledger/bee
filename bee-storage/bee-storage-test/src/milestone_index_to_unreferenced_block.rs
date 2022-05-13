@@ -104,8 +104,8 @@ pub fn milestone_index_to_unreferenced_block_access<B: StorageBackend>(storage: 
     let mut count = 0;
 
     for result in iter {
-        let ((index, message_id), _) = result.unwrap();
-        assert!(unreferenced_blocks.get(&index).unwrap().contains(&message_id));
+        let ((index, block_id), _) = result.unwrap();
+        assert!(unreferenced_blocks.get(&index).unwrap().contains(&block_id));
         count += 1;
     }
 

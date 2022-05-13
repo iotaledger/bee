@@ -27,20 +27,20 @@ where
         let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
         let mut prev_event: Option<MilestoneConfirmed> = None;
-        let mut prev_new_message_count = 0;
+        let mut prev_new_block_count = 0;
 
         while let Some(event) = receiver.next().await {
             if let Some(prev_event) = prev_event {
 
                 let time_diff = event.timestamp - prev_event.timestamp;
 
-                let new_msg_count = metrics.new_messages();
-                let new_msg_diff = new_msg_count - prev_new_message_count;
-                prev_new_message_count = new_msg_count;
+                let new_msg_count = metrics.new_blocks();
+                let new_msg_diff = new_msg_count - prev_new_block_count;
+                prev_new_block_count = new_msg_count;
 
                 let mut referenced_rate = 0.0;
                 if new_msg_diff > 0 {
-                    referenced_rate = (event.referenced_messages as f64 / new_msg_diff as f64) * 100.0;
+                    referenced_rate = (event.referenced_blocks as f64 / new_msg_diff as f64) * 100.0;
                 }
 
                 // to avoid division by zero in case two milestones do have the same timestamp
@@ -48,7 +48,7 @@ where
                     let metrics = ConfirmedMilestoneMetrics {
                         ms_index: *event.index,
                         mps: new_msg_diff / time_diff as u64,
-                        rmps: event.referenced_messages as u64 / time_diff as u64,
+                        rmps: event.referenced_blocks as u64 / time_diff as u64,
                         referenced_rate,
                         time_since_last_ms: time_diff as u64,
                     };

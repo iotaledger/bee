@@ -144,8 +144,8 @@ pub(crate) fn info<B: StorageBackend>(
             use_metric_prefix: false,
         },
         metrics: MetricsResponse {
-            messages_per_second: 0.0,            // TODO
-            referenced_messages_per_second: 0.0, // TODO
+            blocks_per_second: 0.0,            // TODO
+            referenced_blocks_per_second: 0.0, // TODO
             referenced_rate: 0.0,                // TODO
         },
         features: {

@@ -22,7 +22,7 @@ use super::{
 pub(crate) const STORAGE_VERSION: StorageVersion = StorageVersion(10);
 
 pub struct Locks {
-    pub(crate) message_id_to_metadata: RwLock<()>,
+    pub(crate) block_id_to_metadata: RwLock<()>,
 }
 
 pub struct Storage {
@@ -35,7 +35,7 @@ impl Storage {
     fn new(config: RocksDbConfig) -> Result<Self, Error> {
         let cf_system = ColumnFamilyDescriptor::new(CF_SYSTEM, Options::default());
 
-        let cf_message_id_to_message = ColumnFamilyDescriptor::new(CF_MESSAGE_ID_TO_MESSAGE, Options::default());
+        let cf_block_id_to_block = ColumnFamilyDescriptor::new(CF_MESSAGE_ID_TO_MESSAGE, Options::default());
 
         fn keep_current(_key: &[u8], existing_val: Option<&[u8]>, operands: &MergeOperands) -> Option<Vec<u8>> {
             // Keep the existing value, if the value does not exist, take the first operand
@@ -44,11 +44,11 @@ impl Storage {
         }
         let mut options = Options::default();
         options.set_merge_operator_associative("keep current", keep_current);
-        let cf_message_id_to_metadata = ColumnFamilyDescriptor::new(CF_MESSAGE_ID_TO_METADATA, options);
+        let cf_block_id_to_metadata = ColumnFamilyDescriptor::new(CF_MESSAGE_ID_TO_METADATA, options);
 
         let mut options = Options::default();
         options.set_prefix_extractor(SliceTransform::create_fixed_prefix(BlockId::LENGTH));
-        let cf_message_id_to_message_id = ColumnFamilyDescriptor::new(CF_MESSAGE_ID_TO_MESSAGE_ID, options);
+        let cf_block_id_to_block_id = ColumnFamilyDescriptor::new(CF_MESSAGE_ID_TO_MESSAGE_ID, options);
 
         let cf_output_id_to_created_output =
             ColumnFamilyDescriptor::new(CF_OUTPUT_ID_TO_CREATED_OUTPUT, Options::default());
@@ -131,9 +131,9 @@ impl Storage {
             config.path,
             vec![
                 cf_system,
-                cf_message_id_to_message,
-                cf_message_id_to_metadata,
-                cf_message_id_to_message_id,
+                cf_block_id_to_block,
+                cf_block_id_to_metadata,
+                cf_block_id_to_block_id,
                 cf_output_id_to_created_output,
                 cf_output_id_to_consumed_output,
                 cf_output_id_unspent,
@@ -159,7 +159,7 @@ impl Storage {
             config: config.storage,
             inner: db,
             locks: Locks {
-                message_id_to_metadata: RwLock::new(()),
+                block_id_to_metadata: RwLock::new(()),
             },
         })
     }

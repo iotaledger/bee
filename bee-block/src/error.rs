@@ -23,7 +23,7 @@ use crate::{
     unlock_block::{UnlockBlockCount, UnlockBlockIndex},
 };
 
-/// Error occurring when creating/parsing/validating messages.
+/// Error occurring when creating/parsing/validating blocks.
 #[derive(Debug, PartialEq)]
 #[allow(missing_docs)]
 pub enum Error {
@@ -188,7 +188,7 @@ impl fmt::Display for Error {
             Error::InvalidInputKind(k) => write!(f, "invalid input kind: {}", k),
             Error::InvalidInputCount(count) => write!(f, "invalid input count: {}", count),
             Error::InvalidInputOutputIndex(index) => write!(f, "invalid input or output index: {}", index),
-            Error::InvalidBlockLength(length) => write!(f, "invalid message length {}", length),
+            Error::InvalidBlockLength(length) => write!(f, "invalid block length {}", length),
             Error::InvalidStateMetadataLength(length) => write!(f, "invalid state metadata length {}", length),
             Error::InvalidMetadataFeatureBlockLength(length) => {
                 write!(f, "invalid metadata feature block length {length}")
@@ -292,7 +292,7 @@ impl fmt::Display for Error {
                 write!(f, "receipt funds are not unique and/or sorted")
             }
             Error::RemainingBytesAfterBlock => {
-                write!(f, "remaining bytes after message")
+                write!(f, "remaining bytes after block")
             }
             Error::SelfControlledAliasOutput(alias_id) => {
                 write!(f, "self controlled alias output, alias ID {}", alias_id)

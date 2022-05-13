@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub const CF_SYSTEM: &str = "system";
-pub const CF_MESSAGE_ID_TO_MESSAGE: &str = "message_id_to_message";
-pub const CF_MESSAGE_ID_TO_METADATA: &str = "message_id_to_metadata";
-pub const CF_MESSAGE_ID_TO_MESSAGE_ID: &str = "message_id_to_message_id";
+pub const CF_MESSAGE_ID_TO_MESSAGE: &str = "block_id_to_block";
+pub const CF_MESSAGE_ID_TO_METADATA: &str = "block_id_to_metadata";
+pub const CF_MESSAGE_ID_TO_MESSAGE_ID: &str = "block_id_to_block_id";
 pub const CF_OUTPUT_ID_TO_CREATED_OUTPUT: &str = "output_id_to_created_output";
 pub const CF_OUTPUT_ID_TO_CONSUMED_OUTPUT: &str = "output_id_to_consumed_output";
 pub const CF_OUTPUT_ID_UNSPENT: &str = "output_id_unspent";

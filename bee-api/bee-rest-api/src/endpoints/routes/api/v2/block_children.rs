@@ -10,16 +10,16 @@ use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
 
 use crate::{
     endpoints::{
-        config::ROUTE_MESSAGE_CHILDREN, filters::with_tangle, path_params::message_id, permission::has_permission,
+        config::ROUTE_MESSAGE_CHILDREN, filters::with_tangle, path_params::block_id, permission::has_permission,
         storage::StorageBackend,
     },
-    types::responses::MessageChildrenResponse,
+    types::responses::BlockChildrenResponse,
 };
 
 fn path() -> impl Filter<Extract = (BlockId,), Error = warp::Rejection> + Clone {
     super::path()
-        .and(warp::path("messages"))
-        .and(message_id())
+        .and(warp::path("blocks"))
+        .and(block_id())
         .and(warp::path("children"))
         .and(warp::path::end())
 }
@@ -33,22 +33,22 @@ pub(crate) fn filter<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_MESSAGE_CHILDREN, public_routes, allowed_ips))
         .and(with_tangle(tangle))
-        .and_then(|message_id, tangle| async move { message_children(message_id, tangle) })
+        .and_then(|block_id, tangle| async move { block_children(block_id, tangle) })
         .boxed()
 }
 
-pub fn message_children<B: StorageBackend>(
-    message_id: BlockId,
+pub fn block_children<B: StorageBackend>(
+    block_id: BlockId,
     tangle: ResourceHandle<Tangle<B>>,
 ) -> Result<impl Reply, Rejection> {
-    let mut children = Vec::from_iter(tangle.get_children(&message_id).unwrap_or_default());
+    let mut children = Vec::from_iter(tangle.get_children(&block_id).unwrap_or_default());
     let count = children.len();
     let max_results = 1000;
     children.truncate(max_results);
-    Ok(warp::reply::json(&MessageChildrenResponse {
-        message_id: message_id.to_string(),
+    Ok(warp::reply::json(&BlockChildrenResponse {
+        block_id: block_id.to_string(),
         max_results,
         count,
-        children_message_ids: children.iter().map(BlockId::to_string).collect(),
+        children_block_ids: children.iter().map(BlockId::to_string).collect(),
     }))
 }

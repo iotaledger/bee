@@ -83,7 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- First implementation of the Message RFC;
+- First implementation of the Block RFC;
   - `address` module;
   - `input` module;
   - `milestone` module;
@@ -91,5 +91,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `payload` module;
   - `signature` module;
   - `unlock` module;
-  - `message` module;
+  - `block` module;
   - `parents` module;

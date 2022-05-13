@@ -31,9 +31,9 @@ macro_rules! impl_fetch {
 }
 
 impl_fetch!(u8, System, system);
-impl_fetch!(BlockId, Block, message_id_to_message);
-impl_fetch!(BlockId, BlockMetadata, message_id_to_metadata);
-impl_fetch!(BlockId, Vec<BlockId>, message_id_to_message_id);
+impl_fetch!(BlockId, Block, block_id_to_block);
+impl_fetch!(BlockId, BlockMetadata, block_id_to_metadata);
+impl_fetch!(BlockId, Vec<BlockId>, block_id_to_block_id);
 impl_fetch!(OutputId, CreatedOutput, output_id_to_created_output);
 impl_fetch!(OutputId, ConsumedOutput, output_id_to_consumed_output);
 impl_fetch!(Ed25519Address, Vec<OutputId>, ed25519_address_to_output_id);

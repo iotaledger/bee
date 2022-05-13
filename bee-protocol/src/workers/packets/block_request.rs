@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! MessageRequest packet of the protocol.
+//! BlockRequest packet of the protocol.
 
 use std::ops::Range;
 
@@ -12,20 +12,20 @@ use crate::workers::packets::Packet;
 const MESSAGE_ID_SIZE: usize = 32;
 const CONSTANT_SIZE: usize = MESSAGE_ID_SIZE;
 
-/// A packet to request a message.
+/// A packet to request a block.
 #[derive(Clone)]
-pub(crate) struct MessageRequestPacket {
-    /// Message Id of the requested message.
-    pub(crate) message_id: BlockId,
+pub(crate) struct BlockRequestPacket {
+    /// Block Id of the requested block.
+    pub(crate) block_id: BlockId,
 }
 
-impl MessageRequestPacket {
-    pub(crate) fn new(message_id: BlockId) -> Self {
-        Self { message_id }
+impl BlockRequestPacket {
+    pub(crate) fn new(block_id: BlockId) -> Self {
+        Self { block_id }
     }
 }
 
-impl Packet for MessageRequestPacket {
+impl Packet for BlockRequestPacket {
     const ID: u8 = 0x03;
 
     fn size_range() -> Range<usize> {
@@ -33,12 +33,12 @@ impl Packet for MessageRequestPacket {
     }
 
     fn from_bytes(bytes: &[u8]) -> Self {
-        let mut message_id = [0u8; MESSAGE_ID_SIZE];
+        let mut block_id = [0u8; MESSAGE_ID_SIZE];
 
-        message_id.copy_from_slice(&bytes[0..MESSAGE_ID_SIZE]);
+        block_id.copy_from_slice(&bytes[0..MESSAGE_ID_SIZE]);
 
         Self {
-            message_id: BlockId::from(message_id),
+            block_id: BlockId::from(block_id),
         }
     }
 
@@ -47,7 +47,7 @@ impl Packet for MessageRequestPacket {
     }
 
     fn to_bytes(&self, bytes: &mut [u8]) {
-        bytes.copy_from_slice(self.message_id.as_ref())
+        bytes.copy_from_slice(self.block_id.as_ref())
     }
 }
 
@@ -63,30 +63,30 @@ mod tests {
 
     #[test]
     fn id() {
-        assert_eq!(MessageRequestPacket::ID, 3);
+        assert_eq!(BlockRequestPacket::ID, 3);
     }
 
     #[test]
     fn size_range() {
-        assert!(!MessageRequestPacket::size_range().contains(&(CONSTANT_SIZE - 1)));
-        assert!(MessageRequestPacket::size_range().contains(&CONSTANT_SIZE));
-        assert!(!MessageRequestPacket::size_range().contains(&(CONSTANT_SIZE + 1)));
+        assert!(!BlockRequestPacket::size_range().contains(&(CONSTANT_SIZE - 1)));
+        assert!(BlockRequestPacket::size_range().contains(&CONSTANT_SIZE));
+        assert!(!BlockRequestPacket::size_range().contains(&(CONSTANT_SIZE + 1)));
     }
 
     #[test]
     fn size() {
-        let packet = MessageRequestPacket::new(BlockId::from(MESSAGE_ID));
+        let packet = BlockRequestPacket::new(BlockId::from(MESSAGE_ID));
 
         assert_eq!(packet.size(), CONSTANT_SIZE);
     }
 
     #[test]
     fn into_from() {
-        let packet_from = MessageRequestPacket::new(BlockId::from(MESSAGE_ID));
+        let packet_from = BlockRequestPacket::new(BlockId::from(MESSAGE_ID));
         let mut bytes = vec![0u8; packet_from.size()];
         packet_from.to_bytes(&mut bytes);
-        let packet_to = MessageRequestPacket::from_bytes(&bytes);
+        let packet_to = BlockRequestPacket::from_bytes(&bytes);
 
-        assert!(packet_to.message_id.as_ref().eq(&MESSAGE_ID));
+        assert!(packet_to.block_id.as_ref().eq(&MESSAGE_ID));
     }
 }

@@ -33,9 +33,9 @@ macro_rules! impl_delete {
     };
 }
 
-impl_delete!(BlockId, Block, message_id_to_message);
-impl_delete!(BlockId, BlockMetadata, message_id_to_metadata);
-impl_delete!((BlockId, BlockId), (), message_id_to_message_id);
+impl_delete!(BlockId, Block, block_id_to_block);
+impl_delete!(BlockId, BlockMetadata, block_id_to_metadata);
+impl_delete!((BlockId, BlockId), (), block_id_to_block_id);
 impl_delete!(OutputId, CreatedOutput, output_id_to_created_output);
 impl_delete!(OutputId, ConsumedOutput, output_id_to_consumed_output);
 impl_delete!(Unspent, (), output_id_unspent);

@@ -56,9 +56,9 @@ pub struct Storage {
 #[derive(Default)]
 pub(crate) struct InnerStorage {
     pub(crate) system: Table<u8, System>,
-    pub(crate) message_id_to_message: Table<BlockId, Block>,
-    pub(crate) message_id_to_metadata: Table<BlockId, BlockMetadata>,
-    pub(crate) message_id_to_message_id: VecBinTable<BlockId, BlockId>,
+    pub(crate) block_id_to_block: Table<BlockId, Block>,
+    pub(crate) block_id_to_metadata: Table<BlockId, BlockMetadata>,
+    pub(crate) block_id_to_block_id: VecBinTable<BlockId, BlockId>,
     pub(crate) output_id_to_created_output: Table<OutputId, CreatedOutput>,
     pub(crate) output_id_to_consumed_output: Table<OutputId, ConsumedOutput>,
     pub(crate) output_id_unspent: Table<Unspent, ()>,

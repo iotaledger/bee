@@ -30,8 +30,8 @@ impl From<VertexCreated> for WsEvent {
 impl From<VertexCreated> for VertexResponse {
     fn from(event: VertexCreated) -> Self {
         Self {
-            id: event.message_id.to_string(),
-            parents: event.parent_message_ids.iter().map(|p| p.to_string()).collect(),
+            id: event.block_id.to_string(),
+            parents: event.parent_block_ids.iter().map(|p| p.to_string()).collect(),
             is_solid: event.is_solid,
             is_referenced: event.is_referenced,
             is_conflicting: event.is_conflicting,

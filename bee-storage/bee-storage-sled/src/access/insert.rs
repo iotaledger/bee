@@ -35,10 +35,10 @@ impl Insert<u8, System> for Storage {
 }
 
 impl Insert<BlockId, Block> for Storage {
-    fn insert(&self, message_id: &BlockId, message: &Block) -> Result<(), <Self as StorageBackend>::Error> {
+    fn insert(&self, block_id: &BlockId, block: &Block) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
             .open_tree(TREE_MESSAGE_ID_TO_MESSAGE)?
-            .insert(message_id, message.pack_to_vec())?;
+            .insert(block_id, block.pack_to_vec())?;
 
         Ok(())
     }
@@ -47,12 +47,12 @@ impl Insert<BlockId, Block> for Storage {
 impl InsertStrict<BlockId, BlockMetadata> for Storage {
     fn insert_strict(
         &self,
-        message_id: &BlockId,
+        block_id: &BlockId,
         metadata: &BlockMetadata,
     ) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
             .open_tree(TREE_MESSAGE_ID_TO_METADATA)?
-            .update_and_fetch(message_id, |old_metadata| {
+            .update_and_fetch(block_id, |old_metadata| {
                 old_metadata
                     .map(|b| b.to_vec())
                     .or_else(|| Some(metadata.pack_to_vec()))

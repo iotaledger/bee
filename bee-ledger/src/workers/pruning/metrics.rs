@@ -9,7 +9,7 @@ pub struct PruningMetrics {
     pub new_seps: usize,
     pub kept_seps: usize,
     pub next_seps: usize,
-    pub messages: usize,
+    pub blocks: usize,
     pub edges: usize,
     pub output_diffs: bool,
     pub receipts: usize,
@@ -24,7 +24,7 @@ pub struct ConfirmedDataPruningMetrics {
     pub all_approvers_visited: usize,
     pub not_all_approvers_visited: usize,
     pub found_seps: usize,
-    pub prunable_messages: usize,
+    pub prunable_blocks: usize,
     pub prunable_edges: usize,
     pub new_seps: usize,
 }
@@ -32,7 +32,7 @@ pub struct ConfirmedDataPruningMetrics {
 #[derive(Debug, Default)]
 pub struct UnconfirmedDataPruningMetrics {
     pub none_received: bool,
-    pub prunable_messages: usize,
+    pub prunable_blocks: usize,
     pub prunable_edges: usize,
     pub already_pruned: usize,
     pub were_confirmed: usize,

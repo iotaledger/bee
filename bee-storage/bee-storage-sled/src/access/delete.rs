@@ -23,16 +23,16 @@ use packable::PackableExt;
 use crate::{storage::Storage, trees::*};
 
 impl Delete<BlockId, Block> for Storage {
-    fn delete(&self, message_id: &BlockId) -> Result<(), <Self as StorageBackend>::Error> {
-        self.inner.open_tree(TREE_MESSAGE_ID_TO_MESSAGE)?.remove(message_id)?;
+    fn delete(&self, block_id: &BlockId) -> Result<(), <Self as StorageBackend>::Error> {
+        self.inner.open_tree(TREE_MESSAGE_ID_TO_MESSAGE)?.remove(block_id)?;
 
         Ok(())
     }
 }
 
 impl Delete<BlockId, BlockMetadata> for Storage {
-    fn delete(&self, message_id: &BlockId) -> Result<(), <Self as StorageBackend>::Error> {
-        self.inner.open_tree(TREE_MESSAGE_ID_TO_METADATA)?.remove(message_id)?;
+    fn delete(&self, block_id: &BlockId) -> Result<(), <Self as StorageBackend>::Error> {
+        self.inner.open_tree(TREE_MESSAGE_ID_TO_METADATA)?.remove(block_id)?;
 
         Ok(())
     }

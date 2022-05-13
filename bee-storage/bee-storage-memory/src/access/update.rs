@@ -19,4 +19,4 @@ macro_rules! impl_update {
     };
 }
 
-impl_update!(BlockId, BlockMetadata, message_id_to_metadata);
+impl_update!(BlockId, BlockMetadata, block_id_to_metadata);

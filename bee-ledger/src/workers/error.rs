@@ -23,9 +23,9 @@ pub enum Error {
     Snapshot(#[from] SnapshotError),
     #[error("types error: {0}")]
     Types(#[from] TypesError),
-    #[error("message error: {0}")]
+    #[error("block error: {0}")]
     Block(#[from] BlockError),
-    #[error("message {0} is missing in the past cone of the milestone")]
+    #[error("block {0} is missing in the past cone of the milestone")]
     MissingBlock(BlockId),
     #[error("unsupported input kind: {0}")]
     UnsupportedInputKind(u8),
@@ -33,9 +33,9 @@ pub enum Error {
     UnsupportedOutputKind(u8),
     #[error("unsupported payload kind: {0}")]
     UnsupportedPayloadKind(u32),
-    #[error("milestone message not found: {0}")]
+    #[error("milestone block not found: {0}")]
     MilestoneBlockNotFound(BlockId),
-    #[error("message payload is not a milestone")]
+    #[error("block payload is not a milestone")]
     NoMilestonePayload,
     #[error("non contiguous milestones: tried to confirm {0} on top of {1}")]
     NonContiguousMilestones(u32, u32),
@@ -43,7 +43,7 @@ pub enum Error {
     ConfirmedMerkleRootMismatch(MilestoneIndex, String, String),
     #[error("applied merkle root mismatch on milestone {0}: computed {1} != provided {2}")]
     AppliedMerkleRootMismatch(MilestoneIndex, String, String),
-    #[error("invalid messages count: referenced ({0}) != no transaction ({1}) + conflicting ({2}) + included ({3})")]
+    #[error("invalid blocks count: referenced ({0}) != no transaction ({1}) + conflicting ({2}) + included ({3})")]
     InvalidBlocksCount(usize, usize, usize, usize),
     #[error("invalid ledger unspent state: {0}")]
     InvalidLedgerUnspentState(u64),

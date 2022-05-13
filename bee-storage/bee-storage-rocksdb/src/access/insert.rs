@@ -36,11 +36,11 @@ impl Insert<u8, System> for Storage {
 }
 
 impl Insert<BlockId, Block> for Storage {
-    fn insert(&self, message_id: &BlockId, message: &Block) -> Result<(), <Self as StorageBackend>::Error> {
+    fn insert(&self, block_id: &BlockId, block: &Block) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner.put_cf(
             self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?,
-            message_id,
-            message.pack_to_vec(),
+            block_id,
+            block.pack_to_vec(),
         )?;
 
         Ok(())
@@ -50,14 +50,14 @@ impl Insert<BlockId, Block> for Storage {
 impl InsertStrict<BlockId, BlockMetadata> for Storage {
     fn insert_strict(
         &self,
-        message_id: &BlockId,
+        block_id: &BlockId,
         metadata: &BlockMetadata,
     ) -> Result<(), <Self as StorageBackend>::Error> {
-        let guard = self.locks.message_id_to_metadata.read();
+        let guard = self.locks.block_id_to_metadata.read();
 
         self.inner.merge_cf(
             self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?,
-            message_id,
+            block_id,
             metadata.pack_to_vec(),
         )?;
 

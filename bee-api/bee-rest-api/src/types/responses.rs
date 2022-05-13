@@ -112,10 +112,10 @@ pub struct RentStructureResponse {
 /// Metric information about the node.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct MetricsResponse {
-    #[serde(rename = "messagesPerSecond")]
-    pub messages_per_second: f64,
-    #[serde(rename = "referencedMessagesPerSecond")]
-    pub referenced_messages_per_second: f64,
+    #[serde(rename = "blocksPerSecond")]
+    pub blocks_per_second: f64,
+    #[serde(rename = "referencedBlocksPerSecond")]
+    pub referenced_blocks_per_second: f64,
     #[serde(rename = "referencedRate")]
     pub referenced_rate: f64,
 }
@@ -125,36 +125,36 @@ pub struct MetricsResponse {
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct TipsResponse {
     #[serde(rename = "tipBlockIds")]
-    pub tip_message_ids: Vec<String>,
+    pub tip_block_ids: Vec<String>,
 }
 
 impl BodyInner for TipsResponse {}
 
-/// Response of POST /api/v2/messages.
-/// Returns the message identifier of the submitted message.
+/// Response of POST /api/v2/blocks.
+/// Returns the block identifier of the submitted block.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-pub struct SubmitMessageResponse {
-    #[serde(rename = "messageId")]
-    pub message_id: String,
+pub struct SubmitBlockResponse {
+    #[serde(rename = "blockId")]
+    pub block_id: String,
 }
 
-impl BodyInner for SubmitMessageResponse {}
+impl BodyInner for SubmitBlockResponse {}
 
-/// Response of GET /api/v2/messages/{message_id}.
-/// Returns a specific message.
+/// Response of GET /api/v2/blocks/{block_id}.
+/// Returns a specific block.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-pub struct MessageResponse(pub BlockDto);
+pub struct BlockResponse(pub BlockDto);
 
-impl BodyInner for MessageResponse {}
+impl BodyInner for BlockResponse {}
 
-/// Response of GET /api/v2/messages/{message_id}/metadata.
-/// Returns the metadata of a message.
+/// Response of GET /api/v2/blocks/{block_id}/metadata.
+/// Returns the metadata of a block.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct BlockMetadataResponse {
-    #[serde(rename = "messageId")]
-    pub message_id: String,
+    #[serde(rename = "blockId")]
+    pub block_id: String,
     #[serde(rename = "parentBlockIds")]
-    pub parent_message_ids: Vec<String>,
+    pub parent_block_ids: Vec<String>,
     #[serde(rename = "isSolid")]
     pub is_solid: bool,
     #[serde(rename = "referencedByMilestoneIndex", skip_serializing_if = "Option::is_none")]
@@ -173,20 +173,20 @@ pub struct BlockMetadataResponse {
 
 impl BodyInner for BlockMetadataResponse {}
 
-/// Response of GET /api/v2/messages/{message_id}/children.
-/// Returns all children of a specific message.
+/// Response of GET /api/v2/blocks/{block_id}/children.
+/// Returns all children of a specific block.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-pub struct MessageChildrenResponse {
-    #[serde(rename = "messageId")]
-    pub message_id: String,
+pub struct BlockChildrenResponse {
+    #[serde(rename = "blockId")]
+    pub block_id: String,
     #[serde(rename = "maxResults")]
     pub max_results: usize,
     pub count: usize,
     #[serde(rename = "childrenBlockIds")]
-    pub children_message_ids: Vec<String>,
+    pub children_block_ids: Vec<String>,
 }
 
-impl BodyInner for MessageChildrenResponse {}
+impl BodyInner for BlockChildrenResponse {}
 
 /// Response of GET /api/v2/outputs/{output_id}.
 /// Returns an output and its metadata.
@@ -200,8 +200,8 @@ pub struct OutputResponse {
 /// Returns an output metadata.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct OutputMetadataResponse {
-    #[serde(rename = "messageId")]
-    pub message_id: String,
+    #[serde(rename = "blockId")]
+    pub block_id: String,
     #[serde(rename = "transactionId")]
     pub transaction_id: String,
     #[serde(rename = "outputIndex")]

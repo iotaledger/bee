@@ -31,21 +31,21 @@ pub fn visit_parents_depth_first<Match, Apply, ElseApply, MissingApply, B: Stora
     let mut parents = vec![root];
     let mut visited = HashSet::new();
 
-    while let Some(message_id) = parents.pop() {
-        if visited.insert(message_id) {
-            let msg_meta = tangle.get_message_and_metadata(&message_id);
+    while let Some(block_id) = parents.pop() {
+        if visited.insert(block_id) {
+            let msg_meta = tangle.get_block_and_metadata(&block_id);
             match msg_meta {
                 Some((msg, meta)) => {
-                    if matches(&message_id, &msg, &meta) {
-                        apply(&message_id, &msg, &meta);
+                    if matches(&block_id, &msg, &meta) {
+                        apply(&block_id, &msg, &meta);
 
                         parents.extend_from_slice(msg.parents());
                     } else {
-                        else_apply(&message_id, &msg, &meta);
+                        else_apply(&block_id, &msg, &meta);
                     }
                 }
                 None => {
-                    missing_apply(&message_id);
+                    missing_apply(&block_id);
                 }
             }
         }

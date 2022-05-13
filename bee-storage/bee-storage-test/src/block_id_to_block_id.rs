@@ -36,7 +36,7 @@ impl<T> StorageBackend for T where
 {
 }
 
-pub fn message_id_to_message_id_access<B: StorageBackend>(storage: &B) {
+pub fn block_id_to_block_id_access<B: StorageBackend>(storage: &B) {
     let (parent, child) = (rand_block_id(), rand_block_id());
 
     assert!(!Exist::<(BlockId, BlockId), ()>::exist(storage, &(parent, child)).unwrap());

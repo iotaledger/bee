@@ -47,14 +47,14 @@ impl From<&Peer> for PeerDto {
                     synced_neighbors: peer.synced_peers(),
                 },
                 metrics: MetricsDto {
-                    new_messages: peer.metrics().new_messages(),
-                    received_messages: peer.metrics().messages_received(),
-                    known_messages: peer.metrics().known_messages(),
-                    received_message_requests: peer.metrics().message_requests_received(),
+                    new_blocks: peer.metrics().new_blocks(),
+                    received_blocks: peer.metrics().blocks_received(),
+                    known_blocks: peer.metrics().known_blocks(),
+                    received_block_requests: peer.metrics().block_requests_received(),
                     received_milestone_requests: peer.metrics().milestone_requests_received(),
                     received_heartbeats: peer.metrics().heartbeats_received(),
-                    sent_messages: peer.metrics().messages_sent(),
-                    sent_message_requests: peer.metrics().message_requests_sent(),
+                    sent_blocks: peer.metrics().blocks_sent(),
+                    sent_block_requests: peer.metrics().block_requests_sent(),
                     sent_milestone_requests: peer.metrics().milestone_requests_sent(),
                     sent_heartbeats: peer.metrics().heartbeats_sent(),
                     dropped_packets: 0,
@@ -100,22 +100,22 @@ pub struct HeartbeatDto {
 /// Describes metrics of a gossip stream.
 #[derive(Clone, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
 pub struct MetricsDto {
-    #[serde(rename = "newMessages")]
-    pub new_messages: u64,
-    #[serde(rename = "receivedMessages")]
-    pub received_messages: u64,
-    #[serde(rename = "knownMessages")]
-    pub known_messages: u64,
-    #[serde(rename = "receivedMessageRequests")]
-    pub received_message_requests: u64,
+    #[serde(rename = "newBlocks")]
+    pub new_blocks: u64,
+    #[serde(rename = "receivedBlocks")]
+    pub received_blocks: u64,
+    #[serde(rename = "knownBlocks")]
+    pub known_blocks: u64,
+    #[serde(rename = "receivedBlockRequests")]
+    pub received_block_requests: u64,
     #[serde(rename = "receivedMilestoneRequests")]
     pub received_milestone_requests: u64,
     #[serde(rename = "receivedHeartbeats")]
     pub received_heartbeats: u64,
-    #[serde(rename = "sentMessages")]
-    pub sent_messages: u64,
-    #[serde(rename = "sentMessageRequests")]
-    pub sent_message_requests: u64,
+    #[serde(rename = "sentBlocks")]
+    pub sent_blocks: u64,
+    #[serde(rename = "sentBlockRequests")]
+    pub sent_block_requests: u64,
     #[serde(rename = "sentMilestoneRequests")]
     pub sent_milestone_requests: u64,
     #[serde(rename = "sentHeartbeats")]

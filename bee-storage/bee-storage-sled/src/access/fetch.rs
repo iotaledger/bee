@@ -32,22 +32,22 @@ impl Fetch<u8, System> for Storage {
 }
 
 impl Fetch<BlockId, Block> for Storage {
-    fn fetch(&self, message_id: &BlockId) -> Result<Option<Block>, <Self as StorageBackend>::Error> {
+    fn fetch(&self, block_id: &BlockId) -> Result<Option<Block>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_MESSAGE_ID_TO_MESSAGE)?
-            .get(message_id)?
+            .get(block_id)?
             // Unpacking from storage is fine.
             .map(|v| Block::unpack_unverified(&mut v.as_ref()).unwrap()))
     }
 }
 
 impl Fetch<BlockId, BlockMetadata> for Storage {
-    fn fetch(&self, message_id: &BlockId) -> Result<Option<BlockMetadata>, <Self as StorageBackend>::Error> {
+    fn fetch(&self, block_id: &BlockId) -> Result<Option<BlockMetadata>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_MESSAGE_ID_TO_METADATA)?
-            .get(message_id)?
+            .get(block_id)?
             // Unpacking from storage is fine.
             .map(|v| BlockMetadata::unpack_unverified(&mut v.as_ref()).unwrap()))
     }

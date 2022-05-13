@@ -12,7 +12,7 @@ pub enum Error {
     #[error("i/o error: {0}")]
     Io(#[from] std::io::Error),
     /// Block error.
-    #[error("message error: {0}")]
+    #[error("block error: {0}")]
     Block(#[from] BlockError),
     /// Invalid output count error.
     #[error("Invalid output count: {0}")]

@@ -10,7 +10,7 @@ use bee_block::{
     Block, BlockBuilder, BlockId,
 };
 use bee_pow::providers::{miner::MinerBuilder, NonceProviderBuilder};
-use bee_protocol::workers::{config::ProtocolConfig, BlockSubmitterError, MessageSubmitterWorkerEvent};
+use bee_protocol::workers::{config::ProtocolConfig, BlockSubmitterError, BlockSubmitterWorkerEvent};
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::Tangle;
 use futures::channel::oneshot;
@@ -23,23 +23,23 @@ use warp::{filters::BoxedFilter, http::StatusCode, reject, Filter, Rejection, Re
 use crate::{
     endpoints::{
         config::{RestApiConfig, ROUTE_SUBMIT_MESSAGE, ROUTE_SUBMIT_MESSAGE_RAW},
-        filters::{with_message_submitter, with_protocol_config, with_rest_api_config, with_tangle},
+        filters::{with_block_submitter, with_protocol_config, with_rest_api_config, with_tangle},
         permission::has_permission,
         rejection::CustomRejection,
         storage::StorageBackend,
     },
-    types::responses::SubmitMessageResponse,
+    types::responses::SubmitBlockResponse,
 };
 
 fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
-    super::path().and(warp::path("messages")).and(warp::path::end())
+    super::path().and(warp::path("blocks")).and(warp::path::end())
 }
 
 pub(crate) fn filter<B: StorageBackend>(
     public_routes: Box<[String]>,
     allowed_ips: Box<[IpAddr]>,
     tangle: ResourceHandle<Tangle<B>>,
-    message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
+    block_submitter: mpsc::UnboundedSender<BlockSubmitterWorkerEvent>,
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
 ) -> BoxedFilter<(impl Reply,)> {
@@ -54,23 +54,23 @@ pub(crate) fn filter<B: StorageBackend>(
                 ))
                 .and(warp::body::json())
                 .and(with_tangle(tangle))
-                .and(with_message_submitter(message_submitter.clone()))
+                .and(with_block_submitter(block_submitter.clone()))
                 .and(with_rest_api_config(rest_api_config))
                 .and(with_protocol_config(protocol_config))
-                .and_then(submit_message))
+                .and_then(submit_block))
             .or(warp::header::exact("content-type", "application/octet-stream")
                 .and(has_permission(ROUTE_SUBMIT_MESSAGE_RAW, public_routes, allowed_ips))
                 .and(warp::body::bytes())
-                .and(with_message_submitter(message_submitter))
-                .and_then(submit_message_raw)),
+                .and(with_block_submitter(block_submitter))
+                .and_then(submit_block_raw)),
         )
         .boxed()
 }
 
-pub(crate) async fn submit_message<B: StorageBackend>(
+pub(crate) async fn submit_block<B: StorageBackend>(
     value: JsonValue,
     tangle: ResourceHandle<Tangle<B>>,
-    message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
+    block_submitter: mpsc::UnboundedSender<BlockSubmitterWorkerEvent>,
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
 ) -> Result<impl Reply, Rejection> {
@@ -79,7 +79,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
     let payload_json = &value["payload"];
     let nonce_json = &value["nonce"];
 
-    // Tries to build a `Message` from the given JSON.
+    // Tries to build a `Block` from the given JSON.
     // If some fields are missing, it tries to auto-complete them.
 
     if !protocol_version_json.is_null() {
@@ -98,7 +98,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
     }
 
     let parents: Vec<BlockId> = if parents_json.is_null() {
-        tangle.get_messages_to_approve().await.ok_or_else(|| {
+        tangle.get_blocks_to_approve().await.ok_or_else(|| {
             reject::custom(CustomRejection::ServiceUnavailable(
                 "can not auto-fill parents: no tips available".to_string(),
             ))
@@ -106,27 +106,27 @@ pub(crate) async fn submit_message<B: StorageBackend>(
     } else {
         let parents = parents_json.as_array().ok_or_else(|| {
             reject::custom(CustomRejection::BadRequest(
-                "invalid parents: expected an array of message ids".to_string(),
+                "invalid parents: expected an array of block ids".to_string(),
             ))
         })?;
-        let mut message_ids = Vec::with_capacity(parents.len());
-        for message_id in parents {
-            let message_id = message_id
+        let mut block_ids = Vec::with_capacity(parents.len());
+        for block_id in parents {
+            let block_id = block_id
                 .as_str()
                 .ok_or_else(|| {
                     reject::custom(CustomRejection::BadRequest(
-                        "invalid parent: expected a message id".to_string(),
+                        "invalid parent: expected a block id".to_string(),
                     ))
                 })?
                 .parse::<BlockId>()
                 .map_err(|_| {
                     reject::custom(CustomRejection::BadRequest(
-                        "invalid parent: expected a message id".to_string(),
+                        "invalid parent: expected a block id".to_string(),
                     ))
                 })?;
-            message_ids.push(message_id);
+            block_ids.push(block_id);
         }
-        message_ids
+        block_ids
     };
 
     let payload = if payload_json.is_null() {
@@ -156,25 +156,25 @@ pub(crate) async fn submit_message<B: StorageBackend>(
         if parsed_nonce == 0 { None } else { Some(parsed_nonce) }
     };
 
-    let message = build_message(parents, payload, nonce, rest_api_config, protocol_config)?;
-    let message_id = forward_to_message_submitter(message.pack_to_vec(), message_submitter).await?;
+    let block = build_block(parents, payload, nonce, rest_api_config, protocol_config)?;
+    let block_id = forward_to_block_submitter(block.pack_to_vec(), block_submitter).await?;
 
     Ok(warp::reply::with_status(
-        warp::reply::json(&SubmitMessageResponse {
-            message_id: message_id.to_string(),
+        warp::reply::json(&SubmitBlockResponse {
+            block_id: block_id.to_string(),
         }),
         StatusCode::CREATED,
     ))
 }
 
-pub(crate) fn build_message(
+pub(crate) fn build_block(
     parents: Vec<BlockId>,
     payload: Option<Payload>,
     nonce: Option<u64>,
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
 ) -> Result<Block, Rejection> {
-    let message = if let Some(nonce) = nonce {
+    let block = if let Some(nonce) = nonce {
         let mut builder = BlockBuilder::new(
             Parents::new(parents).map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?,
         )
@@ -205,49 +205,49 @@ pub(crate) fn build_message(
             .finish()
             .map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?
     };
-    Ok(message)
+    Ok(block)
 }
 
-pub(crate) async fn submit_message_raw(
+pub(crate) async fn submit_block_raw(
     buf: warp::hyper::body::Bytes,
-    message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
+    block_submitter: mpsc::UnboundedSender<BlockSubmitterWorkerEvent>,
 ) -> Result<impl Reply, Rejection> {
-    let message_id = forward_to_message_submitter((*buf).to_vec(), message_submitter).await?;
+    let block_id = forward_to_block_submitter((*buf).to_vec(), block_submitter).await?;
     Ok(warp::reply::with_status(
-        warp::reply::json(&SubmitMessageResponse {
-            message_id: message_id.to_string(),
+        warp::reply::json(&SubmitBlockResponse {
+            block_id: block_id.to_string(),
         }),
         StatusCode::CREATED,
     ))
 }
 
-pub(crate) async fn forward_to_message_submitter(
-    message_bytes: Vec<u8>,
-    message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
+pub(crate) async fn forward_to_block_submitter(
+    block_bytes: Vec<u8>,
+    block_submitter: mpsc::UnboundedSender<BlockSubmitterWorkerEvent>,
 ) -> Result<BlockId, Rejection> {
     let (notifier, waiter) = oneshot::channel::<Result<BlockId, BlockSubmitterError>>();
 
-    message_submitter
-        .send(MessageSubmitterWorkerEvent {
-            message: message_bytes,
+    block_submitter
+        .send(BlockSubmitterWorkerEvent {
+            block: block_bytes,
             notifier,
         })
         .map_err(|e| {
-            error!("can not submit message: {}", e);
+            error!("can not submit block: {}", e);
             reject::custom(CustomRejection::ServiceUnavailable(
-                "can not submit message".to_string(),
+                "can not submit block".to_string(),
             ))
         })?;
 
     match waiter.await.map_err(|e| {
-        error!("can not submit message: {}", e);
+        error!("can not submit block: {}", e);
         reject::custom(CustomRejection::ServiceUnavailable(
-            "can not submit message".to_string(),
+            "can not submit block".to_string(),
         ))
     })? {
-        Ok(message_id) => Ok(message_id),
+        Ok(block_id) => Ok(block_id),
         Err(e) => Err(reject::custom(CustomRejection::BadRequest(format!(
-            "can not submit message: message is invalid: {}",
+            "can not submit block: block is invalid: {}",
             e
         )))),
     }

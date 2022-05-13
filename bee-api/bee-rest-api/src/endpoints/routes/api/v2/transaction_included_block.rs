@@ -24,7 +24,7 @@ fn path() -> impl Filter<Extract = (TransactionId,), Error = Rejection> + Clone 
     super::path()
         .and(warp::path("transactions"))
         .and(transaction_id())
-        .and(warp::path("included-message"))
+        .and(warp::path("included-block"))
         .and(warp::path::end())
 }
 
@@ -44,12 +44,12 @@ pub(crate) fn filter<B: StorageBackend>(
         .and(with_storage(storage))
         .and(with_tangle(tangle))
         .and_then(|transaction_id, storage, tangle| async move {
-            transaction_included_message(transaction_id, storage, tangle)
+            transaction_included_block(transaction_id, storage, tangle)
         })
         .boxed()
 }
 
-pub(crate) fn transaction_included_message<B: StorageBackend>(
+pub(crate) fn transaction_included_block<B: StorageBackend>(
     transaction_id: TransactionId,
     storage: ResourceHandle<B>,
     tangle: ResourceHandle<Tangle<B>>,
@@ -62,7 +62,7 @@ pub(crate) fn transaction_included_message<B: StorageBackend>(
             "Can not fetch from storage".to_string(),
         ))
     })? {
-        Some(output) => block::message(*output.message_id(), tangle),
+        Some(output) => block::block(*output.block_id(), tangle),
         None => Err(reject::custom(CustomRejection::NotFound(
             "Can not find output".to_string(),
         ))),

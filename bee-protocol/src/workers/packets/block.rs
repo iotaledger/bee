@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! Message packet of the protocol.
+//! Block packet of the protocol.
 
 use std::ops::Range;
 
@@ -9,20 +9,20 @@ use bee_block::Block;
 
 use crate::workers::packets::Packet;
 
-/// A packet to send a message.
+/// A packet to send a block.
 #[derive(Clone)]
-pub(crate) struct MessagePacket {
-    /// Message to send.
+pub(crate) struct BlockPacket {
+    /// Block to send.
     pub(crate) bytes: Vec<u8>,
 }
 
-impl MessagePacket {
+impl BlockPacket {
     pub(crate) fn new(bytes: Vec<u8>) -> Self {
         Self { bytes }
     }
 }
 
-impl Packet for MessagePacket {
+impl Packet for BlockPacket {
     const ID: u8 = 0x02;
 
     fn size_range() -> Range<usize> {
@@ -73,33 +73,33 @@ mod tests {
 
     #[test]
     fn id() {
-        assert_eq!(MessagePacket::ID, 2);
+        assert_eq!(BlockPacket::ID, 2);
     }
 
     #[test]
     fn size_range() {
-        assert!(!MessagePacket::size_range().contains(&(Block::LENGTH_MIN - 1)));
-        assert!(MessagePacket::size_range().contains(&Block::LENGTH_MIN));
-        assert!(MessagePacket::size_range().contains(&(Block::LENGTH_MIN + 1)));
+        assert!(!BlockPacket::size_range().contains(&(Block::LENGTH_MIN - 1)));
+        assert!(BlockPacket::size_range().contains(&Block::LENGTH_MIN));
+        assert!(BlockPacket::size_range().contains(&(Block::LENGTH_MIN + 1)));
 
-        assert!(MessagePacket::size_range().contains(&(Block::LENGTH_MAX - 1)));
-        assert!(MessagePacket::size_range().contains(&Block::LENGTH_MAX));
-        assert!(!MessagePacket::size_range().contains(&(Block::LENGTH_MAX + 1)));
+        assert!(BlockPacket::size_range().contains(&(Block::LENGTH_MAX - 1)));
+        assert!(BlockPacket::size_range().contains(&Block::LENGTH_MAX));
+        assert!(!BlockPacket::size_range().contains(&(Block::LENGTH_MAX + 1)));
     }
 
     #[test]
     fn size() {
-        let packet = MessagePacket::new(MESSAGE.to_vec());
+        let packet = BlockPacket::new(MESSAGE.to_vec());
 
         assert_eq!(packet.size(), 500);
     }
 
     #[test]
     fn into_from() {
-        let packet_from = MessagePacket::new(MESSAGE.to_vec());
+        let packet_from = BlockPacket::new(MESSAGE.to_vec());
         let mut bytes = vec![0u8; packet_from.size()];
         packet_from.to_bytes(&mut bytes);
-        let packet_to = MessagePacket::from_bytes(&bytes);
+        let packet_to = BlockPacket::from_bytes(&bytes);
 
         assert!(packet_to.bytes.eq(&MESSAGE));
     }

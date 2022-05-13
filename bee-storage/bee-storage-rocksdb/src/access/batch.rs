@@ -40,7 +40,7 @@ impl BatchBuilder for Storage {
         write_options.set_sync(false);
         write_options.disable_wal(!durability);
 
-        let guard = batch.should_lock.then(|| self.locks.message_id_to_metadata.read());
+        let guard = batch.should_lock.then(|| self.locks.block_id_to_metadata.read());
 
         self.inner.write_opt(batch.inner, &write_options)?;
 
@@ -54,16 +54,16 @@ impl Batch<BlockId, Block> for Storage {
     fn batch_insert(
         &self,
         batch: &mut Self::Batch,
-        message_id: &BlockId,
-        message: &Block,
+        block_id: &BlockId,
+        block: &Block,
     ) -> Result<(), <Self as StorageBackend>::Error> {
         batch.value_buf.clear();
         // Packing to bytes can't fail.
-        message.pack(&mut batch.value_buf).unwrap();
+        block.pack(&mut batch.value_buf).unwrap();
 
         batch
             .inner
-            .put_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?, message_id, &batch.value_buf);
+            .put_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?, block_id, &batch.value_buf);
 
         Ok(())
     }
@@ -71,11 +71,11 @@ impl Batch<BlockId, Block> for Storage {
     fn batch_delete(
         &self,
         batch: &mut Self::Batch,
-        message_id: &BlockId,
+        block_id: &BlockId,
     ) -> Result<(), <Self as StorageBackend>::Error> {
         batch
             .inner
-            .delete_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?, message_id);
+            .delete_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?, block_id);
 
         Ok(())
     }
@@ -85,7 +85,7 @@ impl Batch<BlockId, BlockMetadata> for Storage {
     fn batch_insert(
         &self,
         batch: &mut Self::Batch,
-        message_id: &BlockId,
+        block_id: &BlockId,
         metadata: &BlockMetadata,
     ) -> Result<(), <Self as StorageBackend>::Error> {
         batch.should_lock = true;
@@ -96,7 +96,7 @@ impl Batch<BlockId, BlockMetadata> for Storage {
 
         batch
             .inner
-            .put_cf(self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?, message_id, &batch.value_buf);
+            .put_cf(self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?, block_id, &batch.value_buf);
 
         Ok(())
     }
@@ -104,13 +104,13 @@ impl Batch<BlockId, BlockMetadata> for Storage {
     fn batch_delete(
         &self,
         batch: &mut Self::Batch,
-        message_id: &BlockId,
+        block_id: &BlockId,
     ) -> Result<(), <Self as StorageBackend>::Error> {
         batch.should_lock = true;
 
         batch
             .inner
-            .delete_cf(self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?, message_id);
+            .delete_cf(self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?, block_id);
 
         Ok(())
     }

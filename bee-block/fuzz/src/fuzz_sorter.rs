@@ -11,7 +11,7 @@ use core::{
 };
 
 fn main() -> io::Result<()> {
-    let paths = fs::read_dir("./corpus/fuzz_message")?;
+    let paths = fs::read_dir("./corpus/fuzz_block")?;
     core::fs::create_dir_all("./corpus/errors")?;
 
     for path in paths {

@@ -37,21 +37,21 @@ fn from_to_str() {
 // Validate that the length of a packed `BlockId` matches the declared `packed_len()`.
 #[test]
 fn packed_len() {
-    let message_id = BlockId::from_str(MESSAGE_ID).unwrap();
+    let block_id = BlockId::from_str(MESSAGE_ID).unwrap();
 
-    assert_eq!(message_id.packed_len(), 32);
-    assert_eq!(message_id.pack_to_vec().len(), 32);
+    assert_eq!(block_id.packed_len(), 32);
+    assert_eq!(block_id.pack_to_vec().len(), 32);
 }
 
-// Validate that a `unpack` ∘ `pack` round-trip results in the original message id.
+// Validate that a `unpack` ∘ `pack` round-trip results in the original block id.
 #[test]
 fn pack_unpack_valid() {
-    let message_id = BlockId::from_str(MESSAGE_ID).unwrap();
-    let packed_message_id = message_id.pack_to_vec();
+    let block_id = BlockId::from_str(MESSAGE_ID).unwrap();
+    let packed_block_id = block_id.pack_to_vec();
 
-    assert_eq!(packed_message_id.len(), message_id.packed_len());
+    assert_eq!(packed_block_id.len(), block_id.packed_len());
     assert_eq!(
-        message_id,
-        PackableExt::unpack_verified(&mut packed_message_id.as_slice()).unwrap()
+        block_id,
+        PackableExt::unpack_verified(&mut packed_block_id.as_slice()).unwrap()
     );
 }

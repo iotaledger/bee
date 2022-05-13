@@ -17,7 +17,7 @@ The default REST API implementation for the IOTA Bee node software.
 
 ## bee-block
 
-Implementation of [RFC: Block](https://github.com/GalRogozinski/protocol-rfcs/blob/message/text/0017-message/0017-message.md).
+Implementation of [RFC: Block](https://github.com/GalRogozinski/protocol-rfcs/blob/block/text/0017-block/0017-block.md).
 
 ## bee-ledger
 

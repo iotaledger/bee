@@ -29,12 +29,12 @@ fn pack_unpack() {
 
 #[test]
 fn getters() {
-    let message_id = rand_block_id();
+    let block_id = rand_block_id();
     let milestone_id = rand_milestone_id();
     let timestamp = rand_number::<u32>();
-    let milestone = MilestoneMetadata::new(message_id, milestone_id, timestamp);
+    let milestone = MilestoneMetadata::new(block_id, milestone_id, timestamp);
 
-    assert_eq!(message_id, *milestone.message_id());
+    assert_eq!(block_id, *milestone.block_id());
     assert_eq!(milestone_id, *milestone.milestone_id());
     assert_eq!(timestamp, milestone.timestamp());
 }

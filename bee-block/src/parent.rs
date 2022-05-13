@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! The parents module defines the core data type for storing the messages directly approved by a message.
+//! The parents module defines the core data type for storing the blocks directly approved by a block.
 
 use alloc::vec::Vec;
 use core::ops::RangeInclusive;
@@ -14,7 +14,7 @@ use crate::{BlockId, Error};
 
 pub(crate) type ParentCount = BoundedU8<{ *Parents::COUNT_RANGE.start() }, { *Parents::COUNT_RANGE.end() }>;
 
-/// A [`Block`](crate::Block)'s [`Parents`] are the [`BlockId`]s of the messages it directly approves.
+/// A [`Block`](crate::Block)'s [`Parents`] are the [`BlockId`]s of the blocks it directly approves.
 ///
 /// Parents must be:
 /// * in the `Parents::COUNT_RANGE` range;

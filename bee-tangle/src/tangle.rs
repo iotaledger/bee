@@ -66,19 +66,19 @@ impl<B: StorageBackend> Tangle<B> {
         &self.config
     }
 
-    /// Insert a message into the tangle without overwriting its metadata if it already exists.
-    pub fn insert(&self, message: &Block, message_id: &BlockId, metadata: &BlockMetadata) {
+    /// Insert a block into the tangle without overwriting its metadata if it already exists.
+    pub fn insert(&self, block: &Block, block_id: &BlockId, metadata: &BlockMetadata) {
         self.storage
-            .insert(message_id, message)
+            .insert(block_id, block)
             .ok()
             .and_then(|()| {
-                self.storage.insert_strict(message_id, metadata).ok()?;
+                self.storage.insert_strict(block_id, metadata).ok()?;
 
-                let message_id = *message_id;
-                for &parent in message.parents().iter() {
+                let block_id = *block_id;
+                for &parent in block.parents().iter() {
                     self.storage
-                        .insert(&(parent, message_id), &())
-                        .unwrap_or_else(|e| warn!("Failed to update approvers for message {:?}", e));
+                        .insert(&(parent, block_id), &())
+                        .unwrap_or_else(|e| warn!("Failed to update approvers for block {:?}", e));
                 }
                 Some(())
             })
@@ -92,9 +92,9 @@ impl<B: StorageBackend> Tangle<B> {
         milestone_metadata: MilestoneMetadata,
         milestone_payload: MilestonePayload,
     ) {
-        let index = IndexId::new(idx, *milestone_metadata.message_id());
+        let index = IndexId::new(idx, *milestone_metadata.block_id());
 
-        self.update_metadata(milestone_metadata.message_id(), |metadata| {
+        self.update_metadata(milestone_metadata.block_id(), |metadata| {
             metadata.flags_mut().set_milestone(true);
             metadata.set_milestone_index(idx);
             metadata.set_omrsi_and_ymrsi(index, index);
@@ -106,7 +106,7 @@ impl<B: StorageBackend> Tangle<B> {
             .map(|()| {
                 self.storage
                     .insert(milestone_metadata.milestone_id(), &milestone_payload)
-                    .unwrap_or_else(|e| warn!("Failed to insert milestone message {:?}", e));
+                    .unwrap_or_else(|e| warn!("Failed to insert milestone block {:?}", e));
             })
             .unwrap_or_default()
     }
@@ -127,14 +127,14 @@ impl<B: StorageBackend> Tangle<B> {
         })
     }
 
-    /// Get the message associated with the given milestone index from the tangle.
-    pub fn get_milestone_message(&self, index: MilestoneIndex) -> Option<Block> {
-        self.get_milestone_message_id(index).and_then(|hash| self.get(&hash))
+    /// Get the block associated with the given milestone index from the tangle.
+    pub fn get_milestone_block(&self, index: MilestoneIndex) -> Option<Block> {
+        self.get_milestone_block_id(index).and_then(|hash| self.get(&hash))
     }
 
-    /// Get the message ID associated with the given milestone index from the tangle.
-    pub fn get_milestone_message_id(&self, index: MilestoneIndex) -> Option<BlockId> {
-        self.get_milestone_metadata(index).map(|m| *m.message_id())
+    /// Get the block ID associated with the given milestone index from the tangle.
+    pub fn get_milestone_block_id(&self, index: MilestoneIndex) -> Option<BlockId> {
+        self.get_milestone_metadata(index).map(|m| *m.block_id())
     }
 
     /// Return whether the tangle contains the given milestone metadata.
@@ -274,7 +274,7 @@ impl<B: StorageBackend> Tangle<B> {
         seps.extend(new_seps);
     }
 
-    /// Returns whether the message associated with given solid entry point is a solid entry point.
+    /// Returns whether the block associated with given solid entry point is a solid entry point.
     pub async fn is_solid_entry_point(&self, id: &BlockId) -> bool {
         self.solid_entry_points
             .lock()
@@ -282,8 +282,8 @@ impl<B: StorageBackend> Tangle<B> {
             .contains_key(SolidEntryPoint::ref_cast(id))
     }
 
-    /// Returns whether the message associated with the given message ID is solid.
-    pub async fn is_solid_message(&self, id: &BlockId) -> bool {
+    /// Returns whether the block associated with the given block ID is solid.
+    pub async fn is_solid_block(&self, id: &BlockId) -> bool {
         if self.is_solid_entry_point(id).await {
             true
         } else {
@@ -304,9 +304,9 @@ impl<B: StorageBackend> Tangle<B> {
         }
     }
 
-    /// Insert the given message ID and parents as a tip.
-    pub async fn insert_tip(&self, message_id: BlockId, parents: Vec<BlockId>) {
-        self.tip_pool.lock().await.insert(self, message_id, parents).await;
+    /// Insert the given block ID and parents as a tip.
+    pub async fn insert_tip(&self, block_id: BlockId, parents: Vec<BlockId>) {
+        self.tip_pool.lock().await.insert(self, block_id, parents).await;
     }
 
     /// Update tip scores.
@@ -314,8 +314,8 @@ impl<B: StorageBackend> Tangle<B> {
         self.tip_pool.lock().await.update_scores(self).await;
     }
 
-    /// Return messages that require approving.
-    pub async fn get_messages_to_approve(&self) -> Option<Vec<BlockId>> {
+    /// Return blocks that require approving.
+    pub async fn get_blocks_to_approve(&self) -> Option<Vec<BlockId>> {
         self.tip_pool.lock().await.choose_non_lazy_tips()
     }
 
@@ -329,46 +329,46 @@ impl<B: StorageBackend> Tangle<B> {
         self.tip_pool.lock().await.non_lazy_tips().len()
     }
 
-    /// Get the data of a vertex associated with the given `message_id`.
-    pub fn get(&self, message_id: &BlockId) -> Option<Block> {
-        self.storage.fetch(message_id).unwrap_or_default()
+    /// Get the data of a vertex associated with the given `block_id`.
+    pub fn get(&self, block_id: &BlockId) -> Option<Block> {
+        self.storage.fetch(block_id).unwrap_or_default()
     }
 
-    /// Get the data and metadata of a vertex associated with the given `message_id`.
-    pub fn get_message_and_metadata(&self, message_id: &BlockId) -> Option<(Block, BlockMetadata)> {
-        let msg = self.storage.fetch(message_id).unwrap_or_default()?;
-        let meta = self.storage.fetch(message_id).unwrap_or_default()?;
+    /// Get the data and metadata of a vertex associated with the given `block_id`.
+    pub fn get_block_and_metadata(&self, block_id: &BlockId) -> Option<(Block, BlockMetadata)> {
+        let msg = self.storage.fetch(block_id).unwrap_or_default()?;
+        let meta = self.storage.fetch(block_id).unwrap_or_default()?;
 
         Some((msg, meta))
     }
 
-    /// Returns whether the message is stored in the Tangle.
-    pub fn contains(&self, message_id: &BlockId) -> bool {
-        self.storage.exist(message_id).unwrap_or_default()
+    /// Returns whether the block is stored in the Tangle.
+    pub fn contains(&self, block_id: &BlockId) -> bool {
+        self.storage.exist(block_id).unwrap_or_default()
     }
 
-    /// Get the metadata of a vertex associated with the given `message_id`.
-    pub fn get_metadata(&self, message_id: &BlockId) -> Option<BlockMetadata> {
-        self.storage.fetch(message_id).unwrap_or_default()
+    /// Get the metadata of a vertex associated with the given `block_id`.
+    pub fn get_metadata(&self, block_id: &BlockId) -> Option<BlockMetadata> {
+        self.storage.fetch(block_id).unwrap_or_default()
     }
 
     /// Updates the metadata of a vertex.
     pub fn update_metadata<R>(
         &self,
-        message_id: &BlockId,
+        block_id: &BlockId,
         update: impl FnOnce(&mut BlockMetadata) -> R + Copy,
     ) -> Option<R> {
         let mut output = None;
 
         self.storage
-            .update(message_id, |metadata| output = Some(update(metadata)))
+            .update(block_id, |metadata| output = Some(update(metadata)))
             .unwrap_or_default();
 
         output
     }
 
     /// Returns the children of a vertex, if we know about them.
-    pub fn get_children(&self, message_id: &BlockId) -> Option<Vec<BlockId>> {
-        self.storage.fetch(message_id).unwrap_or_default()
+    pub fn get_children(&self, block_id: &BlockId) -> Option<Vec<BlockId>> {
+        self.storage.fetch(block_id).unwrap_or_default()
     }
 }

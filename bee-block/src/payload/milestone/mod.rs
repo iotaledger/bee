@@ -47,7 +47,7 @@ impl From<CryptoError> for MilestoneValidationError {
 pub(crate) type SignatureCount =
     BoundedU8<{ *MilestonePayload::SIGNATURE_COUNT_RANGE.start() }, { *MilestonePayload::SIGNATURE_COUNT_RANGE.end() }>;
 
-/// A payload which defines the inclusion set of other messages in the Tangle.
+/// A payload which defines the inclusion set of other blocks in the Tangle.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error)]

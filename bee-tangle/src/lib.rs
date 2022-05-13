@@ -12,7 +12,7 @@ pub mod block_metadata;
 pub mod config;
 /// Types that represent tangle events.
 pub mod event;
-/// Message flags.
+/// Block flags.
 pub mod flags;
 /// Milestone metadata.
 pub mod milestone_metadata;

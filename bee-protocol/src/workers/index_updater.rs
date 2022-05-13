@@ -69,8 +69,8 @@ where
 
 async fn process<B: StorageBackend>(tangle: &Tangle<B>, milestone: MilestoneMetadata, index: MilestoneIndex) {
     if let Some(parents) = tangle
-        .get(milestone.message_id())
-        .map(|message| message.parents().to_vec())
+        .get(milestone.block_id())
+        .map(|block| block.parents().to_vec())
     {
         // Update the past cone of this milestone by setting its milestone index, and return them.
         let roots = update_past_cone(tangle, parents, index).await;
@@ -122,15 +122,15 @@ async fn update_past_cone<B: StorageBackend>(
             parents.extend_from_slice(parent.parents())
         }
 
-        // Preferably we would only collect the 'root messages/transactions'. They are defined as being confirmed by
+        // Preferably we would only collect the 'root blocks/transactions'. They are defined as being confirmed by
         // a milestone, but at least one of their children is not confirmed yet. One can think of them as an attachment
-        // point for new messages to the main tangle. It is ensured however, that this set *contains* the root messages
+        // point for new blocks to the main tangle. It is ensured however, that this set *contains* the root blocks
         // as well, and during the future walk we will skip already confirmed children, which shouldn't be a performance
         // issue.
         updated.insert(parent_id);
     }
 
-    debug!("Set milestone index {} to {} messages.", index, updated.len());
+    debug!("Set milestone index {} to {} blocks.", index, updated.len());
 
     updated
 }
@@ -190,5 +190,5 @@ fn update_future_cone<B: StorageBackend>(tangle: &Tangle<B>, roots: HashSet<Bloc
         }
     }
 
-    debug!("Updated xMRSI values for {} messages.", processed.len());
+    debug!("Updated xMRSI values for {} blocks.", processed.len());
 }

@@ -27,7 +27,7 @@ use std::net::IpAddr;
 
 use bee_gossip::NetworkCommandSender;
 use bee_ledger::workers::consensus::ConsensusWorkerCommand;
-use bee_protocol::workers::{config::ProtocolConfig, MessageSubmitterWorkerEvent, PeerManager};
+use bee_protocol::workers::{config::ProtocolConfig, BlockSubmitterWorkerEvent, PeerManager};
 use bee_runtime::{node::NodeInfo, resource::ResourceHandle};
 use bee_tangle::Tangle;
 use tokio::sync::mpsc;
@@ -45,7 +45,7 @@ pub(crate) fn filter<B: StorageBackend>(
     allowed_ips: Box<[IpAddr]>,
     tangle: ResourceHandle<Tangle<B>>,
     storage: ResourceHandle<B>,
-    message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
+    block_submitter: mpsc::UnboundedSender<BlockSubmitterWorkerEvent>,
     network_id: NetworkId,
     bech32_hrp: Bech32Hrp,
     rest_api_config: RestApiConfig,
@@ -150,7 +150,7 @@ pub(crate) fn filter<B: StorageBackend>(
         public_routes.clone(),
         allowed_ips.clone(),
         tangle.clone(),
-        message_submitter,
+        block_submitter,
         rest_api_config,
         protocol_config,
     ))

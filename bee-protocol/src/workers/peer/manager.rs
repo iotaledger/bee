@@ -21,7 +21,7 @@ use crate::{
         heartbeater::{new_heartbeat, send_heartbeat},
         peer::PeerManager,
         storage::StorageBackend,
-        HasherWorker, MessageResponderWorker, MetricsWorker, MilestoneRequesterWorker, MilestoneResponderWorker,
+        HasherWorker, BlockResponderWorker, MetricsWorker, MilestoneRequesterWorker, MilestoneResponderWorker,
         PeerManagerResWorker, PeerWorker, RequestedMilestones,
     },
 };
@@ -49,7 +49,7 @@ where
             TypeId::of::<MilestoneRequesterWorker>(),
             TypeId::of::<MetricsWorker>(),
             TypeId::of::<HasherWorker>(),
-            TypeId::of::<MessageResponderWorker>(),
+            TypeId::of::<BlockResponderWorker>(),
             TypeId::of::<MilestoneResponderWorker>(),
             TypeId::of::<MilestoneRequesterWorker>(),
             TypeId::of::<PeerManagerResWorker>(),
@@ -65,7 +65,7 @@ where
         let gossip_command_tx = node.resource::<NetworkCommandSender>();
 
         let hasher = node.worker::<HasherWorker>().unwrap().tx.clone();
-        let message_responder = node.worker::<MessageResponderWorker>().unwrap().tx.clone();
+        let block_responder = node.worker::<BlockResponderWorker>().unwrap().tx.clone();
         let milestone_responder = node.worker::<MilestoneResponderWorker>().unwrap().tx.clone();
         let milestone_requester = node.worker::<MilestoneRequesterWorker>().unwrap().tx.clone();
 
@@ -134,7 +134,7 @@ where
                         {
                             let metrics = metrics.clone();
                             let hasher = hasher.clone();
-                            let message_responder = message_responder.clone();
+                            let block_responder = block_responder.clone();
                             let milestone_responder = milestone_responder.clone();
                             let milestone_requester = milestone_requester.clone();
                             let tangle = tangle.clone();
@@ -152,7 +152,7 @@ where
                                             peer.0.clone(),
                                             metrics,
                                             hasher,
-                                            message_responder,
+                                            block_responder,
                                             milestone_responder,
                                             milestone_requester,
                                         )

@@ -17,7 +17,7 @@ use serde::Serialize;
 
 use crate::flags::Flags;
 
-/// Metadata associated with a tangle message.
+/// Metadata associated with a tangle block.
 #[derive(Copy, Clone, Default, Debug, Eq, PartialEq, Serialize, Packable)]
 #[packable(unpack_error = BlockMetadataError)]
 pub struct BlockMetadata {
@@ -34,7 +34,7 @@ pub struct BlockMetadata {
 }
 
 impl BlockMetadata {
-    /// Create a new instance of a message's metadata.
+    /// Create a new instance of a block's metadata.
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         flags: Flags,
@@ -56,7 +56,7 @@ impl BlockMetadata {
         }
     }
 
-    /// Create metadata that corresponds to a just-arrived message using the current system time.
+    /// Create metadata that corresponds to a just-arrived block using the current system time.
     pub fn arrived() -> Self {
         Self {
             arrival_timestamp: SystemTime::now()
@@ -77,37 +77,37 @@ impl BlockMetadata {
         &mut self.flags
     }
 
-    /// Get the milestone index of this message.
+    /// Get the milestone index of this block.
     pub fn milestone_index(&self) -> Option<MilestoneIndex> {
         self.milestone_index
     }
 
-    /// Set the milestone index of this message.
+    /// Set the milestone index of this block.
     pub fn set_milestone_index(&mut self, index: MilestoneIndex) {
         self.milestone_index = Some(index);
     }
 
-    /// Get the arrival timestamp (seconds from the unix epoch) of this message.
+    /// Get the arrival timestamp (seconds from the unix epoch) of this block.
     pub fn arrival_timestamp(&self) -> u64 {
         self.arrival_timestamp
     }
 
-    /// Get the solidification timestamp (seconds from the unix epoch) of this message.
+    /// Get the solidification timestamp (seconds from the unix epoch) of this block.
     pub fn solidification_timestamp(&self) -> u64 {
         self.solidification_timestamp
     }
 
-    /// Get the oldest and youngest message root snapshot index of this message.
+    /// Get the oldest and youngest block root snapshot index of this block.
     pub fn omrsi_and_ymrsi(&self) -> Option<(IndexId, IndexId)> {
         self.omrsi_and_ymrsi
     }
 
-    /// Set the oldest and youngest message root snapshot index of this message.
+    /// Set the oldest and youngest block root snapshot index of this block.
     pub fn set_omrsi_and_ymrsi(&mut self, omrsi: IndexId, ymrsi: IndexId) {
         self.omrsi_and_ymrsi = Some((omrsi, ymrsi));
     }
 
-    /// Update the oldest and youngest message root snapshot index of this message if they have
+    /// Update the oldest and youngest block root snapshot index of this block if they have
     /// been set already.
     pub fn update_omrsi_and_ymrsi(&mut self, f: impl FnOnce(&mut IndexId, &mut IndexId)) {
         if let Some((omrsi, ymrsi)) = self.omrsi_and_ymrsi.as_mut() {
@@ -115,12 +115,12 @@ impl BlockMetadata {
         }
     }
 
-    /// Get the reference timestamp (seconds from the unix epoch) of this message.
+    /// Get the reference timestamp (seconds from the unix epoch) of this block.
     pub fn reference_timestamp(&self) -> u32 {
         self.reference_timestamp
     }
 
-    /// Mark this message as solid at the current system time.
+    /// Mark this block as solid at the current system time.
     pub fn mark_solid(&mut self) {
         self.flags.set_solid(true);
         self.solidification_timestamp = SystemTime::now()
@@ -129,24 +129,24 @@ impl BlockMetadata {
             .as_millis() as u64;
     }
 
-    /// Reference this message with the given timestamp.
+    /// Reference this block with the given timestamp.
     pub fn reference(&mut self, timestamp: u32) {
         self.flags.set_referenced(true);
         self.reference_timestamp = timestamp;
     }
 
-    /// Get the conflict state of this message.
+    /// Get the conflict state of this block.
     pub fn conflict(&self) -> ConflictReason {
         self.conflict
     }
 
-    /// Set the conflict state of this message.
+    /// Set the conflict state of this block.
     pub fn set_conflict(&mut self, conflict: ConflictReason) {
         self.conflict = conflict;
     }
 }
 
-/// An error that may occur when manipulating message metadata.
+/// An error that may occur when manipulating block metadata.
 #[derive(Debug)]
 pub enum BlockMetadataError {
     /// A packing error occurred.
@@ -163,7 +163,7 @@ impl From<Infallible> for BlockMetadataError {
     }
 }
 
-/// A type used to associate two particular interesting Cone Root Indexes with a message in the Tangle, i.e. the Oldest
+/// A type used to associate two particular interesting Cone Root Indexes with a block in the Tangle, i.e. the Oldest
 /// Cone Root Index (OCRI), and the Youngest Cone Root Index (YCRI)
 #[derive(Clone, Copy, Debug, Serialize, packable::Packable)]
 pub struct IndexId(MilestoneIndex, BlockId);
@@ -179,7 +179,7 @@ impl IndexId {
         self.0
     }
 
-    /// Get the message ID of this `IndexId`.
+    /// Get the block ID of this `IndexId`.
     pub fn id(&self) -> BlockId {
         self.1
     }
@@ -210,12 +210,12 @@ impl PartialEq for IndexId {
     }
 }
 
-/// An error that may occur when manipulating message indices.
+/// An error that may occur when manipulating block indices.
 #[derive(Debug)]
 pub enum IndexIdError {
     /// An IO error occurred.
     Io(std::io::Error),
-    /// An message-related error occurred.
+    /// An block-related error occurred.
     BlockId(bee_block::Error),
 }
 

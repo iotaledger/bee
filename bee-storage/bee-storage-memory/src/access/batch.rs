@@ -27,9 +27,9 @@ use crate::{storage::Storage, table::TableBatch};
 /// A writing batch that can be applied atomically.
 #[derive(Default)]
 pub struct StorageBatch {
-    message_id_to_message: TableBatch<BlockId, Block>,
-    message_id_to_metadata: TableBatch<BlockId, BlockMetadata>,
-    message_id_to_message_id: TableBatch<(BlockId, BlockId), ()>,
+    block_id_to_block: TableBatch<BlockId, Block>,
+    block_id_to_metadata: TableBatch<BlockId, BlockMetadata>,
+    block_id_to_block_id: TableBatch<(BlockId, BlockId), ()>,
     output_id_to_created_output: TableBatch<OutputId, CreatedOutput>,
     output_id_to_consumed_output: TableBatch<OutputId, ConsumedOutput>,
     output_id_unspent: TableBatch<Unspent, ()>,
@@ -61,9 +61,9 @@ impl BatchBuilder for Storage {
             };
         }
 
-        apply_batch!(message_id_to_message);
-        apply_batch!(message_id_to_metadata);
-        apply_batch!(message_id_to_message_id);
+        apply_batch!(block_id_to_block);
+        apply_batch!(block_id_to_metadata);
+        apply_batch!(block_id_to_block_id);
         apply_batch!(output_id_to_created_output);
         apply_batch!(output_id_to_consumed_output);
         apply_batch!(output_id_unspent);
@@ -105,9 +105,9 @@ macro_rules! impl_batch {
     };
 }
 
-impl_batch!(BlockId, Block, message_id_to_message);
-impl_batch!(BlockId, BlockMetadata, message_id_to_metadata);
-impl_batch!((BlockId, BlockId), (), message_id_to_message_id);
+impl_batch!(BlockId, Block, block_id_to_block);
+impl_batch!(BlockId, BlockMetadata, block_id_to_metadata);
+impl_batch!((BlockId, BlockId), (), block_id_to_block_id);
 impl_batch!(OutputId, CreatedOutput, output_id_to_created_output);
 impl_batch!(OutputId, ConsumedOutput, output_id_to_consumed_output);
 impl_batch!(Unspent, (), output_id_unspent);

@@ -24,23 +24,23 @@ use packable::{error::UnpackError, PackableExt};
 
 #[test]
 fn pow_default_provider() {
-    let message = BlockBuilder::<Miner>::new(rand_parents()).finish().unwrap();
+    let block = BlockBuilder::<Miner>::new(rand_parents()).finish().unwrap();
 
-    let message_bytes = message.pack_to_vec();
-    let score = PoWScorer::new().score(&message_bytes);
+    let block_bytes = block.pack_to_vec();
+    let score = PoWScorer::new().score(&block_bytes);
 
     assert!(score >= 4000f64);
 }
 
 #[test]
 fn pow_provider() {
-    let message = BlockBuilder::new(rand_parents())
+    let block = BlockBuilder::new(rand_parents())
         .with_nonce_provider(MinerBuilder::new().with_num_workers(num_cpus::get()).finish(), 10000f64)
         .finish()
         .unwrap();
 
-    let message_bytes = message.pack_to_vec();
-    let score = PoWScorer::new().score(&message_bytes);
+    let block_bytes = block.pack_to_vec();
+    let score = PoWScorer::new().score(&block_bytes);
 
     assert!(score >= 10000f64);
 }
@@ -100,16 +100,16 @@ fn unpack_invalid_remaining_bytes() {
     ))
 }
 
-// Validate that a `unpack` ∘ `pack` round-trip results in the original message.
+// Validate that a `unpack` ∘ `pack` round-trip results in the original block.
 #[test]
 fn pack_unpack_valid() {
-    let message = BlockBuilder::<Miner>::new(rand_parents()).finish().unwrap();
-    let packed_message = message.pack_to_vec();
+    let block = BlockBuilder::<Miner>::new(rand_parents()).finish().unwrap();
+    let packed_block = block.pack_to_vec();
 
-    assert_eq!(packed_message.len(), message.packed_len());
+    assert_eq!(packed_block.len(), block.packed_len());
     assert_eq!(
-        message,
-        PackableExt::unpack_verified(&mut packed_message.as_slice()).unwrap()
+        block,
+        PackableExt::unpack_verified(&mut packed_block.as_slice()).unwrap()
     );
 }
 
@@ -119,14 +119,14 @@ fn getters() {
     let payload: Payload = rand_tagged_data_payload().into();
     let nonce: u64 = rand_number();
 
-    let message = BlockBuilder::new(parents.clone())
+    let block = BlockBuilder::new(parents.clone())
         .with_payload(payload.clone())
         .with_nonce_provider(nonce, 10000f64)
         .finish()
         .unwrap();
 
-    assert_eq!(message.protocol_version(), PROTOCOL_VERSION);
-    assert_eq!(*message.parents(), parents);
-    assert_eq!(*message.payload().as_ref().unwrap(), &payload);
-    assert_eq!(message.nonce(), nonce);
+    assert_eq!(block.protocol_version(), PROTOCOL_VERSION);
+    assert_eq!(*block.parents(), parents);
+    assert_eq!(*block.payload().as_ref().unwrap(), &payload);
+    assert_eq!(block.nonce(), nonce);
 }

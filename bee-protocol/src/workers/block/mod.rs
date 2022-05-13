@@ -8,7 +8,7 @@ mod processor;
 mod submitter;
 mod unreferenced_inserter;
 
-pub use self::submitter::{BlockSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent};
+pub use self::submitter::{BlockSubmitterError, BlockSubmitterWorker, BlockSubmitterWorkerEvent};
 pub(crate) use self::{
     hash_cache::HashCache,
     hasher::{HasherWorker, HasherWorkerEvent},

@@ -48,7 +48,7 @@ impl std::error::Error for ConflictError {}
 #[packable(unpack_error = ConflictError)]
 #[packable(tag_type = u8, with_error = ConflictError::InvalidConflict)]
 pub enum ConflictReason {
-    /// The message has no conflict.
+    /// The block has no conflict.
     None = 0,
     /// The referenced Utxo was already spent.
     InputUtxoAlreadySpent = 1,

@@ -10,7 +10,7 @@ use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
 use crate::{
     endpoints::{
-        config::ROUTE_MESSAGE_METADATA, filters::with_tangle, path_params::message_id, permission::has_permission,
+        config::ROUTE_MESSAGE_METADATA, filters::with_tangle, path_params::block_id, permission::has_permission,
         rejection::CustomRejection, storage::StorageBackend, CONFIRMED_THRESHOLD,
     },
     types::{dtos::LedgerInclusionStateDto, responses::BlockMetadataResponse},
@@ -18,8 +18,8 @@ use crate::{
 
 fn path() -> impl Filter<Extract = (BlockId,), Error = warp::Rejection> + Clone {
     super::path()
-        .and(warp::path("messages"))
-        .and(message_id())
+        .and(warp::path("blocks"))
+        .and(block_id())
         .and(warp::path("metadata"))
         .and(warp::path::end())
 }
@@ -33,12 +33,12 @@ pub(crate) fn filter<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_MESSAGE_METADATA, public_routes, allowed_ips))
         .and(with_tangle(tangle))
-        .and_then(|message_id, tangle| async move { block_metadata(message_id, tangle) })
+        .and_then(|block_id, tangle| async move { block_metadata(block_id, tangle) })
         .boxed()
 }
 
 pub(crate) fn block_metadata<B: StorageBackend>(
-    message_id: BlockId,
+    block_id: BlockId,
     tangle: ResourceHandle<Tangle<B>>,
 ) -> Result<impl Reply, Rejection> {
     if !tangle.is_confirmed_threshold(CONFIRMED_THRESHOLD) {
@@ -47,8 +47,8 @@ pub(crate) fn block_metadata<B: StorageBackend>(
         )));
     }
 
-    match tangle.get_message_and_metadata(&message_id) {
-        Some((message, metadata)) => {
+    match tangle.get_block_and_metadata(&block_id) {
+        Some((block, metadata)) => {
             // TODO: access constants from URTS
             let ymrsi_delta = 8;
             let omrsi_delta = 13;
@@ -72,7 +72,7 @@ pub(crate) fn block_metadata<B: StorageBackend>(
                 let should_reattach;
 
                 if let Some(milestone) = metadata.milestone_index() {
-                    // message is referenced by a milestone
+                    // block is referenced by a milestone
                     is_solid = true;
                     referenced_by_milestone_index = Some(*milestone);
 
@@ -82,7 +82,7 @@ pub(crate) fn block_metadata<B: StorageBackend>(
                         milestone_index = None;
                     }
 
-                    ledger_inclusion_state = Some(if let Some(Payload::Transaction(_)) = message.payload() {
+                    ledger_inclusion_state = Some(if let Some(Payload::Transaction(_)) = block.payload() {
                         if metadata.conflict() != ConflictReason::None {
                             conflict_reason = Some(metadata.conflict());
                             LedgerInclusionStateDto::Conflicting
@@ -101,7 +101,7 @@ pub(crate) fn block_metadata<B: StorageBackend>(
                     should_reattach = None;
                     should_promote = None;
                 } else if metadata.flags().is_solid() {
-                    // message is not referenced by a milestone but solid
+                    // block is not referenced by a milestone but solid
                     is_solid = true;
                     referenced_by_milestone_index = None;
                     milestone_index = None;
@@ -110,7 +110,7 @@ pub(crate) fn block_metadata<B: StorageBackend>(
 
                     let cmi = *tangle.get_confirmed_milestone_index();
 
-                    // unwrap() of OMRSI/YMRSI is safe since message is solid
+                    // unwrap() of OMRSI/YMRSI is safe since block is solid
                     let (omrsi, ymrsi) = metadata
                         .omrsi_and_ymrsi()
                         .map(|(o, y)| (*o.index(), *y.index()))
@@ -127,7 +127,7 @@ pub(crate) fn block_metadata<B: StorageBackend>(
                         should_reattach = Some(false);
                     };
                 } else {
-                    // the message is not referenced by a milestone and not solid
+                    // the block is not referenced by a milestone and not solid
                     is_solid = false;
                     referenced_by_milestone_index = None;
                     milestone_index = None;
@@ -149,8 +149,8 @@ pub(crate) fn block_metadata<B: StorageBackend>(
             };
 
             Ok(warp::reply::json(&BlockMetadataResponse {
-                message_id: message_id.to_string(),
-                parent_message_ids: message.parents().iter().map(BlockId::to_string).collect(),
+                block_id: block_id.to_string(),
+                parent_block_ids: block.parents().iter().map(BlockId::to_string).collect(),
                 is_solid,
                 referenced_by_milestone_index,
                 milestone_index,
@@ -161,7 +161,7 @@ pub(crate) fn block_metadata<B: StorageBackend>(
             }))
         }
         None => Err(reject::custom(CustomRejection::NotFound(
-            "can not find message".to_string(),
+            "can not find block".to_string(),
         ))),
     }
 }

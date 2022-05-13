@@ -21,8 +21,8 @@ mod solid_entry_point_to_milestone_index;
 mod spent_to_treasury_output;
 
 pub use self::{
-    block_id_to_block::message_id_to_message_access, block_id_to_block_id::message_id_to_message_id_access,
-    block_id_to_metadata::message_id_to_metadata_access,
+    block_id_to_block::block_id_to_block_access, block_id_to_block_id::block_id_to_block_id_access,
+    block_id_to_metadata::block_id_to_metadata_access,
     ed25519_address_to_output_id::ed25519_address_to_output_id_access, ledger_index::ledger_index_access,
     milestone_id_to_milestone_payload::milestone_id_to_milestone_payload_access,
     milestone_index_to_milestone_metadata::milestone_index_to_milestone_metadata_access,

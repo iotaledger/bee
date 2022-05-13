@@ -14,7 +14,7 @@ use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use crate::workers::{
-    event::MessageSolidified, storage::StorageBackend, MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent,
+    event::BlockSolidified, storage::StorageBackend, MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent,
 };
 
 #[derive(Debug)]
@@ -25,28 +25,28 @@ pub(crate) struct PropagatorWorker {
 }
 
 async fn propagate<B: StorageBackend>(
-    message_id: BlockId,
+    block_id: BlockId,
     tangle: &Tangle<B>,
     solidified_tx: &async_channel::Sender<(BlockId, Vec<BlockId>, Option<MilestoneIndex>)>,
 ) {
-    let mut children = vec![message_id];
+    let mut children = vec![block_id];
 
-    'outer: while let Some(ref message_id) = children.pop() {
-        // Skip messages that are already solid.
-        if tangle.is_solid_message(message_id).await {
+    'outer: while let Some(ref block_id) = children.pop() {
+        // Skip blocks that are already solid.
+        if tangle.is_solid_block(block_id).await {
             continue 'outer;
         }
 
-        if let Some(message) = tangle.get(message_id) {
-            // If one of the parents is not yet solid, we skip the current message.
-            for parent in message.parents().iter() {
-                if !tangle.is_solid_message(parent).await {
+        if let Some(block) = tangle.get(block_id) {
+            // If one of the parents is not yet solid, we skip the current block.
+            for parent in block.parents().iter() {
+                if !tangle.is_solid_block(parent).await {
                     continue 'outer;
                 }
             }
 
             // Note: There are two types of solidity carriers:
-            // * solid messages (with available history)
+            // * solid blocks (with available history)
             // * solid entry points / sep (with verified history)
             // Because we know all parents are solid, we also know that they have set OMRSI/YMRSI values, hence we can
             // simply unwrap. We also try to minimise unnecessary Tangle API calls if - for example - the parent in
@@ -55,7 +55,7 @@ async fn propagate<B: StorageBackend>(
             let mut parent_omrsis = Vec::new();
             let mut parent_ymrsis = Vec::new();
 
-            for parent in message.parents().iter() {
+            for parent in block.parents().iter() {
                 let (parent_omrsi, parent_ymrsi) = match tangle
                     .get_solid_entry_point_index(SolidEntryPoint::ref_cast(parent))
                     .await
@@ -81,7 +81,7 @@ async fn propagate<B: StorageBackend>(
             let child_ymrsi = parent_ymrsis.iter().max().unwrap();
 
             let ms_index_maybe = tangle
-                .update_metadata(message_id, |metadata| {
+                .update_metadata(block_id, |metadata| {
                     // The child inherits the solid property from its parents.
                     metadata.mark_solid();
 
@@ -95,7 +95,7 @@ async fn propagate<B: StorageBackend>(
                 .expect("Failed to fetch metadata.");
 
             // Try to propagate as far as possible into the future.
-            if let Some(msg_children) = tangle.get_children(message_id) {
+            if let Some(msg_children) = tangle.get_children(block_id) {
                 for child in msg_children {
                     children.push(child);
                 }
@@ -103,10 +103,10 @@ async fn propagate<B: StorageBackend>(
 
             // Send child to the tip pool.
             if let Err(e) = solidified_tx
-                .send((*message_id, message.parents().to_vec(), ms_index_maybe))
+                .send((*block_id, block.parents().to_vec(), ms_index_maybe))
                 .await
             {
-                warn!("Failed to send message to the tip pool. Cause: {:?}", e);
+                warn!("Failed to send block to the tip pool. Cause: {:?}", e);
             }
         }
     }
@@ -140,16 +140,16 @@ where
                 let tangle = tangle.clone();
 
                 async move {
-                    while let Ok((message_id, parents, index)) = solidified_rx.recv().await {
-                        bus.dispatch(MessageSolidified { message_id });
+                    while let Ok((block_id, parents, index)) = solidified_rx.recv().await {
+                        bus.dispatch(BlockSolidified { block_id });
 
                         const SAFETY_THRESHOLD: u32 = 5; // Number of ms before eligible section of the Tangle begins
 
-                        // NOTE: We need to decide whether we want to put this new solid message into the tip-pool.
+                        // NOTE: We need to decide whether we want to put this new solid block into the tip-pool.
                         // Some things to consider:
-                        // 1) During synchronization we receive many non-eligible messages, that are way too old for
+                        // 1) During synchronization we receive many non-eligible blocks, that are way too old for
                         //    the TSA, hence we want to exclude them.
-                        // 2) We don't know the confirming milestone index of each eventually confirmed message at this
+                        // 2) We don't know the confirming milestone index of each eventually confirmed block at this
                         // point in time, hence we need to employ a heuristic with a security threshold to minimise the
                         // risk of a false-negative (something excluded from the tip-pool, that would be eligible as
                         // a tip). That heuristic is: Do not add to the tip-pool as long as the Tangle is not within
@@ -161,7 +161,7 @@ where
                         if (tangle.get_latest_milestone_index() - tangle.get_solid_milestone_index())
                             <= (tangle.config().below_max_depth() + SAFETY_THRESHOLD).into()
                         {
-                            tangle.insert_tip(message_id, parents).await;
+                            tangle.insert_tip(block_id, parents).await;
                         }
 
                         if let Some(index) = index {
@@ -175,8 +175,8 @@ where
 
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
-            while let Some(PropagatorWorkerEvent(message_id)) = receiver.next().await {
-                propagate(message_id, &tangle, &solidified_tx).await;
+            while let Some(PropagatorWorkerEvent(block_id)) = receiver.next().await {
+                propagate(block_id, &tangle, &solidified_tx).await;
             }
 
             // Before the worker completely stops, the receiver needs to be drained for statuses to be propagated.
@@ -185,12 +185,12 @@ where
             let (_, mut receiver) = receiver.split();
             let mut count: usize = 0;
 
-            while let Some(Some(PropagatorWorkerEvent(message_id))) = receiver.next().now_or_never() {
-                propagate(message_id, &tangle, &solidified_tx).await;
+            while let Some(Some(PropagatorWorkerEvent(block_id))) = receiver.next().now_or_never() {
+                propagate(block_id, &tangle, &solidified_tx).await;
                 count += 1;
             }
 
-            debug!("Drained {} messages.", count);
+            debug!("Drained {} blocks.", count);
 
             info!("Stopped.");
         });

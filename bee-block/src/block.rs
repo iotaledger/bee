@@ -59,31 +59,31 @@ impl<P: NonceProvider> BlockBuilder<P> {
     pub fn finish(self) -> Result<Block, Error> {
         verify_payload(self.payload.as_ref())?;
 
-        let mut message = Block {
+        let mut block = Block {
             protocol_version: PROTOCOL_VERSION,
             parents: self.parents,
             payload: self.payload.into(),
             nonce: 0,
         };
 
-        let message_bytes = message.pack_to_vec();
+        let block_bytes = block.pack_to_vec();
 
-        if message_bytes.len() > Block::LENGTH_MAX {
-            return Err(Error::InvalidBlockLength(message_bytes.len()));
+        if block_bytes.len() > Block::LENGTH_MAX {
+            return Err(Error::InvalidBlockLength(block_bytes.len()));
         }
 
         let (nonce_provider, target_score) = self
             .nonce_provider
             .unwrap_or((P::Builder::new().finish(), Self::DEFAULT_POW_SCORE));
 
-        message.nonce = nonce_provider
+        block.nonce = nonce_provider
             .nonce(
-                &message_bytes[..message_bytes.len() - core::mem::size_of::<u64>()],
+                &block_bytes[..block_bytes.len() - core::mem::size_of::<u64>()],
                 target_score,
             )
             .unwrap_or(Self::DEFAULT_NONCE);
 
-        Ok(message)
+        Ok(block)
     }
 }
 
@@ -91,20 +91,20 @@ impl<P: NonceProvider> BlockBuilder<P> {
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Block {
-    /// Protocol version of the message.
+    /// Protocol version of the block.
     protocol_version: u8,
-    /// The [`BlockId`]s that this message directly approves.
+    /// The [`BlockId`]s that this block directly approves.
     parents: Parents,
-    /// The optional [Payload] of the message.
+    /// The optional [Payload] of the block.
     payload: OptionalPayload,
-    /// The result of the Proof of Work in order for the message to be accepted into the tangle.
+    /// The result of the Proof of Work in order for the block to be accepted into the tangle.
     nonce: u64,
 }
 
 impl Block {
-    /// The minimum number of bytes in a message.
+    /// The minimum number of bytes in a block.
     pub const LENGTH_MIN: usize = 46;
-    /// The maximum number of bytes in a message.
+    /// The maximum number of bytes in a block.
     pub const LENGTH_MAX: usize = 32768;
 
     /// Creates a new [`BlockBuilder`] to construct an instance of a [`Block`].
@@ -137,7 +137,7 @@ impl Block {
         self.nonce
     }
 
-    /// Computes the identifier of the message.
+    /// Computes the identifier of the block.
     #[inline(always)]
     pub fn id(&self) -> BlockId {
         BlockId::new(Blake2b256::digest(&self.pack_to_vec()).into())
@@ -155,14 +155,14 @@ impl Block {
         bytes: T,
     ) -> Result<Self, UnpackError<<Self as Packable>::UnpackError, UnexpectedEOF>> {
         let mut unpacker = CounterUnpacker::new(bytes.as_ref());
-        let message = Self::unpack::<_, true>(&mut unpacker)?;
+        let block = Self::unpack::<_, true>(&mut unpacker)?;
 
-        // When parsing the message is complete, there should not be any trailing bytes left that were not parsed.
+        // When parsing the block is complete, there should not be any trailing bytes left that were not parsed.
         if u8::unpack::<_, true>(&mut unpacker).is_ok() {
             return Err(UnpackError::Packable(Error::RemainingBytesAfterBlock));
         }
 
-        Ok(message)
+        Ok(block)
     }
 }
 
@@ -201,7 +201,7 @@ impl Packable for Block {
 
         let nonce = u64::unpack::<_, VERIFY>(unpacker).coerce()?;
 
-        let message = Self {
+        let block = Self {
             protocol_version,
             parents,
             payload,
@@ -209,18 +209,18 @@ impl Packable for Block {
         };
 
         if VERIFY {
-            let message_len = if let (Some(start), Some(end)) = (start_opt, unpacker.read_bytes()) {
+            let block_len = if let (Some(start), Some(end)) = (start_opt, unpacker.read_bytes()) {
                 end - start
             } else {
-                message.packed_len()
+                block.packed_len()
             };
 
-            if message_len > Block::LENGTH_MAX {
-                return Err(UnpackError::Packable(Error::InvalidBlockLength(message_len)));
+            if block_len > Block::LENGTH_MAX {
+                return Err(UnpackError::Packable(Error::InvalidBlockLength(block_len)));
             }
         }
 
-        Ok(message)
+        Ok(block)
     }
 }
 
@@ -244,7 +244,7 @@ pub mod dto {
     use super::*;
     use crate::{error::dto::DtoError, payload::dto::PayloadDto};
 
-    /// The message object that nodes gossip around in the network.
+    /// The block object that nodes gossip around in the network.
     #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct BlockDto {
         ///

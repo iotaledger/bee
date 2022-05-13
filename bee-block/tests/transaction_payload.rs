@@ -102,7 +102,7 @@ fn builder_no_essence_too_many_unlock_blocks() {
             if input_count == 1 && block_count == 2));
 }
 
-// Validate that a `unpack` ∘ `pack` round-trip results in the original message.
+// Validate that a `unpack` ∘ `pack` round-trip results in the original block.
 #[test]
 fn pack_unpack_valid() {
     // Construct a transaction essence with two inputs and one output.

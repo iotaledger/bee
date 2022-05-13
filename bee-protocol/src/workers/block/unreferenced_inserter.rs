@@ -45,20 +45,20 @@ where
 
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
-            while let Some(UnreferencedBlockInserterWorkerEvent(message_id, index)) = receiver.next().await {
+            while let Some(UnreferencedBlockInserterWorkerEvent(block_id, index)) = receiver.next().await {
                 if let Err(e) = Batch::<(MilestoneIndex, UnreferencedBlock), ()>::batch_insert(
                     &*storage,
                     &mut batch,
-                    &(index, UnreferencedBlock::from(message_id)),
+                    &(index, UnreferencedBlock::from(block_id)),
                     &(),
                 ) {
-                    error!("Batch inserting unreferenced message failed: {:?}.", e);
+                    error!("Batch inserting unreferenced block failed: {:?}.", e);
                 }
 
                 counter += 1;
                 if counter == UNREFERENCED_MESSAGE_BATCH_SIZE {
                     if let Err(e) = storage.batch_commit(batch, true) {
-                        error!("Committing unreferenced message batch failed: {:?}.", e);
+                        error!("Committing unreferenced block batch failed: {:?}.", e);
                     }
                     batch = N::Backend::batch_begin();
                     counter = 0;
@@ -66,29 +66,29 @@ where
             }
 
             if let Err(e) = storage.batch_commit(batch, true) {
-                error!("Committing unreferenced message batch failed: {:?}.", e);
+                error!("Committing unreferenced block batch failed: {:?}.", e);
             }
 
-            // Before the worker completely stops, the receiver needs to be drained for unreferenced messages to be
+            // Before the worker completely stops, the receiver needs to be drained for unreferenced blocks to be
             // inserted. Otherwise, information would be lost and not easily recoverable.
 
             let (_, mut receiver) = receiver.split();
             counter = 0;
 
-            while let Some(Some(UnreferencedBlockInserterWorkerEvent(message_id, index))) =
+            while let Some(Some(UnreferencedBlockInserterWorkerEvent(block_id, index))) =
                 receiver.next().now_or_never()
             {
                 if let Err(e) = Insert::<(MilestoneIndex, UnreferencedBlock), ()>::insert(
                     &*storage,
-                    &(index, UnreferencedBlock::from(message_id)),
+                    &(index, UnreferencedBlock::from(block_id)),
                     &(),
                 ) {
-                    error!("Inserting unreferenced message failed: {:?}.", e);
+                    error!("Inserting unreferenced block failed: {:?}.", e);
                 }
                 counter += 1;
             }
 
-            debug!("Drained {} messages.", counter);
+            debug!("Drained {} blocks.", counter);
 
             info!("Stopped.");
         });

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //! This example aims at counting the number of allocations that are performed when we score the Proof of Work of a
-//! message by wrapping `GlobalAlloc`. Ideally, this method should not allocate at all, which would lead to a better
+//! block by wrapping `GlobalAlloc`. Ideally, this method should not allocate at all, which would lead to a better
 //! performance.
 //!
 //! The code was adapted from: https://kanejaku.org/posts/2021/01/2021-01-27/ (CC-BY 4.0)
@@ -39,15 +39,15 @@ unsafe impl GlobalAlloc for CheckAlloc {
 static A: CheckAlloc = CheckAlloc;
 
 fn main() {
-    let message = BlockBuilder::new(rand_parents())
+    let block = BlockBuilder::new(rand_parents())
         .with_nonce_provider(MinerBuilder::new().with_num_workers(num_cpus::get()).finish(), 10000f64)
         .finish()
         .unwrap();
 
-    let message_bytes = message.pack_to_vec();
+    let block_bytes = block.pack_to_vec();
 
     let before_count = ALLOCATED.load(SeqCst);
-    PoWScorer::new().score(&message_bytes);
+    PoWScorer::new().score(&block_bytes);
     let after_count = ALLOCATED.load(SeqCst);
 
     println!("Number of allocations: {}", after_count - before_count);

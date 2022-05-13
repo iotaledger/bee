@@ -34,8 +34,8 @@ macro_rules! impl_multi_fetch {
 }
 
 impl_multi_fetch!(u8, System, system);
-impl_multi_fetch!(BlockId, Block, message_id_to_message);
-impl_multi_fetch!(BlockId, BlockMetadata, message_id_to_metadata);
+impl_multi_fetch!(BlockId, Block, block_id_to_block);
+impl_multi_fetch!(BlockId, BlockMetadata, block_id_to_metadata);
 impl_multi_fetch!(OutputId, CreatedOutput, output_id_to_created_output);
 impl_multi_fetch!(OutputId, ConsumedOutput, output_id_to_consumed_output);
 impl_multi_fetch!(MilestoneIndex, MilestoneMetadata, milestone_index_to_milestone_metadata);

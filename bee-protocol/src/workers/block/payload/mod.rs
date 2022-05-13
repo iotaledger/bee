@@ -23,8 +23,8 @@ pub(crate) use self::{
 use crate::workers::storage::StorageBackend;
 
 pub(crate) struct PayloadWorkerEvent {
-    pub(crate) message_id: BlockId,
-    pub(crate) message: Block,
+    pub(crate) block_id: BlockId,
+    pub(crate) block: Block,
 }
 
 pub(crate) struct PayloadWorker {
@@ -32,27 +32,27 @@ pub(crate) struct PayloadWorker {
 }
 
 fn process(
-    message_id: BlockId,
-    message: Block,
+    block_id: BlockId,
+    block: Block,
     transaction_payload_worker: &mpsc::UnboundedSender<TransactionPayloadWorkerEvent>,
     milestone_payload_worker: &mpsc::UnboundedSender<MilestonePayloadWorkerEvent>,
     tagged_data_payload_worker: &mpsc::UnboundedSender<TaggedDataPayloadWorkerEvent>,
 ) {
-    match message.payload() {
+    match block.payload() {
         Some(Payload::Transaction(_)) => {
             if transaction_payload_worker
-                .send(TransactionPayloadWorkerEvent { message_id, message })
+                .send(TransactionPayloadWorkerEvent { block_id, block })
                 .is_err()
             {
-                error!("Sending message {} to transaction payload worker failed.", message_id);
+                error!("Sending block {} to transaction payload worker failed.", block_id);
             }
         }
         Some(Payload::Milestone(_)) => {
             if milestone_payload_worker
-                .send(MilestonePayloadWorkerEvent { message_id, message })
+                .send(MilestonePayloadWorkerEvent { block_id, block })
                 .is_err()
             {
-                error!("Sending message {} to milestone payload worker failed.", message_id);
+                error!("Sending block {} to milestone payload worker failed.", block_id);
             }
         }
         Some(Payload::TaggedData(_)) => {
@@ -60,7 +60,7 @@ fn process(
                 .send(TaggedDataPayloadWorkerEvent {})
                 .is_err()
             {
-                error!("Sending message {} to tagged data payload worker failed.", message_id);
+                error!("Sending block {} to tagged data payload worker failed.", block_id);
             }
         }
         _ => {}
@@ -96,10 +96,10 @@ where
 
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
-            while let Some(PayloadWorkerEvent { message_id, message }) = receiver.next().await {
+            while let Some(PayloadWorkerEvent { block_id, block }) = receiver.next().await {
                 process(
-                    message_id,
-                    message,
+                    block_id,
+                    block,
                     &transaction_payload_worker,
                     &milestone_payload_worker,
                     &tagged_data_payload_worker,
@@ -112,10 +112,10 @@ where
             let (_, mut receiver) = receiver.split();
             let mut count: usize = 0;
 
-            while let Some(Some(PayloadWorkerEvent { message_id, message })) = receiver.next().now_or_never() {
+            while let Some(Some(PayloadWorkerEvent { block_id, block })) = receiver.next().now_or_never() {
                 process(
-                    message_id,
-                    message,
+                    block_id,
+                    block,
                     &transaction_payload_worker,
                     &milestone_payload_worker,
                     &tagged_data_payload_worker,
@@ -123,7 +123,7 @@ where
                 count += 1;
             }
 
-            debug!("Drained {} messages.", count);
+            debug!("Drained {} blocks.", count);
 
             info!("Stopped.");
         });

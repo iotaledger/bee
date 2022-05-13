@@ -71,21 +71,21 @@ pub(crate) fn node_status_worker<N>(
                 request_queue_processing: 0,
                 request_queue_avg_latency: 0,
                 server_metrics: ServerMetrics {
-                    all_msgs: metrics.messages_received() as usize,
-                    new_msgs: metrics.new_messages() as usize,
-                    known_msgs: metrics.known_messages() as usize,
-                    invalid_msgs: metrics.invalid_messages() as usize,
+                    all_msgs: metrics.blocks_received() as usize,
+                    new_msgs: metrics.new_blocks() as usize,
+                    known_msgs: metrics.known_blocks() as usize,
+                    invalid_msgs: metrics.invalid_blocks() as usize,
                     invalid_req: 0,
-                    rec_msg_req: metrics.message_requests_received() as usize,
+                    rec_msg_req: metrics.block_requests_received() as usize,
                     rec_ms_req: metrics.milestone_requests_received() as usize,
                     rec_heartbeat: metrics.heartbeats_received() as usize,
-                    sent_msgs: metrics.messages_sent() as usize,
-                    sent_msg_req: metrics.message_requests_sent() as usize,
+                    sent_msgs: metrics.blocks_sent() as usize,
+                    sent_msg_req: metrics.block_requests_sent() as usize,
                     sent_ms_req: metrics.milestone_requests_sent() as usize,
                     sent_heartbeat: metrics.heartbeats_sent() as usize,
                     dropped_sent_packets: 0,
-                    sent_spam_messages: 0,
-                    validated_messages: 0,
+                    sent_spam_blocks: 0,
+                    validated_blocks: 0,
                 },
                 mem: Mem {
                     sys: 0,
@@ -104,8 +104,8 @@ pub(crate) fn node_status_worker<N>(
                     request_queue: RequestQueue { size: 0 },
                     children: Children { size: 0 },
                     milestones: Milestones { size: 0 },
-                    messages: Messages { size: 0 },
-                    incoming_message_work_units: IncomingMessageWorkUnits { size: 0 },
+                    blocks: Blocks { size: 0 },
+                    incoming_block_work_units: IncomingBlockWorkUnits { size: 0 },
                 },
             };
 
@@ -159,8 +159,8 @@ pub struct ServerMetrics {
     pub sent_ms_req: usize,
     pub sent_heartbeat: usize,
     pub dropped_sent_packets: usize,
-    pub sent_spam_messages: usize,
-    pub validated_messages: usize,
+    pub sent_spam_blocks: usize,
+    pub validated_blocks: usize,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -183,8 +183,8 @@ pub struct Caches {
     pub request_queue: RequestQueue,
     pub children: Children,
     pub milestones: Milestones,
-    pub messages: Messages,
-    pub incoming_message_work_units: IncomingMessageWorkUnits,
+    pub blocks: Blocks,
+    pub incoming_block_work_units: IncomingBlockWorkUnits,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -203,11 +203,11 @@ pub struct Milestones {
 }
 
 #[derive(Clone, Debug, Serialize)]
-pub struct Messages {
+pub struct Blocks {
     pub size: usize,
 }
 
 #[derive(Clone, Debug, Serialize)]
-pub struct IncomingMessageWorkUnits {
+pub struct IncomingBlockWorkUnits {
     pub size: usize,
 }
