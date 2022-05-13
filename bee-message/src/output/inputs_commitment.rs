@@ -17,7 +17,7 @@ impl InputsCommitment {
     pub fn new<'a>(inputs: impl Iterator<Item = &'a Output>) -> Self {
         let mut hasher = Blake2b256::new();
 
-        inputs.for_each(|output| hasher.update(output.pack_to_vec()));
+        inputs.for_each(|output| hasher.update(Blake2b256::digest(&output.pack_to_vec())));
 
         Self(hasher.finalize().into())
     }
