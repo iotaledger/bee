@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub mod add_peer;
+pub mod block_children;
 pub mod block_metadata;
+pub mod block_raw;
 pub mod info;
 pub mod message;
-pub mod message_children;
-pub mod message_raw;
 pub mod milestone_by_milestone_id;
 pub mod milestone_by_milestone_index;
 pub mod output;
@@ -16,9 +16,9 @@ pub mod peers;
 pub mod receipts;
 pub mod receipts_at;
 pub mod remove_peer;
-pub mod submit_message;
+pub mod submit_block;
 pub mod tips;
-pub mod transaction_included_message;
+pub mod transaction_included_block;
 pub mod treasury;
 pub mod utxo_changes_by_milestone_id;
 pub mod utxo_changes_by_milestone_index;
