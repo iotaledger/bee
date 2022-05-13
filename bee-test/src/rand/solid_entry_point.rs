@@ -3,9 +3,9 @@
 
 use bee_tangle::solid_entry_point::SolidEntryPoint;
 
-use crate::rand::message::rand_message_id;
+use crate::rand::block::rand_block_id;
 
 /// Generates a random solid entry point.
 pub fn rand_solid_entry_point() -> SolidEntryPoint {
-    rand_message_id().into()
+    rand_block_id().into()
 }

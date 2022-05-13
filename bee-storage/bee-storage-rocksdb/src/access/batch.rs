@@ -1,20 +1,20 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_block::{
+    address::Ed25519Address,
+    output::OutputId,
+    payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
+    Block, BlockId,
+};
 use bee_ledger::types::{
     snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
     Unspent,
 };
-use bee_message::{
-    address::Ed25519Address,
-    output::OutputId,
-    payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
-    Message, MessageId,
-};
 use bee_storage::access::{Batch, BatchBuilder};
 use bee_tangle::{
-    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
-    unreferenced_message::UnreferencedMessage,
+    block_metadata::BlockMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+    unreferenced_block::UnreferencedBlock,
 };
 use packable::{Packable, PackableExt};
 use rocksdb::{WriteBatch, WriteOptions};
@@ -50,12 +50,12 @@ impl BatchBuilder for Storage {
     }
 }
 
-impl Batch<MessageId, Message> for Storage {
+impl Batch<BlockId, Block> for Storage {
     fn batch_insert(
         &self,
         batch: &mut Self::Batch,
-        message_id: &MessageId,
-        message: &Message,
+        message_id: &BlockId,
+        message: &Block,
     ) -> Result<(), <Self as StorageBackend>::Error> {
         batch.value_buf.clear();
         // Packing to bytes can't fail.
@@ -71,7 +71,7 @@ impl Batch<MessageId, Message> for Storage {
     fn batch_delete(
         &self,
         batch: &mut Self::Batch,
-        message_id: &MessageId,
+        message_id: &BlockId,
     ) -> Result<(), <Self as StorageBackend>::Error> {
         batch
             .inner
@@ -81,12 +81,12 @@ impl Batch<MessageId, Message> for Storage {
     }
 }
 
-impl Batch<MessageId, MessageMetadata> for Storage {
+impl Batch<BlockId, BlockMetadata> for Storage {
     fn batch_insert(
         &self,
         batch: &mut Self::Batch,
-        message_id: &MessageId,
-        metadata: &MessageMetadata,
+        message_id: &BlockId,
+        metadata: &BlockMetadata,
     ) -> Result<(), <Self as StorageBackend>::Error> {
         batch.should_lock = true;
 
@@ -104,7 +104,7 @@ impl Batch<MessageId, MessageMetadata> for Storage {
     fn batch_delete(
         &self,
         batch: &mut Self::Batch,
-        message_id: &MessageId,
+        message_id: &BlockId,
     ) -> Result<(), <Self as StorageBackend>::Error> {
         batch.should_lock = true;
 
@@ -116,11 +116,11 @@ impl Batch<MessageId, MessageMetadata> for Storage {
     }
 }
 
-impl Batch<(MessageId, MessageId), ()> for Storage {
+impl Batch<(BlockId, BlockId), ()> for Storage {
     fn batch_insert(
         &self,
         batch: &mut Self::Batch,
-        (parent, child): &(MessageId, MessageId),
+        (parent, child): &(BlockId, BlockId),
         (): &(),
     ) -> Result<(), <Self as StorageBackend>::Error> {
         batch.key_buf.clear();
@@ -137,7 +137,7 @@ impl Batch<(MessageId, MessageId), ()> for Storage {
     fn batch_delete(
         &self,
         batch: &mut Self::Batch,
-        (parent, child): &(MessageId, MessageId),
+        (parent, child): &(BlockId, BlockId),
     ) -> Result<(), <Self as StorageBackend>::Error> {
         batch.key_buf.clear();
         batch.key_buf.extend_from_slice(parent.as_ref());
@@ -495,16 +495,16 @@ impl Batch<MilestoneIndex, OutputDiff> for Storage {
     }
 }
 
-impl Batch<(MilestoneIndex, UnreferencedMessage), ()> for Storage {
+impl Batch<(MilestoneIndex, UnreferencedBlock), ()> for Storage {
     fn batch_insert(
         &self,
         batch: &mut Self::Batch,
-        (index, unreferenced_message): &(MilestoneIndex, UnreferencedMessage),
+        (index, unreferenced_block): &(MilestoneIndex, UnreferencedBlock),
         (): &(),
     ) -> Result<(), <Self as StorageBackend>::Error> {
         batch.key_buf.clear();
         batch.key_buf.extend_from_slice(&index.pack_to_vec());
-        batch.key_buf.extend_from_slice(unreferenced_message.as_ref());
+        batch.key_buf.extend_from_slice(unreferenced_block.as_ref());
 
         batch.inner.put_cf(
             self.cf_handle(CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE)?,
@@ -518,11 +518,11 @@ impl Batch<(MilestoneIndex, UnreferencedMessage), ()> for Storage {
     fn batch_delete(
         &self,
         batch: &mut Self::Batch,
-        (index, unreferenced_message): &(MilestoneIndex, UnreferencedMessage),
+        (index, unreferenced_block): &(MilestoneIndex, UnreferencedBlock),
     ) -> Result<(), <Self as StorageBackend>::Error> {
         batch.key_buf.clear();
         batch.key_buf.extend_from_slice(&index.pack_to_vec());
-        batch.key_buf.extend_from_slice(unreferenced_message.as_ref());
+        batch.key_buf.extend_from_slice(unreferenced_block.as_ref());
 
         batch.inner.delete_cf(
             self.cf_handle(CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE)?,

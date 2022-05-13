@@ -1,23 +1,23 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_ledger::types::{
-    snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
-    Unspent,
-};
-use bee_message::{
+use bee_block::{
     address::Ed25519Address,
     output::OutputId,
     payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
-    Message, MessageId,
+    Block, BlockId,
+};
+use bee_ledger::types::{
+    snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
+    Unspent,
 };
 use bee_storage::{
     access::{Insert, InsertStrict},
     system::System,
 };
 use bee_tangle::{
-    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
-    unreferenced_message::UnreferencedMessage,
+    block_metadata::BlockMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+    unreferenced_block::UnreferencedBlock,
 };
 use packable::PackableExt;
 
@@ -35,8 +35,8 @@ impl Insert<u8, System> for Storage {
     }
 }
 
-impl Insert<MessageId, Message> for Storage {
-    fn insert(&self, message_id: &MessageId, message: &Message) -> Result<(), <Self as StorageBackend>::Error> {
+impl Insert<BlockId, Block> for Storage {
+    fn insert(&self, message_id: &BlockId, message: &Block) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner.put_cf(
             self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?,
             message_id,
@@ -47,11 +47,11 @@ impl Insert<MessageId, Message> for Storage {
     }
 }
 
-impl InsertStrict<MessageId, MessageMetadata> for Storage {
+impl InsertStrict<BlockId, BlockMetadata> for Storage {
     fn insert_strict(
         &self,
-        message_id: &MessageId,
-        metadata: &MessageMetadata,
+        message_id: &BlockId,
+        metadata: &BlockMetadata,
     ) -> Result<(), <Self as StorageBackend>::Error> {
         let guard = self.locks.message_id_to_metadata.read();
 
@@ -67,8 +67,8 @@ impl InsertStrict<MessageId, MessageMetadata> for Storage {
     }
 }
 
-impl Insert<(MessageId, MessageId), ()> for Storage {
-    fn insert(&self, (parent, child): &(MessageId, MessageId), (): &()) -> Result<(), <Self as StorageBackend>::Error> {
+impl Insert<(BlockId, BlockId), ()> for Storage {
+    fn insert(&self, (parent, child): &(BlockId, BlockId), (): &()) -> Result<(), <Self as StorageBackend>::Error> {
         let mut key = parent.as_ref().to_vec();
         key.extend_from_slice(child.as_ref());
 
@@ -198,14 +198,14 @@ impl Insert<MilestoneIndex, OutputDiff> for Storage {
     }
 }
 
-impl Insert<(MilestoneIndex, UnreferencedMessage), ()> for Storage {
+impl Insert<(MilestoneIndex, UnreferencedBlock), ()> for Storage {
     fn insert(
         &self,
-        (index, unreferenced_message): &(MilestoneIndex, UnreferencedMessage),
+        (index, unreferenced_block): &(MilestoneIndex, UnreferencedBlock),
         (): &(),
     ) -> Result<(), <Self as StorageBackend>::Error> {
         let mut key = index.pack_to_vec();
-        key.extend_from_slice(unreferenced_message.as_ref());
+        key.extend_from_slice(unreferenced_block.as_ref());
 
         self.inner
             .put_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE)?, key, [])?;

@@ -3,8 +3,8 @@
 
 use std::collections::HashMap;
 
+use bee_block::payload::milestone::MilestoneIndex;
 use bee_ledger::types::Receipt;
-use bee_message::payload::milestone::MilestoneIndex;
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend,

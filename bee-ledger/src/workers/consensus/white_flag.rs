@@ -3,7 +3,7 @@
 
 use std::collections::HashSet;
 
-use bee_message::{
+use bee_block::{
     input::Input,
     output::{Output, OutputId},
     payload::{
@@ -12,7 +12,7 @@ use bee_message::{
     },
     semantic::{semantic_validation, ConflictReason, ValidationContext},
     unlock_block::UnlockBlocks,
-    Message, MessageId,
+    Block, BlockId,
 };
 use bee_tangle::Tangle;
 use crypto::hashes::blake2b::Blake2b256;
@@ -28,7 +28,7 @@ use crate::{
 
 fn apply_regular_essence<B: StorageBackend>(
     storage: &B,
-    message_id: &MessageId,
+    message_id: &BlockId,
     transaction_id: &TransactionId,
     essence: &RegularTransactionEssence,
     unlock_blocks: &UnlockBlocks,
@@ -112,7 +112,7 @@ fn apply_regular_essence<B: StorageBackend>(
 
 fn apply_transaction<B: StorageBackend>(
     storage: &B,
-    message_id: &MessageId,
+    message_id: &BlockId,
     transaction: &TransactionPayload,
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<ConflictReason, Error> {
@@ -130,8 +130,8 @@ fn apply_transaction<B: StorageBackend>(
 
 fn apply_message<B: StorageBackend>(
     storage: &B,
-    message_id: &MessageId,
-    message: &Message,
+    message_id: &BlockId,
+    message: &Block,
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<(), Error> {
     metadata.referenced_messages.push(*message_id);
@@ -160,7 +160,7 @@ fn apply_message<B: StorageBackend>(
 async fn traverse_past_cone<B: StorageBackend>(
     tangle: &Tangle<B>,
     storage: &B,
-    mut message_ids: Vec<MessageId>,
+    mut message_ids: Vec<BlockId>,
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<(), Error> {
     let mut visited = HashSet::new();
@@ -183,7 +183,7 @@ async fn traverse_past_cone<B: StorageBackend>(
                 message_ids.pop();
             }
         } else if !tangle.is_solid_entry_point(message_id).await {
-            return Err(Error::MissingMessage(*message_id));
+            return Err(Error::MissingBlock(*message_id));
         } else {
             visited.insert(*message_id);
             message_ids.pop();
@@ -198,7 +198,7 @@ async fn traverse_past_cone<B: StorageBackend>(
 pub async fn white_flag<B: StorageBackend>(
     tangle: &Tangle<B>,
     storage: &B,
-    message_ids: &[MessageId],
+    message_ids: &[BlockId],
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<(), Error> {
     traverse_past_cone(tangle, storage, message_ids.iter().rev().copied().collect(), metadata).await?;
@@ -216,7 +216,7 @@ pub async fn white_flag<B: StorageBackend>(
             + metadata.excluded_conflicting_messages.len()
             + metadata.included_messages.len()
     {
-        return Err(Error::InvalidMessagesCount(
+        return Err(Error::InvalidBlocksCount(
             metadata.referenced_messages.len(),
             metadata.excluded_no_transaction_messages.len(),
             metadata.excluded_conflicting_messages.len(),

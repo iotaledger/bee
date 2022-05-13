@@ -3,14 +3,14 @@
 
 use std::net::IpAddr;
 
-use bee_message::{
+use bee_block::{
     constant::PROTOCOL_VERSION,
     parent::Parents,
     payload::{dto::PayloadDto, Payload},
-    Message, MessageBuilder, MessageId,
+    Block, BlockBuilder, BlockId,
 };
 use bee_pow::providers::{miner::MinerBuilder, NonceProviderBuilder};
-use bee_protocol::workers::{config::ProtocolConfig, MessageSubmitterError, MessageSubmitterWorkerEvent};
+use bee_protocol::workers::{config::ProtocolConfig, BlockSubmitterError, MessageSubmitterWorkerEvent};
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::Tangle;
 use futures::channel::oneshot;
@@ -75,7 +75,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
     protocol_config: ProtocolConfig,
 ) -> Result<impl Reply, Rejection> {
     let protocol_version_json = &value["protocolVersion"];
-    let parents_json = &value["parentMessageIds"];
+    let parents_json = &value["parentBlockIds"];
     let payload_json = &value["payload"];
     let nonce_json = &value["nonce"];
 
@@ -97,7 +97,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
         }
     }
 
-    let parents: Vec<MessageId> = if parents_json.is_null() {
+    let parents: Vec<BlockId> = if parents_json.is_null() {
         tangle.get_messages_to_approve().await.ok_or_else(|| {
             reject::custom(CustomRejection::ServiceUnavailable(
                 "can not auto-fill parents: no tips available".to_string(),
@@ -118,7 +118,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
                         "invalid parent: expected a message id".to_string(),
                     ))
                 })?
-                .parse::<MessageId>()
+                .parse::<BlockId>()
                 .map_err(|_| {
                     reject::custom(CustomRejection::BadRequest(
                         "invalid parent: expected a message id".to_string(),
@@ -168,14 +168,14 @@ pub(crate) async fn submit_message<B: StorageBackend>(
 }
 
 pub(crate) fn build_message(
-    parents: Vec<MessageId>,
+    parents: Vec<BlockId>,
     payload: Option<Payload>,
     nonce: Option<u64>,
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
-) -> Result<Message, Rejection> {
+) -> Result<Block, Rejection> {
     let message = if let Some(nonce) = nonce {
-        let mut builder = MessageBuilder::new(
+        let mut builder = BlockBuilder::new(
             Parents::new(parents).map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?,
         )
         .with_nonce_provider(nonce, 0f64);
@@ -191,7 +191,7 @@ pub(crate) fn build_message(
                 "can not auto-fill nonce: feature `PoW` not enabled".to_string(),
             )));
         }
-        let mut builder = MessageBuilder::new(
+        let mut builder = BlockBuilder::new(
             Parents::new(parents).map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?,
         )
         .with_nonce_provider(
@@ -224,8 +224,8 @@ pub(crate) async fn submit_message_raw(
 pub(crate) async fn forward_to_message_submitter(
     message_bytes: Vec<u8>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
-) -> Result<MessageId, Rejection> {
-    let (notifier, waiter) = oneshot::channel::<Result<MessageId, MessageSubmitterError>>();
+) -> Result<BlockId, Rejection> {
+    let (notifier, waiter) = oneshot::channel::<Result<BlockId, BlockSubmitterError>>();
 
     message_submitter
         .send(MessageSubmitterWorkerEvent {

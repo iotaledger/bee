@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{payload::milestone::MilestoneIndex, MessageId};
+use bee_block::{payload::milestone::MilestoneIndex, BlockId};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -15,11 +15,11 @@ pub enum Error {
     #[error("missing milestone {0}")]
     MissingMilestone(MilestoneIndex),
     #[error("missing message {0}")]
-    MissingMessage(MessageId),
+    MissingBlock(BlockId),
     #[error("missing metadata for message {0}")]
-    MissingMetadata(MessageId),
+    MissingMetadata(BlockId),
     #[error("missing approvers for message {0}")]
-    MissingApprovers(MessageId),
+    MissingApprovers(BlockId),
     #[error("storage operation failed due to: {0:?}")]
     Storage(Box<dyn std::error::Error + Send>),
 }

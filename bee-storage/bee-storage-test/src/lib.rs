@@ -12,7 +12,7 @@ mod milestone_id_to_milestone_payload;
 mod milestone_index_to_milestone_metadata;
 mod milestone_index_to_output_diff;
 mod milestone_index_to_receipt;
-mod milestone_index_to_unreferenced_message;
+mod milestone_index_to_unreferenced_block;
 mod output_id_to_consumed_output;
 mod output_id_to_created_output;
 mod output_id_unspent;
@@ -28,7 +28,7 @@ pub use self::{
     milestone_index_to_milestone_metadata::milestone_index_to_milestone_metadata_access,
     milestone_index_to_output_diff::milestone_index_to_output_diff_access,
     milestone_index_to_receipt::milestone_index_to_receipt_access,
-    milestone_index_to_unreferenced_message::milestone_index_to_unreferenced_message_access,
+    milestone_index_to_unreferenced_block::milestone_index_to_unreferenced_block_access,
     output_id_to_consumed_output::output_id_to_consumed_output_access,
     output_id_to_created_output::output_id_to_created_output_access, output_id_unspent::output_id_unspent_access,
     snapshot_info::snapshot_info_access,

@@ -4,9 +4,9 @@
 use std::{any::TypeId, convert::Infallible};
 
 use async_trait::async_trait;
-use bee_message::{payload::milestone::MilestoneIndex, MessageId};
+use bee_block::{payload::milestone::MilestoneIndex, BlockId};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{message_metadata::IndexId, solid_entry_point::SolidEntryPoint, Tangle, TangleWorker};
+use bee_tangle::{block_metadata::IndexId, solid_entry_point::SolidEntryPoint, Tangle, TangleWorker};
 use futures::{future::FutureExt, stream::StreamExt};
 use log::*;
 use ref_cast::RefCast;
@@ -18,16 +18,16 @@ use crate::workers::{
 };
 
 #[derive(Debug)]
-pub(crate) struct PropagatorWorkerEvent(pub(crate) MessageId);
+pub(crate) struct PropagatorWorkerEvent(pub(crate) BlockId);
 
 pub(crate) struct PropagatorWorker {
     pub(crate) tx: mpsc::UnboundedSender<PropagatorWorkerEvent>,
 }
 
 async fn propagate<B: StorageBackend>(
-    message_id: MessageId,
+    message_id: BlockId,
     tangle: &Tangle<B>,
-    solidified_tx: &async_channel::Sender<(MessageId, Vec<MessageId>, Option<MilestoneIndex>)>,
+    solidified_tx: &async_channel::Sender<(BlockId, Vec<BlockId>, Option<MilestoneIndex>)>,
 ) {
     let mut children = vec![message_id];
 

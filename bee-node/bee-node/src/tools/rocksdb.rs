@@ -3,14 +3,14 @@
 
 use std::str::FromStr;
 
-use bee_ledger::types::{
-    snapshot::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput, Unspent,
-};
-use bee_message::{
+use bee_block::{
     address::Ed25519Address,
     output::OutputId,
     payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
-    Message, MessageId,
+    Block, BlockId,
+};
+use bee_ledger::types::{
+    snapshot::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput, Unspent,
 };
 use bee_storage::{
     access::{AsIterator, Exist, Fetch},
@@ -23,8 +23,8 @@ use bee_storage_rocksdb::{
     storage::{Storage, System},
 };
 use bee_tangle::{
-    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
-    unreferenced_message::UnreferencedMessage,
+    block_metadata::BlockMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+    unreferenced_block::UnreferencedBlock,
 };
 use structopt::StructOpt;
 use thiserror::Error;
@@ -77,13 +77,13 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
         },
         CF_MESSAGE_ID_TO_MESSAGE => match &tool.command {
             RocksdbCommand::Fetch { key } => {
-                let key = MessageId::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?;
-                let value = Fetch::<MessageId, Message>::fetch(storage, &key)?;
+                let key = BlockId::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?;
+                let value = Fetch::<BlockId, Block>::fetch(storage, &key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let iterator = AsIterator::<MessageId, Message>::iter(storage)?;
+                let iterator = AsIterator::<BlockId, Block>::iter(storage)?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -93,13 +93,13 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
         },
         CF_MESSAGE_ID_TO_METADATA => match &tool.command {
             RocksdbCommand::Fetch { key } => {
-                let key = MessageId::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?;
-                let value = Fetch::<MessageId, MessageMetadata>::fetch(storage, &key)?;
+                let key = BlockId::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?;
+                let value = Fetch::<BlockId, BlockMetadata>::fetch(storage, &key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let iterator = AsIterator::<MessageId, MessageMetadata>::iter(storage)?;
+                let iterator = AsIterator::<BlockId, BlockMetadata>::iter(storage)?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -109,13 +109,13 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
         },
         CF_MESSAGE_ID_TO_MESSAGE_ID => match &tool.command {
             RocksdbCommand::Fetch { key } => {
-                let key = MessageId::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?;
-                let value = Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &key)?;
+                let key = BlockId::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?;
+                let value = Fetch::<BlockId, Vec<BlockId>>::fetch(storage, &key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let iterator = AsIterator::<(MessageId, MessageId), ()>::iter(storage)?;
+                let iterator = AsIterator::<(BlockId, BlockId), ()>::iter(storage)?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -244,7 +244,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
         CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX => match &tool.command {
             RocksdbCommand::Fetch { key } => {
                 let key =
-                    SolidEntryPoint::from(MessageId::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?);
+                    SolidEntryPoint::from(BlockId::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?);
                 let value = Fetch::<SolidEntryPoint, MilestoneIndex>::fetch(storage, &key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
@@ -277,12 +277,12 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
         CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE => match &tool.command {
             RocksdbCommand::Fetch { key } => {
                 let key = MilestoneIndex(u32::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?);
-                let value = Fetch::<MilestoneIndex, Vec<UnreferencedMessage>>::fetch(storage, &key)?;
+                let value = Fetch::<MilestoneIndex, Vec<UnreferencedBlock>>::fetch(storage, &key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let iterator = AsIterator::<(MilestoneIndex, UnreferencedMessage), ()>::iter(storage)?;
+                let iterator = AsIterator::<(MilestoneIndex, UnreferencedBlock), ()>::iter(storage)?;
 
                 for result in iterator {
                     let (key, value) = result?;

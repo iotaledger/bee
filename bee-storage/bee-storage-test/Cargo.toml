@@ -17,8 +17,8 @@ all-features = true
 rustdoc-args = [ "--cfg", "doc_cfg" ]
 
 [dependencies]
+bee-block = { version = "0.2.0", path = "../../bee-block", default-features = false }
 bee-ledger = { version = "0.7.0", path = "../../bee-ledger", default-features = false }
-bee-message = { version = "0.2.0", path = "../../bee-message", default-features = false }
 bee-storage = { version = "0.12.0", path = "../bee-storage", default-features = false }
 bee-tangle = { version = "0.3.0", path = "../../bee-tangle", default-features = false }
 bee-test = { version = "0.1.0", path = "../../bee-test", default-features = false }

@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::output::feature_block::{
+use bee_block::output::feature_block::{
     FeatureBlock, FeatureBlockFlags, IssuerFeatureBlock, MetadataFeatureBlock, SenderFeatureBlock, TagFeatureBlock,
 };
 

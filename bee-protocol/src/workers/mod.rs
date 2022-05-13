@@ -5,10 +5,10 @@ pub mod config;
 pub mod event;
 pub mod storage;
 
+mod block;
 mod broadcaster;
 mod heartbeater;
 mod index_updater;
-mod message;
 mod metrics;
 mod mps;
 mod packets;
@@ -25,15 +25,21 @@ use bee_gossip::NetworkEventReceiver as NetworkEventRx;
 use bee_runtime::node::{Node, NodeBuilder};
 
 use self::peer::PeerManagerConfig;
+pub use self::{
+    block::{BlockSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent},
+    metrics::MetricsWorker,
+    peer::{PeerManager, PeerManagerResWorker},
+    requester::{request_message, MessageRequesterWorker, RequestedMessages, RequestedMilestones},
+};
 pub(crate) use self::{
+    block::{
+        HasherWorker, HasherWorkerEvent, MilestonePayloadWorker, PayloadWorker, PayloadWorkerEvent, ProcessorWorker,
+        ProcessorWorkerConfig, TaggedDataPayloadWorker, TaggedDataPayloadWorkerEvent, TransactionPayloadWorker,
+        UnreferencedBlockInserterWorker, UnreferencedBlockInserterWorkerEvent,
+    },
     broadcaster::{BroadcasterWorker, BroadcasterWorkerEvent},
     heartbeater::HeartbeaterWorker,
     index_updater::{IndexUpdaterWorker, IndexUpdaterWorkerEvent},
-    message::{
-        HasherWorker, HasherWorkerEvent, MilestonePayloadWorker, PayloadWorker, PayloadWorkerEvent, ProcessorWorker,
-        ProcessorWorkerConfig, TaggedDataPayloadWorker, TaggedDataPayloadWorkerEvent, TransactionPayloadWorker,
-        UnreferencedMessageInserterWorker, UnreferencedMessageInserterWorkerEvent,
-    },
     mps::MpsWorker,
     peer::{PeerManagerWorker, PeerWorker},
     propagator::{PropagatorWorker, PropagatorWorkerEvent},
@@ -43,12 +49,6 @@ pub(crate) use self::{
     },
     solidifier::{MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent},
     status::StatusWorker,
-};
-pub use self::{
-    message::{MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent},
-    metrics::MetricsWorker,
-    peer::{PeerManager, PeerManagerResWorker},
-    requester::{request_message, MessageRequesterWorker, RequestedMessages, RequestedMilestones},
 };
 
 pub fn init<N: Node>(
@@ -92,5 +92,5 @@ where
         .with_worker_cfg::<StatusWorker>(config.workers.status_interval)
         .with_worker::<HeartbeaterWorker>()
         .with_worker::<MessageSubmitterWorker>()
-        .with_worker::<UnreferencedMessageInserterWorker>()
+        .with_worker::<UnreferencedBlockInserterWorker>()
 }

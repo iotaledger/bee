@@ -5,7 +5,7 @@
 
 use core::cmp::Ordering;
 
-use bee_message::payload::milestone::MilestoneIndex;
+use bee_block::payload::milestone::MilestoneIndex;
 use serde::{Deserialize, Serialize};
 
 /// A milestone key range is a milestone public key valid for a given interval of milestones.

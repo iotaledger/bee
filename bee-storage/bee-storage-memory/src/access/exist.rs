@@ -3,20 +3,20 @@
 
 //! Exist access operations.
 
+use bee_block::{
+    address::Ed25519Address,
+    output::OutputId,
+    payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
+    Block, BlockId,
+};
 use bee_ledger::types::{
     snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
     Unspent,
 };
-use bee_message::{
-    address::Ed25519Address,
-    output::OutputId,
-    payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
-    Message, MessageId,
-};
 use bee_storage::{access::Exist, backend::StorageBackend};
 use bee_tangle::{
-    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
-    unreferenced_message::UnreferencedMessage,
+    block_metadata::BlockMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+    unreferenced_block::UnreferencedBlock,
 };
 
 use crate::storage::Storage;
@@ -31,9 +31,9 @@ macro_rules! impl_exist {
     };
 }
 
-impl_exist!(MessageId, Message, message_id_to_message);
-impl_exist!(MessageId, MessageMetadata, message_id_to_metadata);
-impl_exist!((MessageId, MessageId), (), message_id_to_message_id);
+impl_exist!(BlockId, Block, message_id_to_message);
+impl_exist!(BlockId, BlockMetadata, message_id_to_metadata);
+impl_exist!((BlockId, BlockId), (), message_id_to_message_id);
 impl_exist!(OutputId, CreatedOutput, output_id_to_created_output);
 impl_exist!(OutputId, ConsumedOutput, output_id_to_consumed_output);
 impl_exist!(Unspent, (), output_id_unspent);
@@ -45,9 +45,9 @@ impl_exist!((), SnapshotInfo, snapshot_info);
 impl_exist!(SolidEntryPoint, MilestoneIndex, solid_entry_point_to_milestone_index);
 impl_exist!(MilestoneIndex, OutputDiff, milestone_index_to_output_diff);
 impl_exist!(
-    (MilestoneIndex, UnreferencedMessage),
+    (MilestoneIndex, UnreferencedBlock),
     (),
-    milestone_index_to_unreferenced_message
+    milestone_index_to_unreferenced_block
 );
 impl_exist!((MilestoneIndex, Receipt), (), milestone_index_to_receipt);
 impl_exist!((bool, TreasuryOutput), (), spent_to_treasury_output);

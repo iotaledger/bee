@@ -3,11 +3,11 @@
 
 use std::net::IpAddr;
 
+use bee_block::output::OutputId;
 use bee_ledger::{
     types::{ConsumedOutput, CreatedOutput, LedgerIndex},
     workers::{consensus::ConsensusWorkerCommand, error::Error},
 };
-use bee_message::output::OutputId;
 use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;
 use futures::channel::oneshot;

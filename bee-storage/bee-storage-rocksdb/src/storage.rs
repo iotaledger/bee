@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{address::Ed25519Address, payload::milestone::MilestoneIndex, MessageId};
+use bee_block::{address::Ed25519Address, payload::milestone::MilestoneIndex, BlockId};
 pub use bee_storage::{
     access::{Fetch, Insert},
     backend::StorageBackend,
@@ -47,7 +47,7 @@ impl Storage {
         let cf_message_id_to_metadata = ColumnFamilyDescriptor::new(CF_MESSAGE_ID_TO_METADATA, options);
 
         let mut options = Options::default();
-        options.set_prefix_extractor(SliceTransform::create_fixed_prefix(MessageId::LENGTH));
+        options.set_prefix_extractor(SliceTransform::create_fixed_prefix(BlockId::LENGTH));
         let cf_message_id_to_message_id = ColumnFamilyDescriptor::new(CF_MESSAGE_ID_TO_MESSAGE_ID, options);
 
         let cf_output_id_to_created_output =
@@ -82,7 +82,7 @@ impl Storage {
         options.set_prefix_extractor(SliceTransform::create_fixed_prefix(
             std::mem::size_of::<MilestoneIndex>(),
         ));
-        let cf_milestone_index_to_unreferenced_message =
+        let cf_milestone_index_to_unreferenced_block =
             ColumnFamilyDescriptor::new(CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE, options);
 
         let mut options = Options::default();
@@ -144,7 +144,7 @@ impl Storage {
                 cf_snapshot_info,
                 cf_solid_entry_point_to_milestone_index,
                 cf_milestone_index_to_output_diff,
-                cf_milestone_index_to_unreferenced_message,
+                cf_milestone_index_to_unreferenced_block,
                 cf_milestone_index_to_receipt,
                 cf_spent_to_treasury,
             ],

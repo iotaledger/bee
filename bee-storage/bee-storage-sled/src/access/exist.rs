@@ -3,27 +3,27 @@
 
 //! Exist access operations.
 
+use bee_block::{
+    address::Ed25519Address,
+    output::OutputId,
+    payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
+    Block, BlockId,
+};
 use bee_ledger::types::{
     snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
     Unspent,
 };
-use bee_message::{
-    address::Ed25519Address,
-    output::OutputId,
-    payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
-    Message, MessageId,
-};
 use bee_storage::{access::Exist, backend::StorageBackend};
 use bee_tangle::{
-    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
-    unreferenced_message::UnreferencedMessage,
+    block_metadata::BlockMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+    unreferenced_block::UnreferencedBlock,
 };
 use packable::PackableExt;
 
 use crate::{storage::Storage, trees::*};
 
-impl Exist<MessageId, Message> for Storage {
-    fn exist(&self, message_id: &MessageId) -> Result<bool, <Self as StorageBackend>::Error> {
+impl Exist<BlockId, Block> for Storage {
+    fn exist(&self, message_id: &BlockId) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_MESSAGE_ID_TO_MESSAGE)?
@@ -31,8 +31,8 @@ impl Exist<MessageId, Message> for Storage {
     }
 }
 
-impl Exist<MessageId, MessageMetadata> for Storage {
-    fn exist(&self, message_id: &MessageId) -> Result<bool, <Self as StorageBackend>::Error> {
+impl Exist<BlockId, BlockMetadata> for Storage {
+    fn exist(&self, message_id: &BlockId) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_MESSAGE_ID_TO_METADATA)?
@@ -40,8 +40,8 @@ impl Exist<MessageId, MessageMetadata> for Storage {
     }
 }
 
-impl Exist<(MessageId, MessageId), ()> for Storage {
-    fn exist(&self, (parent, child): &(MessageId, MessageId)) -> Result<bool, <Self as StorageBackend>::Error> {
+impl Exist<(BlockId, BlockId), ()> for Storage {
+    fn exist(&self, (parent, child): &(BlockId, BlockId)) -> Result<bool, <Self as StorageBackend>::Error> {
         let mut key = parent.as_ref().to_vec();
         key.extend_from_slice(child.as_ref());
 
@@ -139,13 +139,13 @@ impl Exist<MilestoneIndex, OutputDiff> for Storage {
     }
 }
 
-impl Exist<(MilestoneIndex, UnreferencedMessage), ()> for Storage {
+impl Exist<(MilestoneIndex, UnreferencedBlock), ()> for Storage {
     fn exist(
         &self,
-        (index, unreferenced_message): &(MilestoneIndex, UnreferencedMessage),
+        (index, unreferenced_block): &(MilestoneIndex, UnreferencedBlock),
     ) -> Result<bool, <Self as StorageBackend>::Error> {
         let mut key = index.pack_to_vec();
-        key.extend_from_slice(unreferenced_message.as_ref());
+        key.extend_from_slice(unreferenced_block.as_ref());
 
         Ok(self
             .inner

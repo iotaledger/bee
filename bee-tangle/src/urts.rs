@@ -3,7 +3,7 @@
 
 use std::time::Instant;
 
-use bee_message::MessageId;
+use bee_block::BlockId;
 use hashbrown::{hash_map::Entry, HashMap, HashSet};
 use log::debug;
 use rand::seq::IteratorRandom;
@@ -35,7 +35,7 @@ const MAX_NUM_CHILDREN: u8 = 2;
 
 #[derive(Default)]
 struct TipMetadata {
-    children: HashSet<MessageId>,
+    children: HashSet<BlockId>,
     time_first_child: Option<Instant>,
 }
 
@@ -46,8 +46,8 @@ impl TipMetadata {
 }
 
 pub(crate) struct UrtsTipPool {
-    tips: HashMap<MessageId, TipMetadata>,
-    non_lazy_tips: HashSet<MessageId>,
+    tips: HashMap<BlockId, TipMetadata>,
+    non_lazy_tips: HashSet<BlockId>,
     below_max_depth: u32,
 }
 
@@ -60,15 +60,15 @@ impl UrtsTipPool {
         }
     }
 
-    pub(crate) fn non_lazy_tips(&self) -> &HashSet<MessageId> {
+    pub(crate) fn non_lazy_tips(&self) -> &HashSet<BlockId> {
         &self.non_lazy_tips
     }
 
     pub(crate) async fn insert<B: StorageBackend>(
         &mut self,
         tangle: &Tangle<B>,
-        message_id: MessageId,
-        parents: Vec<MessageId>,
+        message_id: BlockId,
+        parents: Vec<BlockId>,
     ) {
         if let Score::NonLazy = self.tip_score::<B>(tangle, &message_id).await {
             self.non_lazy_tips.insert(message_id);
@@ -80,7 +80,7 @@ impl UrtsTipPool {
         }
     }
 
-    fn add_child(&mut self, parent: MessageId, child: MessageId) {
+    fn add_child(&mut self, parent: BlockId, child: BlockId) {
         match self.tips.entry(parent) {
             Entry::Occupied(mut entry) => {
                 let metadata = entry.get_mut();
@@ -98,7 +98,7 @@ impl UrtsTipPool {
         }
     }
 
-    fn check_retention_rules_for_parent(&mut self, parent: &MessageId) {
+    fn check_retention_rules_for_parent(&mut self, parent: &BlockId) {
         // For every tip we add to the pool we call `add_child()`. `add_child()` makes sure that the parents of the tip
         // are present in the pool. Since `check_retention_rules_for_parent()` will be called after `add_child()` we
         // can be sure that the parents do exist. Therefore, unwrapping the parents here is fine.
@@ -139,7 +139,7 @@ impl UrtsTipPool {
         debug!("Non-lazy tips {}", self.non_lazy_tips.len());
     }
 
-    async fn tip_score<B: StorageBackend>(&self, tangle: &Tangle<B>, message_id: &MessageId) -> Score {
+    async fn tip_score<B: StorageBackend>(&self, tangle: &Tangle<B>, message_id: &BlockId) -> Score {
         // in case the tip was pruned by the node, consider tip as lazy
         if !tangle.contains(message_id) {
             Score::Lazy
@@ -165,7 +165,7 @@ impl UrtsTipPool {
         }
     }
 
-    pub fn choose_non_lazy_tips(&self) -> Option<Vec<MessageId>> {
+    pub fn choose_non_lazy_tips(&self) -> Option<Vec<BlockId>> {
         if self.non_lazy_tips.is_empty() {
             None
         } else {

@@ -12,9 +12,9 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 bee-autopeering = { version = "0.5.0", path = "../../bee-network/bee-autopeering", default-features = false, features = [ "rocksdb" ] }
+bee-block = { version = "0.2.0", path = "../../bee-block", default-features = false }
 bee-gossip = { version = "0.6.0", path = "../../bee-network/bee-gossip", default-features = false, features = [ "full" ] }
 bee-ledger = { version = "0.7.0", path = "../../bee-ledger", default-features = false, features = [ "workers" ] }
-bee-message = { version = "0.2.0", path = "../../bee-message", default-features = false }
 bee-plugin = { version = "0.1.0", path = "../bee-plugin/bee-plugin", default-features = false }
 bee-plugin-dashboard = { version = "0.1.0", path = "../bee-plugin/bee-plugin-dashboard", default-features = false, optional = true }
 bee-plugin-mps = { version = "0.1.0", path = "../bee-plugin/bee-plugin-mps", default-features = false }

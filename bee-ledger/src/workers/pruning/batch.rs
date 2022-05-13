@@ -3,11 +3,11 @@
 
 use std::collections::VecDeque;
 
-use bee_message::{output::OutputId, payload::milestone::MilestoneIndex, Message, MessageId};
+use bee_block::{output::OutputId, payload::milestone::MilestoneIndex, Block, BlockId};
 use bee_storage::access::{Batch, Fetch};
 use bee_tangle::{
-    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
-    unreferenced_message::UnreferencedMessage, Tangle,
+    block_metadata::BlockMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+    unreferenced_block::UnreferencedBlock, Tangle,
 };
 use hashbrown::{HashMap, HashSet};
 use ref_cast::RefCast;
@@ -24,14 +24,14 @@ use crate::{
     },
 };
 
-pub type Messages = HashSet<MessageId>;
-pub type ApproverCache = HashMap<MessageId, MilestoneIndex>;
+pub type Blocks = HashSet<BlockId>;
+pub type ApproverCache = HashMap<BlockId, MilestoneIndex>;
 pub type Seps = HashMap<SolidEntryPoint, MilestoneIndex>;
 
 #[derive(Eq, PartialEq, Hash)]
 pub struct Edge {
-    pub from_parent: MessageId,
-    pub to_child: MessageId,
+    pub from_parent: BlockId,
+    pub to_child: BlockId,
 }
 
 pub fn prune_confirmed_data<S: StorageBackend>(
@@ -42,7 +42,7 @@ pub fn prune_confirmed_data<S: StorageBackend>(
     current_seps: &Seps,
 ) -> Result<(Seps, ConfirmedDataPruningMetrics), Error> {
     // We keep a list of already visited messages.
-    let mut visited = Messages::with_capacity(512);
+    let mut visited = Blocks::with_capacity(512);
     // We keep a cache of approvers to prevent fetch the same data from the storage more than once.
     let mut approver_cache = ApproverCache::with_capacity(512);
     // We collect new SEPs during the traversal, and return them as a result of this function.
@@ -52,7 +52,7 @@ pub fn prune_confirmed_data<S: StorageBackend>(
     // FIXME: mitigation code
     let mitigation_threshold = tangle.config().below_max_depth() + EXTRA_PRUNING_DEPTH; // = BMD + 5
 
-    // Get the `MessageId` of the milestone we are about to prune from the storage.
+    // Get the `BlockId` of the milestone we are about to prune from the storage.
     let prune_id = *Fetch::<MilestoneIndex, MilestoneMetadata>::fetch(storage, &prune_index)
         .map_err(|e| Error::Storage(Box::new(e)))?
         .ok_or(Error::MissingMilestone(prune_index))?
@@ -74,10 +74,10 @@ pub fn prune_confirmed_data<S: StorageBackend>(
             continue;
         }
 
-        // Get the `Message` for `message_id`.
-        let msg = match Fetch::<MessageId, Message>::fetch(storage, &message_id)
+        // Get the `Block` for `message_id`.
+        let msg = match Fetch::<BlockId, Block>::fetch(storage, &message_id)
             .map_err(|e| Error::Storage(Box::new(e)))?
-            .ok_or(Error::MissingMessage(message_id))
+            .ok_or(Error::MissingBlock(message_id))
         {
             Ok(msg) => msg,
             Err(e) => {
@@ -86,7 +86,7 @@ pub fn prune_confirmed_data<S: StorageBackend>(
                 // (b) the algo didn't turn a confirmed message into an SEP although it should have (bug),
                 // (c) the algo treated a in fact confirmed message as unconfirmed, and removed it (bug).
                 log::error!(
-                    "failed to fetch `Message` associated with message id {} during past-cone traversal of milestone {} ({})",
+                    "failed to fetch `Block` associated with message id {} during past-cone traversal of milestone {} ({})",
                     &message_id,
                     &prune_index,
                     &prune_id,
@@ -120,7 +120,7 @@ pub fn prune_confirmed_data<S: StorageBackend>(
         // ---
 
         // Fetch its approvers from the storage.
-        let approvers = Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &message_id)
+        let approvers = Fetch::<BlockId, Vec<BlockId>>::fetch(storage, &message_id)
             .map_err(|e| Error::Storage(Box::new(e)))?
             .ok_or(Error::MissingApprovers(message_id))?;
 
@@ -149,7 +149,7 @@ pub fn prune_confirmed_data<S: StorageBackend>(
                 // We need to fetch the metadata of this approver (slow path).
                 metrics.approver_cache_miss += 1;
 
-                let unvisited_md = Fetch::<MessageId, MessageMetadata>::fetch(storage, &unvisited_id)
+                let unvisited_md = Fetch::<BlockId, BlockMetadata>::fetch(storage, &unvisited_id)
                     .map_err(|e| Error::Storage(Box::new(e)))?
                     .ok_or(Error::MissingMetadata(unvisited_id))?;
 
@@ -211,7 +211,7 @@ pub fn prune_unconfirmed_data<S: StorageBackend>(
 ) -> Result<UnconfirmedDataPruningMetrics, Error> {
     let mut metrics = UnconfirmedDataPruningMetrics::default();
 
-    let unconf_msgs = match Fetch::<MilestoneIndex, Vec<UnreferencedMessage>>::fetch(storage, &prune_index)
+    let unconf_msgs = match Fetch::<MilestoneIndex, Vec<UnreferencedBlock>>::fetch(storage, &prune_index)
         .map_err(|e| Error::Storage(Box::new(e)))?
     {
         Some(unconf_msgs) => {
@@ -231,9 +231,7 @@ pub fn prune_unconfirmed_data<S: StorageBackend>(
     // TODO: consider using `MultiFetch`
     'outer_loop: for unconf_msg_id in unconf_msgs.iter().map(|unconf_msg| unconf_msg.message_id()) {
         // Skip those that were confirmed.
-        match Fetch::<MessageId, MessageMetadata>::fetch(storage, unconf_msg_id)
-            .map_err(|e| Error::Storage(Box::new(e)))?
-        {
+        match Fetch::<BlockId, BlockMetadata>::fetch(storage, unconf_msg_id).map_err(|e| Error::Storage(Box::new(e)))? {
             Some(msg_meta) => {
                 if msg_meta.flags().is_referenced() {
                     metrics.were_confirmed += 1;
@@ -255,13 +253,13 @@ pub fn prune_unconfirmed_data<S: StorageBackend>(
                     // In other words: If we find at least one confirmed approver, then we know the flag wasn't set
                     // appropriatedly for the current message due to THE bug, and that we cannot prune it.
                     // ---
-                    let unconf_approvers = Fetch::<MessageId, Vec<MessageId>>::fetch(storage, unconf_msg_id)
+                    let unconf_approvers = Fetch::<BlockId, Vec<BlockId>>::fetch(storage, unconf_msg_id)
                         .map_err(|e| Error::Storage(Box::new(e)))?
                         .ok_or(Error::MissingApprovers(*unconf_msg_id))?;
 
                     for unconf_approver_id in unconf_approvers {
                         if let Some(unconf_approver_md) =
-                            Fetch::<MessageId, MessageMetadata>::fetch(storage, &unconf_approver_id)
+                            Fetch::<BlockId, BlockMetadata>::fetch(storage, &unconf_approver_id)
                                 .map_err(|e| Error::Storage(Box::new(e)))?
                         {
                             if unconf_approver_md.flags().is_referenced() {
@@ -280,7 +278,7 @@ pub fn prune_unconfirmed_data<S: StorageBackend>(
         }
 
         // Delete those messages that remained unconfirmed.
-        match Fetch::<MessageId, Message>::fetch(storage, unconf_msg_id).map_err(|e| Error::Storage(Box::new(e)))? {
+        match Fetch::<BlockId, Block>::fetch(storage, unconf_msg_id).map_err(|e| Error::Storage(Box::new(e)))? {
             Some(msg) => {
                 let parents = msg.parents();
 
@@ -302,7 +300,7 @@ pub fn prune_unconfirmed_data<S: StorageBackend>(
             }
         }
 
-        Batch::<(MilestoneIndex, UnreferencedMessage), ()>::batch_delete(
+        Batch::<(MilestoneIndex, UnreferencedBlock), ()>::batch_delete(
             storage,
             batch,
             &(prune_index, (*unconf_msg_id).into()),
@@ -337,21 +335,17 @@ pub fn prune_milestone_data<S: StorageBackend>(
 fn prune_message_and_metadata<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
-    message_id: &MessageId,
+    message_id: &BlockId,
 ) -> Result<(), Error> {
-    Batch::<MessageId, Message>::batch_delete(storage, batch, message_id).map_err(|e| Error::Storage(Box::new(e)))?;
-    Batch::<MessageId, MessageMetadata>::batch_delete(storage, batch, message_id)
+    Batch::<BlockId, Block>::batch_delete(storage, batch, message_id).map_err(|e| Error::Storage(Box::new(e)))?;
+    Batch::<BlockId, BlockMetadata>::batch_delete(storage, batch, message_id)
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
     Ok(())
 }
 
-fn prune_edge<S: StorageBackend>(
-    storage: &S,
-    batch: &mut S::Batch,
-    edge: &(MessageId, MessageId),
-) -> Result<(), Error> {
-    Batch::<(MessageId, MessageId), ()>::batch_delete(storage, batch, edge).map_err(|e| Error::Storage(Box::new(e)))?;
+fn prune_edge<S: StorageBackend>(storage: &S, batch: &mut S::Batch, edge: &(BlockId, BlockId)) -> Result<(), Error> {
+    Batch::<(BlockId, BlockId), ()>::batch_delete(storage, batch, edge).map_err(|e| Error::Storage(Box::new(e)))?;
 
     Ok(())
 }

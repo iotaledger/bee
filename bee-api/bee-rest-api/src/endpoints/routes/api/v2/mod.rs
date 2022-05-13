@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub mod add_peer;
+pub mod block_metadata;
 pub mod info;
 pub mod message;
 pub mod message_children;
-pub mod message_metadata;
 pub mod message_raw;
 pub mod milestone_by_milestone_id;
 pub mod milestone_by_milestone_index;
@@ -82,7 +82,7 @@ pub(crate) fn filter<B: StorageBackend>(
         allowed_ips.clone(),
         tangle.clone(),
     ))
-    .or(message_metadata::filter(
+    .or(block_metadata::filter(
         public_routes.clone(),
         allowed_ips.clone(),
         tangle.clone(),

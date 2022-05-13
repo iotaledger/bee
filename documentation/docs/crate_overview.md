@@ -11,28 +11,17 @@ keywords:
 
 In this section, you will find references to all of the crates that make up Bee.  
 
-
 ## bee-api
 
 The default REST API implementation for the IOTA Bee node software.
 
-## bee-common
+## bee-block
 
-### bee-common
-
-Common utilities used across the bee framework.
-
-### bee-common-derive
-
-Derive macros for the `bee-common` crate.
+Implementation of [RFC: Block](https://github.com/GalRogozinski/protocol-rfcs/blob/message/text/0017-message/0017-message.md).
 
 ## bee-ledger
 
 All types and features required to compute and maintain the ledger state.
-
-## bee-message
-
-Implementation of [RFC: Message](https://github.com/GalRogozinski/protocol-rfcs/blob/message/text/0017-message/0017-message.md).
 
 ## bee-gossip
 

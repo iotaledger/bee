@@ -1,87 +1,87 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{payload::milestone::MilestoneIndex, MessageId};
+use bee_block::{payload::milestone::MilestoneIndex, BlockId};
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, InsertStrict, MultiFetch, Truncate, Update},
     backend,
 };
-use bee_tangle::message_metadata::MessageMetadata;
-use bee_test::rand::{message::rand_message_id, message_metadata::rand_message_metadata};
+use bee_tangle::block_metadata::BlockMetadata;
+use bee_test::rand::{block::rand_block_id, block_metadata::rand_block_metadata};
 
 pub trait StorageBackend:
     backend::StorageBackend
-    + Exist<MessageId, MessageMetadata>
-    + Fetch<MessageId, MessageMetadata>
-    + for<'a> MultiFetch<'a, MessageId, MessageMetadata>
-    + InsertStrict<MessageId, MessageMetadata>
-    + Delete<MessageId, MessageMetadata>
+    + Exist<BlockId, BlockMetadata>
+    + Fetch<BlockId, BlockMetadata>
+    + for<'a> MultiFetch<'a, BlockId, BlockMetadata>
+    + InsertStrict<BlockId, BlockMetadata>
+    + Delete<BlockId, BlockMetadata>
     + BatchBuilder
-    + Batch<MessageId, MessageMetadata>
-    + for<'a> AsIterator<'a, MessageId, MessageMetadata>
-    + Truncate<MessageId, MessageMetadata>
-    + Update<MessageId, MessageMetadata>
+    + Batch<BlockId, BlockMetadata>
+    + for<'a> AsIterator<'a, BlockId, BlockMetadata>
+    + Truncate<BlockId, BlockMetadata>
+    + Update<BlockId, BlockMetadata>
 {
 }
 
 impl<T> StorageBackend for T where
     T: backend::StorageBackend
-        + Exist<MessageId, MessageMetadata>
-        + Fetch<MessageId, MessageMetadata>
-        + for<'a> MultiFetch<'a, MessageId, MessageMetadata>
-        + InsertStrict<MessageId, MessageMetadata>
-        + Delete<MessageId, MessageMetadata>
+        + Exist<BlockId, BlockMetadata>
+        + Fetch<BlockId, BlockMetadata>
+        + for<'a> MultiFetch<'a, BlockId, BlockMetadata>
+        + InsertStrict<BlockId, BlockMetadata>
+        + Delete<BlockId, BlockMetadata>
         + BatchBuilder
-        + Batch<MessageId, MessageMetadata>
-        + for<'a> AsIterator<'a, MessageId, MessageMetadata>
-        + Truncate<MessageId, MessageMetadata>
-        + Update<MessageId, MessageMetadata>
+        + Batch<BlockId, BlockMetadata>
+        + for<'a> AsIterator<'a, BlockId, BlockMetadata>
+        + Truncate<BlockId, BlockMetadata>
+        + Update<BlockId, BlockMetadata>
 {
 }
 
 pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
-    let (message_id, metadata) = (rand_message_id(), rand_message_metadata());
+    let (message_id, metadata) = (rand_block_id(), rand_block_metadata());
 
-    assert!(!Exist::<MessageId, MessageMetadata>::exist(storage, &message_id).unwrap());
+    assert!(!Exist::<BlockId, BlockMetadata>::exist(storage, &message_id).unwrap());
     assert!(
-        Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
+        Fetch::<BlockId, BlockMetadata>::fetch(storage, &message_id)
             .unwrap()
             .is_none()
     );
-    let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch(storage, &[message_id])
+    let results = MultiFetch::<BlockId, BlockMetadata>::multi_fetch(storage, &[message_id])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(None))));
 
-    InsertStrict::<MessageId, MessageMetadata>::insert_strict(storage, &message_id, &metadata).unwrap();
-    assert!(Exist::<MessageId, MessageMetadata>::exist(storage, &message_id).unwrap());
+    InsertStrict::<BlockId, BlockMetadata>::insert_strict(storage, &message_id, &metadata).unwrap();
+    assert!(Exist::<BlockId, BlockMetadata>::exist(storage, &message_id).unwrap());
 
-    // calling `insert_strict` with the same `MessageId` but a different `MessageMetadata` should
+    // calling `insert_strict` with the same `BlockId` but a different `BlockMetadata` should
     // not overwrite the old value.
     {
         let index = metadata.milestone_index().map_or(0, |i| *i + 1);
         let mut metadata = metadata;
         metadata.set_milestone_index(MilestoneIndex(index));
 
-        InsertStrict::<MessageId, MessageMetadata>::insert_strict(storage, &message_id, &metadata).unwrap();
+        InsertStrict::<BlockId, BlockMetadata>::insert_strict(storage, &message_id, &metadata).unwrap();
     }
     assert_eq!(
-        Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
+        Fetch::<BlockId, BlockMetadata>::fetch(storage, &message_id)
             .unwrap()
             .unwrap(),
         metadata,
         "`InsertStrict` should not overwrite"
     );
 
-    let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch(storage, &[message_id])
+    let results = MultiFetch::<BlockId, BlockMetadata>::multi_fetch(storage, &[message_id])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(Some(v))) if v == &metadata));
 
     let milestone_index = {
-        let index = Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
+        let index = Fetch::<BlockId, BlockMetadata>::fetch(storage, &message_id)
             .unwrap()
             .unwrap()
             .milestone_index();
@@ -89,29 +89,29 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
         MilestoneIndex(index.map_or(0, |i| i.wrapping_add(1)))
     };
 
-    Update::<MessageId, MessageMetadata>::update(storage, &message_id, |metadata: &mut MessageMetadata| {
+    Update::<BlockId, BlockMetadata>::update(storage, &message_id, |metadata: &mut BlockMetadata| {
         metadata.set_milestone_index(milestone_index);
     })
     .unwrap();
 
     assert_eq!(
-        Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
+        Fetch::<BlockId, BlockMetadata>::fetch(storage, &message_id)
             .unwrap()
             .unwrap()
             .milestone_index(),
         Some(milestone_index),
     );
 
-    Delete::<MessageId, MessageMetadata>::delete(storage, &message_id).unwrap();
+    Delete::<BlockId, BlockMetadata>::delete(storage, &message_id).unwrap();
 
-    assert!(!Exist::<MessageId, MessageMetadata>::exist(storage, &message_id).unwrap());
+    assert!(!Exist::<BlockId, BlockMetadata>::exist(storage, &message_id).unwrap());
     assert!(
-        Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
+        Fetch::<BlockId, BlockMetadata>::fetch(storage, &message_id)
             .unwrap()
             .is_none()
     );
 
-    let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch(storage, &[message_id])
+    let results = MultiFetch::<BlockId, BlockMetadata>::multi_fetch(storage, &[message_id])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
@@ -122,23 +122,23 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
     let mut metadatas = Vec::new();
 
     for _ in 0..10 {
-        let (message_id, metadata) = (rand_message_id(), rand_message_metadata());
-        InsertStrict::<MessageId, MessageMetadata>::insert_strict(storage, &message_id, &metadata).unwrap();
-        Batch::<MessageId, MessageMetadata>::batch_delete(storage, &mut batch, &message_id).unwrap();
+        let (message_id, metadata) = (rand_block_id(), rand_block_metadata());
+        InsertStrict::<BlockId, BlockMetadata>::insert_strict(storage, &message_id, &metadata).unwrap();
+        Batch::<BlockId, BlockMetadata>::batch_delete(storage, &mut batch, &message_id).unwrap();
         message_ids.push(message_id);
         metadatas.push((message_id, None));
     }
 
     for _ in 0..10 {
-        let (message_id, metadata) = (rand_message_id(), rand_message_metadata());
-        Batch::<MessageId, MessageMetadata>::batch_insert(storage, &mut batch, &message_id, &metadata).unwrap();
+        let (message_id, metadata) = (rand_block_id(), rand_block_metadata());
+        Batch::<BlockId, BlockMetadata>::batch_insert(storage, &mut batch, &message_id, &metadata).unwrap();
         message_ids.push(message_id);
         metadatas.push((message_id, Some(metadata)));
     }
 
     storage.batch_commit(batch, true).unwrap();
 
-    let iter = AsIterator::<MessageId, MessageMetadata>::iter(storage).unwrap();
+    let iter = AsIterator::<BlockId, BlockMetadata>::iter(storage).unwrap();
     let mut count = 0;
 
     for result in iter {
@@ -149,7 +149,7 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(count, 10);
 
-    let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch(storage, &message_ids)
+    let results = MultiFetch::<BlockId, BlockMetadata>::multi_fetch(storage, &message_ids)
         .unwrap()
         .collect::<Vec<_>>();
 
@@ -159,9 +159,9 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
         assert_eq!(metadata, result.unwrap());
     }
 
-    Truncate::<MessageId, MessageMetadata>::truncate(storage).unwrap();
+    Truncate::<BlockId, BlockMetadata>::truncate(storage).unwrap();
 
-    let mut iter = AsIterator::<MessageId, MessageMetadata>::iter(storage).unwrap();
+    let mut iter = AsIterator::<BlockId, BlockMetadata>::iter(storage).unwrap();
 
     assert!(iter.next().is_none());
 }

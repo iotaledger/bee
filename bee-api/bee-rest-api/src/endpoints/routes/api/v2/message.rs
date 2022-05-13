@@ -3,7 +3,7 @@
 
 use std::net::IpAddr;
 
-use bee_message::{MessageDto, MessageId};
+use bee_block::{BlockDto, BlockId};
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::Tangle;
 use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
@@ -16,7 +16,7 @@ use crate::{
     types::responses::MessageResponse,
 };
 
-fn path() -> impl Filter<Extract = (MessageId,), Error = Rejection> + Clone {
+fn path() -> impl Filter<Extract = (BlockId,), Error = Rejection> + Clone {
     super::path()
         .and(warp::path("messages"))
         .and(message_id())
@@ -37,11 +37,11 @@ pub(crate) fn filter<B: StorageBackend>(
 }
 
 pub(crate) fn message<B: StorageBackend>(
-    message_id: MessageId,
+    message_id: BlockId,
     tangle: ResourceHandle<Tangle<B>>,
 ) -> Result<impl Reply, Rejection> {
     match tangle.get(&message_id) {
-        Some(message) => Ok(warp::reply::json(&MessageResponse(MessageDto::from(&message)))),
+        Some(message) => Ok(warp::reply::json(&MessageResponse(BlockDto::from(&message)))),
         None => Err(reject::custom(CustomRejection::NotFound(
             "can not find message".to_string(),
         ))),

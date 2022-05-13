@@ -4,7 +4,7 @@
 use std::any::TypeId;
 
 use async_trait::async_trait;
-use bee_message::{
+use bee_block::{
     output::{unlock_condition::AddressUnlockCondition, BasicOutput, Output, OutputId},
     payload::{
         milestone::{MilestoneId, MilestoneIndex, ReceiptMilestoneOption},
@@ -12,7 +12,7 @@ use bee_message::{
         Payload,
     },
     semantic::ConflictReason,
-    MessageId,
+    BlockId,
 };
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{Tangle, TangleWorker};
@@ -26,7 +26,7 @@ use crate::{
     workers::{
         consensus::{metadata::WhiteFlagMetadata, state::validate_ledger_state, white_flag},
         error::Error,
-        event::{LedgerUpdated, MessageReferenced, MilestoneConfirmed, OutputConsumed, OutputCreated, ReceiptCreated},
+        event::{BlockReferenced, LedgerUpdated, MilestoneConfirmed, OutputConsumed, OutputCreated, ReceiptCreated},
         pruning::{condition::should_prune, config::PruningConfig, prune},
         snapshot::{condition::should_snapshot, config::SnapshotConfig, worker::SnapshotWorker},
         storage::{self, StorageBackend},
@@ -40,7 +40,7 @@ pub(crate) const EXTRA_PRUNING_DEPTH: u32 = 5;
 #[allow(clippy::type_complexity)]
 pub enum ConsensusWorkerCommand {
     /// Command to confirm a milestone.
-    ConfirmMilestone(MessageId),
+    ConfirmMilestone(BlockId),
     /// Command to fetch an output.
     FetchOutput(
         OutputId,
@@ -73,7 +73,7 @@ async fn confirm<N: Node>(
     tangle: &Tangle<N::Backend>,
     storage: &N::Backend,
     bus: &Bus<'static>,
-    message_id: MessageId,
+    message_id: BlockId,
     ledger_index: &mut LedgerIndex,
     receipt_migrated_at: &mut MilestoneIndex,
 ) -> Result<(), Error>
@@ -82,7 +82,7 @@ where
 {
     let message = tangle
         .get(&message_id)
-        .ok_or(Error::MilestoneMessageNotFound(message_id))?;
+        .ok_or(Error::MilestoneBlockNotFound(message_id))?;
 
     let milestone = match message.payload() {
         Some(Payload::Milestone(milestone)) => milestone,
@@ -179,31 +179,31 @@ where
     tangle.update_confirmed_milestone_index(milestone.essence().index());
 
     for message_id in metadata.excluded_no_transaction_messages.iter() {
-        tangle.update_metadata(message_id, |message_metadata| {
-            message_metadata.set_conflict(ConflictReason::None);
-            message_metadata.reference(milestone.essence().timestamp());
+        tangle.update_metadata(message_id, |block_metadata| {
+            block_metadata.set_conflict(ConflictReason::None);
+            block_metadata.reference(milestone.essence().timestamp());
         });
-        bus.dispatch(MessageReferenced {
+        bus.dispatch(BlockReferenced {
             message_id: *message_id,
         });
     }
 
     for (message_id, conflict) in metadata.excluded_conflicting_messages.iter() {
-        tangle.update_metadata(message_id, |message_metadata| {
-            message_metadata.set_conflict(*conflict);
-            message_metadata.reference(milestone.essence().timestamp());
+        tangle.update_metadata(message_id, |block_metadata| {
+            block_metadata.set_conflict(*conflict);
+            block_metadata.reference(milestone.essence().timestamp());
         });
-        bus.dispatch(MessageReferenced {
+        bus.dispatch(BlockReferenced {
             message_id: *message_id,
         });
     }
 
     for message_id in metadata.included_messages.iter() {
-        tangle.update_metadata(message_id, |message_metadata| {
-            message_metadata.set_conflict(ConflictReason::None);
-            message_metadata.reference(milestone.essence().timestamp());
+        tangle.update_metadata(message_id, |block_metadata| {
+            block_metadata.set_conflict(ConflictReason::None);
+            block_metadata.reference(milestone.essence().timestamp());
         });
-        bus.dispatch(MessageReferenced {
+        bus.dispatch(BlockReferenced {
             message_id: *message_id,
         });
     }

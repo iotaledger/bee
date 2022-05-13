@@ -6,17 +6,17 @@ pub mod feature_block;
 /// Module providing random unlock condition generation utilities.
 pub mod unlock_condition;
 
-use bee_ledger::types::{ConsumedOutput, CreatedOutput, TreasuryOutput, Unspent};
-use bee_message::output::{
+use bee_block::output::{
     self, unlock_condition::ImmutableAliasAddressUnlockCondition, InputsCommitment, Output, OutputId,
     SimpleTokenScheme, TokenScheme, OUTPUT_INDEX_RANGE,
 };
+use bee_ledger::types::{ConsumedOutput, CreatedOutput, TreasuryOutput, Unspent};
 use primitive_types::U256;
 
 use crate::rand::{
     address::rand_alias_address,
+    block::rand_block_id,
     bytes::rand_bytes_array,
-    message::rand_message_id,
     milestone::{rand_milestone_id, rand_milestone_index},
     number::{rand_number, rand_number_range},
     output::{
@@ -142,7 +142,7 @@ pub fn rand_consumed_output() -> ConsumedOutput {
 
 /// Generates a random [`CreatedOutput`].
 pub fn rand_created_output() -> CreatedOutput {
-    CreatedOutput::new(rand_message_id(), rand_milestone_index(), rand_number(), rand_output())
+    CreatedOutput::new(rand_block_id(), rand_milestone_index(), rand_number(), rand_output())
 }
 
 /// Generates a random [`InputsCommitment`].

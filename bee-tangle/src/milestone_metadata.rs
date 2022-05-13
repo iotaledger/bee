@@ -1,19 +1,19 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{payload::milestone::MilestoneId, MessageId};
+use bee_block::{payload::milestone::MilestoneId, BlockId};
 
 /// Defines milestone metadata.
 #[derive(Clone, Debug, Eq, PartialEq, packable::Packable)]
 pub struct MilestoneMetadata {
-    message_id: MessageId,
+    message_id: BlockId,
     milestone_id: MilestoneId,
     timestamp: u32,
 }
 
 impl MilestoneMetadata {
     /// Creates a new [`MilestoneMetadata`].
-    pub fn new(message_id: MessageId, milestone_id: MilestoneId, timestamp: u32) -> Self {
+    pub fn new(message_id: BlockId, milestone_id: MilestoneId, timestamp: u32) -> Self {
         Self {
             message_id,
             milestone_id,
@@ -22,7 +22,7 @@ impl MilestoneMetadata {
     }
 
     /// Returns the message id of a [`MilestoneMetadata`].
-    pub fn message_id(&self) -> &MessageId {
+    pub fn message_id(&self) -> &BlockId {
         &self.message_id
     }
 

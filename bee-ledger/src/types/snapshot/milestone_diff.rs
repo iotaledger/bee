@@ -3,7 +3,7 @@
 
 use std::collections::HashMap;
 
-use bee_message::{
+use bee_block::{
     output::{OutputId, TreasuryOutput},
     payload::{
         milestone::{MilestoneId, MilestonePayload},

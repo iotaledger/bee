@@ -3,11 +3,11 @@
 
 use std::collections::HashMap;
 
-use bee_message::{
+use bee_block::{
     output::OutputId,
     payload::milestone::{MilestoneId, MilestoneIndex},
     semantic::ConflictReason,
-    MessageId,
+    BlockId,
 };
 
 use crate::types::{ConsumedOutput, CreatedOutput};
@@ -23,13 +23,13 @@ pub struct WhiteFlagMetadata {
     /// Whether the previous milestone has been found in the past cone of the current milestone.
     pub(crate) found_previous_milestone: bool,
     /// The messages which were referenced by the confirmed milestone.
-    pub(crate) referenced_messages: Vec<MessageId>,
+    pub(crate) referenced_messages: Vec<BlockId>,
     /// The messages which were excluded because they did not include a transaction.
-    pub(crate) excluded_no_transaction_messages: Vec<MessageId>,
+    pub(crate) excluded_no_transaction_messages: Vec<BlockId>,
     /// The messages which were excluded because they were conflicting with the ledger state.
-    pub(crate) excluded_conflicting_messages: Vec<(MessageId, ConflictReason)>,
+    pub(crate) excluded_conflicting_messages: Vec<(BlockId, ConflictReason)>,
     // The messages which mutate the ledger in the order in which they were applied.
-    pub(crate) included_messages: Vec<MessageId>,
+    pub(crate) included_messages: Vec<BlockId>,
     /// The outputs created within the confirmed milestone.
     pub(crate) created_outputs: HashMap<OutputId, CreatedOutput>,
     /// The outputs consumed within the confirmed milestone.

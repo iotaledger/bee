@@ -34,11 +34,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Implementation of `InsertStrict<MessageId, MessageMetadata>` for `Storage`;
+- Implementation of `InsertStrict<BlockId, BlockMetadata>` for `Storage`;
 
 ### Removed
 
-- Implementation of `Insert<MessageId, MessageMetadata>` for `Storage`;
+- Implementation of `Insert<BlockId, BlockMetadata>` for `Storage`;
 
 ## 0.6.0 - 2022-03-11
 

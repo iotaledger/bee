@@ -4,11 +4,11 @@
 use std::{any::TypeId, cmp, convert::Infallible};
 
 use async_trait::async_trait;
-use bee_ledger::workers::consensus::{ConsensusWorker, ConsensusWorkerCommand};
-use bee_message::{
+use bee_block::{
     payload::milestone::{MilestoneId, MilestoneIndex},
-    MessageId,
+    BlockId,
 };
+use bee_ledger::workers::consensus::{ConsensusWorker, ConsensusWorkerCommand};
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{
     event::SolidMilestoneChanged, milestone_metadata::MilestoneMetadata, traversal, Tangle, TangleWorker,
@@ -41,7 +41,7 @@ async fn heavy_solidification<B: StorageBackend>(
     message_requester: &MessageRequesterWorker,
     requested_messages: &RequestedMessages,
     target_index: MilestoneIndex,
-    target_id: MessageId,
+    target_id: BlockId,
 ) -> usize {
     // TODO: This wouldn't be necessary if the traversal code wasn't closure-driven
     let mut missing = Vec::new();
@@ -72,7 +72,7 @@ fn solidify<B: StorageBackend>(
     peer_manager: &PeerManager,
     metrics: &NodeMetrics,
     bus: &Bus<'static>,
-    id: MessageId,
+    id: BlockId,
     index: MilestoneIndex,
 ) {
     debug!("New solid milestone {}.", *index);

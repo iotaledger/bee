@@ -1,15 +1,15 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_gossip::PeerId;
-use bee_message::{
+use bee_block::{
     output::OutputId,
     payload::{
         milestone::{MilestoneId, MilestoneIndex},
         transaction::TransactionId,
     },
-    MessageId,
+    BlockId,
 };
+use bee_gossip::PeerId;
 use warp::{reject, Filter, Rejection};
 
 use crate::endpoints::rejection::CustomRejection;
@@ -22,10 +22,10 @@ pub(super) fn output_id() -> impl Filter<Extract = (OutputId,), Error = Rejectio
     })
 }
 
-pub(super) fn message_id() -> impl Filter<Extract = (MessageId,), Error = Rejection> + Copy {
+pub(super) fn message_id() -> impl Filter<Extract = (BlockId,), Error = Rejection> + Copy {
     warp::path::param().and_then(|value: String| async move {
         value
-            .parse::<MessageId>()
+            .parse::<BlockId>()
             .map_err(|_| reject::custom(CustomRejection::BadRequest("invalid message id".to_string())))
     })
 }

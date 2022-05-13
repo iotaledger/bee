@@ -3,7 +3,7 @@
 
 use std::net::IpAddr;
 
-use bee_message::MessageId;
+use bee_block::BlockId;
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::Tangle;
 use packable::PackableExt;
@@ -14,7 +14,7 @@ use crate::endpoints::{
     rejection::CustomRejection, storage::StorageBackend,
 };
 
-fn path() -> impl Filter<Extract = (MessageId,), Error = warp::Rejection> + Clone {
+fn path() -> impl Filter<Extract = (BlockId,), Error = warp::Rejection> + Clone {
     super::path()
         .and(warp::path("messages"))
         .and(message_id())
@@ -36,7 +36,7 @@ pub(crate) fn filter<B: StorageBackend>(
 }
 
 pub fn message_raw<B: StorageBackend>(
-    message_id: MessageId,
+    message_id: BlockId,
     tangle: ResourceHandle<Tangle<B>>,
 ) -> Result<impl Reply, Rejection> {
     match tangle.get(&message_id) {

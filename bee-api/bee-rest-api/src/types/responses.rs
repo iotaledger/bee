@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{output::dto::OutputDto, payload::dto::MilestonePayloadDto, MessageDto};
+use bee_block::{output::dto::OutputDto, payload::dto::MilestonePayloadDto, BlockDto};
 use serde::{Deserialize, Serialize};
 
 use crate::types::{
@@ -124,7 +124,7 @@ pub struct MetricsResponse {
 /// Returns non-lazy tips.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct TipsResponse {
-    #[serde(rename = "tipMessageIds")]
+    #[serde(rename = "tipBlockIds")]
     pub tip_message_ids: Vec<String>,
 }
 
@@ -143,17 +143,17 @@ impl BodyInner for SubmitMessageResponse {}
 /// Response of GET /api/v2/messages/{message_id}.
 /// Returns a specific message.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-pub struct MessageResponse(pub MessageDto);
+pub struct MessageResponse(pub BlockDto);
 
 impl BodyInner for MessageResponse {}
 
 /// Response of GET /api/v2/messages/{message_id}/metadata.
 /// Returns the metadata of a message.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-pub struct MessageMetadataResponse {
+pub struct BlockMetadataResponse {
     #[serde(rename = "messageId")]
     pub message_id: String,
-    #[serde(rename = "parentMessageIds")]
+    #[serde(rename = "parentBlockIds")]
     pub parent_message_ids: Vec<String>,
     #[serde(rename = "isSolid")]
     pub is_solid: bool,
@@ -171,7 +171,7 @@ pub struct MessageMetadataResponse {
     pub should_reattach: Option<bool>,
 }
 
-impl BodyInner for MessageMetadataResponse {}
+impl BodyInner for BlockMetadataResponse {}
 
 /// Response of GET /api/v2/messages/{message_id}/children.
 /// Returns all children of a specific message.
@@ -182,7 +182,7 @@ pub struct MessageChildrenResponse {
     #[serde(rename = "maxResults")]
     pub max_results: usize,
     pub count: usize,
-    #[serde(rename = "childrenMessageIds")]
+    #[serde(rename = "childrenBlockIds")]
     pub children_message_ids: Vec<String>,
 }
 

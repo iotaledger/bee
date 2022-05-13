@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::Error as MessageError;
+use bee_block::Error as MessageError;
 use thiserror::Error;
 
 #[derive(Debug, Error)]

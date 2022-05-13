@@ -5,6 +5,6 @@
 mod access;
 
 impl_access_test!(
-    milestone_index_to_unreferenced_message_access_sled,
-    milestone_index_to_unreferenced_message_access
+    milestone_index_to_unreferenced_block_access_sled,
+    milestone_index_to_unreferenced_block_access
 );

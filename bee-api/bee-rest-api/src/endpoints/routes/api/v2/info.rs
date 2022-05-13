@@ -3,7 +3,7 @@
 
 use std::{convert::Infallible, net::IpAddr};
 
-use bee_message::constant::{PROTOCOL_VERSION, TOKEN_SUPPLY};
+use bee_block::constant::{PROTOCOL_VERSION, TOKEN_SUPPLY};
 use bee_protocol::workers::{config::ProtocolConfig, PeerManager};
 use bee_runtime::{node::NodeInfo, resource::ResourceHandle};
 use bee_tangle::Tangle;

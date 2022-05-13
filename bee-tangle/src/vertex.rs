@@ -3,14 +3,14 @@
 
 use std::sync::Arc;
 
-use bee_message::{Message, MessageId};
+use bee_block::{Block, BlockId};
 
-use crate::{metadata::MessageMetadata, MessageRef, VecSet};
+use crate::{metadata::BlockMetadata, MessageRef, VecSet};
 
 #[derive(Clone)]
 pub struct Vertex {
-    message: Option<(MessageRef, MessageMetadata)>,
-    children: (VecSet<MessageId>, bool), // Exhaustive flag
+    message: Option<(MessageRef, BlockMetadata)>,
+    children: (VecSet<BlockId>, bool), // Exhaustive flag
     eviction_blocks: isize,
 }
 
@@ -23,7 +23,7 @@ impl Vertex {
         }
     }
 
-    pub fn new(message: Message, metadata: MessageMetadata) -> Self {
+    pub fn new(message: Message, metadata: BlockMetadata) -> Self {
         Self {
             message: Some((MessageRef(Arc::new(message)), metadata)),
             children: (VecSet::default(), false),
@@ -31,11 +31,11 @@ impl Vertex {
         }
     }
 
-    pub fn parents(&self) -> Option<impl Iterator<Item = &MessageId> + '_> {
+    pub fn parents(&self) -> Option<impl Iterator<Item = &BlockId> + '_> {
         self.message().map(|m| m.parents().iter())
     }
 
-    pub fn message_and_metadata(&self) -> Option<&(MessageRef, MessageMetadata)> {
+    pub fn message_and_metadata(&self) -> Option<&(MessageRef, BlockMetadata)> {
         self.message.as_ref()
     }
 
@@ -43,19 +43,19 @@ impl Vertex {
         self.message_and_metadata().map(|(m, _)| m)
     }
 
-    pub fn metadata(&self) -> Option<&MessageMetadata> {
+    pub fn metadata(&self) -> Option<&BlockMetadata> {
         self.message_and_metadata().map(|(_, m)| m)
     }
 
-    pub fn metadata_mut(&mut self) -> Option<&mut MessageMetadata> {
+    pub fn metadata_mut(&mut self) -> Option<&mut BlockMetadata> {
         self.message.as_mut().map(|(_, m)| m)
     }
 
-    pub fn add_child(&mut self, child: MessageId) {
+    pub fn add_child(&mut self, child: BlockId) {
         self.children.0.insert(child);
     }
 
-    pub fn children(&self) -> &[MessageId] {
+    pub fn children(&self) -> &[BlockId] {
         &self.children.0
     }
 
@@ -68,7 +68,7 @@ impl Vertex {
         self.children.1 = true;
     }
 
-    pub(crate) fn insert_message_and_metadata(&mut self, message: Message, metadata: MessageMetadata) {
+    pub(crate) fn insert_message_and_metadata(&mut self, message: Message, metadata: BlockMetadata) {
         self.message = Some((MessageRef(Arc::new(message)), metadata));
     }
 

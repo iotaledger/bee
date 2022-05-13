@@ -3,7 +3,7 @@
 
 use std::net::IpAddr;
 
-use bee_message::payload::milestone::MilestoneId;
+use bee_block::payload::milestone::MilestoneId;
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::Tangle;
 use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};

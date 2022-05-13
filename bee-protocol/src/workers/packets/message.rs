@@ -5,7 +5,7 @@
 
 use std::ops::Range;
 
-use bee_message::Message;
+use bee_block::Block;
 
 use crate::workers::packets::Packet;
 
@@ -26,7 +26,7 @@ impl Packet for MessagePacket {
     const ID: u8 = 0x02;
 
     fn size_range() -> Range<usize> {
-        (Message::LENGTH_MIN)..(Message::LENGTH_MAX + 1)
+        (Block::LENGTH_MIN)..(Block::LENGTH_MAX + 1)
     }
 
     fn from_bytes(bytes: &[u8]) -> Self {
@@ -78,13 +78,13 @@ mod tests {
 
     #[test]
     fn size_range() {
-        assert!(!MessagePacket::size_range().contains(&(Message::LENGTH_MIN - 1)));
-        assert!(MessagePacket::size_range().contains(&Message::LENGTH_MIN));
-        assert!(MessagePacket::size_range().contains(&(Message::LENGTH_MIN + 1)));
+        assert!(!MessagePacket::size_range().contains(&(Block::LENGTH_MIN - 1)));
+        assert!(MessagePacket::size_range().contains(&Block::LENGTH_MIN));
+        assert!(MessagePacket::size_range().contains(&(Block::LENGTH_MIN + 1)));
 
-        assert!(MessagePacket::size_range().contains(&(Message::LENGTH_MAX - 1)));
-        assert!(MessagePacket::size_range().contains(&Message::LENGTH_MAX));
-        assert!(!MessagePacket::size_range().contains(&(Message::LENGTH_MAX + 1)));
+        assert!(MessagePacket::size_range().contains(&(Block::LENGTH_MAX - 1)));
+        assert!(MessagePacket::size_range().contains(&Block::LENGTH_MAX));
+        assert!(!MessagePacket::size_range().contains(&(Block::LENGTH_MAX + 1)));
     }
 
     #[test]

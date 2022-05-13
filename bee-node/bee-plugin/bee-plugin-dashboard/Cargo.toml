@@ -11,8 +11,8 @@ keywords = [ "iota", "tangle", "bee", "plugin", "dashboard" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
+bee-block = { version = "0.2.0", path = "../../../bee-block", default-features = false }
 bee-ledger = { version = "0.7.0", path = "../../../bee-ledger", default-features = false, features = [ "workers" ] }
-bee-message = { version = "0.2.0", path = "../../../bee-message", default-features = false }
 bee-protocol = { version = "0.2.0", path = "../../../bee-protocol", default-features = false, features = [ "workers" ] }
 bee-rest-api = { version = "0.2.0", path = "../../../bee-api/bee-rest-api", default-features = false, features = [ "endpoints", "peer" ] }
 bee-runtime = { version = "0.1.1-alpha", path = "../../../bee-runtime", default-features = false }

@@ -3,16 +3,16 @@
 
 /// Module providing random address generation utilities.
 pub mod address;
+/// Module providing random block generation utilities.
+pub mod block;
+/// Module providing random block metadata generation utilities.
+pub mod block_metadata;
 /// Module providing random boolean generation utilities.
 pub mod bool;
 /// Module providing random byte generation utilities.
 pub mod bytes;
 /// Module providing random input generation utilities.
 pub mod input;
-/// Module providing random message generation utilities.
-pub mod message;
-/// Module providing random message metadata generation utilities.
-pub mod message_metadata;
 /// Module providing random milestone generation utilities.
 pub mod milestone;
 /// Module providing random milestone option generation utilities.
@@ -39,5 +39,5 @@ pub mod solid_entry_point;
 pub mod string;
 /// Module providing random transaction generation utilities.
 pub mod transaction;
-/// Module providing random unreferenced message generation utilities.
-pub mod unreferenced_message;
+/// Module providing random unreferenced block generation utilities.
+pub mod unreferenced_block;

@@ -3,65 +3,65 @@
 
 use std::collections::HashMap;
 
-use bee_message::MessageId;
+use bee_block::BlockId;
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend,
 };
-use bee_test::rand::message::rand_message_id;
+use bee_test::rand::block::rand_block_id;
 
 pub trait StorageBackend:
     backend::StorageBackend
-    + Exist<(MessageId, MessageId), ()>
-    + Fetch<MessageId, Vec<MessageId>>
-    + Insert<(MessageId, MessageId), ()>
-    + Delete<(MessageId, MessageId), ()>
+    + Exist<(BlockId, BlockId), ()>
+    + Fetch<BlockId, Vec<BlockId>>
+    + Insert<(BlockId, BlockId), ()>
+    + Delete<(BlockId, BlockId), ()>
     + BatchBuilder
-    + Batch<(MessageId, MessageId), ()>
-    + for<'a> AsIterator<'a, (MessageId, MessageId), ()>
-    + Truncate<(MessageId, MessageId), ()>
+    + Batch<(BlockId, BlockId), ()>
+    + for<'a> AsIterator<'a, (BlockId, BlockId), ()>
+    + Truncate<(BlockId, BlockId), ()>
 {
 }
 
 impl<T> StorageBackend for T where
     T: backend::StorageBackend
-        + Exist<(MessageId, MessageId), ()>
-        + Fetch<MessageId, Vec<MessageId>>
-        + Insert<(MessageId, MessageId), ()>
-        + Delete<(MessageId, MessageId), ()>
+        + Exist<(BlockId, BlockId), ()>
+        + Fetch<BlockId, Vec<BlockId>>
+        + Insert<(BlockId, BlockId), ()>
+        + Delete<(BlockId, BlockId), ()>
         + BatchBuilder
-        + Batch<(MessageId, MessageId), ()>
-        + for<'a> AsIterator<'a, (MessageId, MessageId), ()>
-        + Truncate<(MessageId, MessageId), ()>
+        + Batch<(BlockId, BlockId), ()>
+        + for<'a> AsIterator<'a, (BlockId, BlockId), ()>
+        + Truncate<(BlockId, BlockId), ()>
 {
 }
 
 pub fn message_id_to_message_id_access<B: StorageBackend>(storage: &B) {
-    let (parent, child) = (rand_message_id(), rand_message_id());
+    let (parent, child) = (rand_block_id(), rand_block_id());
 
-    assert!(!Exist::<(MessageId, MessageId), ()>::exist(storage, &(parent, child)).unwrap());
+    assert!(!Exist::<(BlockId, BlockId), ()>::exist(storage, &(parent, child)).unwrap());
     assert!(
-        Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &parent)
+        Fetch::<BlockId, Vec<BlockId>>::fetch(storage, &parent)
             .unwrap()
             .unwrap()
             .is_empty()
     );
 
-    Insert::<(MessageId, MessageId), ()>::insert(storage, &(parent, child), &()).unwrap();
+    Insert::<(BlockId, BlockId), ()>::insert(storage, &(parent, child), &()).unwrap();
 
-    assert!(Exist::<(MessageId, MessageId), ()>::exist(storage, &(parent, child)).unwrap());
+    assert!(Exist::<(BlockId, BlockId), ()>::exist(storage, &(parent, child)).unwrap());
     assert_eq!(
-        Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &parent)
+        Fetch::<BlockId, Vec<BlockId>>::fetch(storage, &parent)
             .unwrap()
             .unwrap(),
         vec![child]
     );
 
-    Delete::<(MessageId, MessageId), ()>::delete(storage, &(parent, child)).unwrap();
+    Delete::<(BlockId, BlockId), ()>::delete(storage, &(parent, child)).unwrap();
 
-    assert!(!Exist::<(MessageId, MessageId), ()>::exist(storage, &(parent, child)).unwrap());
+    assert!(!Exist::<(BlockId, BlockId), ()>::exist(storage, &(parent, child)).unwrap());
     assert!(
-        Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &parent)
+        Fetch::<BlockId, Vec<BlockId>>::fetch(storage, &parent)
             .unwrap()
             .unwrap()
             .is_empty()
@@ -70,25 +70,25 @@ pub fn message_id_to_message_id_access<B: StorageBackend>(storage: &B) {
     let mut batch = B::batch_begin();
 
     for _ in 0..10 {
-        let (parent, child) = (rand_message_id(), rand_message_id());
-        Insert::<(MessageId, MessageId), ()>::insert(storage, &(parent, child), &()).unwrap();
-        Batch::<(MessageId, MessageId), ()>::batch_delete(storage, &mut batch, &(parent, child)).unwrap();
+        let (parent, child) = (rand_block_id(), rand_block_id());
+        Insert::<(BlockId, BlockId), ()>::insert(storage, &(parent, child), &()).unwrap();
+        Batch::<(BlockId, BlockId), ()>::batch_delete(storage, &mut batch, &(parent, child)).unwrap();
     }
 
-    let mut edges = HashMap::<MessageId, Vec<MessageId>>::new();
+    let mut edges = HashMap::<BlockId, Vec<BlockId>>::new();
 
     for _ in 0..5 {
-        let parent = rand_message_id();
+        let parent = rand_block_id();
         for _ in 0..5 {
-            let child = rand_message_id();
-            Batch::<(MessageId, MessageId), ()>::batch_insert(storage, &mut batch, &(parent, child), &()).unwrap();
+            let child = rand_block_id();
+            Batch::<(BlockId, BlockId), ()>::batch_insert(storage, &mut batch, &(parent, child), &()).unwrap();
             edges.entry(parent).or_default().push(child);
         }
     }
 
     storage.batch_commit(batch, true).unwrap();
 
-    let iter = AsIterator::<(MessageId, MessageId), ()>::iter(storage).unwrap();
+    let iter = AsIterator::<(BlockId, BlockId), ()>::iter(storage).unwrap();
     let mut count = 0;
 
     for result in iter {
@@ -99,9 +99,9 @@ pub fn message_id_to_message_id_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(count, edges.iter().fold(0, |acc, v| acc + v.1.len()));
 
-    Truncate::<(MessageId, MessageId), ()>::truncate(storage).unwrap();
+    Truncate::<(BlockId, BlockId), ()>::truncate(storage).unwrap();
 
-    let mut iter = AsIterator::<(MessageId, MessageId), ()>::iter(storage).unwrap();
+    let mut iter = AsIterator::<(BlockId, BlockId), ()>::iter(storage).unwrap();
 
     assert!(iter.next().is_none());
 }

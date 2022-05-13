@@ -3,7 +3,7 @@
 
 use std::net::IpAddr;
 
-use bee_message::MessageId;
+use bee_block::BlockId;
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::Tangle;
 use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
@@ -16,7 +16,7 @@ use crate::{
     types::responses::MessageChildrenResponse,
 };
 
-fn path() -> impl Filter<Extract = (MessageId,), Error = warp::Rejection> + Clone {
+fn path() -> impl Filter<Extract = (BlockId,), Error = warp::Rejection> + Clone {
     super::path()
         .and(warp::path("messages"))
         .and(message_id())
@@ -38,7 +38,7 @@ pub(crate) fn filter<B: StorageBackend>(
 }
 
 pub fn message_children<B: StorageBackend>(
-    message_id: MessageId,
+    message_id: BlockId,
     tangle: ResourceHandle<Tangle<B>>,
 ) -> Result<impl Reply, Rejection> {
     let mut children = Vec::from_iter(tangle.get_children(&message_id).unwrap_or_default());
@@ -49,6 +49,6 @@ pub fn message_children<B: StorageBackend>(
         message_id: message_id.to_string(),
         max_results,
         count,
-        children_message_ids: children.iter().map(MessageId::to_string).collect(),
+        children_message_ids: children.iter().map(BlockId::to_string).collect(),
     }))
 }

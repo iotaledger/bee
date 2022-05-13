@@ -5,14 +5,14 @@
 
 use std::sync::{PoisonError, RwLock};
 
-use bee_ledger::types::{
-    snapshot::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput, Unspent,
-};
-use bee_message::{
+use bee_block::{
     address::Ed25519Address,
     output::OutputId,
     payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
-    Message, MessageId,
+    Block, BlockId,
+};
+use bee_ledger::types::{
+    snapshot::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput, Unspent,
 };
 use bee_storage::{
     access::{Fetch, Insert},
@@ -20,8 +20,8 @@ use bee_storage::{
     system::{StorageHealth, StorageVersion, System, SYSTEM_HEALTH_KEY},
 };
 use bee_tangle::{
-    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
-    unreferenced_message::UnreferencedMessage,
+    block_metadata::BlockMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+    unreferenced_block::UnreferencedBlock,
 };
 use thiserror::Error;
 
@@ -56,9 +56,9 @@ pub struct Storage {
 #[derive(Default)]
 pub(crate) struct InnerStorage {
     pub(crate) system: Table<u8, System>,
-    pub(crate) message_id_to_message: Table<MessageId, Message>,
-    pub(crate) message_id_to_metadata: Table<MessageId, MessageMetadata>,
-    pub(crate) message_id_to_message_id: VecBinTable<MessageId, MessageId>,
+    pub(crate) message_id_to_message: Table<BlockId, Block>,
+    pub(crate) message_id_to_metadata: Table<BlockId, BlockMetadata>,
+    pub(crate) message_id_to_message_id: VecBinTable<BlockId, BlockId>,
     pub(crate) output_id_to_created_output: Table<OutputId, CreatedOutput>,
     pub(crate) output_id_to_consumed_output: Table<OutputId, ConsumedOutput>,
     pub(crate) output_id_unspent: Table<Unspent, ()>,
@@ -69,7 +69,7 @@ pub(crate) struct InnerStorage {
     pub(crate) snapshot_info: SingletonTable<SnapshotInfo>,
     pub(crate) solid_entry_point_to_milestone_index: Table<SolidEntryPoint, MilestoneIndex>,
     pub(crate) milestone_index_to_output_diff: Table<MilestoneIndex, OutputDiff>,
-    pub(crate) milestone_index_to_unreferenced_message: VecTable<MilestoneIndex, UnreferencedMessage>,
+    pub(crate) milestone_index_to_unreferenced_block: VecTable<MilestoneIndex, UnreferencedBlock>,
     pub(crate) milestone_index_to_receipt: VecTable<MilestoneIndex, Receipt>,
     pub(crate) spent_to_treasury_output: VecTable<bool, TreasuryOutput>,
 }

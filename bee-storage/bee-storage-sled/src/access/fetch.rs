@@ -3,19 +3,19 @@
 
 //! Fetch access operations.
 
-use bee_ledger::types::{
-    snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
-};
-use bee_message::{
+use bee_block::{
     address::Ed25519Address,
     output::OutputId,
     payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
-    Message, MessageId,
+    Block, BlockId,
+};
+use bee_ledger::types::{
+    snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
 };
 use bee_storage::{access::Fetch, backend::StorageBackend, system::System};
 use bee_tangle::{
-    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
-    unreferenced_message::UnreferencedMessage,
+    block_metadata::BlockMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+    unreferenced_block::UnreferencedBlock,
 };
 use packable::PackableExt;
 
@@ -31,43 +31,43 @@ impl Fetch<u8, System> for Storage {
     }
 }
 
-impl Fetch<MessageId, Message> for Storage {
-    fn fetch(&self, message_id: &MessageId) -> Result<Option<Message>, <Self as StorageBackend>::Error> {
+impl Fetch<BlockId, Block> for Storage {
+    fn fetch(&self, message_id: &BlockId) -> Result<Option<Block>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_MESSAGE_ID_TO_MESSAGE)?
             .get(message_id)?
             // Unpacking from storage is fine.
-            .map(|v| Message::unpack_unverified(&mut v.as_ref()).unwrap()))
+            .map(|v| Block::unpack_unverified(&mut v.as_ref()).unwrap()))
     }
 }
 
-impl Fetch<MessageId, MessageMetadata> for Storage {
-    fn fetch(&self, message_id: &MessageId) -> Result<Option<MessageMetadata>, <Self as StorageBackend>::Error> {
+impl Fetch<BlockId, BlockMetadata> for Storage {
+    fn fetch(&self, message_id: &BlockId) -> Result<Option<BlockMetadata>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_MESSAGE_ID_TO_METADATA)?
             .get(message_id)?
             // Unpacking from storage is fine.
-            .map(|v| MessageMetadata::unpack_unverified(&mut v.as_ref()).unwrap()))
+            .map(|v| BlockMetadata::unpack_unverified(&mut v.as_ref()).unwrap()))
     }
 }
 
-impl Fetch<MessageId, Vec<MessageId>> for Storage {
-    fn fetch(&self, parent: &MessageId) -> Result<Option<Vec<MessageId>>, <Self as StorageBackend>::Error> {
+impl Fetch<BlockId, Vec<BlockId>> for Storage {
+    fn fetch(&self, parent: &BlockId) -> Result<Option<Vec<BlockId>>, <Self as StorageBackend>::Error> {
         Ok(Some(
             self.inner
                 .open_tree(TREE_MESSAGE_ID_TO_MESSAGE_ID)?
                 .scan_prefix(parent)
                 .map(|result| {
                     let (key, _) = result?;
-                    let (_, child) = key.split_at(MessageId::LENGTH);
+                    let (_, child) = key.split_at(BlockId::LENGTH);
                     // Unpacking from storage is fine.
-                    let child: [u8; MessageId::LENGTH] = child.try_into().unwrap();
-                    Ok(MessageId::from(child))
+                    let child: [u8; BlockId::LENGTH] = child.try_into().unwrap();
+                    Ok(BlockId::from(child))
                 })
                 .take(self.config.storage.fetch_edge_limit)
-                .collect::<Result<Vec<MessageId>, Self::Error>>()?,
+                .collect::<Result<Vec<BlockId>, Self::Error>>()?,
         ))
     }
 }
@@ -180,23 +180,20 @@ impl Fetch<MilestoneIndex, OutputDiff> for Storage {
     }
 }
 
-impl Fetch<MilestoneIndex, Vec<UnreferencedMessage>> for Storage {
-    fn fetch(
-        &self,
-        index: &MilestoneIndex,
-    ) -> Result<Option<Vec<UnreferencedMessage>>, <Self as StorageBackend>::Error> {
+impl Fetch<MilestoneIndex, Vec<UnreferencedBlock>> for Storage {
+    fn fetch(&self, index: &MilestoneIndex) -> Result<Option<Vec<UnreferencedBlock>>, <Self as StorageBackend>::Error> {
         Ok(Some(
             self.inner
                 .open_tree(TREE_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE)?
                 .scan_prefix(index.pack_to_vec())
                 .map(|result| {
                     let (key, _) = result?;
-                    let (_, unreferenced_message) = key.split_at(std::mem::size_of::<MilestoneIndex>());
+                    let (_, unreferenced_block) = key.split_at(std::mem::size_of::<MilestoneIndex>());
                     // Unpacking from storage is fine.
-                    let unreferenced_message: [u8; MessageId::LENGTH] = unreferenced_message.try_into().unwrap();
-                    Ok(UnreferencedMessage::from(MessageId::from(unreferenced_message)))
+                    let unreferenced_block: [u8; BlockId::LENGTH] = unreferenced_block.try_into().unwrap();
+                    Ok(UnreferencedBlock::from(BlockId::from(unreferenced_block)))
                 })
-                .collect::<Result<Vec<UnreferencedMessage>, Self::Error>>()?,
+                .collect::<Result<Vec<UnreferencedBlock>, Self::Error>>()?,
         ))
     }
 }

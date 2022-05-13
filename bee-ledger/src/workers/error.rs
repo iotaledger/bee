@@ -5,7 +5,7 @@
 
 use std::convert::Infallible;
 
-use bee_message::{payload::milestone::MilestoneIndex, Error as MessageError, MessageId};
+use bee_block::{payload::milestone::MilestoneIndex, BlockId, Error as BlockError};
 use packable::error::UnpackError;
 
 use crate::{
@@ -24,9 +24,9 @@ pub enum Error {
     #[error("types error: {0}")]
     Types(#[from] TypesError),
     #[error("message error: {0}")]
-    Message(#[from] MessageError),
+    Block(#[from] BlockError),
     #[error("message {0} is missing in the past cone of the milestone")]
-    MissingMessage(MessageId),
+    MissingBlock(BlockId),
     #[error("unsupported input kind: {0}")]
     UnsupportedInputKind(u8),
     #[error("unsupported output kind: {0}")]
@@ -34,7 +34,7 @@ pub enum Error {
     #[error("unsupported payload kind: {0}")]
     UnsupportedPayloadKind(u32),
     #[error("milestone message not found: {0}")]
-    MilestoneMessageNotFound(MessageId),
+    MilestoneBlockNotFound(BlockId),
     #[error("message payload is not a milestone")]
     NoMilestonePayload,
     #[error("non contiguous milestones: tried to confirm {0} on top of {1}")]
@@ -44,7 +44,7 @@ pub enum Error {
     #[error("applied merkle root mismatch on milestone {0}: computed {1} != provided {2}")]
     AppliedMerkleRootMismatch(MilestoneIndex, String, String),
     #[error("invalid messages count: referenced ({0}) != no transaction ({1}) + conflicting ({2}) + included ({3})")]
-    InvalidMessagesCount(usize, usize, usize, usize),
+    InvalidBlocksCount(usize, usize, usize, usize),
     #[error("invalid ledger unspent state: {0}")]
     InvalidLedgerUnspentState(u64),
     #[error("consumed amount overflow")]

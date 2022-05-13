@@ -3,7 +3,7 @@
 
 use bee_tangle::milestone_metadata::MilestoneMetadata;
 use bee_test::rand::{
-    message::rand_message_id,
+    block::rand_block_id,
     milestone::{rand_milestone_id, rand_milestone_metadata},
     number::rand_number,
 };
@@ -29,7 +29,7 @@ fn pack_unpack() {
 
 #[test]
 fn getters() {
-    let message_id = rand_message_id();
+    let message_id = rand_block_id();
     let milestone_id = rand_milestone_id();
     let timestamp = rand_number::<u32>();
     let milestone = MilestoneMetadata::new(message_id, milestone_id, timestamp);

@@ -15,6 +15,6 @@ pub const CF_MILESTONE_ID_TO_MILESTONE_PAYLOAD: &str = "milestone_id_to_mileston
 pub const CF_SNAPSHOT_INFO: &str = "snapshot_info";
 pub const CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX: &str = "solid_entry_point_to_milestone_index";
 pub const CF_MILESTONE_INDEX_TO_OUTPUT_DIFF: &str = "milestone_index_to_output_diff";
-pub const CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE: &str = "milestone_index_to_unreferenced_message";
+pub const CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE: &str = "milestone_index_to_unreferenced_block";
 pub const CF_MILESTONE_INDEX_TO_RECEIPT: &str = "milestone_index_to_receipt";
 pub const CF_SPENT_TO_TREASURY_OUTPUT: &str = "spent_to_treasury_output";

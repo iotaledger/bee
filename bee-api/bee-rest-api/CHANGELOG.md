@@ -140,7 +140,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `SuccessBody` type;
   - `ErrorBody` type;
   - `DefaultErrorResponse` type;
-  - `MessageDto` type;
+  - `BlockDto` type;
   - `PayloadDto` type;
   - `TransactionPayloadDto` type;
   - `EssenceDto` type;
@@ -177,7 +177,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `SubmitMessageResponse` type;
   - `MessagesFindResponse` type;
   - `MessageResponse` type;
-  - `MessageMetadataResponse` type;
+  - `BlockMetadataResponse` type;
   - `MessageChildrenResponse` type;
   - `OutputResponse` type;
   - `BalanceAddressResponse` type;

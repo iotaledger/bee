@@ -1,20 +1,20 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::MessageId;
+use bee_block::BlockId;
 
 /// An event that indicates that a message was processed.
 #[derive(Clone)]
 pub struct MessageProcessed {
     /// Message identifier of the processed message.
-    pub message_id: MessageId,
+    pub message_id: BlockId,
 }
 
 /// An event that indicates that a message was solidified.
 #[derive(Clone)]
 pub struct MessageSolidified {
     /// Message identifier of the solidified message.
-    pub message_id: MessageId,
+    pub message_id: BlockId,
 }
 
 /// An event that indicates that the MPS metrics were updated.
@@ -36,9 +36,9 @@ pub struct MpsMetricsUpdated {
 #[derive(Clone)]
 pub struct VertexCreated {
     /// Message identifier of the created vertex.
-    pub message_id: MessageId,
+    pub message_id: BlockId,
     /// Message identifiers of the parents of the created vertex.
-    pub parent_message_ids: Vec<MessageId>,
+    pub parent_message_ids: Vec<BlockId>,
     /// Whether the vertex is a solid message.
     pub is_solid: bool,
     /// Whether the vertex is a referenced message.
@@ -57,12 +57,12 @@ pub struct VertexCreated {
 #[derive(Clone)]
 pub struct TipAdded {
     /// Message identifier of the added tip.
-    pub message_id: MessageId,
+    pub message_id: BlockId,
 }
 
 /// An event that indicates that a tip was removed.
 #[derive(Clone)]
 pub struct TipRemoved {
     /// Message identifier of the removed tip.
-    pub message_id: MessageId,
+    pub message_id: BlockId,
 }

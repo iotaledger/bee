@@ -9,8 +9,8 @@ use std::{
     time::Duration,
 };
 
+use bee_block::{payload::milestone::MilestoneIndex, BlockId};
 use bee_ledger::workers::consensus::{self, WhiteFlagMetadata};
-use bee_message::{payload::milestone::MilestoneIndex, MessageId};
 use bee_protocol::workers::{event::MessageSolidified, request_message, MessageRequesterWorker, RequestedMessages};
 use bee_runtime::{event::Bus, resource::ResourceHandle};
 use bee_tangle::Tangle;
@@ -71,7 +71,7 @@ pub(crate) async fn white_flag<B: StorageBackend>(
     rest_api_config: RestApiConfig,
 ) -> Result<impl Reply, Rejection> {
     let index_json = &body["index"];
-    let parents_json = &body["parentMessageIds"];
+    let parents_json = &body["parentBlockIds"];
 
     let index = if index_json.is_null() {
         return Err(reject::custom(CustomRejection::BadRequest(
@@ -87,12 +87,12 @@ pub(crate) async fn white_flag<B: StorageBackend>(
 
     let parents = if parents_json.is_null() {
         return Err(reject::custom(CustomRejection::BadRequest(
-            "Invalid parents: expected an array of MessageId".to_string(),
+            "Invalid parents: expected an array of BlockId".to_string(),
         )));
     } else {
         let array = parents_json.as_array().ok_or_else(|| {
             reject::custom(CustomRejection::BadRequest(
-                "Invalid parents: expected an array of MessageId".to_string(),
+                "Invalid parents: expected an array of BlockId".to_string(),
             ))
         })?;
         let mut message_ids = Vec::new();
@@ -101,13 +101,13 @@ pub(crate) async fn white_flag<B: StorageBackend>(
                 .as_str()
                 .ok_or_else(|| {
                     reject::custom(CustomRejection::BadRequest(
-                        "Invalid parents: expected an array of MessageId".to_string(),
+                        "Invalid parents: expected an array of BlockId".to_string(),
                     ))
                 })?
-                .parse::<MessageId>()
+                .parse::<BlockId>()
                 .map_err(|_| {
                     reject::custom(CustomRejection::BadRequest(
-                        "Invalid parents: expected an array of MessageId".to_string(),
+                        "Invalid parents: expected an array of BlockId".to_string(),
                     ))
                 })?;
             message_ids.push(message_id);
@@ -123,7 +123,7 @@ pub(crate) async fn white_flag<B: StorageBackend>(
     // aborting if it took too long. This is done by requesting all missing parents then listening for their
     // solidification event or aborting if the allowed time passed.
 
-    let to_solidify = Arc::new(Mutex::new(parents.iter().copied().collect::<HashSet<MessageId>>()));
+    let to_solidify = Arc::new(Mutex::new(parents.iter().copied().collect::<HashSet<BlockId>>()));
     let (sender, receiver) = oneshot::channel::<()>();
     let sender = Arc::new(Mutex::new(Some(sender)));
 

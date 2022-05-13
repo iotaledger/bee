@@ -1,22 +1,22 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{semantic::ConflictReason, Message, MessageId};
+use bee_block::{semantic::ConflictReason, Block, BlockId};
 use bee_runtime::resource::ResourceHandle;
 use bee_storage_null::Storage as NullStorage;
-use bee_tangle::{config::TangleConfig, message_metadata::MessageMetadata, Tangle};
-use bee_test::rand::{message::rand_message, message_metadata::rand_message_metadata, number::rand_number};
+use bee_tangle::{block_metadata::BlockMetadata, config::TangleConfig, Tangle};
+use bee_test::rand::{block::rand_message, block_metadata::rand_block_metadata, number::rand_number};
 use criterion::*;
 use rand::seq::SliceRandom;
 
-fn random_input() -> (Message, MessageId, MessageMetadata) {
+fn random_input() -> (Block, BlockId, BlockMetadata) {
     let message = rand_message();
     let id = message.id();
 
-    (message, id, rand_message_metadata())
+    (message, id, rand_block_metadata())
 }
 
-fn update_metadata(tangle: &Tangle<NullStorage>, id: &MessageId, timestamp: u32) {
+fn update_metadata(tangle: &Tangle<NullStorage>, id: &BlockId, timestamp: u32) {
     tangle.update_metadata(id, |metadata| {
         metadata.set_conflict(ConflictReason::InputUtxoAlreadySpent);
         metadata.reference(timestamp);

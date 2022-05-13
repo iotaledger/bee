@@ -3,9 +3,9 @@
 
 use std::sync::atomic::{AtomicU32, Ordering};
 
-use bee_message::{
+use bee_block::{
     payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
-    Message, MessageId,
+    Block, BlockId,
 };
 use bee_runtime::resource::ResourceHandle;
 use hashbrown::HashMap;
@@ -14,8 +14,8 @@ use ref_cast::RefCast;
 use tokio::sync::Mutex;
 
 use crate::{
+    block_metadata::{BlockMetadata, IndexId},
     config::TangleConfig,
-    message_metadata::{IndexId, MessageMetadata},
     milestone_metadata::MilestoneMetadata,
     solid_entry_point::SolidEntryPoint,
     storage::StorageBackend,
@@ -67,7 +67,7 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Insert a message into the tangle without overwriting its metadata if it already exists.
-    pub fn insert(&self, message: &Message, message_id: &MessageId, metadata: &MessageMetadata) {
+    pub fn insert(&self, message: &Block, message_id: &BlockId, metadata: &BlockMetadata) {
         self.storage
             .insert(message_id, message)
             .ok()
@@ -128,12 +128,12 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Get the message associated with the given milestone index from the tangle.
-    pub fn get_milestone_message(&self, index: MilestoneIndex) -> Option<Message> {
+    pub fn get_milestone_message(&self, index: MilestoneIndex) -> Option<Block> {
         self.get_milestone_message_id(index).and_then(|hash| self.get(&hash))
     }
 
     /// Get the message ID associated with the given milestone index from the tangle.
-    pub fn get_milestone_message_id(&self, index: MilestoneIndex) -> Option<MessageId> {
+    pub fn get_milestone_message_id(&self, index: MilestoneIndex) -> Option<BlockId> {
         self.get_milestone_metadata(index).map(|m| *m.message_id())
     }
 
@@ -275,7 +275,7 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Returns whether the message associated with given solid entry point is a solid entry point.
-    pub async fn is_solid_entry_point(&self, id: &MessageId) -> bool {
+    pub async fn is_solid_entry_point(&self, id: &BlockId) -> bool {
         self.solid_entry_points
             .lock()
             .await
@@ -283,7 +283,7 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Returns whether the message associated with the given message ID is solid.
-    pub async fn is_solid_message(&self, id: &MessageId) -> bool {
+    pub async fn is_solid_message(&self, id: &BlockId) -> bool {
         if self.is_solid_entry_point(id).await {
             true
         } else {
@@ -294,7 +294,7 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Get the oldest and youngest milestone root snapshot index.
-    pub async fn omrsi_and_ymrsi(&self, id: &MessageId) -> Option<(IndexId, IndexId)> {
+    pub async fn omrsi_and_ymrsi(&self, id: &BlockId) -> Option<(IndexId, IndexId)> {
         match self.solid_entry_points.lock().await.get(SolidEntryPoint::ref_cast(id)) {
             Some(sep) => {
                 let index = IndexId::new(*sep, *id);
@@ -305,7 +305,7 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Insert the given message ID and parents as a tip.
-    pub async fn insert_tip(&self, message_id: MessageId, parents: Vec<MessageId>) {
+    pub async fn insert_tip(&self, message_id: BlockId, parents: Vec<BlockId>) {
         self.tip_pool.lock().await.insert(self, message_id, parents).await;
     }
 
@@ -315,7 +315,7 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Return messages that require approving.
-    pub async fn get_messages_to_approve(&self) -> Option<Vec<MessageId>> {
+    pub async fn get_messages_to_approve(&self) -> Option<Vec<BlockId>> {
         self.tip_pool.lock().await.choose_non_lazy_tips()
     }
 
@@ -330,12 +330,12 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Get the data of a vertex associated with the given `message_id`.
-    pub fn get(&self, message_id: &MessageId) -> Option<Message> {
+    pub fn get(&self, message_id: &BlockId) -> Option<Block> {
         self.storage.fetch(message_id).unwrap_or_default()
     }
 
     /// Get the data and metadata of a vertex associated with the given `message_id`.
-    pub fn get_message_and_metadata(&self, message_id: &MessageId) -> Option<(Message, MessageMetadata)> {
+    pub fn get_message_and_metadata(&self, message_id: &BlockId) -> Option<(Block, BlockMetadata)> {
         let msg = self.storage.fetch(message_id).unwrap_or_default()?;
         let meta = self.storage.fetch(message_id).unwrap_or_default()?;
 
@@ -343,20 +343,20 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Returns whether the message is stored in the Tangle.
-    pub fn contains(&self, message_id: &MessageId) -> bool {
+    pub fn contains(&self, message_id: &BlockId) -> bool {
         self.storage.exist(message_id).unwrap_or_default()
     }
 
     /// Get the metadata of a vertex associated with the given `message_id`.
-    pub fn get_metadata(&self, message_id: &MessageId) -> Option<MessageMetadata> {
+    pub fn get_metadata(&self, message_id: &BlockId) -> Option<BlockMetadata> {
         self.storage.fetch(message_id).unwrap_or_default()
     }
 
     /// Updates the metadata of a vertex.
     pub fn update_metadata<R>(
         &self,
-        message_id: &MessageId,
-        update: impl FnOnce(&mut MessageMetadata) -> R + Copy,
+        message_id: &BlockId,
+        update: impl FnOnce(&mut BlockMetadata) -> R + Copy,
     ) -> Option<R> {
         let mut output = None;
 
@@ -368,7 +368,7 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Returns the children of a vertex, if we know about them.
-    pub fn get_children(&self, message_id: &MessageId) -> Option<Vec<MessageId>> {
+    pub fn get_children(&self, message_id: &BlockId) -> Option<Vec<BlockId>> {
         self.storage.fetch(message_id).unwrap_or_default()
     }
 }

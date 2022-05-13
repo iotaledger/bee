@@ -6,14 +6,14 @@
 #![cfg_attr(doc_cfg, feature(doc_cfg))]
 #![deny(missing_docs)]
 
+/// Block metadata, including block flags.
+pub mod block_metadata;
 /// Types used for tangle configuration.
 pub mod config;
 /// Types that represent tangle events.
 pub mod event;
 /// Message flags.
 pub mod flags;
-/// Message metadata, including message flags.
-pub mod message_metadata;
 /// Milestone metadata.
 pub mod milestone_metadata;
 /// Types used to represent SEPs (Solid Entry Points).
@@ -28,8 +28,8 @@ pub mod tangle_worker;
 pub mod tip_pool_cleaner_worker;
 /// Common tangle traversal functionality.
 pub mod traversal;
-/// Types used to represent unreferenced messages.
-pub mod unreferenced_message;
+/// Types used to represent unreferenced blocks.
+pub mod unreferenced_block;
 /// The URTS tips pool.
 pub mod urts;
 

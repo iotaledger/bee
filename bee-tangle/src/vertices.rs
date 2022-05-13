@@ -7,18 +7,18 @@ use std::{
     sync::atomic::{AtomicUsize, Ordering},
 };
 
-use bee_message::MessageId;
+use bee_block::BlockId;
 use hashbrown::{hash_map::DefaultHashBuilder, raw::RawTable};
 use rand::Rng;
 use tokio::sync::{RwLock, RwLockMappedWriteGuard, RwLockReadGuard, RwLockWriteGuard};
 
 use crate::vertex::Vertex;
 
-fn equivalent_id(message_id: &MessageId) -> impl Fn(&(MessageId, Vertex)) -> bool + '_ {
+fn equivalent_id(message_id: &BlockId) -> impl Fn(&(BlockId, Vertex)) -> bool + '_ {
     move |(k, _)| message_id.eq(k)
 }
 
-type Table = RwLock<RawTable<(MessageId, Vertex)>>;
+type Table = RwLock<RawTable<(BlockId, Vertex)>>;
 
 pub(crate) struct Vertices {
     hash_builder: DefaultHashBuilder,
@@ -37,13 +37,13 @@ impl Vertices {
         }
     }
 
-    fn make_hash(&self, message_id: &MessageId) -> u64 {
+    fn make_hash(&self, message_id: &BlockId) -> u64 {
         let mut state = self.hash_builder.build_hasher();
         message_id.hash(&mut state);
         state.finish()
     }
 
-    fn make_hasher(&self) -> impl Fn(&(MessageId, Vertex)) -> u64 + '_ {
+    fn make_hasher(&self) -> impl Fn(&(BlockId, Vertex)) -> u64 + '_ {
         move |(message_id, _)| self.make_hash(message_id)
     }
 
@@ -53,7 +53,7 @@ impl Vertices {
         unsafe { self.tables.get_unchecked(index) }
     }
 
-    pub(crate) async fn get(&self, message_id: &MessageId) -> Option<RwLockReadGuard<'_, Vertex>> {
+    pub(crate) async fn get(&self, message_id: &BlockId) -> Option<RwLockReadGuard<'_, Vertex>> {
         let hash = self.make_hash(message_id);
         let table = self.get_table(hash).read().await;
 
@@ -64,7 +64,7 @@ impl Vertices {
         .ok()
     }
 
-    pub(crate) async fn get_mut(&self, message_id: &MessageId) -> Option<RwLockMappedWriteGuard<'_, Vertex>> {
+    pub(crate) async fn get_mut(&self, message_id: &BlockId) -> Option<RwLockMappedWriteGuard<'_, Vertex>> {
         let hash = self.make_hash(message_id);
         let table = self.get_table(hash).write().await;
 
@@ -110,7 +110,7 @@ impl Vertices {
         None
     }
 
-    pub(crate) async fn get_mut_or_empty(&self, message_id: MessageId) -> RwLockMappedWriteGuard<'_, Vertex> {
+    pub(crate) async fn get_mut_or_empty(&self, message_id: BlockId) -> RwLockMappedWriteGuard<'_, Vertex> {
         let hash = self.make_hash(&message_id);
         let table = self.get_table(hash).write().await;
 
