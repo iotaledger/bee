@@ -25,7 +25,7 @@ use crate::{
         peer::PeerManager,
         requester::{request_block, request_milestone},
         storage::StorageBackend,
-        IndexUpdaterWorker, IndexUpdaterWorkerEvent, BlockRequesterWorker, MetricsWorker, MilestoneRequesterWorker,
+        BlockRequesterWorker, IndexUpdaterWorker, IndexUpdaterWorkerEvent, MetricsWorker, MilestoneRequesterWorker,
         PeerManagerResWorker, RequestedBlocks, RequestedMilestones,
     },
 };
@@ -193,8 +193,7 @@ where
                         } else {
                             // TODO Is this actually necessary ?
                             let missing_len =
-                                heavy_solidification(&tangle, &block_requester, &requested_blocks, target, id)
-                                    .await;
+                                heavy_solidification(&tangle, &block_requester, &requested_blocks, target, id).await;
                             debug!(
                                 "Heavy solidification of milestone {} {}: {} blocks requested in [{};{}].",
                                 target,

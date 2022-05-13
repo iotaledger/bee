@@ -234,16 +234,12 @@ pub(crate) async fn forward_to_block_submitter(
         })
         .map_err(|e| {
             error!("can not submit block: {}", e);
-            reject::custom(CustomRejection::ServiceUnavailable(
-                "can not submit block".to_string(),
-            ))
+            reject::custom(CustomRejection::ServiceUnavailable("can not submit block".to_string()))
         })?;
 
     match waiter.await.map_err(|e| {
         error!("can not submit block: {}", e);
-        reject::custom(CustomRejection::ServiceUnavailable(
-            "can not submit block".to_string(),
-        ))
+        reject::custom(CustomRejection::ServiceUnavailable("can not submit block".to_string()))
     })? {
         Ok(block_id) => Ok(block_id),
         Err(e) => Err(reject::custom(CustomRejection::BadRequest(format!(

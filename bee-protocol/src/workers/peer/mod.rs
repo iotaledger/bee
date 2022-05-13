@@ -21,13 +21,13 @@ use crate::{
     types::{metrics::NodeMetrics, peer::Peer},
     workers::{
         packets::{
-            tlv_from_bytes, HeaderPacket, HeartbeatPacket, BlockPacket, BlockRequestPacket, MilestoneRequestPacket,
+            tlv_from_bytes, BlockPacket, BlockRequestPacket, HeaderPacket, HeartbeatPacket, MilestoneRequestPacket,
             Packet, TlvError,
         },
         peer::packet_handler::PacketHandler,
         requester::request_latest_milestone,
         storage::StorageBackend,
-        HasherWorkerEvent, BlockResponderWorkerEvent, MilestoneRequesterWorkerEvent, MilestoneResponderWorkerEvent,
+        BlockResponderWorkerEvent, HasherWorkerEvent, MilestoneRequesterWorkerEvent, MilestoneResponderWorkerEvent,
         RequestedMilestones,
     },
 };

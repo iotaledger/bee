@@ -92,8 +92,7 @@ where
             let (_, mut receiver) = receiver.split();
             let mut count: usize = 0;
 
-            while let Some(Some(TransactionPayloadWorkerEvent { block_id, block })) = receiver.next().now_or_never()
-            {
+            while let Some(Some(TransactionPayloadWorkerEvent { block_id, block })) = receiver.next().now_or_never() {
                 process(block_id, block, &tagged_data_payload_worker, &metrics);
                 count += 1;
             }

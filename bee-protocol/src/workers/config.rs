@@ -108,10 +108,7 @@ impl ProtocolConfigBuilder {
                 }),
             },
             workers: ProtocolWorkersConfig {
-                block_worker_cache: self
-                    .workers
-                    .block_worker_cache
-                    .unwrap_or(DEFAULT_MESSAGE_WORKER_CACHE),
+                block_worker_cache: self.workers.block_worker_cache.unwrap_or(DEFAULT_MESSAGE_WORKER_CACHE),
                 status_interval: self.workers.status_interval.unwrap_or(DEFAULT_STATUS_INTERVAL),
                 milestone_sync_count: self
                     .workers

@@ -37,11 +37,8 @@ impl Insert<u8, System> for Storage {
 
 impl Insert<BlockId, Block> for Storage {
     fn insert(&self, block_id: &BlockId, block: &Block) -> Result<(), <Self as StorageBackend>::Error> {
-        self.inner.put_cf(
-            self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?,
-            block_id,
-            block.pack_to_vec(),
-        )?;
+        self.inner
+            .put_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?, block_id, block.pack_to_vec())?;
 
         Ok(())
     }

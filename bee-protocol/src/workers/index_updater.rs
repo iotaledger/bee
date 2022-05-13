@@ -68,10 +68,7 @@ where
 }
 
 async fn process<B: StorageBackend>(tangle: &Tangle<B>, milestone: MilestoneMetadata, index: MilestoneIndex) {
-    if let Some(parents) = tangle
-        .get(milestone.block_id())
-        .map(|block| block.parents().to_vec())
-    {
+    if let Some(parents) = tangle.get(milestone.block_id()).map(|block| block.parents().to_vec()) {
         // Update the past cone of this milestone by setting its milestone index, and return them.
         let roots = update_past_cone(tangle, parents, index).await;
 

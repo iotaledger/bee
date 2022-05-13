@@ -137,12 +137,10 @@ fn apply_block<B: StorageBackend>(
     metadata.referenced_blocks.push(*block_id);
 
     match block.payload() {
-        Some(Payload::Transaction(transaction)) => {
-            match apply_transaction(storage, block_id, transaction, metadata)? {
-                ConflictReason::None => metadata.included_blocks.push(*block_id),
-                conflict => metadata.excluded_conflicting_blocks.push((*block_id, conflict)),
-            }
-        }
+        Some(Payload::Transaction(transaction)) => match apply_transaction(storage, block_id, transaction, metadata)? {
+            ConflictReason::None => metadata.included_blocks.push(*block_id),
+            conflict => metadata.excluded_conflicting_blocks.push((*block_id, conflict)),
+        },
         Some(Payload::Milestone(milestone)) => {
             if let Some(previous_milestone_id) = metadata.previous_milestone_id {
                 if previous_milestone_id == milestone.id() {

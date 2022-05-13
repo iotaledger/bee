@@ -9,7 +9,7 @@ use log::warn;
 use crate::{
     types::metrics::NodeMetrics,
     workers::{
-        packets::{tlv_to_bytes, HeartbeatPacket, BlockPacket, BlockRequestPacket, MilestoneRequestPacket, Packet},
+        packets::{tlv_to_bytes, BlockPacket, BlockRequestPacket, HeartbeatPacket, MilestoneRequestPacket, Packet},
         peer::PeerManager,
     },
 };

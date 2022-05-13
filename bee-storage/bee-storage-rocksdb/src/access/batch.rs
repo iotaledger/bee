@@ -68,11 +68,7 @@ impl Batch<BlockId, Block> for Storage {
         Ok(())
     }
 
-    fn batch_delete(
-        &self,
-        batch: &mut Self::Batch,
-        block_id: &BlockId,
-    ) -> Result<(), <Self as StorageBackend>::Error> {
+    fn batch_delete(&self, batch: &mut Self::Batch, block_id: &BlockId) -> Result<(), <Self as StorageBackend>::Error> {
         batch
             .inner
             .delete_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?, block_id);
@@ -101,11 +97,7 @@ impl Batch<BlockId, BlockMetadata> for Storage {
         Ok(())
     }
 
-    fn batch_delete(
-        &self,
-        batch: &mut Self::Batch,
-        block_id: &BlockId,
-    ) -> Result<(), <Self as StorageBackend>::Error> {
+    fn batch_delete(&self, batch: &mut Self::Batch, block_id: &BlockId) -> Result<(), <Self as StorageBackend>::Error> {
         batch.should_lock = true;
 
         batch

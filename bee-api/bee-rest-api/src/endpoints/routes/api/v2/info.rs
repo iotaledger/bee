@@ -146,7 +146,7 @@ pub(crate) fn info<B: StorageBackend>(
         metrics: MetricsResponse {
             blocks_per_second: 0.0,            // TODO
             referenced_blocks_per_second: 0.0, // TODO
-            referenced_rate: 0.0,                // TODO
+            referenced_rate: 0.0,              // TODO
         },
         features: {
             let mut features = Vec::new();

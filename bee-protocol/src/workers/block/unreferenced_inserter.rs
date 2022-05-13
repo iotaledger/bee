@@ -75,8 +75,7 @@ where
             let (_, mut receiver) = receiver.split();
             counter = 0;
 
-            while let Some(Some(UnreferencedBlockInserterWorkerEvent(block_id, index))) =
-                receiver.next().now_or_never()
+            while let Some(Some(UnreferencedBlockInserterWorkerEvent(block_id, index))) = receiver.next().now_or_never()
             {
                 if let Err(e) = Insert::<(MilestoneIndex, UnreferencedBlock), ()>::insert(
                     &*storage,

@@ -80,9 +80,7 @@ async fn confirm<N: Node>(
 where
     N::Backend: StorageBackend,
 {
-    let block = tangle
-        .get(&block_id)
-        .ok_or(Error::MilestoneBlockNotFound(block_id))?;
+    let block = tangle.get(&block_id).ok_or(Error::MilestoneBlockNotFound(block_id))?;
 
     let milestone = match block.payload() {
         Some(Payload::Milestone(milestone)) => milestone,
@@ -183,9 +181,7 @@ where
             block_metadata.set_conflict(ConflictReason::None);
             block_metadata.reference(milestone.essence().timestamp());
         });
-        bus.dispatch(BlockReferenced {
-            block_id: *block_id,
-        });
+        bus.dispatch(BlockReferenced { block_id: *block_id });
     }
 
     for (block_id, conflict) in metadata.excluded_conflicting_blocks.iter() {
@@ -193,9 +189,7 @@ where
             block_metadata.set_conflict(*conflict);
             block_metadata.reference(milestone.essence().timestamp());
         });
-        bus.dispatch(BlockReferenced {
-            block_id: *block_id,
-        });
+        bus.dispatch(BlockReferenced { block_id: *block_id });
     }
 
     for block_id in metadata.included_blocks.iter() {
@@ -203,9 +197,7 @@ where
             block_metadata.set_conflict(ConflictReason::None);
             block_metadata.reference(milestone.essence().timestamp());
         });
-        bus.dispatch(BlockReferenced {
-            block_id: *block_id,
-        });
+        bus.dispatch(BlockReferenced { block_id: *block_id });
     }
 
     info!(

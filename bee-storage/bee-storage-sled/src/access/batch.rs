@@ -87,11 +87,7 @@ impl Batch<BlockId, Block> for Storage {
         Ok(())
     }
 
-    fn batch_delete(
-        &self,
-        batch: &mut Self::Batch,
-        block_id: &BlockId,
-    ) -> Result<(), <Self as StorageBackend>::Error> {
+    fn batch_delete(&self, batch: &mut Self::Batch, block_id: &BlockId) -> Result<(), <Self as StorageBackend>::Error> {
         batch
             .inner
             .entry(TREE_MESSAGE_ID_TO_MESSAGE)
@@ -122,11 +118,7 @@ impl Batch<BlockId, BlockMetadata> for Storage {
         Ok(())
     }
 
-    fn batch_delete(
-        &self,
-        batch: &mut Self::Batch,
-        block_id: &BlockId,
-    ) -> Result<(), <Self as StorageBackend>::Error> {
+    fn batch_delete(&self, batch: &mut Self::Batch, block_id: &BlockId) -> Result<(), <Self as StorageBackend>::Error> {
         batch
             .inner
             .entry(TREE_MESSAGE_ID_TO_METADATA)

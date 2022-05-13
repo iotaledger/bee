@@ -23,7 +23,7 @@ use crate::{
     endpoints::{
         config::{RestApiConfig, ROUTE_WHITE_FLAG},
         filters::{
-            with_bus, with_block_requester, with_requested_blocks, with_rest_api_config, with_storage, with_tangle,
+            with_block_requester, with_bus, with_requested_blocks, with_rest_api_config, with_storage, with_tangle,
         },
         permission::has_permission,
         rejection::CustomRejection,

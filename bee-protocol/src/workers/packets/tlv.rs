@@ -88,9 +88,7 @@ mod tests {
     use rand::Rng;
 
     use super::*;
-    use crate::workers::packets::{
-        HeartbeatPacket, BlockPacket, BlockRequestPacket, MilestoneRequestPacket, Packet,
-    };
+    use crate::workers::packets::{BlockPacket, BlockRequestPacket, HeartbeatPacket, MilestoneRequestPacket, Packet};
 
     fn invalid_advertised_type<P: Packet>() {
         match tlv_from_bytes::<P>(

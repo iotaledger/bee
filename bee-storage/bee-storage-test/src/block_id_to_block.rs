@@ -6,7 +6,7 @@ use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate},
     backend,
 };
-use bee_test::rand::block::{rand_block_id, rand_block};
+use bee_test::rand::block::{rand_block, rand_block_id};
 
 pub trait StorageBackend:
     backend::StorageBackend

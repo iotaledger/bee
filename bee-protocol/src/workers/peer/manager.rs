@@ -21,7 +21,7 @@ use crate::{
         heartbeater::{new_heartbeat, send_heartbeat},
         peer::PeerManager,
         storage::StorageBackend,
-        HasherWorker, BlockResponderWorker, MetricsWorker, MilestoneRequesterWorker, MilestoneResponderWorker,
+        BlockResponderWorker, HasherWorker, MetricsWorker, MilestoneRequesterWorker, MilestoneResponderWorker,
         PeerManagerResWorker, PeerWorker, RequestedMilestones,
     },
 };

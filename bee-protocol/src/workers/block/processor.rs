@@ -21,13 +21,13 @@ use tokio_stream::wrappers::UnboundedReceiverStream;
 use crate::{
     types::metrics::NodeMetrics,
     workers::{
-        block::submitter::{notify_invalid_block, notify_block},
+        block::submitter::{notify_block, notify_invalid_block},
         event::{BlockProcessed, VertexCreated},
         packets::BlockPacket,
         peer::PeerManager,
         requester::request_block,
         storage::StorageBackend,
-        BlockSubmitterError, BroadcasterWorker, BroadcasterWorkerEvent, BlockRequesterWorker, MetricsWorker,
+        BlockRequesterWorker, BlockSubmitterError, BroadcasterWorker, BroadcasterWorkerEvent, MetricsWorker,
         PayloadWorker, PayloadWorkerEvent, PeerManagerResWorker, PropagatorWorker, PropagatorWorkerEvent,
         RequestedBlocks, UnreferencedBlockInserterWorker, UnreferencedBlockInserterWorkerEvent,
     },
@@ -225,8 +225,7 @@ where
                                 metrics.blocks_average_latency_set(latency_sum / latency_num);
 
                                 for parent in block.parents().iter() {
-                                    request_block(&tangle, &block_requester, &*requested_blocks, *parent, index)
-                                        .await;
+                                    request_block(&tangle, &block_requester, &*requested_blocks, *parent, index).await;
                                 }
                             }
                             // Block was not requested.

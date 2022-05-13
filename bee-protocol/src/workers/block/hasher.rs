@@ -76,8 +76,7 @@ where
                     trace!("Block already received.");
 
                     if let Some(notifier) = notifier {
-                        if let Err(e) = notifier.send(Err(BlockSubmitterError("block already received".to_string())))
-                        {
+                        if let Err(e) = notifier.send(Err(BlockSubmitterError("block already received".to_string()))) {
                             error!("failed to send error: {:?}.", e);
                         }
                     }

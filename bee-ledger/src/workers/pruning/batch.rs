@@ -338,8 +338,7 @@ fn prune_block_and_metadata<S: StorageBackend>(
     block_id: &BlockId,
 ) -> Result<(), Error> {
     Batch::<BlockId, Block>::batch_delete(storage, batch, block_id).map_err(|e| Error::Storage(Box::new(e)))?;
-    Batch::<BlockId, BlockMetadata>::batch_delete(storage, batch, block_id)
-        .map_err(|e| Error::Storage(Box::new(e)))?;
+    Batch::<BlockId, BlockMetadata>::batch_delete(storage, batch, block_id).map_err(|e| Error::Storage(Box::new(e)))?;
 
     Ok(())
 }
