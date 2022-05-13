@@ -7,7 +7,7 @@ mod block;
 mod block_request;
 mod header;
 mod heartbeat;
-mod message_request;
+mod milestone_request;
 mod tlv;
 
 use std::ops::Range;

@@ -16,7 +16,7 @@ use crate::endpoints::{
     path_params::transaction_id,
     permission::has_permission,
     rejection::CustomRejection,
-    routes::api::v2::message,
+    routes::api::v2::block,
     storage::StorageBackend,
 };
 
@@ -62,7 +62,7 @@ pub(crate) fn transaction_included_message<B: StorageBackend>(
             "Can not fetch from storage".to_string(),
         ))
     })? {
-        Some(output) => message::message(*output.message_id(), tangle),
+        Some(output) => block::message(*output.message_id(), tangle),
         None => Err(reject::custom(CustomRejection::NotFound(
             "Can not find output".to_string(),
         ))),
