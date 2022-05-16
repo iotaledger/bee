@@ -4,7 +4,7 @@
 use std::{convert::Infallible, net::SocketAddr, time::Duration};
 
 use async_trait::async_trait;
-use bee_metrics::{metrics::ProcessMetrics, Registry};
+use bee_metrics::{metrics::process::ProcessMetrics, Registry};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use futures::StreamExt;
 use log::info;

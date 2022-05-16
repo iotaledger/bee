@@ -468,9 +468,11 @@ name = "bee-metrics"
 version = "0.1.0"
 dependencies = [
  "axum 0.4.8",
+ "futures 0.3.21",
  "parking_lot 0.12.0",
  "prometheus-client",
  "tokio",
+ "tokio-stream",
 ]
 
 [[package]]
