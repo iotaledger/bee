@@ -48,8 +48,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `NftOutputDto`;
 - `AliasAddressDto`;
 - `NftAddressDto`;
-- `AliasUnlockBlockDto`;
-- `NftUnlockBlockDto`;
+- `AliasUnlockDto`;
+- `NftUnlockDto`;
 - `NativeTokenDto`;
 - `TokenIdDto`;
 - `U256Dto`;
@@ -154,7 +154,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `AddressDto` type;
   - `Ed25519AddressDto` type;
   - `TreasuryOutputDto` type;
-  - `UnlockBlockDto` type;
+  - `UnlockDto` type;
   - `SignatureUnlockDto` type;
   - `SignatureDto` type;
   - `Ed25519SignatureDto` type;

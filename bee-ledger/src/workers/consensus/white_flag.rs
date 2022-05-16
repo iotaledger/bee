@@ -11,7 +11,7 @@ use bee_block::{
         Payload,
     },
     semantic::{semantic_validation, ConflictReason, ValidationContext},
-    unlock_block::UnlockBlocks,
+    unlock::Unlocks,
     Block, BlockId,
 };
 use bee_tangle::Tangle;
@@ -31,7 +31,7 @@ fn apply_regular_essence<B: StorageBackend>(
     block_id: &BlockId,
     transaction_id: &TransactionId,
     essence: &RegularTransactionEssence,
-    unlock_blocks: &UnlockBlocks,
+    unlocks: &Unlocks,
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<ConflictReason, Error> {
     let mut consumed_outputs = Vec::<(OutputId, CreatedOutput)>::new();
@@ -74,12 +74,12 @@ fn apply_regular_essence<B: StorageBackend>(
         transaction_id,
         essence,
         inputs.iter().map(|(output_id, input)| (output_id, *input)),
-        unlock_blocks,
+        unlocks,
         metadata.milestone_index,
         metadata.milestone_timestamp,
     );
 
-    let conflict = semantic_validation(context, &inputs, unlock_blocks)?;
+    let conflict = semantic_validation(context, &inputs, unlocks)?;
 
     if conflict != ConflictReason::None {
         return Ok(conflict);
@@ -122,7 +122,7 @@ fn apply_transaction<B: StorageBackend>(
             block_id,
             &transaction.id(),
             essence,
-            transaction.unlock_blocks(),
+            transaction.unlocks(),
             metadata,
         ),
     }

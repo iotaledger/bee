@@ -21,7 +21,7 @@ use crate::{
         OutputBuilderAmount, OutputId, StateTransitionError, StateTransitionVerifier,
     },
     semantic::{ConflictReason, ValidationContext},
-    unlock_block::UnlockBlock,
+    unlock::Unlock,
     Error,
 };
 
@@ -428,7 +428,7 @@ impl AliasOutput {
     pub fn unlock(
         &self,
         output_id: &OutputId,
-        unlock_block: &UnlockBlock,
+        unlock: &Unlock,
         inputs: &[(OutputId, &Output)],
         context: &mut ValidationContext,
     ) -> Result<(), ConflictReason> {
@@ -456,7 +456,7 @@ impl AliasOutput {
             context.milestone_timestamp,
         );
 
-        locked_address.unlock(unlock_block, inputs, context)?;
+        locked_address.unlock(unlock, inputs, context)?;
 
         context
             .unlocked_addresses

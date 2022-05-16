@@ -19,7 +19,7 @@ use crate::{
         OutputId, StateTransitionError, StateTransitionVerifier,
     },
     semantic::{ConflictReason, ValidationContext},
-    unlock_block::UnlockBlock,
+    unlock::Unlock,
     Error,
 };
 
@@ -343,7 +343,7 @@ impl NftOutput {
     pub fn unlock(
         &self,
         output_id: &OutputId,
-        unlock_block: &UnlockBlock,
+        unlock: &Unlock,
         inputs: &[(OutputId, &Output)],
         context: &mut ValidationContext,
     ) -> Result<(), ConflictReason> {
@@ -358,7 +358,7 @@ impl NftOutput {
             *self.nft_id()
         };
 
-        locked_address.unlock(unlock_block, inputs, context)?;
+        locked_address.unlock(unlock, inputs, context)?;
 
         context
             .unlocked_addresses

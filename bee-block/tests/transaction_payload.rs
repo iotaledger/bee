@@ -7,7 +7,7 @@ use bee_block::{
     output::{unlock_condition::AddressUnlockCondition, BasicOutput, Output},
     payload::transaction::{RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayload},
     signature::{Ed25519Signature, Signature},
-    unlock_block::{ReferenceUnlockBlock, SignatureUnlockBlock, UnlockBlock, UnlockBlocks},
+    unlock::{ReferenceUnlock, SignatureUnlock, Unlock, Unlocks},
     Error,
 };
 use bee_test::rand::output::rand_inputs_commitment;
@@ -26,7 +26,7 @@ fn kind() {
 // Validate that attempting to construct a `TransactionPayload` with too few unlock blocks is an
 // error.
 #[test]
-fn builder_no_essence_too_few_unlock_blocks() {
+fn builder_no_essence_too_few_unlocks() {
     // Construct a transaction essence with two inputs and one output.
     let txid = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
     let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
@@ -53,19 +53,19 @@ fn builder_no_essence_too_few_unlock_blocks() {
     let pub_key_bytes: [u8; 32] = prefix_hex::decode(ED25519_PUBLIC_KEY).unwrap();
     let sig_bytes: [u8; 64] = prefix_hex::decode(ED25519_SIGNATURE).unwrap();
     let signature = Ed25519Signature::new(pub_key_bytes, sig_bytes);
-    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlockBlock::from(Signature::Ed25519(signature)));
-    let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block]).unwrap();
+    let sig_unlock = Unlock::Signature(SignatureUnlock::from(Signature::Ed25519(signature)));
+    let unlocks = Unlocks::new(vec![sig_unlock]).unwrap();
 
     assert!(matches!(
-            TransactionPayload::new(essence, unlock_blocks),
-            Err(Error::InputUnlockBlockCountMismatch{input_count, block_count})
+            TransactionPayload::new(essence, unlocks),
+            Err(Error::InputUnlockCountMismatch{input_count, block_count})
             if input_count == 2 && block_count == 1));
 }
 
 // Validate that attempting to construct a `TransactionPayload` with too many unlock blocks is an
 // error.
 #[test]
-fn builder_no_essence_too_many_unlock_blocks() {
+fn builder_no_essence_too_many_unlocks() {
     // Construct a transaction essence with one input and one output.
     let txid = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
     let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
@@ -91,14 +91,14 @@ fn builder_no_essence_too_many_unlock_blocks() {
     let pub_key_bytes: [u8; 32] = prefix_hex::decode(ED25519_PUBLIC_KEY).unwrap();
     let sig_bytes: [u8; 64] = prefix_hex::decode(ED25519_SIGNATURE).unwrap();
     let signature = Ed25519Signature::new(pub_key_bytes, sig_bytes);
-    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlockBlock::from(Signature::Ed25519(signature)));
-    let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlockBlock::new(0).unwrap());
+    let sig_unlock = Unlock::Signature(SignatureUnlock::from(Signature::Ed25519(signature)));
+    let ref_unlock = Unlock::Reference(ReferenceUnlock::new(0).unwrap());
 
-    let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block, ref_unlock_block]).unwrap();
+    let unlocks = Unlocks::new(vec![sig_unlock, ref_unlock]).unwrap();
 
     assert!(matches!(
-            TransactionPayload::new(essence, unlock_blocks),
-            Err(Error::InputUnlockBlockCountMismatch{input_count, block_count})
+            TransactionPayload::new(essence, unlocks),
+            Err(Error::InputUnlockCountMismatch{input_count, block_count})
             if input_count == 1 && block_count == 2));
 }
 
@@ -131,11 +131,11 @@ fn pack_unpack_valid() {
     let pub_key_bytes: [u8; 32] = prefix_hex::decode(ED25519_PUBLIC_KEY).unwrap();
     let sig_bytes: [u8; 64] = prefix_hex::decode(ED25519_SIGNATURE).unwrap();
     let signature = Ed25519Signature::new(pub_key_bytes, sig_bytes);
-    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlockBlock::from(Signature::Ed25519(signature)));
-    let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlockBlock::new(0).unwrap());
-    let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block, ref_unlock_block]).unwrap();
+    let sig_unlock = Unlock::Signature(SignatureUnlock::from(Signature::Ed25519(signature)));
+    let ref_unlock = Unlock::Reference(ReferenceUnlock::new(0).unwrap());
+    let unlocks = Unlocks::new(vec![sig_unlock, ref_unlock]).unwrap();
 
-    let tx_payload = TransactionPayload::new(essence, unlock_blocks).unwrap();
+    let tx_payload = TransactionPayload::new(essence, unlocks).unwrap();
     let packed_tx_payload = tx_payload.pack_to_vec();
 
     assert_eq!(packed_tx_payload.len(), tx_payload.packed_len());
@@ -173,12 +173,12 @@ fn getters() {
     let pub_key_bytes: [u8; 32] = prefix_hex::decode(ED25519_PUBLIC_KEY).unwrap();
     let sig_bytes: [u8; 64] = prefix_hex::decode(ED25519_SIGNATURE).unwrap();
     let signature = Ed25519Signature::new(pub_key_bytes, sig_bytes);
-    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlockBlock::from(Signature::Ed25519(signature)));
-    let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlockBlock::new(0).unwrap());
-    let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block, ref_unlock_block]).unwrap();
+    let sig_unlock = Unlock::Signature(SignatureUnlock::from(Signature::Ed25519(signature)));
+    let ref_unlock = Unlock::Reference(ReferenceUnlock::new(0).unwrap());
+    let unlocks = Unlocks::new(vec![sig_unlock, ref_unlock]).unwrap();
 
-    let tx_payload = TransactionPayload::new(essence.clone(), unlock_blocks.clone()).unwrap();
+    let tx_payload = TransactionPayload::new(essence.clone(), unlocks.clone()).unwrap();
 
     assert_eq!(*tx_payload.essence(), essence);
-    assert_eq!(*tx_payload.unlock_blocks(), unlock_blocks);
+    assert_eq!(*tx_payload.unlocks(), unlocks);
 }

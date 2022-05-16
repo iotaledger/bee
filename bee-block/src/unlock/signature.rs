@@ -5,23 +5,23 @@ use derive_more::{Deref, From};
 
 use crate::signature::Signature;
 
-/// An [`UnlockBlock`](crate::unlock_block::UnlockBlock) which is used to unlock a signature locked
+/// An [`Unlock`](crate::unlock::Unlock) which is used to unlock a signature locked
 /// [`Input`](crate::input::Input).
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, From, Deref, packable::Packable)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct SignatureUnlockBlock(Signature);
+pub struct SignatureUnlock(Signature);
 
-impl SignatureUnlockBlock {
-    /// The [`UnlockBlock`](crate::unlock_block::UnlockBlock) kind of a [`SignatureUnlockBlock`].
+impl SignatureUnlock {
+    /// The [`Unlock`](crate::unlock::Unlock) kind of a [`SignatureUnlock`].
     pub const KIND: u8 = 0;
 
-    /// Creates a new [`SignatureUnlockBlock`].
+    /// Creates a new [`SignatureUnlock`].
     #[inline(always)]
     pub fn new(signature: Signature) -> Self {
         Self(signature)
     }
 
-    /// Returns the actual [`Signature`] of the [`SignatureUnlockBlock`].
+    /// Returns the actual [`Signature`] of the [`SignatureUnlock`].
     #[inline(always)]
     pub fn signature(&self) -> &Signature {
         &self.0
@@ -35,9 +35,9 @@ pub mod dto {
 
     use crate::signature::dto::SignatureDto;
 
-    /// Defines an unlock block containing signature(s) unlocking input(s).
+    /// Defines an unlock containing signature(s) unlocking input(s).
     #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-    pub struct SignatureUnlockBlockDto {
+    pub struct SignatureUnlockDto {
         #[serde(rename = "type")]
         pub kind: u8,
         pub signature: SignatureDto,

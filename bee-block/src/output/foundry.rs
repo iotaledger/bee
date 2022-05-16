@@ -20,7 +20,7 @@ use crate::{
         OutputBuilderAmount, OutputId, StateTransitionError, StateTransitionVerifier, TokenId, TokenScheme,
     },
     semantic::{ConflictReason, ValidationContext},
-    unlock_block::UnlockBlock,
+    unlock::Unlock,
     Error,
 };
 
@@ -397,7 +397,7 @@ impl FoundryOutput {
     pub fn unlock(
         &self,
         _output_id: &OutputId,
-        unlock_block: &UnlockBlock,
+        unlock: &Unlock,
         inputs: &[(OutputId, &Output)],
         context: &mut ValidationContext,
     ) -> Result<(), ConflictReason> {
@@ -409,7 +409,7 @@ impl FoundryOutput {
             context.milestone_timestamp,
         );
 
-        locked_address.unlock(unlock_block, inputs, context)
+        locked_address.unlock(unlock, inputs, context)
     }
 }
 

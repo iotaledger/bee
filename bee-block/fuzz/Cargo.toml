@@ -61,8 +61,8 @@ test = false
 doc = false
 
 [[bin]]
-name = "fuzz_unlock_block"
-path = "fuzz_targets/fuzz_unlock_block.rs"
+name = "fuzz_unlock"
+path = "fuzz_targets/fuzz_unlock.rs"
 test = false
 doc = false
 

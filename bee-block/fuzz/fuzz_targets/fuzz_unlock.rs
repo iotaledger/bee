@@ -3,11 +3,11 @@
 
 #![no_main]
 
-use bee_block::unlock_block::UnlockBlock;
+use bee_block::unlock::Unlock;
 
 use libfuzzer_sys::fuzz_target;
 use packable::PackableExt;
 
 fuzz_target!(|data: &[u8]| {
-    let _ = UnlockBlock::unpack_verified(&mut data.to_vec().as_slice());
+    let _ = Unlock::unpack_verified(&mut data.to_vec().as_slice());
 });

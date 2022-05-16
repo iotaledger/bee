@@ -13,7 +13,7 @@ use bee_block::{
         Payload, TaggedDataPayload, TreasuryTransactionPayload,
     },
     signature::{Ed25519Signature, Signature},
-    unlock_block::{ReferenceUnlockBlock, SignatureUnlockBlock, UnlockBlock, UnlockBlocks},
+    unlock::{ReferenceUnlock, SignatureUnlock, Unlock, Unlocks},
 };
 use bee_test::rand::{
     bytes::rand_bytes, milestone::rand_milestone_id, output::rand_inputs_commitment, parents::rand_parents,
@@ -52,11 +52,11 @@ fn transaction() {
     let pub_key_bytes: [u8; 32] = prefix_hex::decode(ED25519_PUBLIC_KEY).unwrap();
     let sig_bytes: [u8; 64] = prefix_hex::decode(ED25519_SIGNATURE).unwrap();
     let signature = Ed25519Signature::new(pub_key_bytes, sig_bytes);
-    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlockBlock::from(Signature::Ed25519(signature)));
-    let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlockBlock::new(0).unwrap());
-    let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block, ref_unlock_block]).unwrap();
+    let sig_unlock = Unlock::Signature(SignatureUnlock::from(Signature::Ed25519(signature)));
+    let ref_unlock = Unlock::Reference(ReferenceUnlock::new(0).unwrap());
+    let unlocks = Unlocks::new(vec![sig_unlock, ref_unlock]).unwrap();
 
-    let tx_payload = TransactionPayload::new(essence, unlock_blocks).unwrap();
+    let tx_payload = TransactionPayload::new(essence, unlocks).unwrap();
 
     let payload: Payload = tx_payload.into();
     let packed = payload.pack_to_vec();

@@ -16,7 +16,7 @@ use crate::{
     output::{Output, OutputId},
     semantic::{ConflictReason, ValidationContext},
     signature::Signature,
-    unlock_block::UnlockBlock,
+    unlock::Unlock,
     Error,
 };
 
@@ -89,17 +89,17 @@ impl Address {
     ///
     pub fn unlock(
         &self,
-        unlock_block: &UnlockBlock,
+        unlock: &Unlock,
         inputs: &[(OutputId, &Output)],
         context: &mut ValidationContext,
     ) -> Result<(), ConflictReason> {
-        match (self, unlock_block) {
-            (Address::Ed25519(ed25519_address), UnlockBlock::Signature(unlock_block)) => {
+        match (self, unlock) {
+            (Address::Ed25519(ed25519_address), Unlock::Signature(unlock)) => {
                 if context.unlocked_addresses.contains(self) {
-                    return Err(ConflictReason::InvalidUnlockBlock);
+                    return Err(ConflictReason::InvalidUnlock);
                 }
 
-                let Signature::Ed25519(signature) = unlock_block.signature();
+                let Signature::Ed25519(signature) = unlock.signature();
 
                 if signature.is_valid(&context.essence_hash, ed25519_address).is_err() {
                     return Err(ConflictReason::InvalidSignature);
@@ -107,39 +107,39 @@ impl Address {
 
                 context.unlocked_addresses.insert(*self);
             }
-            (Address::Ed25519(_ed25519_address), UnlockBlock::Reference(_unlock_block)) => {
+            (Address::Ed25519(_ed25519_address), Unlock::Reference(_unlock)) => {
                 // TODO actually check that it was unlocked by the same signature.
                 if !context.unlocked_addresses.contains(self) {
-                    return Err(ConflictReason::InvalidUnlockBlock);
+                    return Err(ConflictReason::InvalidUnlock);
                 }
             }
-            (Address::Alias(alias_address), UnlockBlock::Alias(unlock_block)) => {
+            (Address::Alias(alias_address), Unlock::Alias(unlock)) => {
                 // PANIC: indexing is fine as it is already syntactically verified that indexes reference below.
-                if let (output_id, Output::Alias(alias_output)) = inputs[unlock_block.index() as usize] {
+                if let (output_id, Output::Alias(alias_output)) = inputs[unlock.index() as usize] {
                     if &alias_output.alias_id().or_from_output_id(output_id) != alias_address.alias_id() {
-                        return Err(ConflictReason::InvalidUnlockBlock);
+                        return Err(ConflictReason::InvalidUnlock);
                     }
                     if !context.unlocked_addresses.contains(self) {
-                        return Err(ConflictReason::InvalidUnlockBlock);
+                        return Err(ConflictReason::InvalidUnlock);
                     }
                 } else {
-                    return Err(ConflictReason::InvalidUnlockBlock);
+                    return Err(ConflictReason::InvalidUnlock);
                 }
             }
-            (Address::Nft(nft_address), UnlockBlock::Nft(unlock_block)) => {
+            (Address::Nft(nft_address), Unlock::Nft(unlock)) => {
                 // PANIC: indexing is fine as it is already syntactically verified that indexes reference below.
-                if let (output_id, Output::Nft(nft_output)) = inputs[unlock_block.index() as usize] {
+                if let (output_id, Output::Nft(nft_output)) = inputs[unlock.index() as usize] {
                     if &nft_output.nft_id().or_from_output_id(output_id) != nft_address.nft_id() {
-                        return Err(ConflictReason::InvalidUnlockBlock);
+                        return Err(ConflictReason::InvalidUnlock);
                     }
                     if !context.unlocked_addresses.contains(self) {
-                        return Err(ConflictReason::InvalidUnlockBlock);
+                        return Err(ConflictReason::InvalidUnlock);
                     }
                 } else {
-                    return Err(ConflictReason::InvalidUnlockBlock);
+                    return Err(ConflictReason::InvalidUnlock);
                 }
             }
-            _ => return Err(ConflictReason::InvalidUnlockBlock),
+            _ => return Err(ConflictReason::InvalidUnlock),
         }
 
         Ok(())

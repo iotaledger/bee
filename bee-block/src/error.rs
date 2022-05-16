@@ -20,7 +20,7 @@ use crate::{
         InputCount, MigratedFundsAmount, MilestoneMetadataLength, MilestoneOptionCount, OutputCount, ReceiptFundsCount,
         SignatureCount, TagLength, TaggedDataLength,
     },
-    unlock_block::{UnlockBlockCount, UnlockBlockIndex},
+    unlock::{UnlockCount, UnlockIndex},
 };
 
 /// Error occurring when creating/parsing/validating blocks.
@@ -33,14 +33,14 @@ pub enum Error {
     CreatedAmountOverflow,
     CreatedNativeTokensAmountOverflow,
     CryptoError(CryptoError),
-    DuplicateSignatureUnlockBlock(u16),
+    DuplicateSignatureUnlock(u16),
     DuplicateUtxo(UtxoInput),
     ExpirationUnlockConditionZero,
     FeaturesNotUniqueSorted,
-    InputUnlockBlockCountMismatch { input_count: usize, block_count: usize },
+    InputUnlockCountMismatch { input_count: usize, block_count: usize },
     InvalidAddress,
     InvalidAddressKind(u8),
-    InvalidAliasIndex(<UnlockBlockIndex as TryFrom<u16>>::Error),
+    InvalidAliasIndex(<UnlockIndex as TryFrom<u16>>::Error),
     InvalidControllerKind(u8),
     InvalidStorageDepositAmount(<StorageDepositAmount as TryFrom<u64>>::Error),
     // The above is used by `Packable` to denote out-of-range values. The following denotes the actual amount.
@@ -63,7 +63,7 @@ pub enum Error {
     InvalidMilestoneOptionKind(u8),
     InvalidMigratedFundsEntryAmount(<MigratedFundsAmount as TryFrom<u64>>::Error),
     InvalidNativeTokenCount(<NativeTokenCount as TryFrom<usize>>::Error),
-    InvalidNftIndex(<UnlockBlockIndex as TryFrom<u16>>::Error),
+    InvalidNftIndex(<UnlockIndex as TryFrom<u16>>::Error),
     InvalidOutputAmount(<OutputAmount as TryFrom<u64>>::Error),
     InvalidOutputCount(<OutputCount as TryFrom<usize>>::Error),
     InvalidOutputKind(u8),
@@ -73,7 +73,7 @@ pub enum Error {
     InvalidPowScoreValues { nps: u32, npsmi: u32 },
     InvalidReceiptFundsCount(<ReceiptFundsCount as TryFrom<usize>>::Error),
     InvalidReceiptFundsSum(u128),
-    InvalidReferenceIndex(<UnlockBlockIndex as TryFrom<u16>>::Error),
+    InvalidReferenceIndex(<UnlockIndex as TryFrom<u16>>::Error),
     InvalidSignature,
     InvalidSignatureKind(u8),
     InvalidTaggedDataLength(<TaggedDataLength as TryFrom<usize>>::Error),
@@ -84,11 +84,11 @@ pub enum Error {
     InvalidTransactionAmountSum(u128),
     InvalidTransactionNativeTokensCount(u16),
     InvalidTreasuryOutputAmount(<TreasuryOutputAmount as TryFrom<u64>>::Error),
-    InvalidUnlockBlockCount(<UnlockBlockCount as TryFrom<usize>>::Error),
-    InvalidUnlockBlockKind(u8),
-    InvalidUnlockBlockReference(u16),
-    InvalidUnlockBlockAlias(u16),
-    InvalidUnlockBlockNft(u16),
+    InvalidUnlockCount(<UnlockCount as TryFrom<usize>>::Error),
+    InvalidUnlockKind(u8),
+    InvalidUnlockReference(u16),
+    InvalidUnlockAlias(u16),
+    InvalidUnlockNft(u16),
     InvalidUnlockConditionCount(<UnlockConditionCount as TryFrom<usize>>::Error),
     InvalidUnlockConditionKind(u8),
     MigratedFundsNotSorted,
@@ -133,7 +133,7 @@ impl fmt::Display for Error {
             Error::CreatedAmountOverflow => write!(f, "created amount overflow"),
             Error::CreatedNativeTokensAmountOverflow => write!(f, "created native tokens amount overflow"),
             Error::CryptoError(e) => write!(f, "cryptographic error: {}", e),
-            Error::DuplicateSignatureUnlockBlock(index) => {
+            Error::DuplicateSignatureUnlock(index) => {
                 write!(f, "duplicate signature unlock block at index: {0}", index)
             }
             Error::DuplicateUtxo(utxo) => write!(f, "duplicate UTXO {:?} in inputs", utxo),
@@ -144,7 +144,7 @@ impl fmt::Display for Error {
                 )
             }
             Error::FeaturesNotUniqueSorted => write!(f, "features are not unique and/or sorted"),
-            Error::InputUnlockBlockCountMismatch {
+            Error::InputUnlockCountMismatch {
                 input_count,
                 block_count,
             } => {
@@ -239,15 +239,15 @@ impl fmt::Display for Error {
                 write!(f, "invalid transaction native tokens count: {}", count)
             }
             Error::InvalidTreasuryOutputAmount(amount) => write!(f, "invalid treasury amount: {}", amount),
-            Error::InvalidUnlockBlockCount(count) => write!(f, "invalid unlock block count: {}", count),
-            Error::InvalidUnlockBlockKind(k) => write!(f, "invalid unlock block kind: {}", k),
-            Error::InvalidUnlockBlockReference(index) => {
+            Error::InvalidUnlockCount(count) => write!(f, "invalid unlock block count: {}", count),
+            Error::InvalidUnlockKind(k) => write!(f, "invalid unlock block kind: {}", k),
+            Error::InvalidUnlockReference(index) => {
                 write!(f, "invalid unlock block reference: {0}", index)
             }
-            Error::InvalidUnlockBlockAlias(index) => {
+            Error::InvalidUnlockAlias(index) => {
                 write!(f, "invalid unlock block alias: {0}", index)
             }
-            Error::InvalidUnlockBlockNft(index) => {
+            Error::InvalidUnlockNft(index) => {
                 write!(f, "invalid unlock block nft: {0}", index)
             }
             Error::InvalidUnlockConditionCount(count) => write!(f, "invalid unlock condition count: {}", count),

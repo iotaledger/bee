@@ -13,7 +13,7 @@ use crate::{
         ByteCost, ByteCostConfig, NativeToken, NativeTokens, Output, OutputAmount, OutputBuilderAmount, OutputId,
     },
     semantic::{ConflictReason, ValidationContext},
-    unlock_block::UnlockBlock,
+    unlock::Unlock,
     Error,
 };
 
@@ -268,7 +268,7 @@ impl BasicOutput {
     pub fn unlock(
         &self,
         _output_id: &OutputId,
-        unlock_block: &UnlockBlock,
+        unlock: &Unlock,
         inputs: &[(OutputId, &Output)],
         context: &mut ValidationContext,
     ) -> Result<(), ConflictReason> {
@@ -278,7 +278,7 @@ impl BasicOutput {
             context.milestone_timestamp,
         );
 
-        locked_address.unlock(unlock_block, inputs, context)
+        locked_address.unlock(unlock, inputs, context)
     }
 }
 

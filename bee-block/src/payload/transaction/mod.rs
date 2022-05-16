@@ -14,14 +14,14 @@ pub use self::{
     essence::{RegularTransactionEssence, RegularTransactionEssenceBuilder, TransactionEssence},
     transaction_id::TransactionId,
 };
-use crate::{unlock_block::UnlockBlocks, Error};
+use crate::{unlock::Unlocks, Error};
 
 /// A transaction to move funds.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TransactionPayload {
     essence: TransactionEssence,
-    unlock_blocks: UnlockBlocks,
+    unlocks: Unlocks,
 }
 
 impl TransactionPayload {
@@ -29,10 +29,10 @@ impl TransactionPayload {
     pub const KIND: u32 = 6;
 
     /// Creates a new [`TransactionPayload`].
-    pub fn new(essence: TransactionEssence, unlock_blocks: UnlockBlocks) -> Result<TransactionPayload, Error> {
-        verify_essence_unlock_blocks(&essence, &unlock_blocks)?;
+    pub fn new(essence: TransactionEssence, unlocks: Unlocks) -> Result<TransactionPayload, Error> {
+        verify_essence_unlocks(&essence, &unlocks)?;
 
-        Ok(TransactionPayload { essence, unlock_blocks })
+        Ok(TransactionPayload { essence, unlocks })
     }
 
     /// Return the essence of a [`TransactionPayload`].
@@ -41,8 +41,8 @@ impl TransactionPayload {
     }
 
     /// Return unlock blocks of a [`TransactionPayload`].
-    pub fn unlock_blocks(&self) -> &UnlockBlocks {
-        &self.unlock_blocks
+    pub fn unlocks(&self) -> &Unlocks {
+        &self.unlocks
     }
 
     /// Computes the identifier of a [`TransactionPayload`].
@@ -61,7 +61,7 @@ impl Packable for TransactionPayload {
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         self.essence.pack(packer)?;
-        self.unlock_blocks.pack(packer)?;
+        self.unlocks.pack(packer)?;
 
         Ok(())
     }
@@ -70,23 +70,23 @@ impl Packable for TransactionPayload {
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let essence = TransactionEssence::unpack::<_, VERIFY>(unpacker)?;
-        let unlock_blocks = UnlockBlocks::unpack::<_, VERIFY>(unpacker)?;
+        let unlocks = Unlocks::unpack::<_, VERIFY>(unpacker)?;
 
         if VERIFY {
-            verify_essence_unlock_blocks(&essence, &unlock_blocks).map_err(UnpackError::Packable)?;
+            verify_essence_unlocks(&essence, &unlocks).map_err(UnpackError::Packable)?;
         }
 
-        Ok(TransactionPayload { essence, unlock_blocks })
+        Ok(TransactionPayload { essence, unlocks })
     }
 }
 
-fn verify_essence_unlock_blocks(essence: &TransactionEssence, unlock_blocks: &UnlockBlocks) -> Result<(), Error> {
+fn verify_essence_unlocks(essence: &TransactionEssence, unlocks: &Unlocks) -> Result<(), Error> {
     match essence {
         TransactionEssence::Regular(ref essence) => {
-            if essence.inputs().len() != unlock_blocks.len() {
-                return Err(Error::InputUnlockBlockCountMismatch {
+            if essence.inputs().len() != unlocks.len() {
+                return Err(Error::InputUnlockCountMismatch {
                     input_count: essence.inputs().len(),
-                    block_count: unlock_blocks.len(),
+                    block_count: unlocks.len(),
                 });
             }
         }
@@ -102,7 +102,7 @@ pub mod dto {
 
     pub use super::essence::dto::TransactionEssenceDto;
     use super::*;
-    use crate::{error::dto::DtoError, unlock_block::dto::UnlockBlockDto};
+    use crate::{error::dto::DtoError, unlock::dto::UnlockDto};
 
     /// The payload type to define a value transaction.
     #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -110,8 +110,7 @@ pub mod dto {
         #[serde(rename = "type")]
         pub kind: u32,
         pub essence: TransactionEssenceDto,
-        #[serde(rename = "unlockBlocks")]
-        pub unlock_blocks: Vec<UnlockBlockDto>,
+        pub unlocks: Vec<UnlockDto>,
     }
 
     impl From<&TransactionPayload> for TransactionPayloadDto {
@@ -119,7 +118,7 @@ pub mod dto {
             TransactionPayloadDto {
                 kind: TransactionPayload::KIND,
                 essence: value.essence().into(),
-                unlock_blocks: value.unlock_blocks().iter().map(Into::into).collect::<Vec<_>>(),
+                unlocks: value.unlocks().iter().map(Into::into).collect::<Vec<_>>(),
             }
         }
     }
@@ -128,14 +127,14 @@ pub mod dto {
         type Error = DtoError;
 
         fn try_from(value: &TransactionPayloadDto) -> Result<Self, Self::Error> {
-            let mut unlock_blocks = Vec::new();
-            for b in &value.unlock_blocks {
-                unlock_blocks.push(b.try_into()?);
+            let mut unlocks = Vec::new();
+            for b in &value.unlocks {
+                unlocks.push(b.try_into()?);
             }
 
             Ok(TransactionPayload::new(
                 (&value.essence).try_into()?,
-                UnlockBlocks::new(unlock_blocks)?,
+                Unlocks::new(unlocks)?,
             )?)
         }
     }

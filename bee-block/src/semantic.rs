@@ -14,7 +14,7 @@ use crate::{
         milestone::MilestoneIndex,
         transaction::{RegularTransactionEssence, TransactionEssence, TransactionId},
     },
-    unlock_block::UnlockBlocks,
+    unlock::Unlocks,
 };
 
 /// Errors related to ledger types.
@@ -67,7 +67,7 @@ pub enum ConflictReason {
     /// Storage deposit return mismatch.
     StorageDepositReturnUnfulfilled = 8,
     /// An invalid unlock block was used.
-    InvalidUnlockBlock = 9,
+    InvalidUnlock = 9,
     /// The inputs commitments do not match.
     InputsCommitmentsMismatch = 10,
     /// The sender was not verified.
@@ -98,7 +98,7 @@ impl TryFrom<u8> for ConflictReason {
             6 => Self::TimelockNotExpired,
             7 => Self::InvalidNativeTokens,
             8 => Self::StorageDepositReturnUnfulfilled,
-            9 => Self::InvalidUnlockBlock,
+            9 => Self::InvalidUnlock,
             10 => Self::InputsCommitmentsMismatch,
             11 => Self::UnverifiedSender,
             12 => Self::InvalidChainStateTransition,
@@ -117,7 +117,7 @@ pub struct ValidationContext<'a> {
     ///
     pub inputs_commitment: InputsCommitment,
     ///
-    pub unlock_blocks: &'a UnlockBlocks,
+    pub unlocks: &'a Unlocks,
     ///
     pub milestone_index: MilestoneIndex,
     ///
@@ -148,13 +148,13 @@ impl<'a> ValidationContext<'a> {
         transaction_id: &TransactionId,
         essence: &'a RegularTransactionEssence,
         inputs: impl Iterator<Item = (&'a OutputId, &'a Output)> + Clone,
-        unlock_blocks: &'a UnlockBlocks,
+        unlocks: &'a Unlocks,
         milestone_index: MilestoneIndex,
         milestone_timestamp: u32,
     ) -> Self {
         Self {
             essence,
-            unlock_blocks,
+            unlocks,
             essence_hash: TransactionEssence::from(essence.clone()).hash(),
             inputs_commitment: InputsCommitment::new(inputs.clone().map(|(_, output)| output)),
             milestone_index,
@@ -194,7 +194,7 @@ impl<'a> ValidationContext<'a> {
 pub fn semantic_validation(
     mut context: ValidationContext,
     inputs: &[(OutputId, &Output)],
-    unlock_blocks: &UnlockBlocks,
+    unlocks: &Unlocks,
 ) -> Result<ConflictReason, Error> {
     // Validation of the inputs commitment.
     if context.essence.inputs_commitment() != &context.inputs_commitment {
@@ -202,28 +202,28 @@ pub fn semantic_validation(
     }
 
     // Validation of inputs.
-    for ((output_id, consumed_output), unlock_block) in inputs.iter().zip(unlock_blocks.iter()) {
+    for ((output_id, consumed_output), unlock) in inputs.iter().zip(unlocks.iter()) {
         let (conflict, amount, consumed_native_tokens, unlock_conditions) = match consumed_output {
             Output::Basic(output) => (
-                output.unlock(output_id, unlock_block, inputs, &mut context),
+                output.unlock(output_id, unlock, inputs, &mut context),
                 output.amount(),
                 output.native_tokens(),
                 output.unlock_conditions(),
             ),
             Output::Alias(output) => (
-                output.unlock(output_id, unlock_block, inputs, &mut context),
+                output.unlock(output_id, unlock, inputs, &mut context),
                 output.amount(),
                 output.native_tokens(),
                 output.unlock_conditions(),
             ),
             Output::Foundry(output) => (
-                output.unlock(output_id, unlock_block, inputs, &mut context),
+                output.unlock(output_id, unlock, inputs, &mut context),
                 output.amount(),
                 output.native_tokens(),
                 output.unlock_conditions(),
             ),
             Output::Nft(output) => (
-                output.unlock(output_id, unlock_block, inputs, &mut context),
+                output.unlock(output_id, unlock, inputs, &mut context),
                 output.amount(),
                 output.native_tokens(),
                 output.unlock_conditions(),

@@ -36,8 +36,8 @@ pub mod payload;
 pub mod semantic;
 /// A module that provides types and syntactic validations of signatures.
 pub mod signature;
-/// A module that provides types and syntactic validations of unlock blocks.
-pub mod unlock_block;
+/// A module that provides types and syntactic validations of unlocks.
+pub mod unlock;
 
 #[cfg(feature = "dto")]
 pub use self::{block::dto::BlockDto, error::dto::DtoError};
