@@ -38,19 +38,28 @@ impl EncodeMetric for UnboundedReceiverCounter {
 }
 
 /// A wrapper around [`UnboundedReceiver`] that implements [`Stream`].
-pub struct UnboundedReceiverStream<T>(TokioUnboundedReceiverStream<T>, Counter);
+pub struct UnboundedReceiverStream<T> {
+    stream: TokioUnboundedReceiverStream<T>,
+    counter: Counter,
+}
 
 impl<T> UnboundedReceiverStream<T> {
     /// Create a new [`UnboundedReceiverStream`].
     #[inline]
     pub fn new(recv: UnboundedReceiver<T>) -> Self {
-        Self(TokioUnboundedReceiverStream::new(recv.0), recv.1)
+        Self {
+            stream: TokioUnboundedReceiverStream::new(recv.receiver),
+            counter: recv.counter,
+        }
     }
 
     /// Get back the inner [`UnboundedReceiver`].
     #[inline]
     pub fn into_inner(self) -> UnboundedReceiver<T> {
-        UnboundedReceiver(self.0.into_inner(), self.1)
+        UnboundedReceiver {
+            receiver: self.stream.into_inner(),
+            counter: self.counter,
+        }
     }
 
     /// Closes the receiving half of a channel without dropping it.
@@ -59,7 +68,7 @@ impl<T> UnboundedReceiverStream<T> {
     /// still enabling the receiver to drain messages that are buffered.
     #[inline]
     pub fn close(&mut self) {
-        self.0.close()
+        self.stream.close()
     }
 }
 
@@ -67,9 +76,9 @@ impl<T> Stream for UnboundedReceiverStream<T> {
     type Item = <TokioUnboundedReceiverStream<T> as Stream>::Item;
 
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
-        self.0.poll_next_unpin(cx).map(|opt| {
+        self.stream.poll_next_unpin(cx).map(|opt| {
             opt.map(|message| {
-                self.1.inc();
+                self.counter.inc();
                 message
             })
         })
@@ -77,14 +86,17 @@ impl<T> Stream for UnboundedReceiverStream<T> {
 }
 
 /// Receive values from the associated [`UnboundedSender`].
-pub struct UnboundedReceiver<T>(TokioUnboundedReceiver<T>, Counter);
+pub struct UnboundedReceiver<T> {
+    receiver: TokioUnboundedReceiver<T>,
+    counter: Counter,
+}
 
 impl<T> UnboundedReceiver<T> {
     /// Receives the next value for this receiver and increases the counter by one if the value is
     /// not `None`.
     pub async fn recv(&mut self) -> Option<T> {
-        self.0.recv().await.map(|message| {
-            self.1.inc();
+        self.receiver.recv().await.map(|message| {
+            self.counter.inc();
             message
         })
     }
@@ -92,16 +104,16 @@ impl<T> UnboundedReceiver<T> {
     /// Tries to receive the next value for this receiver and increases the counter by one if
     /// successful.
     pub fn try_recv(&mut self) -> Result<T, TryRecvError> {
-        self.0.try_recv().map(|message| {
-            self.1.inc();
+        self.receiver.try_recv().map(|message| {
+            self.counter.inc();
             message
         })
     }
 
     /// Blocking receive to call outside of asynchronous contexts.
     pub fn blocking_recv(&mut self) -> Option<T> {
-        self.0.blocking_recv().map(|message| {
-            self.1.inc();
+        self.receiver.blocking_recv().map(|message| {
+            self.counter.inc();
             message
         })
     }
@@ -109,14 +121,14 @@ impl<T> UnboundedReceiver<T> {
     /// Closes the receiving half of a channel, without dropping it.
     #[inline]
     pub fn close(&mut self) {
-        self.0.close()
+        self.receiver.close()
     }
 
     /// Polls to receive the next message on this channel.
     pub fn poll_recv(&mut self, cx: &mut Context<'_>) -> Poll<Option<T>> {
-        self.0.poll_recv(cx).map(|opt| {
+        self.receiver.poll_recv(cx).map(|opt| {
             opt.map(|message| {
-                self.1.inc();
+                self.counter.inc();
                 message
             })
         })
@@ -139,40 +151,46 @@ impl EncodeMetric for UnboundedSenderCounter {
 }
 
 /// Send values to the associated [`UnboundedReceiver`].
-pub struct UnboundedSender<T>(TokioUnboundedSender<T>, Counter);
+pub struct UnboundedSender<T> {
+    sender: TokioUnboundedSender<T>,
+    counter: Counter,
+}
 
 impl<T> UnboundedSender<T> {
     /// Attempts to send a message on this [`UnboundedSender`] without blocking and increases the
     /// counter by one if successful.
     pub fn send(&self, message: T) -> Result<(), SendError<T>> {
-        self.0.send(message).map(|()| {
-            self.1.inc();
+        self.sender.send(message).map(|()| {
+            self.counter.inc();
         })
     }
 
     /// Completes when the receiver has dropped.
     #[inline]
     pub async fn closed(&self) {
-        self.0.closed().await
+        self.sender.closed().await
     }
 
     /// Checks if the channel has been closed.
     #[inline]
     pub fn is_closed(&self) -> bool {
-        self.0.is_closed()
+        self.sender.is_closed()
     }
 
     /// Returns `true` if senders belong to the same channel.
     #[inline]
     pub fn same_channel(&self, other: &Self) -> bool {
-        self.0.same_channel(&other.0)
+        self.sender.same_channel(&other.sender)
     }
 }
 
 impl<T> Clone for UnboundedSender<T> {
     #[inline]
     fn clone(&self) -> Self {
-        Self(self.0.clone(), self.1.clone())
+        Self {
+            sender: self.sender.clone(),
+            counter: self.counter.clone(),
+        }
     }
 }
 
@@ -186,11 +204,17 @@ pub fn unbounded_channel<T>() -> (
     let tx_counter = Counter::default();
     let rx_counter = Counter::default();
 
-    let (tx, rx) = tokio_unbounded_channel();
+    let (sender, receiver) = tokio_unbounded_channel();
 
     (
-        UnboundedSender(tx, tx_counter.clone()),
-        UnboundedReceiver(rx, rx_counter.clone()),
+        UnboundedSender {
+            sender,
+            counter: tx_counter.clone(),
+        },
+        UnboundedReceiver {
+            receiver,
+            counter: rx_counter.clone(),
+        },
         UnboundedSenderCounter(tx_counter),
         UnboundedReceiverCounter(rx_counter),
     )
