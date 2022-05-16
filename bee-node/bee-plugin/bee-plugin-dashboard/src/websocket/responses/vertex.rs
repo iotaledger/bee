@@ -31,7 +31,7 @@ impl From<VertexCreated> for VertexResponse {
     fn from(event: VertexCreated) -> Self {
         Self {
             id: event.block_id.to_string(),
-            parents: event.parent_block_ids.iter().map(|p| p.to_string()).collect(),
+            parents: event.parents.iter().map(|p| p.to_string()).collect(),
             is_solid: event.is_solid,
             is_referenced: event.is_referenced,
             is_conflicting: event.is_conflicting,

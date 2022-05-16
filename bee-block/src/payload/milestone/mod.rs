@@ -178,7 +178,6 @@ pub mod dto {
         pub protocol_version: u8,
         #[serde(rename = "previousMilestoneId")]
         pub previous_milestone_id: String,
-        #[serde(rename = "parentBlockIds")]
         pub parents: Vec<String>,
         #[serde(rename = "confirmedMerkleRoot")]
         pub confirmed_merkle_root: String,
@@ -235,7 +234,7 @@ pub mod dto {
                     parent_ids.push(
                         msg_id
                             .parse::<BlockId>()
-                            .map_err(|_| DtoError::InvalidField("parentBlockIds"))?,
+                            .map_err(|_| DtoError::InvalidField("parents"))?,
                     );
                 }
 

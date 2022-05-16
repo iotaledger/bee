@@ -150,7 +150,7 @@ pub(crate) fn block_metadata<B: StorageBackend>(
 
             Ok(warp::reply::json(&BlockMetadataResponse {
                 block_id: block_id.to_string(),
-                parent_block_ids: block.parents().iter().map(BlockId::to_string).collect(),
+                parents: block.parents().iter().map(BlockId::to_string).collect(),
                 is_solid,
                 referenced_by_milestone_index,
                 milestone_index,

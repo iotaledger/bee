@@ -245,7 +245,7 @@ where
                             }
                         };
 
-                        let parent_block_ids = block.parents().to_vec();
+                        let parents = block.parents().to_vec();
 
                         if payload_worker.send(PayloadWorkerEvent { block_id, block }).is_err() {
                             error!("Sending block {} to payload worker failed.", block_id);
@@ -258,7 +258,7 @@ where
                         // TODO: boolean values are false at this point in time? trigger event from another location?
                         bus.dispatch(VertexCreated {
                             block_id,
-                            parent_block_ids,
+                            parents,
                             is_solid: false,
                             is_referenced: false,
                             is_conflicting: false,

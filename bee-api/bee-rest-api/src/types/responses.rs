@@ -153,8 +153,7 @@ impl BodyInner for BlockResponse {}
 pub struct BlockMetadataResponse {
     #[serde(rename = "blockId")]
     pub block_id: String,
-    #[serde(rename = "parentBlockIds")]
-    pub parent_block_ids: Vec<String>,
+    pub parents: Vec<String>,
     #[serde(rename = "isSolid")]
     pub is_solid: bool,
     #[serde(rename = "referencedByMilestoneIndex", skip_serializing_if = "Option::is_none")]

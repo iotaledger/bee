@@ -75,7 +75,7 @@ pub(crate) async fn submit_block<B: StorageBackend>(
     protocol_config: ProtocolConfig,
 ) -> Result<impl Reply, Rejection> {
     let protocol_version_json = &value["protocolVersion"];
-    let parents_json = &value["parentBlockIds"];
+    let parents_json = &value["parents"];
     let payload_json = &value["payload"];
     let nonce_json = &value["nonce"];
 
@@ -153,7 +153,11 @@ pub(crate) async fn submit_block<B: StorageBackend>(
                     "invalid nonce: expected an u64-string".to_string(),
                 ))
             })?;
-        if parsed_nonce == 0 { None } else { Some(parsed_nonce) }
+        if parsed_nonce == 0 {
+            None
+        } else {
+            Some(parsed_nonce)
+        }
     };
 
     let block = build_block(parents, payload, nonce, rest_api_config, protocol_config)?;

@@ -38,7 +38,7 @@ pub struct VertexCreated {
     /// Block identifier of the created vertex.
     pub block_id: BlockId,
     /// Block identifiers of the parents of the created vertex.
-    pub parent_block_ids: Vec<BlockId>,
+    pub parents: Vec<BlockId>,
     /// Whether the vertex is a solid block.
     pub is_solid: bool,
     /// Whether the vertex is a referenced block.

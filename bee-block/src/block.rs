@@ -250,11 +250,10 @@ pub mod dto {
         ///
         #[serde(rename = "protocolVersion")]
         pub protocol_version: u8,
-        #[serde(rename = "parentBlockIds")]
         ///
         pub parents: Vec<String>,
-        #[serde(skip_serializing_if = "Option::is_none")]
         ///
+        #[serde(skip_serializing_if = "Option::is_none")]
         pub payload: Option<PayloadDto>,
         ///
         pub nonce: String,
@@ -287,10 +286,7 @@ pub mod dto {
                 value
                     .parents
                     .iter()
-                    .map(|m| {
-                        m.parse::<BlockId>()
-                            .map_err(|_| DtoError::InvalidField("parentBlockIds"))
-                    })
+                    .map(|m| m.parse::<BlockId>().map_err(|_| DtoError::InvalidField("parents")))
                     .collect::<Result<Vec<BlockId>, DtoError>>()?,
             )?;
 

@@ -71,7 +71,7 @@ pub(crate) async fn white_flag<B: StorageBackend>(
     rest_api_config: RestApiConfig,
 ) -> Result<impl Reply, Rejection> {
     let index_json = &body["index"];
-    let parents_json = &body["parentBlockIds"];
+    let parents_json = &body["parents"];
 
     let index = if index_json.is_null() {
         return Err(reject::custom(CustomRejection::BadRequest(
