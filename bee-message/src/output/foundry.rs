@@ -87,6 +87,20 @@ impl FoundryOutputBuilder {
         })
     }
 
+    /// Sets the amount to the provided value.
+    #[inline(always)]
+    pub fn with_amount(mut self, amount: u64) -> Result<Self, Error> {
+        self.amount = OutputBuilderAmount::Amount(amount.try_into().map_err(Error::InvalidOutputAmount)?);
+        Ok(self)
+    }
+
+    /// Sets the amount to the minimum storage deposit.
+    #[inline(always)]
+    pub fn with_minimum_storage_deposit(mut self, byte_cost_config: ByteCostConfig) -> Self {
+        self.amount = OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config);
+        self
+    }
+
     ///
     #[inline(always)]
     pub fn add_native_token(mut self, native_token: NativeToken) -> Self {
@@ -98,6 +112,27 @@ impl FoundryOutputBuilder {
     #[inline(always)]
     pub fn with_native_tokens(mut self, native_tokens: impl IntoIterator<Item = NativeToken>) -> Self {
         self.native_tokens = native_tokens.into_iter().collect();
+        self
+    }
+
+    /// Sets the serial number to the provided value.
+    #[inline(always)]
+    pub fn with_serial_number(mut self, serial_number: u32) -> Self {
+        self.serial_number = serial_number;
+        self
+    }
+
+    /// Sets the token tag to the provided value.
+    #[inline(always)]
+    pub fn with_token_tag(mut self, token_tag: TokenTag) -> Self {
+        self.token_tag = token_tag;
+        self
+    }
+
+    /// Sets the token scheme to the provided value.
+    #[inline(always)]
+    pub fn with_token_scheme(mut self, token_scheme: TokenScheme) -> Self {
+        self.token_scheme = token_scheme;
         self
     }
 

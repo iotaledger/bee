@@ -63,6 +63,20 @@ impl NftOutputBuilder {
         })
     }
 
+    /// Sets the amount to the provided value.
+    #[inline(always)]
+    pub fn with_amount(mut self, amount: u64) -> Result<Self, Error> {
+        self.amount = OutputBuilderAmount::Amount(amount.try_into().map_err(Error::InvalidOutputAmount)?);
+        Ok(self)
+    }
+
+    /// Sets the amount to the minimum storage deposit.
+    #[inline(always)]
+    pub fn with_minimum_storage_deposit(mut self, byte_cost_config: ByteCostConfig) -> Self {
+        self.amount = OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config);
+        self
+    }
+
     ///
     #[inline(always)]
     pub fn add_native_token(mut self, native_token: NativeToken) -> Self {
@@ -74,6 +88,13 @@ impl NftOutputBuilder {
     #[inline(always)]
     pub fn with_native_tokens(mut self, native_tokens: impl IntoIterator<Item = NativeToken>) -> Self {
         self.native_tokens = native_tokens.into_iter().collect();
+        self
+    }
+
+    /// Sets the NFT ID to the provided value.
+    #[inline(always)]
+    pub fn with_nft_id(mut self, nft_id: NftId) -> Self {
+        self.nft_id = nft_id;
         self
     }
 
