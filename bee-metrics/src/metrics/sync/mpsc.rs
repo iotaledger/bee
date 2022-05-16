@@ -92,6 +92,11 @@ pub struct UnboundedReceiver<T> {
 }
 
 impl<T> UnboundedReceiver<T> {
+    /// Returns the counter metric for this side of the channel.
+    pub fn counter(&self) -> UnboundedReceiverCounter {
+        UnboundedReceiverCounter(self.counter.clone())
+    }
+
     /// Receives the next value for this receiver and increases the counter by one if the value is
     /// not `None`.
     pub async fn recv(&mut self) -> Option<T> {
@@ -157,6 +162,11 @@ pub struct UnboundedSender<T> {
 }
 
 impl<T> UnboundedSender<T> {
+    /// Returns the counter metric for this side of the channel.
+    pub fn counter(&self) -> UnboundedSenderCounter {
+        UnboundedSenderCounter(self.counter.clone())
+    }
+
     /// Attempts to send a message on this [`UnboundedSender`] without blocking and increases the
     /// counter by one if successful.
     pub fn send(&self, message: T) -> Result<(), SendError<T>> {
@@ -195,27 +205,17 @@ impl<T> Clone for UnboundedSender<T> {
 }
 
 /// Creates an unbounded mpsc channel for communicating between asynchronous tasks without backpressure.
-pub fn unbounded_channel<T>() -> (
-    UnboundedSender<T>,
-    UnboundedReceiver<T>,
-    UnboundedSenderCounter,
-    UnboundedReceiverCounter,
-) {
-    let tx_counter = Counter::default();
-    let rx_counter = Counter::default();
-
+pub fn unbounded_channel<T>() -> (UnboundedSender<T>, UnboundedReceiver<T>) {
     let (sender, receiver) = tokio_unbounded_channel();
 
     (
         UnboundedSender {
             sender,
-            counter: tx_counter.clone(),
+            counter: Counter::default(),
         },
         UnboundedReceiver {
             receiver,
-            counter: rx_counter.clone(),
+            counter: Counter::default(),
         },
-        UnboundedSenderCounter(tx_counter),
-        UnboundedReceiverCounter(rx_counter),
     )
 }
