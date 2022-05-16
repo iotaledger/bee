@@ -19,11 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
-## 0.1.0 - 2022-04-12
+## 0.1.0 - 2022-05-16
 
 ### Added
 
 - `Registry` type to register metrics;
 - `ProcessMetrics`, `MemoryUsage` and `CpuUsage` types to track OS process related metrics;
+- Wrappers around `tokio::sync::mpsc` unbounded channel items;
 - `serve_metrics` function to serve the metrics to Prometheus;
 - Re-exported `prometheus_client` types to write custom metrics;
