@@ -44,7 +44,7 @@ pub struct UnboundedReceiverStream<T> {
 }
 
 impl<T> UnboundedReceiverStream<T> {
-    /// Create a new [`UnboundedReceiverStream`].
+    /// Creates a new [`UnboundedReceiverStream`].
     #[inline]
     pub fn new(recv: UnboundedReceiver<T>) -> Self {
         Self {
