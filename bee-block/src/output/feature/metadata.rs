@@ -8,36 +8,36 @@ use packable::{bounded::BoundedU16, prefix::BoxedSlicePrefix};
 
 use crate::Error;
 
-pub(crate) type MetadataFeatureBlockLength =
-    BoundedU16<{ *MetadataFeatureBlock::LENGTH_RANGE.start() }, { *MetadataFeatureBlock::LENGTH_RANGE.end() }>;
+pub(crate) type MetadataFeatureLength =
+    BoundedU16<{ *MetadataFeature::LENGTH_RANGE.start() }, { *MetadataFeature::LENGTH_RANGE.end() }>;
 
 /// Defines metadata, arbitrary binary data, that will be stored in the output.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, packable::Packable)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[packable(unpack_error = Error, with = |err| Error::InvalidMetadataFeatureBlockLength(err.into_prefix_err().into()))]
-pub struct MetadataFeatureBlock(
+#[packable(unpack_error = Error, with = |err| Error::InvalidMetadataFeatureLength(err.into_prefix_err().into()))]
+pub struct MetadataFeature(
     // Binary data.
-    BoxedSlicePrefix<u8, MetadataFeatureBlockLength>,
+    BoxedSlicePrefix<u8, MetadataFeatureLength>,
 );
 
-impl TryFrom<Vec<u8>> for MetadataFeatureBlock {
+impl TryFrom<Vec<u8>> for MetadataFeature {
     type Error = Error;
 
     fn try_from(data: Vec<u8>) -> Result<Self, Error> {
         data.into_boxed_slice()
             .try_into()
             .map(Self)
-            .map_err(Error::InvalidMetadataFeatureBlockLength)
+            .map_err(Error::InvalidMetadataFeatureLength)
     }
 }
 
-impl MetadataFeatureBlock {
-    /// The [`FeatureBlock`](crate::output::FeatureBlock) kind of [`MetadataFeatureBlock`].
+impl MetadataFeature {
+    /// The [`Feature`](crate::output::Feature) kind of [`MetadataFeature`].
     pub const KIND: u8 = 2;
-    /// Valid lengths for a [`MetadataFeatureBlock`].
+    /// Valid lengths for a [`MetadataFeature`].
     pub const LENGTH_RANGE: RangeInclusive<u16> = 1..=8192;
 
-    /// Creates a new [`MetadataFeatureBlock`].
+    /// Creates a new [`MetadataFeature`].
     #[inline(always)]
     pub fn new(data: Vec<u8>) -> Result<Self, Error> {
         Self::try_from(data)
@@ -50,15 +50,15 @@ impl MetadataFeatureBlock {
     }
 }
 
-impl core::fmt::Display for MetadataFeatureBlock {
+impl core::fmt::Display for MetadataFeature {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "{}", prefix_hex::encode(self.data()))
     }
 }
 
-impl core::fmt::Debug for MetadataFeatureBlock {
+impl core::fmt::Debug for MetadataFeature {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "MetadataFeatureBlock({})", self)
+        write!(f, "MetadataFeature({})", self)
     }
 }
 
@@ -68,7 +68,7 @@ pub mod dto {
     use serde::{Deserialize, Serialize};
 
     #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-    pub struct MetadataFeatureBlockDto {
+    pub struct MetadataFeatureDto {
         #[serde(rename = "type")]
         pub kind: u8,
         pub data: String,

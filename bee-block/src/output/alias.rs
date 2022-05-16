@@ -15,7 +15,7 @@ use packable::{
 use crate::{
     address::{Address, AliasAddress},
     output::{
-        feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
+        feature::{verify_allowed_features, Feature, FeatureFlags, Features},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
         AliasId, ByteCost, ByteCostConfig, ChainId, NativeToken, NativeTokens, Output, OutputAmount,
         OutputBuilderAmount, OutputId, StateTransitionError, StateTransitionVerifier,
@@ -35,8 +35,8 @@ pub struct AliasOutputBuilder {
     state_metadata: Vec<u8>,
     foundry_counter: Option<u32>,
     unlock_conditions: Vec<UnlockCondition>,
-    feature_blocks: Vec<FeatureBlock>,
-    immutable_feature_blocks: Vec<FeatureBlock>,
+    features: Vec<Feature>,
+    immutable_features: Vec<Feature>,
 }
 
 impl AliasOutputBuilder {
@@ -66,8 +66,8 @@ impl AliasOutputBuilder {
             state_metadata: Vec::new(),
             foundry_counter: None,
             unlock_conditions: Vec::new(),
-            feature_blocks: Vec::new(),
-            immutable_feature_blocks: Vec::new(),
+            features: Vec::new(),
+            immutable_features: Vec::new(),
         })
     }
 
@@ -156,26 +156,22 @@ impl AliasOutputBuilder {
 
     ///
     #[inline(always)]
-    pub fn add_feature_block(mut self, feature_block: FeatureBlock) -> Self {
-        self.feature_blocks.push(feature_block);
+    pub fn add_feature(mut self, feature: Feature) -> Self {
+        self.features.push(feature);
         self
     }
 
     ///
     #[inline(always)]
-    pub fn with_feature_blocks(mut self, feature_blocks: impl IntoIterator<Item = FeatureBlock>) -> Self {
-        self.feature_blocks = feature_blocks.into_iter().collect();
+    pub fn with_features(mut self, features: impl IntoIterator<Item = Feature>) -> Self {
+        self.features = features.into_iter().collect();
         self
     }
 
     ///
-    pub fn replace_feature_block(mut self, feature_block: FeatureBlock) -> Result<Self, Error> {
-        match self
-            .feature_blocks
-            .iter_mut()
-            .find(|f| f.kind() == feature_block.kind())
-        {
-            Some(f) => *f = feature_block,
+    pub fn replace_feature(mut self, feature: Feature) -> Result<Self, Error> {
+        match self.features.iter_mut().find(|f| f.kind() == feature.kind()) {
+            Some(f) => *f = feature,
             None => return Err(Error::CannotReplaceMissingField),
         }
         Ok(self)
@@ -183,29 +179,26 @@ impl AliasOutputBuilder {
 
     ///
     #[inline(always)]
-    pub fn add_immutable_feature_block(mut self, immutable_feature_block: FeatureBlock) -> Self {
-        self.immutable_feature_blocks.push(immutable_feature_block);
+    pub fn add_immutable_feature(mut self, immutable_feature: Feature) -> Self {
+        self.immutable_features.push(immutable_feature);
         self
     }
 
     ///
     #[inline(always)]
-    pub fn with_immutable_feature_blocks(
-        mut self,
-        immutable_feature_blocks: impl IntoIterator<Item = FeatureBlock>,
-    ) -> Self {
-        self.immutable_feature_blocks = immutable_feature_blocks.into_iter().collect();
+    pub fn with_immutable_features(mut self, immutable_features: impl IntoIterator<Item = Feature>) -> Self {
+        self.immutable_features = immutable_features.into_iter().collect();
         self
     }
 
     ///
-    pub fn replace_immutable_feature_block(mut self, immutable_feature_block: FeatureBlock) -> Result<Self, Error> {
+    pub fn replace_immutable_feature(mut self, immutable_feature: Feature) -> Result<Self, Error> {
         match self
-            .immutable_feature_blocks
+            .immutable_features
             .iter_mut()
-            .find(|f| f.kind() == immutable_feature_block.kind())
+            .find(|f| f.kind() == immutable_feature.kind())
         {
-            Some(f) => *f = immutable_feature_block,
+            Some(f) => *f = immutable_feature,
             None => return Err(Error::CannotReplaceMissingField),
         }
         Ok(self)
@@ -228,13 +221,13 @@ impl AliasOutputBuilder {
 
         verify_unlock_conditions(&unlock_conditions, &self.alias_id)?;
 
-        let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
+        let features = Features::new(self.features)?;
 
-        verify_allowed_feature_blocks(&feature_blocks, AliasOutput::ALLOWED_FEATURE_BLOCKS)?;
+        verify_allowed_features(&features, AliasOutput::ALLOWED_FEATURES)?;
 
-        let immutable_feature_blocks = FeatureBlocks::new(self.immutable_feature_blocks)?;
+        let immutable_features = Features::new(self.immutable_features)?;
 
-        verify_allowed_feature_blocks(&immutable_feature_blocks, AliasOutput::ALLOWED_IMMUTABLE_FEATURE_BLOCKS)?;
+        verify_allowed_features(&immutable_features, AliasOutput::ALLOWED_IMMUTABLE_FEATURES)?;
 
         let mut output = AliasOutput {
             amount: 1u64.try_into().map_err(Error::InvalidOutputAmount)?,
@@ -244,8 +237,8 @@ impl AliasOutputBuilder {
             state_metadata,
             foundry_counter,
             unlock_conditions,
-            feature_blocks,
-            immutable_feature_blocks,
+            features,
+            immutable_features,
         };
 
         output.amount = match self.amount {
@@ -275,8 +268,8 @@ impl From<&AliasOutput> for AliasOutputBuilder {
             state_metadata: output.state_metadata.to_vec(),
             foundry_counter: Some(output.foundry_counter),
             unlock_conditions: output.unlock_conditions.to_vec(),
-            feature_blocks: output.feature_blocks.to_vec(),
-            immutable_feature_blocks: output.immutable_feature_blocks.to_vec(),
+            features: output.features.to_vec(),
+            immutable_features: output.immutable_features.to_vec(),
         }
     }
 }
@@ -301,9 +294,9 @@ pub struct AliasOutput {
     foundry_counter: u32,
     unlock_conditions: UnlockConditions,
     //
-    feature_blocks: FeatureBlocks,
+    features: Features,
     //
-    immutable_feature_blocks: FeatureBlocks,
+    immutable_features: Features,
 }
 
 impl AliasOutput {
@@ -314,11 +307,10 @@ impl AliasOutput {
     /// The set of allowed [`UnlockCondition`]s for an [`AliasOutput`].
     pub const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags =
         UnlockConditionFlags::STATE_CONTROLLER_ADDRESS.union(UnlockConditionFlags::GOVERNOR_ADDRESS);
-    /// The set of allowed [`FeatureBlock`]s for an [`AliasOutput`].
-    pub const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::SENDER.union(FeatureBlockFlags::METADATA);
-    /// The set of allowed immutable [`FeatureBlock`]s for an [`AliasOutput`].
-    pub const ALLOWED_IMMUTABLE_FEATURE_BLOCKS: FeatureBlockFlags =
-        FeatureBlockFlags::ISSUER.union(FeatureBlockFlags::METADATA);
+    /// The set of allowed [`Feature`]s for an [`AliasOutput`].
+    pub const ALLOWED_FEATURES: FeatureFlags = FeatureFlags::SENDER.union(FeatureFlags::METADATA);
+    /// The set of allowed immutable [`Feature`]s for an [`AliasOutput`].
+    pub const ALLOWED_IMMUTABLE_FEATURES: FeatureFlags = FeatureFlags::ISSUER.union(FeatureFlags::METADATA);
 
     /// Creates a new [`AliasOutput`] with a provided amount.
     #[inline(always)]
@@ -396,14 +388,14 @@ impl AliasOutput {
 
     ///
     #[inline(always)]
-    pub fn feature_blocks(&self) -> &FeatureBlocks {
-        &self.feature_blocks
+    pub fn features(&self) -> &Features {
+        &self.features
     }
 
     ///
     #[inline(always)]
-    pub fn immutable_feature_blocks(&self) -> &FeatureBlocks {
-        &self.immutable_feature_blocks
+    pub fn immutable_features(&self) -> &Features {
+        &self.immutable_features
     }
 
     ///
@@ -480,7 +472,7 @@ impl StateTransitionVerifier for AliasOutput {
             return Err(StateTransitionError::NonZeroCreatedId);
         }
 
-        if let Some(issuer) = next_state.immutable_feature_blocks().issuer() {
+        if let Some(issuer) = next_state.immutable_features().issuer() {
             if !context.unlocked_addresses.contains(issuer.address()) {
                 return Err(StateTransitionError::IssuerNotUnlocked);
             }
@@ -494,7 +486,7 @@ impl StateTransitionVerifier for AliasOutput {
         next_state: &Self,
         context: &ValidationContext,
     ) -> Result<(), StateTransitionError> {
-        if current_state.immutable_feature_blocks != next_state.immutable_feature_blocks {
+        if current_state.immutable_features != next_state.immutable_features {
             return Err(StateTransitionError::MutatedImmutableField);
         }
 
@@ -502,7 +494,7 @@ impl StateTransitionVerifier for AliasOutput {
             // State transition.
             if current_state.state_controller_address() != next_state.state_controller_address()
                 || current_state.governor_address() != next_state.governor_address()
-                || current_state.feature_blocks.metadata() != next_state.feature_blocks.metadata()
+                || current_state.features.metadata() != next_state.features.metadata()
             {
                 return Err(StateTransitionError::MutatedFieldWithoutRights);
             }
@@ -570,8 +562,8 @@ impl Packable for AliasOutput {
         self.state_metadata.pack(packer)?;
         self.foundry_counter.pack(packer)?;
         self.unlock_conditions.pack(packer)?;
-        self.feature_blocks.pack(packer)?;
-        self.immutable_feature_blocks.pack(packer)?;
+        self.features.pack(packer)?;
+        self.immutable_features.pack(packer)?;
 
         Ok(())
     }
@@ -598,17 +590,16 @@ impl Packable for AliasOutput {
             verify_unlock_conditions(&unlock_conditions, &alias_id).map_err(UnpackError::Packable)?;
         }
 
-        let feature_blocks = FeatureBlocks::unpack::<_, VERIFY>(unpacker)?;
+        let features = Features::unpack::<_, VERIFY>(unpacker)?;
 
         if VERIFY {
-            verify_allowed_feature_blocks(&feature_blocks, AliasOutput::ALLOWED_FEATURE_BLOCKS)
-                .map_err(UnpackError::Packable)?;
+            verify_allowed_features(&features, AliasOutput::ALLOWED_FEATURES).map_err(UnpackError::Packable)?;
         }
 
-        let immutable_feature_blocks = FeatureBlocks::unpack::<_, VERIFY>(unpacker)?;
+        let immutable_features = Features::unpack::<_, VERIFY>(unpacker)?;
 
         if VERIFY {
-            verify_allowed_feature_blocks(&immutable_feature_blocks, AliasOutput::ALLOWED_IMMUTABLE_FEATURE_BLOCKS)
+            verify_allowed_features(&immutable_features, AliasOutput::ALLOWED_IMMUTABLE_FEATURES)
                 .map_err(UnpackError::Packable)?;
         }
 
@@ -620,8 +611,8 @@ impl Packable for AliasOutput {
             state_metadata,
             foundry_counter,
             unlock_conditions,
-            feature_blocks,
-            immutable_feature_blocks,
+            features,
+            immutable_features,
         })
     }
 }
@@ -668,7 +659,7 @@ pub mod dto {
     use crate::{
         error::dto::DtoError,
         output::{
-            alias_id::dto::AliasIdDto, feature_block::dto::FeatureBlockDto, native_token::dto::NativeTokenDto,
+            alias_id::dto::AliasIdDto, feature::dto::FeatureDto, native_token::dto::NativeTokenDto,
             unlock_condition::dto::UnlockConditionDto,
         },
     };
@@ -699,11 +690,11 @@ pub mod dto {
         #[serde(rename = "unlockConditions")]
         pub unlock_conditions: Vec<UnlockConditionDto>,
         //
-        #[serde(rename = "featureBlocks", skip_serializing_if = "Vec::is_empty", default)]
-        pub feature_blocks: Vec<FeatureBlockDto>,
+        #[serde(skip_serializing_if = "Vec::is_empty", default)]
+        pub features: Vec<FeatureDto>,
         //
-        #[serde(rename = "immutableFeatureBlocks", skip_serializing_if = "Vec::is_empty", default)]
-        pub immutable_feature_blocks: Vec<FeatureBlockDto>,
+        #[serde(rename = "immutableFeatures", skip_serializing_if = "Vec::is_empty", default)]
+        pub immutable_features: Vec<FeatureDto>,
     }
 
     impl From<&AliasOutput> for AliasOutputDto {
@@ -717,8 +708,8 @@ pub mod dto {
                 state_metadata: prefix_hex::encode(value.state_metadata()),
                 foundry_counter: value.foundry_counter(),
                 unlock_conditions: value.unlock_conditions().iter().map(Into::into).collect::<_>(),
-                feature_blocks: value.feature_blocks().iter().map(Into::into).collect::<_>(),
-                immutable_feature_blocks: value.immutable_feature_blocks().iter().map(Into::into).collect::<_>(),
+                features: value.features().iter().map(Into::into).collect::<_>(),
+                immutable_features: value.immutable_features().iter().map(Into::into).collect::<_>(),
             }
         }
     }
@@ -753,12 +744,12 @@ pub mod dto {
                 builder = builder.add_unlock_condition(b.try_into()?);
             }
 
-            for b in &value.feature_blocks {
-                builder = builder.add_feature_block(b.try_into()?);
+            for b in &value.features {
+                builder = builder.add_feature(b.try_into()?);
             }
 
-            for b in &value.immutable_feature_blocks {
-                builder = builder.add_immutable_feature_block(b.try_into()?);
+            for b in &value.immutable_features {
+                builder = builder.add_immutable_feature(b.try_into()?);
             }
 
             Ok(builder.finish()?)

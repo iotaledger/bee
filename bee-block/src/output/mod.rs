@@ -19,7 +19,7 @@ mod token_scheme;
 mod treasury;
 
 ///
-pub mod feature_block;
+pub mod feature;
 ///
 pub mod unlock_condition;
 
@@ -30,7 +30,7 @@ use packable::{bounded::BoundedU64, PackableExt};
 
 pub(crate) use self::{
     alias::StateMetadataLength,
-    feature_block::{MetadataFeatureBlockLength, TagFeatureBlockLength},
+    feature::{MetadataFeatureLength, TagFeatureLength},
     native_token::NativeTokenCount,
     output_id::OutputIndex,
     treasury::TreasuryOutputAmount,
@@ -42,7 +42,7 @@ pub use self::{
     basic::{BasicOutput, BasicOutputBuilder},
     byte_cost::{ByteCost, ByteCostConfig, ByteCostConfigBuilder},
     chain_id::ChainId,
-    feature_block::{FeatureBlock, FeatureBlocks},
+    feature::{Feature, Features},
     foundry::{FoundryOutput, FoundryOutputBuilder},
     foundry_id::FoundryId,
     inputs_commitment::InputsCommitment,
@@ -150,25 +150,25 @@ impl Output {
         }
     }
 
-    /// Returns the feature blocks of an [`Output`], if any.
-    pub fn feature_blocks(&self) -> Option<&FeatureBlocks> {
+    /// Returns the features of an [`Output`], if any.
+    pub fn features(&self) -> Option<&Features> {
         match self {
             Self::Treasury(_) => None,
-            Self::Basic(output) => Some(output.feature_blocks()),
-            Self::Alias(output) => Some(output.feature_blocks()),
-            Self::Foundry(output) => Some(output.feature_blocks()),
-            Self::Nft(output) => Some(output.feature_blocks()),
+            Self::Basic(output) => Some(output.features()),
+            Self::Alias(output) => Some(output.features()),
+            Self::Foundry(output) => Some(output.features()),
+            Self::Nft(output) => Some(output.features()),
         }
     }
 
-    /// Returns the immutable feature blocks of an [`Output`], if any.
-    pub fn immutable_feature_blocks(&self) -> Option<&FeatureBlocks> {
+    /// Returns the immutable features of an [`Output`], if any.
+    pub fn immutable_features(&self) -> Option<&Features> {
         match self {
             Self::Treasury(_) => None,
             Self::Basic(_) => None,
-            Self::Alias(output) => Some(output.immutable_feature_blocks()),
-            Self::Foundry(output) => Some(output.immutable_feature_blocks()),
-            Self::Nft(output) => Some(output.immutable_feature_blocks()),
+            Self::Alias(output) => Some(output.immutable_features()),
+            Self::Foundry(output) => Some(output.immutable_features()),
+            Self::Nft(output) => Some(output.immutable_features()),
         }
     }
 

@@ -1,8 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-/// Module providing random feature block generation utilities.
-pub mod feature_block;
+/// Module providing random feature generation utilities.
+pub mod feature;
 /// Module providing random unlock condition generation utilities.
 pub mod unlock_condition;
 
@@ -20,7 +20,7 @@ use crate::rand::{
     milestone::{rand_milestone_id, rand_milestone_index},
     number::{rand_number, rand_number_range},
     output::{
-        feature_block::rand_allowed_feature_blocks,
+        feature::rand_allowed_features,
         unlock_condition::{
             rand_address_unlock_condition, rand_address_unlock_condition_different_from,
             rand_governor_address_unlock_condition_different_from,
@@ -47,11 +47,11 @@ pub fn rand_treasury_output() -> output::TreasuryOutput {
 
 /// Generates a random [`BasicOutput`](output::BasicOutput).
 pub fn rand_basic_output() -> output::BasicOutput {
-    let feature_blocks = rand_allowed_feature_blocks(output::BasicOutput::ALLOWED_FEATURE_BLOCKS);
+    let features = rand_allowed_features(output::BasicOutput::ALLOWED_FEATURES);
     // TODO: Add `NativeTokens`
     output::BasicOutput::build_with_amount(rand_number_range(Output::AMOUNT_RANGE))
         .unwrap()
-        .with_feature_blocks(feature_blocks)
+        .with_features(features)
         .add_unlock_condition(rand_address_unlock_condition().into())
         .finish()
         .unwrap()
@@ -64,14 +64,14 @@ pub fn rand_alias_id() -> output::AliasId {
 
 /// Generates a random [`AliasOutput`](output::AliasOutput).
 pub fn rand_alias_output() -> output::AliasOutput {
-    let feature_blocks = rand_allowed_feature_blocks(output::AliasOutput::ALLOWED_FEATURE_BLOCKS);
+    let features = rand_allowed_features(output::AliasOutput::ALLOWED_FEATURES);
 
     // We need to make sure that `AliasId` and `Address` don't match.
     let alias_id = rand_alias_id();
 
     output::AliasOutput::build_with_amount(rand_number_range(Output::AMOUNT_RANGE), alias_id)
         .unwrap()
-        .with_feature_blocks(feature_blocks)
+        .with_features(features)
         .add_unlock_condition(rand_state_controller_address_unlock_condition_different_from(&alias_id).into())
         .add_unlock_condition(rand_governor_address_unlock_condition_different_from(&alias_id).into())
         .finish()
@@ -89,7 +89,7 @@ pub fn rand_token_scheme() -> TokenScheme {
 
 /// Generates a random [`FoundryOutput`](output::FoundryOutput).
 pub fn rand_foundry_output() -> output::FoundryOutput {
-    let feature_blocks = rand_allowed_feature_blocks(output::FoundryOutput::ALLOWED_FEATURE_BLOCKS);
+    let features = rand_allowed_features(output::FoundryOutput::ALLOWED_FEATURES);
 
     output::FoundryOutput::build_with_amount(
         rand_number_range(Output::AMOUNT_RANGE),
@@ -97,7 +97,7 @@ pub fn rand_foundry_output() -> output::FoundryOutput {
         rand_token_scheme(),
     )
     .unwrap()
-    .with_feature_blocks(feature_blocks)
+    .with_features(features)
     .add_unlock_condition(ImmutableAliasAddressUnlockCondition::new(rand_alias_address()).into())
     .finish()
     .unwrap()
@@ -105,14 +105,14 @@ pub fn rand_foundry_output() -> output::FoundryOutput {
 
 /// Generates a random [`NftOutput`](output::NftOutput).
 pub fn rand_nft_output() -> output::NftOutput {
-    let feature_blocks = rand_allowed_feature_blocks(output::NftOutput::ALLOWED_FEATURE_BLOCKS);
+    let features = rand_allowed_features(output::NftOutput::ALLOWED_FEATURES);
 
     // We need to make sure that `NftId` and `Address` don't match.
     let nft_id = output::NftId::from(rand_bytes_array());
 
     output::NftOutput::build_with_amount(rand_number_range(Output::AMOUNT_RANGE), nft_id)
         .unwrap()
-        .with_feature_blocks(feature_blocks)
+        .with_features(features)
         .add_unlock_condition(rand_address_unlock_condition_different_from(&nft_id).into())
         .finish()
         .unwrap()

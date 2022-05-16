@@ -11,9 +11,9 @@ use primitive_types::U256;
 use crate::{
     input::UtxoInput,
     output::{
-        feature_block::FeatureBlockCount, unlock_condition::UnlockConditionCount, AliasId, MetadataFeatureBlockLength,
+        feature::FeatureCount, unlock_condition::UnlockConditionCount, AliasId, MetadataFeatureLength,
         NativeTokenCount, NftId, OutputAmount, OutputIndex, StateMetadataLength, StorageDepositAmount,
-        TagFeatureBlockLength, TreasuryOutputAmount,
+        TagFeatureLength, TreasuryOutputAmount,
     },
     parent::ParentCount,
     payload::{
@@ -36,7 +36,7 @@ pub enum Error {
     DuplicateSignatureUnlockBlock(u16),
     DuplicateUtxo(UtxoInput),
     ExpirationUnlockConditionZero,
-    FeatureBlocksNotUniqueSorted,
+    FeaturesNotUniqueSorted,
     InputUnlockBlockCountMismatch { input_count: usize, block_count: usize },
     InvalidAddress,
     InvalidAddressKind(u8),
@@ -48,8 +48,8 @@ pub enum Error {
     StorageDepositReturnExceedsOutputAmount { deposit: u64, amount: u64 },
     InsufficientStorageDepositReturnAmount { deposit: u64, required: u64 },
     InvalidEssenceKind(u8),
-    InvalidFeatureBlockCount(<FeatureBlockCount as TryFrom<usize>>::Error),
-    InvalidFeatureBlockKind(u8),
+    InvalidFeatureCount(<FeatureCount as TryFrom<usize>>::Error),
+    InvalidFeatureKind(u8),
     InvalidFoundryOutputSupply { minted: U256, melted: U256, max: U256 },
     HexError(HexError),
     InvalidInputKind(u8),
@@ -57,7 +57,7 @@ pub enum Error {
     InvalidInputOutputIndex(<OutputIndex as TryFrom<u16>>::Error),
     InvalidBlockLength(usize),
     InvalidStateMetadataLength(<StateMetadataLength as TryFrom<usize>>::Error),
-    InvalidMetadataFeatureBlockLength(<MetadataFeatureBlockLength as TryFrom<usize>>::Error),
+    InvalidMetadataFeatureLength(<MetadataFeatureLength as TryFrom<usize>>::Error),
     InvalidMilestoneMetadataLength(<MilestoneMetadataLength as TryFrom<usize>>::Error),
     InvalidMilestoneOptionCount(<MilestoneOptionCount as TryFrom<usize>>::Error),
     InvalidMilestoneOptionKind(u8),
@@ -77,7 +77,7 @@ pub enum Error {
     InvalidSignature,
     InvalidSignatureKind(u8),
     InvalidTaggedDataLength(<TaggedDataLength as TryFrom<usize>>::Error),
-    InvalidTagFeatureBlockLength(<TagFeatureBlockLength as TryFrom<usize>>::Error),
+    InvalidTagFeatureLength(<TagFeatureLength as TryFrom<usize>>::Error),
     InvalidTagLength(<TagLength as TryFrom<usize>>::Error),
     InvalidTailTransactionHash,
     InvalidTokenSchemeKind(u8),
@@ -115,7 +115,7 @@ pub enum Error {
     StorageDepositReturnOverflow,
     TailTransactionHashNotUnique { previous: usize, current: usize },
     TimelockUnlockConditionZero,
-    UnallowedFeatureBlock { index: usize, kind: u8 },
+    UnallowedFeature { index: usize, kind: u8 },
     UnallowedUnlockCondition { index: usize, kind: u8 },
     UnlockConditionsNotUniqueSorted,
     UnsupportedOutputKind(u8),
@@ -143,7 +143,7 @@ impl fmt::Display for Error {
                     "expiration unlock condition with milestone index and timestamp set to 0",
                 )
             }
-            Error::FeatureBlocksNotUniqueSorted => write!(f, "feature blocks are not unique and/or sorted"),
+            Error::FeaturesNotUniqueSorted => write!(f, "features are not unique and/or sorted"),
             Error::InputUnlockBlockCountMismatch {
                 input_count,
                 block_count,
@@ -178,8 +178,8 @@ impl fmt::Display for Error {
                 "storage deposit return of {deposit} exceeds the original output amount of {amount}"
             ),
             Error::InvalidEssenceKind(k) => write!(f, "invalid essence kind: {}", k),
-            Error::InvalidFeatureBlockCount(count) => write!(f, "invalid feature block count: {}", count),
-            Error::InvalidFeatureBlockKind(k) => write!(f, "invalid feature block kind: {}", k),
+            Error::InvalidFeatureCount(count) => write!(f, "invalid feature count: {}", count),
+            Error::InvalidFeatureKind(k) => write!(f, "invalid feature kind: {}", k),
             Error::InvalidFoundryOutputSupply { minted, melted, max } => write!(
                 f,
                 "invalid foundry output supply: minted {minted}, melted {melted} max {max}",
@@ -190,8 +190,8 @@ impl fmt::Display for Error {
             Error::InvalidInputOutputIndex(index) => write!(f, "invalid input or output index: {}", index),
             Error::InvalidBlockLength(length) => write!(f, "invalid block length {}", length),
             Error::InvalidStateMetadataLength(length) => write!(f, "invalid state metadata length {}", length),
-            Error::InvalidMetadataFeatureBlockLength(length) => {
-                write!(f, "invalid metadata feature block length {length}")
+            Error::InvalidMetadataFeatureLength(length) => {
+                write!(f, "invalid metadata feature length {length}")
             }
             Error::InvalidMilestoneMetadataLength(length) => {
                 write!(f, "invalid milestone metadata length {length}")
@@ -226,8 +226,8 @@ impl fmt::Display for Error {
             Error::InvalidTaggedDataLength(length) => {
                 write!(f, "invalid tagged data length {}", length)
             }
-            Error::InvalidTagFeatureBlockLength(length) => {
-                write!(f, "invalid tag feature block length {}", length)
+            Error::InvalidTagFeatureLength(length) => {
+                write!(f, "invalid tag feature length {}", length)
             }
             Error::InvalidTagLength(length) => {
                 write!(f, "invalid tag length {}", length)
@@ -323,8 +323,8 @@ impl fmt::Display for Error {
                     "timelock unlock condition with milestone index and timestamp set to 0",
                 )
             }
-            Error::UnallowedFeatureBlock { index, kind } => {
-                write!(f, "unallowed feature block at index {} with kind {}", index, kind)
+            Error::UnallowedFeature { index, kind } => {
+                write!(f, "unallowed feature at index {} with kind {}", index, kind)
             }
             Error::UnallowedUnlockCondition { index, kind } => {
                 write!(f, "unallowed unlock condition at index {} with kind {}", index, kind)

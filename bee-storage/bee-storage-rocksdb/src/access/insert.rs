@@ -69,8 +69,7 @@ impl Insert<(BlockId, BlockId), ()> for Storage {
         let mut key = parent.as_ref().to_vec();
         key.extend_from_slice(child.as_ref());
 
-        self.inner
-            .put_cf(self.cf_handle(CF_BLOCK_ID_TO_BLOCK_ID)?, key, [])?;
+        self.inner.put_cf(self.cf_handle(CF_BLOCK_ID_TO_BLOCK_ID)?, key, [])?;
 
         Ok(())
     }

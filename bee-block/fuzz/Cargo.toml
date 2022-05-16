@@ -37,8 +37,8 @@ test = false
 doc = false
 
 [[bin]]
-name = "fuzz_feature_block"
-path = "fuzz_targets/fuzz_feature_block.rs"
+name = "fuzz_feature"
+path = "fuzz_targets/fuzz_feature.rs"
 test = false
 doc = false
 

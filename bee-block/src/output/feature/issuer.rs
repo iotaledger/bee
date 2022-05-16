@@ -8,13 +8,13 @@ use crate::address::Address;
 /// Identifies the validated issuer of the UTXO state machine.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From, packable::Packable)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct IssuerFeatureBlock(Address);
+pub struct IssuerFeature(Address);
 
-impl IssuerFeatureBlock {
-    /// The [`FeatureBlock`](crate::output::FeatureBlock) kind of an [`IssuerFeatureBlock`].
+impl IssuerFeature {
+    /// The [`Feature`](crate::output::Feature) kind of an [`IssuerFeature`].
     pub const KIND: u8 = 1;
 
-    /// Creates a new [`IssuerFeatureBlock`].
+    /// Creates a new [`IssuerFeature`].
     #[inline(always)]
     pub fn new(address: Address) -> Self {
         Self(address)
@@ -35,7 +35,7 @@ pub mod dto {
     use crate::address::dto::AddressDto;
 
     #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-    pub struct IssuerFeatureBlockDto {
+    pub struct IssuerFeatureDto {
         #[serde(rename = "type")]
         pub kind: u8,
         pub address: AddressDto,

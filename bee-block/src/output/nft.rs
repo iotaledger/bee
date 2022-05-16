@@ -13,7 +13,7 @@ use packable::{
 use crate::{
     address::{Address, NftAddress},
     output::{
-        feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
+        feature::{verify_allowed_features, Feature, FeatureFlags, Features},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
         ByteCost, ByteCostConfig, ChainId, NativeToken, NativeTokens, NftId, Output, OutputAmount, OutputBuilderAmount,
         OutputId, StateTransitionError, StateTransitionVerifier,
@@ -30,8 +30,8 @@ pub struct NftOutputBuilder {
     native_tokens: Vec<NativeToken>,
     nft_id: NftId,
     unlock_conditions: Vec<UnlockCondition>,
-    feature_blocks: Vec<FeatureBlock>,
-    immutable_feature_blocks: Vec<FeatureBlock>,
+    features: Vec<Feature>,
+    immutable_features: Vec<Feature>,
 }
 
 impl NftOutputBuilder {
@@ -58,8 +58,8 @@ impl NftOutputBuilder {
             native_tokens: Vec::new(),
             nft_id,
             unlock_conditions: Vec::new(),
-            feature_blocks: Vec::new(),
-            immutable_feature_blocks: Vec::new(),
+            features: Vec::new(),
+            immutable_features: Vec::new(),
         })
     }
 
@@ -127,26 +127,22 @@ impl NftOutputBuilder {
 
     ///
     #[inline(always)]
-    pub fn add_feature_block(mut self, feature_block: FeatureBlock) -> Self {
-        self.feature_blocks.push(feature_block);
+    pub fn add_feature(mut self, feature: Feature) -> Self {
+        self.features.push(feature);
         self
     }
 
     ///
     #[inline(always)]
-    pub fn with_feature_blocks(mut self, feature_blocks: impl IntoIterator<Item = FeatureBlock>) -> Self {
-        self.feature_blocks = feature_blocks.into_iter().collect();
+    pub fn with_features(mut self, features: impl IntoIterator<Item = Feature>) -> Self {
+        self.features = features.into_iter().collect();
         self
     }
 
     ///
-    pub fn replace_feature_block(mut self, feature_block: FeatureBlock) -> Result<Self, Error> {
-        match self
-            .feature_blocks
-            .iter_mut()
-            .find(|f| f.kind() == feature_block.kind())
-        {
-            Some(f) => *f = feature_block,
+    pub fn replace_feature(mut self, feature: Feature) -> Result<Self, Error> {
+        match self.features.iter_mut().find(|f| f.kind() == feature.kind()) {
+            Some(f) => *f = feature,
             None => return Err(Error::CannotReplaceMissingField),
         }
         Ok(self)
@@ -154,29 +150,26 @@ impl NftOutputBuilder {
 
     ///
     #[inline(always)]
-    pub fn add_immutable_feature_block(mut self, immutable_feature_block: FeatureBlock) -> Self {
-        self.immutable_feature_blocks.push(immutable_feature_block);
+    pub fn add_immutable_feature(mut self, immutable_feature: Feature) -> Self {
+        self.immutable_features.push(immutable_feature);
         self
     }
 
     ///
     #[inline(always)]
-    pub fn with_immutable_feature_blocks(
-        mut self,
-        immutable_feature_blocks: impl IntoIterator<Item = FeatureBlock>,
-    ) -> Self {
-        self.immutable_feature_blocks = immutable_feature_blocks.into_iter().collect();
+    pub fn with_immutable_features(mut self, immutable_features: impl IntoIterator<Item = Feature>) -> Self {
+        self.immutable_features = immutable_features.into_iter().collect();
         self
     }
 
     ///
-    pub fn replace_immutable_feature_block(mut self, immutable_feature_block: FeatureBlock) -> Result<Self, Error> {
+    pub fn replace_immutable_feature(mut self, immutable_feature: Feature) -> Result<Self, Error> {
         match self
-            .immutable_feature_blocks
+            .immutable_features
             .iter_mut()
-            .find(|f| f.kind() == immutable_feature_block.kind())
+            .find(|f| f.kind() == immutable_feature.kind())
         {
-            Some(f) => *f = immutable_feature_block,
+            Some(f) => *f = immutable_feature,
             None => return Err(Error::CannotReplaceMissingField),
         }
         Ok(self)
@@ -188,21 +181,21 @@ impl NftOutputBuilder {
 
         verify_unlock_conditions(&unlock_conditions, &self.nft_id)?;
 
-        let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
+        let features = Features::new(self.features)?;
 
-        verify_allowed_feature_blocks(&feature_blocks, NftOutput::ALLOWED_FEATURE_BLOCKS)?;
+        verify_allowed_features(&features, NftOutput::ALLOWED_FEATURES)?;
 
-        let immutable_feature_blocks = FeatureBlocks::new(self.immutable_feature_blocks)?;
+        let immutable_features = Features::new(self.immutable_features)?;
 
-        verify_allowed_feature_blocks(&immutable_feature_blocks, NftOutput::ALLOWED_IMMUTABLE_FEATURE_BLOCKS)?;
+        verify_allowed_features(&immutable_features, NftOutput::ALLOWED_IMMUTABLE_FEATURES)?;
 
         let mut output = NftOutput {
             amount: 1u64.try_into().map_err(Error::InvalidOutputAmount)?,
             native_tokens: NativeTokens::new(self.native_tokens)?,
             nft_id: self.nft_id,
             unlock_conditions,
-            feature_blocks,
-            immutable_feature_blocks,
+            features,
+            immutable_features,
         };
 
         output.amount = match self.amount {
@@ -229,8 +222,8 @@ impl From<&NftOutput> for NftOutputBuilder {
             native_tokens: output.native_tokens.to_vec(),
             nft_id: output.nft_id,
             unlock_conditions: output.unlock_conditions.to_vec(),
-            feature_blocks: output.feature_blocks.to_vec(),
-            immutable_feature_blocks: output.immutable_feature_blocks.to_vec(),
+            features: output.features.to_vec(),
+            immutable_features: output.immutable_features.to_vec(),
         }
     }
 }
@@ -246,8 +239,8 @@ pub struct NftOutput {
     // Unique identifier of the NFT.
     nft_id: NftId,
     unlock_conditions: UnlockConditions,
-    feature_blocks: FeatureBlocks,
-    immutable_feature_blocks: FeatureBlocks,
+    features: Features,
+    immutable_features: Features,
 }
 
 impl NftOutput {
@@ -258,13 +251,12 @@ impl NftOutput {
         .union(UnlockConditionFlags::STORAGE_DEPOSIT_RETURN)
         .union(UnlockConditionFlags::TIMELOCK)
         .union(UnlockConditionFlags::EXPIRATION);
-    /// The set of allowed [`FeatureBlock`]s for an [`NftOutput`].
-    pub const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::SENDER
-        .union(FeatureBlockFlags::METADATA)
-        .union(FeatureBlockFlags::TAG);
-    /// The set of allowed immutable [`FeatureBlock`]s for an [`NftOutput`].
-    pub const ALLOWED_IMMUTABLE_FEATURE_BLOCKS: FeatureBlockFlags =
-        FeatureBlockFlags::ISSUER.union(FeatureBlockFlags::METADATA);
+    /// The set of allowed [`Feature`]s for an [`NftOutput`].
+    pub const ALLOWED_FEATURES: FeatureFlags = FeatureFlags::SENDER
+        .union(FeatureFlags::METADATA)
+        .union(FeatureFlags::TAG);
+    /// The set of allowed immutable [`Feature`]s for an [`NftOutput`].
+    pub const ALLOWED_IMMUTABLE_FEATURES: FeatureFlags = FeatureFlags::ISSUER.union(FeatureFlags::METADATA);
 
     /// Creates a new [`NftOutput`] with a provided amount.
     #[inline(always)]
@@ -321,14 +313,14 @@ impl NftOutput {
 
     ///
     #[inline(always)]
-    pub fn feature_blocks(&self) -> &FeatureBlocks {
-        &self.feature_blocks
+    pub fn features(&self) -> &Features {
+        &self.features
     }
 
     ///
     #[inline(always)]
-    pub fn immutable_feature_blocks(&self) -> &FeatureBlocks {
-        &self.immutable_feature_blocks
+    pub fn immutable_features(&self) -> &Features {
+        &self.immutable_features
     }
 
     ///
@@ -382,7 +374,7 @@ impl StateTransitionVerifier for NftOutput {
             return Err(StateTransitionError::NonZeroCreatedId);
         }
 
-        if let Some(issuer) = next_state.immutable_feature_blocks().issuer() {
+        if let Some(issuer) = next_state.immutable_features().issuer() {
             if !context.unlocked_addresses.contains(issuer.address()) {
                 return Err(StateTransitionError::IssuerNotUnlocked);
             }
@@ -396,7 +388,7 @@ impl StateTransitionVerifier for NftOutput {
         next_state: &Self,
         _context: &ValidationContext,
     ) -> Result<(), StateTransitionError> {
-        if current_state.immutable_feature_blocks != next_state.immutable_feature_blocks {
+        if current_state.immutable_features != next_state.immutable_features {
             return Err(StateTransitionError::MutatedImmutableField);
         }
 
@@ -416,8 +408,8 @@ impl Packable for NftOutput {
         self.native_tokens.pack(packer)?;
         self.nft_id.pack(packer)?;
         self.unlock_conditions.pack(packer)?;
-        self.feature_blocks.pack(packer)?;
-        self.immutable_feature_blocks.pack(packer)?;
+        self.features.pack(packer)?;
+        self.immutable_features.pack(packer)?;
 
         Ok(())
     }
@@ -434,17 +426,16 @@ impl Packable for NftOutput {
             verify_unlock_conditions(&unlock_conditions, &nft_id).map_err(UnpackError::Packable)?;
         }
 
-        let feature_blocks = FeatureBlocks::unpack::<_, VERIFY>(unpacker)?;
+        let features = Features::unpack::<_, VERIFY>(unpacker)?;
 
         if VERIFY {
-            verify_allowed_feature_blocks(&feature_blocks, NftOutput::ALLOWED_FEATURE_BLOCKS)
-                .map_err(UnpackError::Packable)?;
+            verify_allowed_features(&features, NftOutput::ALLOWED_FEATURES).map_err(UnpackError::Packable)?;
         }
 
-        let immutable_feature_blocks = FeatureBlocks::unpack::<_, VERIFY>(unpacker)?;
+        let immutable_features = Features::unpack::<_, VERIFY>(unpacker)?;
 
         if VERIFY {
-            verify_allowed_feature_blocks(&immutable_feature_blocks, NftOutput::ALLOWED_IMMUTABLE_FEATURE_BLOCKS)
+            verify_allowed_features(&immutable_features, NftOutput::ALLOWED_IMMUTABLE_FEATURES)
                 .map_err(UnpackError::Packable)?;
         }
 
@@ -453,8 +444,8 @@ impl Packable for NftOutput {
             native_tokens,
             nft_id,
             unlock_conditions,
-            feature_blocks,
-            immutable_feature_blocks,
+            features,
+            immutable_features,
         })
     }
 }
@@ -482,7 +473,7 @@ pub mod dto {
     use crate::{
         error::dto::DtoError,
         output::{
-            feature_block::dto::FeatureBlockDto, native_token::dto::NativeTokenDto, nft_id::dto::NftIdDto,
+            feature::dto::FeatureDto, native_token::dto::NativeTokenDto, nft_id::dto::NftIdDto,
             unlock_condition::dto::UnlockConditionDto,
         },
     };
@@ -502,10 +493,10 @@ pub mod dto {
         pub nft_id: NftIdDto,
         #[serde(rename = "unlockConditions")]
         pub unlock_conditions: Vec<UnlockConditionDto>,
-        #[serde(rename = "featureBlocks", skip_serializing_if = "Vec::is_empty", default)]
-        pub feature_blocks: Vec<FeatureBlockDto>,
-        #[serde(rename = "immutableFeatureBlocks", skip_serializing_if = "Vec::is_empty", default)]
-        pub immutable_feature_blocks: Vec<FeatureBlockDto>,
+        #[serde(skip_serializing_if = "Vec::is_empty", default)]
+        pub features: Vec<FeatureDto>,
+        #[serde(rename = "immutableFeatures", skip_serializing_if = "Vec::is_empty", default)]
+        pub immutable_features: Vec<FeatureDto>,
     }
 
     impl From<&NftOutput> for NftOutputDto {
@@ -516,8 +507,8 @@ pub mod dto {
                 native_tokens: value.native_tokens().iter().map(Into::into).collect::<_>(),
                 nft_id: NftIdDto(value.nft_id().to_string()),
                 unlock_conditions: value.unlock_conditions().iter().map(Into::into).collect::<_>(),
-                feature_blocks: value.feature_blocks().iter().map(Into::into).collect::<_>(),
-                immutable_feature_blocks: value.immutable_feature_blocks().iter().map(Into::into).collect::<_>(),
+                features: value.features().iter().map(Into::into).collect::<_>(),
+                immutable_features: value.immutable_features().iter().map(Into::into).collect::<_>(),
             }
         }
     }
@@ -542,12 +533,12 @@ pub mod dto {
                 builder = builder.add_unlock_condition(b.try_into()?);
             }
 
-            for b in &value.feature_blocks {
-                builder = builder.add_feature_block(b.try_into()?);
+            for b in &value.features {
+                builder = builder.add_feature(b.try_into()?);
             }
 
-            for b in &value.immutable_feature_blocks {
-                builder = builder.add_immutable_feature_block(b.try_into()?);
+            for b in &value.immutable_features {
+                builder = builder.add_immutable_feature(b.try_into()?);
             }
 
             Ok(builder.finish()?)

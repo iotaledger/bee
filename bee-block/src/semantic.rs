@@ -270,10 +270,10 @@ pub fn semantic_validation(
 
     // Validation of outputs.
     for created_output in context.essence.outputs() {
-        let (amount, created_native_tokens, feature_blocks) = match created_output {
+        let (amount, created_native_tokens, features) = match created_output {
             Output::Basic(output) => {
                 if let [UnlockCondition::Address(address)] = output.unlock_conditions().as_ref() {
-                    if output.feature_blocks().is_empty() {
+                    if output.features().is_empty() {
                         let amount = context.simple_deposits.entry(*address.address()).or_default();
 
                         *amount = amount
@@ -281,15 +281,15 @@ pub fn semantic_validation(
                             .ok_or(Error::CreatedAmountOverflow)?;
                     }
                 }
-                (output.amount(), output.native_tokens(), output.feature_blocks())
+                (output.amount(), output.native_tokens(), output.features())
             }
-            Output::Alias(output) => (output.amount(), output.native_tokens(), output.feature_blocks()),
-            Output::Foundry(output) => (output.amount(), output.native_tokens(), output.feature_blocks()),
-            Output::Nft(output) => (output.amount(), output.native_tokens(), output.feature_blocks()),
+            Output::Alias(output) => (output.amount(), output.native_tokens(), output.features()),
+            Output::Foundry(output) => (output.amount(), output.native_tokens(), output.features()),
+            Output::Nft(output) => (output.amount(), output.native_tokens(), output.features()),
             _ => return Err(Error::UnsupportedOutputKind(created_output.kind())),
         };
 
-        if let Some(sender) = feature_blocks.sender() {
+        if let Some(sender) = features.sender() {
             if !context.unlocked_addresses.contains(sender.address()) {
                 return Ok(ConflictReason::UnverifiedSender);
             }

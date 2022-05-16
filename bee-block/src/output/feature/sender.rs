@@ -8,13 +8,13 @@ use crate::address::Address;
 /// Identifies the validated sender of an output.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From, packable::Packable)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct SenderFeatureBlock(Address);
+pub struct SenderFeature(Address);
 
-impl SenderFeatureBlock {
-    /// The [`FeatureBlock`](crate::output::FeatureBlock) kind of a [`SenderFeatureBlock`].
+impl SenderFeature {
+    /// The [`Feature`](crate::output::Feature) kind of a [`SenderFeature`].
     pub const KIND: u8 = 0;
 
-    /// Creates a new [`SenderFeatureBlock`].
+    /// Creates a new [`SenderFeature`].
     #[inline(always)]
     pub fn new(address: Address) -> Self {
         Self(address)
@@ -35,7 +35,7 @@ pub mod dto {
     use crate::address::dto::AddressDto;
 
     #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-    pub struct SenderFeatureBlockDto {
+    pub struct SenderFeatureDto {
         #[serde(rename = "type")]
         pub kind: u8,
         pub address: AddressDto,

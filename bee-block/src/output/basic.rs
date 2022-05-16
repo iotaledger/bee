@@ -8,7 +8,7 @@ use packable::Packable;
 use crate::{
     address::Address,
     output::{
-        feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
+        feature::{verify_allowed_features, Feature, FeatureFlags, Features},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
         ByteCost, ByteCostConfig, NativeToken, NativeTokens, Output, OutputAmount, OutputBuilderAmount, OutputId,
     },
@@ -23,7 +23,7 @@ pub struct BasicOutputBuilder {
     amount: OutputBuilderAmount,
     native_tokens: Vec<NativeToken>,
     unlock_conditions: Vec<UnlockCondition>,
-    feature_blocks: Vec<FeatureBlock>,
+    features: Vec<Feature>,
 }
 
 impl BasicOutputBuilder {
@@ -47,7 +47,7 @@ impl BasicOutputBuilder {
             amount,
             native_tokens: Vec::new(),
             unlock_conditions: Vec::new(),
-            feature_blocks: Vec::new(),
+            features: Vec::new(),
         })
     }
 
@@ -108,26 +108,22 @@ impl BasicOutputBuilder {
 
     ///
     #[inline(always)]
-    pub fn add_feature_block(mut self, feature_block: FeatureBlock) -> Self {
-        self.feature_blocks.push(feature_block);
+    pub fn add_feature(mut self, feature: Feature) -> Self {
+        self.features.push(feature);
         self
     }
 
     ///
     #[inline(always)]
-    pub fn with_feature_blocks(mut self, feature_blocks: impl IntoIterator<Item = FeatureBlock>) -> Self {
-        self.feature_blocks = feature_blocks.into_iter().collect();
+    pub fn with_features(mut self, features: impl IntoIterator<Item = Feature>) -> Self {
+        self.features = features.into_iter().collect();
         self
     }
 
     ///
-    pub fn replace_feature_block(mut self, feature_block: FeatureBlock) -> Result<Self, Error> {
-        match self
-            .feature_blocks
-            .iter_mut()
-            .find(|f| f.kind() == feature_block.kind())
-        {
-            Some(f) => *f = feature_block,
+    pub fn replace_feature(mut self, feature: Feature) -> Result<Self, Error> {
+        match self.features.iter_mut().find(|f| f.kind() == feature.kind()) {
+            Some(f) => *f = feature,
             None => return Err(Error::CannotReplaceMissingField),
         }
         Ok(self)
@@ -139,15 +135,15 @@ impl BasicOutputBuilder {
 
         verify_unlock_conditions::<true>(&unlock_conditions)?;
 
-        let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
+        let features = Features::new(self.features)?;
 
-        verify_feature_blocks::<true>(&feature_blocks)?;
+        verify_features::<true>(&features)?;
 
         let mut output = BasicOutput {
             amount: 1u64.try_into().map_err(Error::InvalidOutputAmount)?,
             native_tokens: NativeTokens::new(self.native_tokens)?,
             unlock_conditions,
-            feature_blocks,
+            features,
         };
 
         output.amount = match self.amount {
@@ -173,7 +169,7 @@ impl From<&BasicOutput> for BasicOutputBuilder {
             amount: OutputBuilderAmount::Amount(output.amount),
             native_tokens: output.native_tokens.to_vec(),
             unlock_conditions: output.unlock_conditions.to_vec(),
-            feature_blocks: output.feature_blocks.to_vec(),
+            features: output.features.to_vec(),
         }
     }
 }
@@ -190,8 +186,8 @@ pub struct BasicOutput {
     native_tokens: NativeTokens,
     #[packable(verify_with = verify_unlock_conditions)]
     unlock_conditions: UnlockConditions,
-    #[packable(verify_with = verify_feature_blocks)]
-    feature_blocks: FeatureBlocks,
+    #[packable(verify_with = verify_features)]
+    features: Features,
 }
 
 impl BasicOutput {
@@ -203,10 +199,10 @@ impl BasicOutput {
         .union(UnlockConditionFlags::STORAGE_DEPOSIT_RETURN)
         .union(UnlockConditionFlags::TIMELOCK)
         .union(UnlockConditionFlags::EXPIRATION);
-    /// The set of allowed [`FeatureBlock`]s for an [`BasicOutput`].
-    pub const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::SENDER
-        .union(FeatureBlockFlags::METADATA)
-        .union(FeatureBlockFlags::TAG);
+    /// The set of allowed [`Feature`]s for an [`BasicOutput`].
+    pub const ALLOWED_FEATURES: FeatureFlags = FeatureFlags::SENDER
+        .union(FeatureFlags::METADATA)
+        .union(FeatureFlags::TAG);
 
     /// Creates a new [`BasicOutput`] with a provided amount.
     #[inline(always)]
@@ -254,8 +250,8 @@ impl BasicOutput {
 
     ///
     #[inline(always)]
-    pub fn feature_blocks(&self) -> &FeatureBlocks {
-        &self.feature_blocks
+    pub fn features(&self) -> &Features {
+        &self.features
     }
 
     ///
@@ -298,9 +294,9 @@ fn verify_unlock_conditions<const VERIFY: bool>(unlock_conditions: &UnlockCondit
     }
 }
 
-fn verify_feature_blocks<const VERIFY: bool>(blocks: &FeatureBlocks) -> Result<(), Error> {
+fn verify_features<const VERIFY: bool>(blocks: &Features) -> Result<(), Error> {
     if VERIFY {
-        verify_allowed_feature_blocks(blocks, BasicOutput::ALLOWED_FEATURE_BLOCKS)
+        verify_allowed_features(blocks, BasicOutput::ALLOWED_FEATURES)
     } else {
         Ok(())
     }
@@ -315,8 +311,7 @@ pub mod dto {
     use crate::{
         error::dto::DtoError,
         output::{
-            feature_block::dto::FeatureBlockDto, native_token::dto::NativeTokenDto,
-            unlock_condition::dto::UnlockConditionDto,
+            feature::dto::FeatureDto, native_token::dto::NativeTokenDto, unlock_condition::dto::UnlockConditionDto,
         },
     };
 
@@ -332,8 +327,8 @@ pub mod dto {
         pub native_tokens: Vec<NativeTokenDto>,
         #[serde(rename = "unlockConditions")]
         pub unlock_conditions: Vec<UnlockConditionDto>,
-        #[serde(rename = "featureBlocks", skip_serializing_if = "Vec::is_empty", default)]
-        pub feature_blocks: Vec<FeatureBlockDto>,
+        #[serde(skip_serializing_if = "Vec::is_empty", default)]
+        pub features: Vec<FeatureDto>,
     }
 
     impl From<&BasicOutput> for BasicOutputDto {
@@ -343,7 +338,7 @@ pub mod dto {
                 amount: value.amount().to_string(),
                 native_tokens: value.native_tokens().iter().map(Into::into).collect::<_>(),
                 unlock_conditions: value.unlock_conditions().iter().map(Into::into).collect::<_>(),
-                feature_blocks: value.feature_blocks().iter().map(Into::into).collect::<_>(),
+                features: value.features().iter().map(Into::into).collect::<_>(),
             }
         }
     }
@@ -367,8 +362,8 @@ pub mod dto {
                 builder = builder.add_unlock_condition(b.try_into()?);
             }
 
-            for b in &value.feature_blocks {
-                builder = builder.add_feature_block(b.try_into()?);
+            for b in &value.features {
+                builder = builder.add_feature(b.try_into()?);
             }
 
             Ok(builder.finish()?)
