@@ -10,7 +10,7 @@ use packable::PackableExt;
 use warp::{filters::BoxedFilter, http::Response, reject, Filter, Rejection, Reply};
 
 use crate::endpoints::{
-    config::ROUTE_MESSAGE_RAW, filters::with_tangle, path_params::block_id, permission::has_permission,
+    config::ROUTE_BLOCK_RAW, filters::with_tangle, path_params::block_id, permission::has_permission,
     rejection::CustomRejection, storage::StorageBackend,
 };
 
@@ -29,7 +29,7 @@ pub(crate) fn filter<B: StorageBackend>(
 ) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
-        .and(has_permission(ROUTE_MESSAGE_RAW, public_routes, allowed_ips))
+        .and(has_permission(ROUTE_BLOCK_RAW, public_routes, allowed_ips))
         .and(with_tangle(tangle))
         .and_then(|block_id, tangle| async move { block_raw(block_id, tangle) })
         .boxed()

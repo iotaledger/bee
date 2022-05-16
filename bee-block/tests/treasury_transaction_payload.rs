@@ -6,7 +6,7 @@ use core::str::FromStr;
 use bee_block::{input::TreasuryInput, output::TreasuryOutput, payload::TreasuryTransactionPayload};
 use packable::PackableExt;
 
-const MESSAGE_ID: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
+const BLOCK_ID: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 
 #[test]
 fn kind() {
@@ -15,7 +15,7 @@ fn kind() {
 
 #[test]
 fn new_valid() {
-    let input = TreasuryInput::from_str(MESSAGE_ID).unwrap();
+    let input = TreasuryInput::from_str(BLOCK_ID).unwrap();
     let output = TreasuryOutput::new(1_000).unwrap();
     let transaction = TreasuryTransactionPayload::new(input, output.clone()).unwrap();
 
@@ -26,7 +26,7 @@ fn new_valid() {
 #[test]
 fn packed_len() {
     let treasury_transaction = TreasuryTransactionPayload::new(
-        TreasuryInput::from_str(MESSAGE_ID).unwrap(),
+        TreasuryInput::from_str(BLOCK_ID).unwrap(),
         TreasuryOutput::new(1_000).unwrap(),
     )
     .unwrap();
@@ -38,7 +38,7 @@ fn packed_len() {
 #[test]
 fn pack_unpack_valid() {
     let transaction_1 = TreasuryTransactionPayload::new(
-        TreasuryInput::from_str(MESSAGE_ID).unwrap(),
+        TreasuryInput::from_str(BLOCK_ID).unwrap(),
         TreasuryOutput::new(1_000).unwrap(),
     )
     .unwrap();

@@ -60,8 +60,8 @@ macro_rules! impl_truncate {
     };
 }
 
-impl_truncate!(BlockId, Block, CF_MESSAGE_ID_TO_MESSAGE);
-impl_truncate!((BlockId, BlockId), (), CF_MESSAGE_ID_TO_MESSAGE_ID);
+impl_truncate!(BlockId, Block, CF_BLOCK_ID_TO_BLOCK);
+impl_truncate!((BlockId, BlockId), (), CF_BLOCK_ID_TO_BLOCK_ID);
 impl_truncate!(OutputId, CreatedOutput, CF_OUTPUT_ID_TO_CREATED_OUTPUT);
 impl_truncate!(OutputId, ConsumedOutput, CF_OUTPUT_ID_TO_CONSUMED_OUTPUT);
 impl_truncate!(Unspent, (), CF_OUTPUT_ID_UNSPENT);
@@ -79,7 +79,7 @@ impl_truncate!(MilestoneIndex, OutputDiff, CF_MILESTONE_INDEX_TO_OUTPUT_DIFF);
 impl_truncate!(
     (MilestoneIndex, UnreferencedBlock),
     (),
-    CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE
+    CF_MILESTONE_INDEX_TO_UNREFERENCED_BLOCK
 );
 impl_truncate!((MilestoneIndex, Receipt), (), CF_MILESTONE_INDEX_TO_RECEIPT);
 impl_truncate!((bool, TreasuryOutput), (), CF_SPENT_TO_TREASURY_OUTPUT);
@@ -88,7 +88,7 @@ impl Truncate<BlockId, BlockMetadata> for Storage {
     fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
         let guard = self.locks.block_id_to_metadata.read();
 
-        let cf_handle = self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?;
+        let cf_handle = self.cf_handle(CF_BLOCK_ID_TO_METADATA)?;
 
         let mut iter = self.inner.raw_iterator_cf(cf_handle);
 

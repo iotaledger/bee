@@ -37,7 +37,7 @@ impl Insert<u8, System> for Storage {
 impl Insert<BlockId, Block> for Storage {
     fn insert(&self, block_id: &BlockId, block: &Block) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
-            .open_tree(TREE_MESSAGE_ID_TO_MESSAGE)?
+            .open_tree(TREE_BLOCK_ID_TO_BLOCK)?
             .insert(block_id, block.pack_to_vec())?;
 
         Ok(())
@@ -51,7 +51,7 @@ impl InsertStrict<BlockId, BlockMetadata> for Storage {
         metadata: &BlockMetadata,
     ) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
-            .open_tree(TREE_MESSAGE_ID_TO_METADATA)?
+            .open_tree(TREE_BLOCK_ID_TO_METADATA)?
             .update_and_fetch(block_id, |old_metadata| {
                 old_metadata
                     .map(|b| b.to_vec())
@@ -67,7 +67,7 @@ impl Insert<(BlockId, BlockId), ()> for Storage {
         let mut key = parent.as_ref().to_vec();
         key.extend_from_slice(child.as_ref());
 
-        self.inner.open_tree(TREE_MESSAGE_ID_TO_MESSAGE_ID)?.insert(key, &[])?;
+        self.inner.open_tree(TREE_BLOCK_ID_TO_BLOCK_ID)?.insert(key, &[])?;
 
         Ok(())
     }
@@ -194,7 +194,7 @@ impl Insert<(MilestoneIndex, UnreferencedBlock), ()> for Storage {
         key.extend_from_slice(unreferenced_block.as_ref());
 
         self.inner
-            .open_tree(TREE_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE)?
+            .open_tree(TREE_MILESTONE_INDEX_TO_UNREFERENCED_BLOCK)?
             .insert(key, &[])?;
 
         Ok(())

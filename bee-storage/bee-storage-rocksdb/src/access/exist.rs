@@ -27,7 +27,7 @@ impl Exist<BlockId, Block> for Storage {
     fn exist(&self, block_id: &BlockId) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .get_pinned_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?, block_id)?
+            .get_pinned_cf(self.cf_handle(CF_BLOCK_ID_TO_BLOCK)?, block_id)?
             .is_some())
     }
 }
@@ -38,7 +38,7 @@ impl Exist<BlockId, BlockMetadata> for Storage {
 
         let exists = self
             .inner
-            .get_pinned_cf(self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?, block_id)?
+            .get_pinned_cf(self.cf_handle(CF_BLOCK_ID_TO_METADATA)?, block_id)?
             .is_some();
 
         drop(guard);
@@ -54,7 +54,7 @@ impl Exist<(BlockId, BlockId), ()> for Storage {
 
         Ok(self
             .inner
-            .get_pinned_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE_ID)?, key)?
+            .get_pinned_cf(self.cf_handle(CF_BLOCK_ID_TO_BLOCK_ID)?, key)?
             .is_some())
     }
 }
@@ -174,7 +174,7 @@ impl Exist<(MilestoneIndex, UnreferencedBlock), ()> for Storage {
 
         Ok(self
             .inner
-            .get_pinned_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE)?, key)?
+            .get_pinned_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_UNREFERENCED_BLOCK)?, key)?
             .is_some())
     }
 }

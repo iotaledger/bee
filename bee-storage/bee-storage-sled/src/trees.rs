@@ -7,11 +7,11 @@
 //! Each tree can be accessed using the `sled::Db::open_tree` method with one of the identifiers found here.
 
 /// Identifier for the `BlockId` to `Block` tree.
-pub const TREE_MESSAGE_ID_TO_MESSAGE: &str = "block_id_to_block";
+pub const TREE_BLOCK_ID_TO_BLOCK: &str = "block_id_to_block";
 /// Identifier for the `BlockId` to `BlockMetadata` tree.
-pub const TREE_MESSAGE_ID_TO_METADATA: &str = "block_id_to_metadata";
+pub const TREE_BLOCK_ID_TO_METADATA: &str = "block_id_to_metadata";
 /// Identifier for the `BlockId` to `Vec<BlockId>` tree.
-pub const TREE_MESSAGE_ID_TO_MESSAGE_ID: &str = "block_id_to_block_id";
+pub const TREE_BLOCK_ID_TO_BLOCK_ID: &str = "block_id_to_block_id";
 /// Identifier for the `OutputId` to `CreatedOutput` tree.
 pub const TREE_OUTPUT_ID_TO_CREATED_OUTPUT: &str = "output_id_to_created_output";
 /// Identifier for the `OutputId` to `ConsumedOutput` tree.
@@ -33,7 +33,7 @@ pub const TREE_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX: &str = "solid_entry_point_t
 /// Identifier for the `MilestoneIndex` to `OutputDiff` tree.
 pub const TREE_MILESTONE_INDEX_TO_OUTPUT_DIFF: &str = "milestone_index_to_output_diff";
 /// Identifier for the `MilestoneIndex` to `Vec<UnreferencedBlock>` tree.
-pub const TREE_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE: &str = "milestone_index_to_unreferenced_block";
+pub const TREE_MILESTONE_INDEX_TO_UNREFERENCED_BLOCK: &str = "milestone_index_to_unreferenced_block";
 /// Identifier for the `MilestoneIndex` to `Vec<Receipt>` tree.
 pub const TREE_MILESTONE_INDEX_TO_RECEIPT: &str = "milestone_index_to_receipt";
 /// Identifier for the `bool` to `Vec<TreasuryOutput>` tree.

@@ -36,7 +36,7 @@ impl Fetch<BlockId, Block> for Storage {
     fn fetch(&self, block_id: &BlockId) -> Result<Option<Block>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .get_pinned_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?, block_id)?
+            .get_pinned_cf(self.cf_handle(CF_BLOCK_ID_TO_BLOCK)?, block_id)?
             // Unpacking from storage is fine.
             .map(|v| Block::unpack_unverified(&mut &*v).unwrap()))
     }
@@ -48,7 +48,7 @@ impl Fetch<BlockId, BlockMetadata> for Storage {
 
         let metadata = self
             .inner
-            .get_pinned_cf(self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?, block_id)?
+            .get_pinned_cf(self.cf_handle(CF_BLOCK_ID_TO_METADATA)?, block_id)?
             // Unpacking from storage is fine.
             .map(|v| BlockMetadata::unpack_unverified(&mut &*v).unwrap());
 
@@ -62,7 +62,7 @@ impl Fetch<BlockId, Vec<BlockId>> for Storage {
     fn fetch(&self, parent: &BlockId) -> Result<Option<Vec<BlockId>>, <Self as StorageBackend>::Error> {
         Ok(Some(
             self.inner
-                .prefix_iterator_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE_ID)?, parent)
+                .prefix_iterator_cf(self.cf_handle(CF_BLOCK_ID_TO_BLOCK_ID)?, parent)
                 .map(|(key, _)| {
                     let (_, child) = key.split_at(BlockId::LENGTH);
                     // Unpacking from storage is fine.
@@ -182,7 +182,7 @@ impl Fetch<MilestoneIndex, Vec<UnreferencedBlock>> for Storage {
         Ok(Some(
             self.inner
                 .prefix_iterator_cf(
-                    self.cf_handle(CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE)?,
+                    self.cf_handle(CF_MILESTONE_INDEX_TO_UNREFERENCED_BLOCK)?,
                     index.pack_to_vec(),
                 )
                 .map(|(key, _)| {

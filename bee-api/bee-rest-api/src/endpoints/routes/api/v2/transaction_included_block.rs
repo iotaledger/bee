@@ -11,7 +11,7 @@ use bee_tangle::Tangle;
 use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
 use crate::endpoints::{
-    config::ROUTE_TRANSACTION_INCLUDED_MESSAGE,
+    config::ROUTE_TRANSACTION_INCLUDED_BLOCK,
     filters::{with_storage, with_tangle},
     path_params::transaction_id,
     permission::has_permission,
@@ -37,7 +37,7 @@ pub(crate) fn filter<B: StorageBackend>(
     self::path()
         .and(warp::get())
         .and(has_permission(
-            ROUTE_TRANSACTION_INCLUDED_MESSAGE,
+            ROUTE_TRANSACTION_INCLUDED_BLOCK,
             public_routes,
             allowed_ips,
         ))

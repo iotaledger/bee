@@ -10,7 +10,7 @@ use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
 use crate::{
     endpoints::{
-        config::ROUTE_MESSAGE_METADATA, filters::with_tangle, path_params::block_id, permission::has_permission,
+        config::ROUTE_BLOCK_METADATA, filters::with_tangle, path_params::block_id, permission::has_permission,
         rejection::CustomRejection, storage::StorageBackend, CONFIRMED_THRESHOLD,
     },
     types::{dtos::LedgerInclusionStateDto, responses::BlockMetadataResponse},
@@ -31,7 +31,7 @@ pub(crate) fn filter<B: StorageBackend>(
 ) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
-        .and(has_permission(ROUTE_MESSAGE_METADATA, public_routes, allowed_ips))
+        .and(has_permission(ROUTE_BLOCK_METADATA, public_routes, allowed_ips))
         .and(with_tangle(tangle))
         .and_then(|block_id, tangle| async move { block_metadata(block_id, tangle) })
         .boxed()

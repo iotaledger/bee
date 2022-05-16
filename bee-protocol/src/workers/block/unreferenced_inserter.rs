@@ -17,7 +17,7 @@ use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use crate::workers::storage::StorageBackend;
 
-const UNREFERENCED_MESSAGE_BATCH_SIZE: usize = 1000;
+const UNREFERENCED_BLOCK_BATCH_SIZE: usize = 1000;
 
 pub struct UnreferencedBlockInserterWorkerEvent(pub(crate) BlockId, pub(crate) MilestoneIndex);
 
@@ -56,7 +56,7 @@ where
                 }
 
                 counter += 1;
-                if counter == UNREFERENCED_MESSAGE_BATCH_SIZE {
+                if counter == UNREFERENCED_BLOCK_BATCH_SIZE {
                     if let Err(e) = storage.batch_commit(batch, true) {
                         error!("Committing unreferenced block batch failed: {:?}.", e);
                     }

@@ -35,7 +35,7 @@ impl Storage {
     fn new(config: RocksDbConfig) -> Result<Self, Error> {
         let cf_system = ColumnFamilyDescriptor::new(CF_SYSTEM, Options::default());
 
-        let cf_block_id_to_block = ColumnFamilyDescriptor::new(CF_MESSAGE_ID_TO_MESSAGE, Options::default());
+        let cf_block_id_to_block = ColumnFamilyDescriptor::new(CF_BLOCK_ID_TO_BLOCK, Options::default());
 
         fn keep_current(_key: &[u8], existing_val: Option<&[u8]>, operands: &MergeOperands) -> Option<Vec<u8>> {
             // Keep the existing value, if the value does not exist, take the first operand
@@ -44,11 +44,11 @@ impl Storage {
         }
         let mut options = Options::default();
         options.set_merge_operator_associative("keep current", keep_current);
-        let cf_block_id_to_metadata = ColumnFamilyDescriptor::new(CF_MESSAGE_ID_TO_METADATA, options);
+        let cf_block_id_to_metadata = ColumnFamilyDescriptor::new(CF_BLOCK_ID_TO_METADATA, options);
 
         let mut options = Options::default();
         options.set_prefix_extractor(SliceTransform::create_fixed_prefix(BlockId::LENGTH));
-        let cf_block_id_to_block_id = ColumnFamilyDescriptor::new(CF_MESSAGE_ID_TO_MESSAGE_ID, options);
+        let cf_block_id_to_block_id = ColumnFamilyDescriptor::new(CF_BLOCK_ID_TO_BLOCK_ID, options);
 
         let cf_output_id_to_created_output =
             ColumnFamilyDescriptor::new(CF_OUTPUT_ID_TO_CREATED_OUTPUT, Options::default());
@@ -83,7 +83,7 @@ impl Storage {
             std::mem::size_of::<MilestoneIndex>(),
         ));
         let cf_milestone_index_to_unreferenced_block =
-            ColumnFamilyDescriptor::new(CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE, options);
+            ColumnFamilyDescriptor::new(CF_MILESTONE_INDEX_TO_UNREFERENCED_BLOCK, options);
 
         let mut options = Options::default();
         options.set_prefix_extractor(SliceTransform::create_fixed_prefix(

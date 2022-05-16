@@ -12,7 +12,7 @@ use crate::types::milestone_key_range::MilestoneKeyRange;
 const DEFAULT_MINIMUM_POW_SCORE: f64 = 4000.0;
 const DEFAULT_COO_PUBLIC_KEY_COUNT: usize = 2;
 const DEFAULT_COO_PUBLIC_KEY_RANGES: [(&str, MilestoneIndex, MilestoneIndex); 0] = [];
-const DEFAULT_MESSAGE_WORKER_CACHE: usize = 10000;
+const DEFAULT_BLOCK_WORKER_CACHE: usize = 10000;
 const DEFAULT_STATUS_INTERVAL: u64 = 10;
 const DEFAULT_MILESTONE_SYNC_COUNT: u32 = 200;
 
@@ -108,7 +108,7 @@ impl ProtocolConfigBuilder {
                 }),
             },
             workers: ProtocolWorkersConfig {
-                block_worker_cache: self.workers.block_worker_cache.unwrap_or(DEFAULT_MESSAGE_WORKER_CACHE),
+                block_worker_cache: self.workers.block_worker_cache.unwrap_or(DEFAULT_BLOCK_WORKER_CACHE),
                 status_interval: self.workers.status_interval.unwrap_or(DEFAULT_STATUS_INTERVAL),
                 milestone_sync_count: self
                     .workers

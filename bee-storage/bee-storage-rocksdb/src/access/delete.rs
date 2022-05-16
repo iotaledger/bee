@@ -25,8 +25,7 @@ use crate::{
 
 impl Delete<BlockId, Block> for Storage {
     fn delete(&self, block_id: &BlockId) -> Result<(), <Self as StorageBackend>::Error> {
-        self.inner
-            .delete_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?, block_id)?;
+        self.inner.delete_cf(self.cf_handle(CF_BLOCK_ID_TO_BLOCK)?, block_id)?;
 
         Ok(())
     }
@@ -37,7 +36,7 @@ impl Delete<BlockId, BlockMetadata> for Storage {
         let guard = self.locks.block_id_to_metadata.read();
 
         self.inner
-            .delete_cf(self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?, block_id)?;
+            .delete_cf(self.cf_handle(CF_BLOCK_ID_TO_METADATA)?, block_id)?;
 
         drop(guard);
 
@@ -50,8 +49,7 @@ impl Delete<(BlockId, BlockId), ()> for Storage {
         let mut key = parent.as_ref().to_vec();
         key.extend_from_slice(child.as_ref());
 
-        self.inner
-            .delete_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE_ID)?, key)?;
+        self.inner.delete_cf(self.cf_handle(CF_BLOCK_ID_TO_BLOCK_ID)?, key)?;
 
         Ok(())
     }
@@ -161,7 +159,7 @@ impl Delete<(MilestoneIndex, UnreferencedBlock), ()> for Storage {
         key.extend_from_slice(unreferenced_block.as_ref());
 
         self.inner
-            .delete_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE)?, key)?;
+            .delete_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_UNREFERENCED_BLOCK)?, key)?;
 
         Ok(())
     }

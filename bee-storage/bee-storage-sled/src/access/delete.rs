@@ -24,7 +24,7 @@ use crate::{storage::Storage, trees::*};
 
 impl Delete<BlockId, Block> for Storage {
     fn delete(&self, block_id: &BlockId) -> Result<(), <Self as StorageBackend>::Error> {
-        self.inner.open_tree(TREE_MESSAGE_ID_TO_MESSAGE)?.remove(block_id)?;
+        self.inner.open_tree(TREE_BLOCK_ID_TO_BLOCK)?.remove(block_id)?;
 
         Ok(())
     }
@@ -32,7 +32,7 @@ impl Delete<BlockId, Block> for Storage {
 
 impl Delete<BlockId, BlockMetadata> for Storage {
     fn delete(&self, block_id: &BlockId) -> Result<(), <Self as StorageBackend>::Error> {
-        self.inner.open_tree(TREE_MESSAGE_ID_TO_METADATA)?.remove(block_id)?;
+        self.inner.open_tree(TREE_BLOCK_ID_TO_METADATA)?.remove(block_id)?;
 
         Ok(())
     }
@@ -43,7 +43,7 @@ impl Delete<(BlockId, BlockId), ()> for Storage {
         let mut key = parent.as_ref().to_vec();
         key.extend_from_slice(child.as_ref());
 
-        self.inner.open_tree(TREE_MESSAGE_ID_TO_MESSAGE_ID)?.remove(key)?;
+        self.inner.open_tree(TREE_BLOCK_ID_TO_BLOCK_ID)?.remove(key)?;
 
         Ok(())
     }
@@ -155,7 +155,7 @@ impl Delete<(MilestoneIndex, UnreferencedBlock), ()> for Storage {
         key.extend_from_slice(unreferenced_block.as_ref());
 
         self.inner
-            .open_tree(TREE_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE)?
+            .open_tree(TREE_MILESTONE_INDEX_TO_UNREFERENCED_BLOCK)?
             .remove(key)?;
 
         Ok(())

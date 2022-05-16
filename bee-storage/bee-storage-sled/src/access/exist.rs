@@ -24,10 +24,7 @@ use crate::{storage::Storage, trees::*};
 
 impl Exist<BlockId, Block> for Storage {
     fn exist(&self, block_id: &BlockId) -> Result<bool, <Self as StorageBackend>::Error> {
-        Ok(self
-            .inner
-            .open_tree(TREE_MESSAGE_ID_TO_MESSAGE)?
-            .contains_key(block_id)?)
+        Ok(self.inner.open_tree(TREE_BLOCK_ID_TO_BLOCK)?.contains_key(block_id)?)
     }
 }
 
@@ -35,7 +32,7 @@ impl Exist<BlockId, BlockMetadata> for Storage {
     fn exist(&self, block_id: &BlockId) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .open_tree(TREE_MESSAGE_ID_TO_METADATA)?
+            .open_tree(TREE_BLOCK_ID_TO_METADATA)?
             .contains_key(block_id)?)
     }
 }
@@ -45,7 +42,7 @@ impl Exist<(BlockId, BlockId), ()> for Storage {
         let mut key = parent.as_ref().to_vec();
         key.extend_from_slice(child.as_ref());
 
-        Ok(self.inner.open_tree(TREE_MESSAGE_ID_TO_MESSAGE_ID)?.contains_key(key)?)
+        Ok(self.inner.open_tree(TREE_BLOCK_ID_TO_BLOCK_ID)?.contains_key(key)?)
     }
 }
 
@@ -149,7 +146,7 @@ impl Exist<(MilestoneIndex, UnreferencedBlock), ()> for Storage {
 
         Ok(self
             .inner
-            .open_tree(TREE_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE)?
+            .open_tree(TREE_MILESTONE_INDEX_TO_UNREFERENCED_BLOCK)?
             .contains_key(key)?)
     }
 }

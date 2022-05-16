@@ -63,15 +63,13 @@ impl Batch<BlockId, Block> for Storage {
 
         batch
             .inner
-            .put_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?, block_id, &batch.value_buf);
+            .put_cf(self.cf_handle(CF_BLOCK_ID_TO_BLOCK)?, block_id, &batch.value_buf);
 
         Ok(())
     }
 
     fn batch_delete(&self, batch: &mut Self::Batch, block_id: &BlockId) -> Result<(), <Self as StorageBackend>::Error> {
-        batch
-            .inner
-            .delete_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?, block_id);
+        batch.inner.delete_cf(self.cf_handle(CF_BLOCK_ID_TO_BLOCK)?, block_id);
 
         Ok(())
     }
@@ -92,7 +90,7 @@ impl Batch<BlockId, BlockMetadata> for Storage {
 
         batch
             .inner
-            .put_cf(self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?, block_id, &batch.value_buf);
+            .put_cf(self.cf_handle(CF_BLOCK_ID_TO_METADATA)?, block_id, &batch.value_buf);
 
         Ok(())
     }
@@ -102,7 +100,7 @@ impl Batch<BlockId, BlockMetadata> for Storage {
 
         batch
             .inner
-            .delete_cf(self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?, block_id);
+            .delete_cf(self.cf_handle(CF_BLOCK_ID_TO_METADATA)?, block_id);
 
         Ok(())
     }
@@ -121,7 +119,7 @@ impl Batch<(BlockId, BlockId), ()> for Storage {
 
         batch
             .inner
-            .put_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE_ID)?, &batch.key_buf, []);
+            .put_cf(self.cf_handle(CF_BLOCK_ID_TO_BLOCK_ID)?, &batch.key_buf, []);
 
         Ok(())
     }
@@ -137,7 +135,7 @@ impl Batch<(BlockId, BlockId), ()> for Storage {
 
         batch
             .inner
-            .delete_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE_ID)?, &batch.key_buf);
+            .delete_cf(self.cf_handle(CF_BLOCK_ID_TO_BLOCK_ID)?, &batch.key_buf);
 
         Ok(())
     }
@@ -499,7 +497,7 @@ impl Batch<(MilestoneIndex, UnreferencedBlock), ()> for Storage {
         batch.key_buf.extend_from_slice(unreferenced_block.as_ref());
 
         batch.inner.put_cf(
-            self.cf_handle(CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE)?,
+            self.cf_handle(CF_MILESTONE_INDEX_TO_UNREFERENCED_BLOCK)?,
             &batch.key_buf,
             [],
         );
@@ -517,7 +515,7 @@ impl Batch<(MilestoneIndex, UnreferencedBlock), ()> for Storage {
         batch.key_buf.extend_from_slice(unreferenced_block.as_ref());
 
         batch.inner.delete_cf(
-            self.cf_handle(CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE)?,
+            self.cf_handle(CF_MILESTONE_INDEX_TO_UNREFERENCED_BLOCK)?,
             &batch.key_buf,
         );
 

@@ -62,7 +62,7 @@ macro_rules! impl_multi_fetch {
 }
 
 impl_multi_fetch!(u8, System, CF_SYSTEM);
-impl_multi_fetch!(BlockId, Block, CF_MESSAGE_ID_TO_MESSAGE);
+impl_multi_fetch!(BlockId, Block, CF_BLOCK_ID_TO_BLOCK);
 impl_multi_fetch!(OutputId, CreatedOutput, CF_OUTPUT_ID_TO_CREATED_OUTPUT);
 impl_multi_fetch!(OutputId, ConsumedOutput, CF_OUTPUT_ID_TO_CONSUMED_OUTPUT);
 impl_multi_fetch!(
@@ -78,7 +78,7 @@ impl<'a> MultiFetch<'a, BlockId, BlockMetadata> for Storage {
     type Iter = MultiIter<'a, BlockMetadata, <Self as StorageBackend>::Error>;
 
     fn multi_fetch(&'a self, keys: &[BlockId]) -> Result<Self::Iter, <Self as StorageBackend>::Error> {
-        let cf = self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?;
+        let cf = self.cf_handle(CF_BLOCK_ID_TO_METADATA)?;
 
         Ok(MultiIter {
             iter: self

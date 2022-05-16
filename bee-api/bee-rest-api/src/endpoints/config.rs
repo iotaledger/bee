@@ -14,11 +14,11 @@ pub(crate) const ROUTE_BALANCE_BECH32: &str = "/api/v2/addresses/:address";
 pub(crate) const ROUTE_BALANCE_ED25519: &str = "/api/v2/addresses/ed25519/:address";
 pub(crate) const ROUTE_HEALTH: &str = "/health";
 pub(crate) const ROUTE_INFO: &str = "/api/v2/info";
-pub(crate) const ROUTE_MESSAGE: &str = "/api/v2/blocks/:blockId";
-pub(crate) const ROUTE_MESSAGE_CHILDREN: &str = "/api/v2/blocks/:blockId/children";
-pub(crate) const ROUTE_MESSAGE_METADATA: &str = "/api/v2/blocks/:blockId/metadata";
-pub(crate) const ROUTE_MESSAGE_RAW: &str = "/api/v2/blocks/:blockId/raw";
-pub(crate) const ROUTE_MESSAGES_FIND: &str = "/api/v2/blocks";
+pub(crate) const ROUTE_BLOCK: &str = "/api/v2/blocks/:blockId";
+pub(crate) const ROUTE_BLOCK_CHILDREN: &str = "/api/v2/blocks/:blockId/children";
+pub(crate) const ROUTE_BLOCK_METADATA: &str = "/api/v2/blocks/:blockId/metadata";
+pub(crate) const ROUTE_BLOCK_RAW: &str = "/api/v2/blocks/:blockId/raw";
+pub(crate) const ROUTE_BLOCKS_FIND: &str = "/api/v2/blocks";
 pub(crate) const ROUTE_MILESTONE_BY_MILESTONE_ID: &str = "/api/v2/milestones/:milestoneId";
 pub(crate) const ROUTE_MILESTONE_BY_MILESTONE_INDEX: &str = "/api/v2/milestones/by-index/:milestoneIndex";
 pub(crate) const ROUTE_UTXO_CHANGES_BY_MILESTONE_ID: &str = "/api/v2/milestones/:milestoneId/utxo-changes";
@@ -31,13 +31,13 @@ pub(crate) const ROUTE_OUTPUTS_ED25519: &str = "/api/v2/addresses/ed25519/:addre
 pub(crate) const ROUTE_PEER: &str = "/api/v2/peers/:peerId";
 pub(crate) const ROUTE_PEERS: &str = "/api/v2/peers";
 pub(crate) const ROUTE_REMOVE_PEER: &str = "/api/v2/peers/:peerId";
-pub(crate) const ROUTE_SUBMIT_MESSAGE: &str = "/api/v2/blocks";
-pub(crate) const ROUTE_SUBMIT_MESSAGE_RAW: &str = "/api/v2/blocks";
+pub(crate) const ROUTE_SUBMIT_BLOCK: &str = "/api/v2/blocks";
+pub(crate) const ROUTE_SUBMIT_BLOCK_RAW: &str = "/api/v2/blocks";
 pub(crate) const ROUTE_TIPS: &str = "/api/v2/tips";
 pub(crate) const ROUTE_RECEIPTS: &str = "/api/v2/receipts";
 pub(crate) const ROUTE_RECEIPTS_AT: &str = "/api/v2/receipts/:milestoneIndex";
 pub(crate) const ROUTE_TREASURY: &str = "/api/v2/treasury";
-pub(crate) const ROUTE_TRANSACTION_INCLUDED_MESSAGE: &str = "/api/v2/transactions/:transactionId/included-block";
+pub(crate) const ROUTE_TRANSACTION_INCLUDED_BLOCK: &str = "/api/v2/transactions/:transactionId/included-block";
 pub(crate) const ROUTE_WHITE_FLAG: &str = "/api/plugins/debug/whiteflag";
 
 /// the routes that are available for public use
@@ -46,11 +46,11 @@ pub(crate) const DEFAULT_PUBLIC_ROUTES: [&str; 24] = [
     ROUTE_BALANCE_ED25519,
     ROUTE_HEALTH,
     ROUTE_INFO,
-    ROUTE_MESSAGE,
-    ROUTE_MESSAGE_CHILDREN,
-    ROUTE_MESSAGE_METADATA,
-    ROUTE_MESSAGE_RAW,
-    ROUTE_MESSAGES_FIND,
+    ROUTE_BLOCK,
+    ROUTE_BLOCK_CHILDREN,
+    ROUTE_BLOCK_METADATA,
+    ROUTE_BLOCK_RAW,
+    ROUTE_BLOCKS_FIND,
     ROUTE_MILESTONE_BY_MILESTONE_ID,
     ROUTE_MILESTONE_BY_MILESTONE_INDEX,
     ROUTE_UTXO_CHANGES_BY_MILESTONE_ID,
@@ -59,13 +59,13 @@ pub(crate) const DEFAULT_PUBLIC_ROUTES: [&str; 24] = [
     ROUTE_OUTPUT_METADATA,
     ROUTE_OUTPUTS_BECH32,
     ROUTE_OUTPUTS_ED25519,
-    ROUTE_SUBMIT_MESSAGE,
-    ROUTE_SUBMIT_MESSAGE_RAW,
+    ROUTE_SUBMIT_BLOCK,
+    ROUTE_SUBMIT_BLOCK_RAW,
     ROUTE_TIPS,
     ROUTE_RECEIPTS,
     ROUTE_RECEIPTS_AT,
     ROUTE_TREASURY,
-    ROUTE_TRANSACTION_INCLUDED_MESSAGE,
+    ROUTE_TRANSACTION_INCLUDED_BLOCK,
 ];
 pub(crate) const DEFAULT_ALLOWED_IPS: [IpAddr; 2] = [
     IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),

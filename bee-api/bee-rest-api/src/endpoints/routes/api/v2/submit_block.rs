@@ -22,7 +22,7 @@ use warp::{filters::BoxedFilter, http::StatusCode, reject, Filter, Rejection, Re
 
 use crate::{
     endpoints::{
-        config::{RestApiConfig, ROUTE_SUBMIT_MESSAGE, ROUTE_SUBMIT_MESSAGE_RAW},
+        config::{RestApiConfig, ROUTE_SUBMIT_BLOCK, ROUTE_SUBMIT_BLOCK_RAW},
         filters::{with_block_submitter, with_protocol_config, with_rest_api_config, with_tangle},
         permission::has_permission,
         rejection::CustomRejection,
@@ -48,7 +48,7 @@ pub(crate) fn filter<B: StorageBackend>(
         .and(
             (warp::header::exact("content-type", "application/json")
                 .and(has_permission(
-                    ROUTE_SUBMIT_MESSAGE,
+                    ROUTE_SUBMIT_BLOCK,
                     public_routes.clone(),
                     allowed_ips.clone(),
                 ))
@@ -59,7 +59,7 @@ pub(crate) fn filter<B: StorageBackend>(
                 .and(with_protocol_config(protocol_config))
                 .and_then(submit_block))
             .or(warp::header::exact("content-type", "application/octet-stream")
-                .and(has_permission(ROUTE_SUBMIT_MESSAGE_RAW, public_routes, allowed_ips))
+                .and(has_permission(ROUTE_SUBMIT_BLOCK_RAW, public_routes, allowed_ips))
                 .and(warp::body::bytes())
                 .and(with_block_submitter(block_submitter))
                 .and_then(submit_block_raw)),
@@ -153,7 +153,11 @@ pub(crate) async fn submit_block<B: StorageBackend>(
                     "invalid nonce: expected an u64-string".to_string(),
                 ))
             })?;
-        if parsed_nonce == 0 { None } else { Some(parsed_nonce) }
+        if parsed_nonce == 0 {
+            None
+        } else {
+            Some(parsed_nonce)
+        }
     };
 
     let block = build_block(parents, payload, nonce, rest_api_config, protocol_config)?;

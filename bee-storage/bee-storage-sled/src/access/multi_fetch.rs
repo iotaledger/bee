@@ -91,8 +91,8 @@ macro_rules! impl_multi_fetch {
     };
 }
 
-impl_multi_fetch!(BlockId, Block, TREE_MESSAGE_ID_TO_MESSAGE);
-impl_multi_fetch!(BlockId, BlockMetadata, TREE_MESSAGE_ID_TO_METADATA);
+impl_multi_fetch!(BlockId, Block, TREE_BLOCK_ID_TO_BLOCK);
+impl_multi_fetch!(BlockId, BlockMetadata, TREE_BLOCK_ID_TO_METADATA);
 impl_multi_fetch!(OutputId, CreatedOutput, TREE_OUTPUT_ID_TO_CREATED_OUTPUT);
 impl_multi_fetch!(OutputId, ConsumedOutput, TREE_OUTPUT_ID_TO_CONSUMED_OUTPUT);
 impl_multi_fetch!(

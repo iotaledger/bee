@@ -38,7 +38,7 @@ impl Insert<u8, System> for Storage {
 impl Insert<BlockId, Block> for Storage {
     fn insert(&self, block_id: &BlockId, block: &Block) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
-            .put_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?, block_id, block.pack_to_vec())?;
+            .put_cf(self.cf_handle(CF_BLOCK_ID_TO_BLOCK)?, block_id, block.pack_to_vec())?;
 
         Ok(())
     }
@@ -53,7 +53,7 @@ impl InsertStrict<BlockId, BlockMetadata> for Storage {
         let guard = self.locks.block_id_to_metadata.read();
 
         self.inner.merge_cf(
-            self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?,
+            self.cf_handle(CF_BLOCK_ID_TO_METADATA)?,
             block_id,
             metadata.pack_to_vec(),
         )?;
@@ -70,7 +70,7 @@ impl Insert<(BlockId, BlockId), ()> for Storage {
         key.extend_from_slice(child.as_ref());
 
         self.inner
-            .put_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE_ID)?, key, [])?;
+            .put_cf(self.cf_handle(CF_BLOCK_ID_TO_BLOCK_ID)?, key, [])?;
 
         Ok(())
     }
@@ -205,7 +205,7 @@ impl Insert<(MilestoneIndex, UnreferencedBlock), ()> for Storage {
         key.extend_from_slice(unreferenced_block.as_ref());
 
         self.inner
-            .put_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE)?, key, [])?;
+            .put_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_UNREFERENCED_BLOCK)?, key, [])?;
 
         Ok(())
     }

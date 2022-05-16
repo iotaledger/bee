@@ -286,8 +286,8 @@ impl<'a> StorageIterator<'a, (bool, TreasuryOutput), ()> {
 }
 
 impl_iter!(u8, System, CF_SYSTEM);
-impl_iter!(BlockId, Block, CF_MESSAGE_ID_TO_MESSAGE);
-impl_iter!((BlockId, BlockId), (), CF_MESSAGE_ID_TO_MESSAGE_ID);
+impl_iter!(BlockId, Block, CF_BLOCK_ID_TO_BLOCK);
+impl_iter!((BlockId, BlockId), (), CF_BLOCK_ID_TO_BLOCK_ID);
 impl_iter!(OutputId, CreatedOutput, CF_OUTPUT_ID_TO_CREATED_OUTPUT);
 impl_iter!(OutputId, ConsumedOutput, CF_OUTPUT_ID_TO_CONSUMED_OUTPUT);
 impl_iter!(Unspent, (), CF_OUTPUT_ID_UNSPENT);
@@ -305,7 +305,7 @@ impl_iter!(MilestoneIndex, OutputDiff, CF_MILESTONE_INDEX_TO_OUTPUT_DIFF);
 impl_iter!(
     (MilestoneIndex, UnreferencedBlock),
     (),
-    CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE
+    CF_MILESTONE_INDEX_TO_UNREFERENCED_BLOCK
 );
 impl_iter!((MilestoneIndex, Receipt), (), CF_MILESTONE_INDEX_TO_RECEIPT);
 impl_iter!((bool, TreasuryOutput), (), CF_SPENT_TO_TREASURY_OUTPUT);
@@ -316,7 +316,7 @@ impl<'a> AsIterator<'a, BlockId, BlockMetadata> for Storage {
     fn iter(&'a self) -> Result<Self::AsIter, <Self as StorageBackend>::Error> {
         Ok(StorageIterator::new(
             self.inner
-                .iterator_cf(self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?, IteratorMode::Start),
+                .iterator_cf(self.cf_handle(CF_BLOCK_ID_TO_METADATA)?, IteratorMode::Start),
             Some(self.locks.block_id_to_metadata.read()),
         ))
     }

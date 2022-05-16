@@ -10,7 +10,7 @@ use crate::{column_families::*, storage::Storage};
 
 impl Update<BlockId, BlockMetadata> for Storage {
     fn update(&self, block_id: &BlockId, mut f: impl FnMut(&mut BlockMetadata)) -> Result<(), Self::Error> {
-        let cf_handle = self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?;
+        let cf_handle = self.cf_handle(CF_BLOCK_ID_TO_METADATA)?;
 
         let guard = self.locks.block_id_to_metadata.write();
 

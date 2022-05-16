@@ -75,7 +75,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 }
             }
         },
-        CF_MESSAGE_ID_TO_MESSAGE => match &tool.command {
+        CF_BLOCK_ID_TO_BLOCK => match &tool.command {
             RocksdbCommand::Fetch { key } => {
                 let key = BlockId::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?;
                 let value = Fetch::<BlockId, Block>::fetch(storage, &key)?;
@@ -91,7 +91,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 }
             }
         },
-        CF_MESSAGE_ID_TO_METADATA => match &tool.command {
+        CF_BLOCK_ID_TO_METADATA => match &tool.command {
             RocksdbCommand::Fetch { key } => {
                 let key = BlockId::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?;
                 let value = Fetch::<BlockId, BlockMetadata>::fetch(storage, &key)?;
@@ -107,7 +107,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 }
             }
         },
-        CF_MESSAGE_ID_TO_MESSAGE_ID => match &tool.command {
+        CF_BLOCK_ID_TO_BLOCK_ID => match &tool.command {
             RocksdbCommand::Fetch { key } => {
                 let key = BlockId::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?;
                 let value = Fetch::<BlockId, Vec<BlockId>>::fetch(storage, &key)?;
@@ -274,7 +274,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 }
             }
         },
-        CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE => match &tool.command {
+        CF_MILESTONE_INDEX_TO_UNREFERENCED_BLOCK => match &tool.command {
             RocksdbCommand::Fetch { key } => {
                 let key = MilestoneIndex(u32::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?);
                 let value = Fetch::<MilestoneIndex, Vec<UnreferencedBlock>>::fetch(storage, &key)?;

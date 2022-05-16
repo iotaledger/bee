@@ -32,9 +32,9 @@ macro_rules! impl_truncate {
     };
 }
 
-impl_truncate!(BlockId, Block, TREE_MESSAGE_ID_TO_MESSAGE);
-impl_truncate!(BlockId, BlockMetadata, TREE_MESSAGE_ID_TO_METADATA);
-impl_truncate!((BlockId, BlockId), (), TREE_MESSAGE_ID_TO_MESSAGE_ID);
+impl_truncate!(BlockId, Block, TREE_BLOCK_ID_TO_BLOCK);
+impl_truncate!(BlockId, BlockMetadata, TREE_BLOCK_ID_TO_METADATA);
+impl_truncate!((BlockId, BlockId), (), TREE_BLOCK_ID_TO_BLOCK_ID);
 impl_truncate!(OutputId, CreatedOutput, TREE_OUTPUT_ID_TO_CREATED_OUTPUT);
 impl_truncate!(OutputId, ConsumedOutput, TREE_OUTPUT_ID_TO_CONSUMED_OUTPUT);
 impl_truncate!(Unspent, (), TREE_OUTPUT_ID_UNSPENT);
@@ -56,7 +56,7 @@ impl_truncate!(MilestoneIndex, OutputDiff, TREE_MILESTONE_INDEX_TO_OUTPUT_DIFF);
 impl_truncate!(
     (MilestoneIndex, UnreferencedBlock),
     (),
-    TREE_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE
+    TREE_MILESTONE_INDEX_TO_UNREFERENCED_BLOCK
 );
 impl_truncate!((MilestoneIndex, Receipt), (), TREE_MILESTONE_INDEX_TO_RECEIPT);
 impl_truncate!((bool, TreasuryOutput), (), TREE_SPENT_TO_TREASURY_OUTPUT);

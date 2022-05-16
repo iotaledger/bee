@@ -80,7 +80,7 @@ impl Batch<BlockId, Block> for Storage {
 
         batch
             .inner
-            .entry(TREE_MESSAGE_ID_TO_MESSAGE)
+            .entry(TREE_BLOCK_ID_TO_BLOCK)
             .or_default()
             .insert(block_id.as_ref(), batch.value_buf.as_slice());
 
@@ -90,7 +90,7 @@ impl Batch<BlockId, Block> for Storage {
     fn batch_delete(&self, batch: &mut Self::Batch, block_id: &BlockId) -> Result<(), <Self as StorageBackend>::Error> {
         batch
             .inner
-            .entry(TREE_MESSAGE_ID_TO_MESSAGE)
+            .entry(TREE_BLOCK_ID_TO_BLOCK)
             .or_default()
             .remove(block_id.as_ref());
 
@@ -111,7 +111,7 @@ impl Batch<BlockId, BlockMetadata> for Storage {
 
         batch
             .inner
-            .entry(TREE_MESSAGE_ID_TO_METADATA)
+            .entry(TREE_BLOCK_ID_TO_METADATA)
             .or_default()
             .insert(block_id.as_ref(), batch.value_buf.as_slice());
 
@@ -121,7 +121,7 @@ impl Batch<BlockId, BlockMetadata> for Storage {
     fn batch_delete(&self, batch: &mut Self::Batch, block_id: &BlockId) -> Result<(), <Self as StorageBackend>::Error> {
         batch
             .inner
-            .entry(TREE_MESSAGE_ID_TO_METADATA)
+            .entry(TREE_BLOCK_ID_TO_METADATA)
             .or_default()
             .remove(block_id.as_ref());
 
@@ -142,7 +142,7 @@ impl Batch<(BlockId, BlockId), ()> for Storage {
 
         batch
             .inner
-            .entry(TREE_MESSAGE_ID_TO_MESSAGE_ID)
+            .entry(TREE_BLOCK_ID_TO_BLOCK_ID)
             .or_default()
             .insert(batch.key_buf.as_slice(), &[]);
 
@@ -160,7 +160,7 @@ impl Batch<(BlockId, BlockId), ()> for Storage {
 
         batch
             .inner
-            .entry(TREE_MESSAGE_ID_TO_MESSAGE_ID)
+            .entry(TREE_BLOCK_ID_TO_BLOCK_ID)
             .or_default()
             .remove(batch.key_buf.as_slice());
 
@@ -548,7 +548,7 @@ impl Batch<(MilestoneIndex, UnreferencedBlock), ()> for Storage {
 
         batch
             .inner
-            .entry(TREE_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE)
+            .entry(TREE_MILESTONE_INDEX_TO_UNREFERENCED_BLOCK)
             .or_default()
             .insert(batch.key_buf.as_slice(), &[]);
 
@@ -566,7 +566,7 @@ impl Batch<(MilestoneIndex, UnreferencedBlock), ()> for Storage {
 
         batch
             .inner
-            .entry(TREE_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE)
+            .entry(TREE_MILESTONE_INDEX_TO_UNREFERENCED_BLOCK)
             .or_default()
             .remove(batch.key_buf.as_slice());
 

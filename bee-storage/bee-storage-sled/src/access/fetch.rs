@@ -35,7 +35,7 @@ impl Fetch<BlockId, Block> for Storage {
     fn fetch(&self, block_id: &BlockId) -> Result<Option<Block>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .open_tree(TREE_MESSAGE_ID_TO_MESSAGE)?
+            .open_tree(TREE_BLOCK_ID_TO_BLOCK)?
             .get(block_id)?
             // Unpacking from storage is fine.
             .map(|v| Block::unpack_unverified(&mut v.as_ref()).unwrap()))
@@ -46,7 +46,7 @@ impl Fetch<BlockId, BlockMetadata> for Storage {
     fn fetch(&self, block_id: &BlockId) -> Result<Option<BlockMetadata>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .open_tree(TREE_MESSAGE_ID_TO_METADATA)?
+            .open_tree(TREE_BLOCK_ID_TO_METADATA)?
             .get(block_id)?
             // Unpacking from storage is fine.
             .map(|v| BlockMetadata::unpack_unverified(&mut v.as_ref()).unwrap()))
@@ -57,7 +57,7 @@ impl Fetch<BlockId, Vec<BlockId>> for Storage {
     fn fetch(&self, parent: &BlockId) -> Result<Option<Vec<BlockId>>, <Self as StorageBackend>::Error> {
         Ok(Some(
             self.inner
-                .open_tree(TREE_MESSAGE_ID_TO_MESSAGE_ID)?
+                .open_tree(TREE_BLOCK_ID_TO_BLOCK_ID)?
                 .scan_prefix(parent)
                 .map(|result| {
                     let (key, _) = result?;
@@ -184,7 +184,7 @@ impl Fetch<MilestoneIndex, Vec<UnreferencedBlock>> for Storage {
     fn fetch(&self, index: &MilestoneIndex) -> Result<Option<Vec<UnreferencedBlock>>, <Self as StorageBackend>::Error> {
         Ok(Some(
             self.inner
-                .open_tree(TREE_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE)?
+                .open_tree(TREE_MILESTONE_INDEX_TO_UNREFERENCED_BLOCK)?
                 .scan_prefix(index.pack_to_vec())
                 .map(|result| {
                     let (key, _) = result?;

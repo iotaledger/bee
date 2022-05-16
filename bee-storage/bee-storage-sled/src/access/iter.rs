@@ -301,9 +301,9 @@ impl<'a> Iterator for StorageIterator<'a, u8, System> {
     }
 }
 
-impl_iter!(BlockId, Block, TREE_MESSAGE_ID_TO_MESSAGE);
-impl_iter!(BlockId, BlockMetadata, TREE_MESSAGE_ID_TO_METADATA);
-impl_iter!((BlockId, BlockId), (), TREE_MESSAGE_ID_TO_MESSAGE_ID);
+impl_iter!(BlockId, Block, TREE_BLOCK_ID_TO_BLOCK);
+impl_iter!(BlockId, BlockMetadata, TREE_BLOCK_ID_TO_METADATA);
+impl_iter!((BlockId, BlockId), (), TREE_BLOCK_ID_TO_BLOCK_ID);
 impl_iter!(OutputId, CreatedOutput, TREE_OUTPUT_ID_TO_CREATED_OUTPUT);
 impl_iter!(OutputId, ConsumedOutput, TREE_OUTPUT_ID_TO_CONSUMED_OUTPUT);
 impl_iter!(Unspent, (), TREE_OUTPUT_ID_UNSPENT);
@@ -325,7 +325,7 @@ impl_iter!(MilestoneIndex, OutputDiff, TREE_MILESTONE_INDEX_TO_OUTPUT_DIFF);
 impl_iter!(
     (MilestoneIndex, UnreferencedBlock),
     (),
-    TREE_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE
+    TREE_MILESTONE_INDEX_TO_UNREFERENCED_BLOCK
 );
 impl_iter!((MilestoneIndex, Receipt), (), TREE_MILESTONE_INDEX_TO_RECEIPT);
 impl_iter!((bool, TreasuryOutput), (), TREE_SPENT_TO_TREASURY_OUTPUT);
