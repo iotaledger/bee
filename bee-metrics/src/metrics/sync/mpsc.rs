@@ -53,7 +53,7 @@ impl<T> UnboundedReceiverStream<T> {
         }
     }
 
-    /// Get back the inner [`UnboundedReceiver`].
+    /// Gets back the inner [`UnboundedReceiver`].
     #[inline]
     pub fn into_inner(self) -> UnboundedReceiver<T> {
         UnboundedReceiver {
