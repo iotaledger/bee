@@ -143,7 +143,7 @@ fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
     Ok(warp::reply::with_status(
         warp::reply::json(&ErrorBody::new(DefaultErrorResponse {
             code: err_code.to_string(),
-            block: reason.to_string(),
+            message: reason.to_string(),
         })),
         http_code,
     ))

@@ -27,7 +27,7 @@ BINARIES=""
 for file in \
   $( \
     RUSTFLAGS="-Zinstrument-coverage" \
-      cargo +nightly test --tests --all --all-features --no-run --block-format=json \
+      cargo +nightly test --tests --all --all-features --no-run --message-format=json \
         | jq -r "select(.profile.test == true) | .filenames[]" \
         | grep -v dSYM - \
   ); \
@@ -43,7 +43,7 @@ cargo +nightly cov -- export ${BINARIES} \
   --ignore-filename-regex="/.cargo|rustc|target|tests|/.rustup" \
   --format=lcov --Xdemangler=rustfilt \
   >> coverage/coverage.info
-  
+
 
 # Ensure intermediate coverage files are deleted
 echo "Removing intermediate files..."
