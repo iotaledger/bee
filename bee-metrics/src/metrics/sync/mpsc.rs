@@ -6,6 +6,7 @@
 //! For more information about the specific semantics of the channel see [`tokio::sync::mpsc`].
 
 use std::{
+    fmt,
     pin::Pin,
     task::{Context, Poll},
 };
@@ -23,6 +24,7 @@ use tokio::sync::mpsc::{
 use tokio_stream::wrappers::UnboundedReceiverStream as TokioUnboundedReceiverStream;
 
 /// Counter tracking the number of received messages through an [`UnboundedReceiver`].
+#[derive(Clone)]
 pub struct UnboundedReceiverCounter(Counter);
 
 impl EncodeMetric for UnboundedReceiverCounter {
@@ -41,6 +43,12 @@ impl EncodeMetric for UnboundedReceiverCounter {
 pub struct UnboundedReceiverStream<T> {
     stream: TokioUnboundedReceiverStream<T>,
     counter: Counter,
+}
+
+impl<T: fmt::Debug> fmt::Debug for UnboundedReceiverStream<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.stream.fmt(f)
+    }
 }
 
 impl<T> UnboundedReceiverStream<T> {
@@ -89,6 +97,12 @@ impl<T> Stream for UnboundedReceiverStream<T> {
 pub struct UnboundedReceiver<T> {
     receiver: TokioUnboundedReceiver<T>,
     counter: Counter,
+}
+
+impl<T> fmt::Debug for UnboundedReceiver<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.receiver.fmt(f)
+    }
 }
 
 impl<T> UnboundedReceiver<T> {
@@ -141,6 +155,7 @@ impl<T> UnboundedReceiver<T> {
 }
 
 /// Counter tracking the number of received messages through an [`UnboundedSender`].
+#[derive(Clone)]
 pub struct UnboundedSenderCounter(Counter);
 
 impl EncodeMetric for UnboundedSenderCounter {
@@ -159,6 +174,12 @@ impl EncodeMetric for UnboundedSenderCounter {
 pub struct UnboundedSender<T> {
     sender: TokioUnboundedSender<T>,
     counter: Counter,
+}
+
+impl<T> fmt::Debug for UnboundedSender<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.sender.fmt(f)
+    }
 }
 
 impl<T> UnboundedSender<T> {
