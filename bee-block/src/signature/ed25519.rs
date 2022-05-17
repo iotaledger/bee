@@ -42,8 +42,8 @@ impl Ed25519Signature {
         &self.signature
     }
 
-    /// Verifies the [`Ed25519Signature`] for a block against an [`Ed25519Address`].
-    pub fn is_valid(&self, block: &[u8], address: &Ed25519Address) -> Result<(), Error> {
+    /// Verifies the [`Ed25519Signature`] for a message against an [`Ed25519Address`].
+    pub fn is_valid(&self, message: &[u8], address: &Ed25519Address) -> Result<(), Error> {
         let signature_address: [u8; PUBLIC_KEY_LENGTH] = Blake2b256::digest(&self.public_key).into();
 
         if address.deref() != &signature_address {
@@ -53,7 +53,7 @@ impl Ed25519Signature {
             });
         }
 
-        if !PublicKey::try_from_bytes(self.public_key)?.verify(&Signature::from_bytes(self.signature), block) {
+        if !PublicKey::try_from_bytes(self.public_key)?.verify(&Signature::from_bytes(self.signature), message) {
             return Err(Error::InvalidSignature);
         }
 
