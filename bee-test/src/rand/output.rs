@@ -57,12 +57,17 @@ pub fn rand_basic_output() -> output::BasicOutput {
         .unwrap()
 }
 
+/// Generates a random [`AliasId`](output::AliasId).
+pub fn rand_alias_id() -> output::AliasId {
+    output::AliasId::from(rand_bytes_array())
+}
+
 /// Generates a random [`AliasOutput`](output::AliasOutput).
 pub fn rand_alias_output() -> output::AliasOutput {
     let feature_blocks = rand_allowed_feature_blocks(output::AliasOutput::ALLOWED_FEATURE_BLOCKS);
 
     // We need to make sure that `AliasId` and `Address` don't match.
-    let alias_id = output::AliasId::from(rand_bytes_array());
+    let alias_id = rand_alias_id();
 
     output::AliasOutput::build_with_amount(rand_number_range(Output::AMOUNT_RANGE), alias_id)
         .unwrap()
