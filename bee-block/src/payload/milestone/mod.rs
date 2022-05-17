@@ -230,9 +230,9 @@ pub mod dto {
 
                 let mut parent_ids = Vec::new();
 
-                for msg_id in &value.parents {
+                for block_id in &value.parents {
                     parent_ids.push(
-                        msg_id
+                        block_id
                             .parse::<BlockId>()
                             .map_err(|_| DtoError::InvalidField("parents"))?,
                     );

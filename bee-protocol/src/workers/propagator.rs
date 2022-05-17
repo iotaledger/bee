@@ -67,7 +67,7 @@ async fn propagate<B: StorageBackend>(
                         .map(|parent_md| {
                             parent_md
                                 .omrsi_and_ymrsi()
-                                .expect("solid msg with unset omrsi and ymrsi")
+                                .expect("solid block with unset omrsi and ymrsi")
                         })
                         .unwrap(),
                 };
@@ -95,8 +95,8 @@ async fn propagate<B: StorageBackend>(
                 .expect("Failed to fetch metadata.");
 
             // Try to propagate as far as possible into the future.
-            if let Some(msg_children) = tangle.get_children(block_id) {
-                for child in msg_children {
+            if let Some(block_children) = tangle.get_children(block_id) {
+                for child in block_children {
                     children.push(child);
                 }
             }

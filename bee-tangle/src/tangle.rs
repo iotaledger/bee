@@ -336,10 +336,10 @@ impl<B: StorageBackend> Tangle<B> {
 
     /// Get the data and metadata of a vertex associated with the given `block_id`.
     pub fn get_block_and_metadata(&self, block_id: &BlockId) -> Option<(Block, BlockMetadata)> {
-        let msg = self.storage.fetch(block_id).unwrap_or_default()?;
-        let meta = self.storage.fetch(block_id).unwrap_or_default()?;
+        let block = self.storage.fetch(block_id).unwrap_or_default()?;
+        let metadata = self.storage.fetch(block_id).unwrap_or_default()?;
 
-        Some((msg, meta))
+        Some((block, metadata))
     }
 
     /// Returns whether the block is stored in the Tangle.

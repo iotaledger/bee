@@ -64,7 +64,7 @@ pub fn prune_confirmed_data<S: StorageBackend>(
     while let Some(block_id) = to_visit.pop_front() {
         // Skip already visited blocks.
         if visited.contains(&block_id) {
-            metrics.msg_already_visited += 1;
+            metrics.block_already_visited += 1;
             continue;
         }
 
@@ -75,11 +75,11 @@ pub fn prune_confirmed_data<S: StorageBackend>(
         }
 
         // Get the `Block` for `block_id`.
-        let msg = match Fetch::<BlockId, Block>::fetch(storage, &block_id)
+        let block = match Fetch::<BlockId, Block>::fetch(storage, &block_id)
             .map_err(|e| Error::Storage(Box::new(e)))?
             .ok_or(Error::MissingBlock(block_id))
         {
-            Ok(msg) => msg,
+            Ok(block) => block,
             Err(e) => {
                 // Note: if we land here, then one of those things can have happened:
                 // (a) the storage has been messed with, and is therefore faulty,
@@ -97,14 +97,14 @@ pub fn prune_confirmed_data<S: StorageBackend>(
         };
 
         // Delete its edges.
-        let parents = msg.parents();
+        let parents = block.parents();
         for parent_id in parents.iter() {
             prune_edge(storage, batch, &(*parent_id, block_id))?;
             metrics.prunable_edges += 1;
         }
 
         // Add its parents to the queue of yet to traverse blocks.
-        to_visit.extend(msg.into_parents().iter());
+        to_visit.extend(block.into_parents().iter());
 
         // Remember that we've seen this block already.
         visited.insert(block_id);
@@ -211,15 +211,15 @@ pub fn prune_unconfirmed_data<S: StorageBackend>(
 ) -> Result<UnconfirmedDataPruningMetrics, Error> {
     let mut metrics = UnconfirmedDataPruningMetrics::default();
 
-    let unconf_msgs = match Fetch::<MilestoneIndex, Vec<UnreferencedBlock>>::fetch(storage, &prune_index)
+    let unconf_blocks = match Fetch::<MilestoneIndex, Vec<UnreferencedBlock>>::fetch(storage, &prune_index)
         .map_err(|e| Error::Storage(Box::new(e)))?
     {
-        Some(unconf_msgs) => {
-            if unconf_msgs.is_empty() {
+        Some(unconf_blocks) => {
+            if unconf_blocks.is_empty() {
                 metrics.none_received = true;
                 Vec::new()
             } else {
-                unconf_msgs
+                unconf_blocks
             }
         }
         None => {
@@ -229,16 +229,18 @@ pub fn prune_unconfirmed_data<S: StorageBackend>(
     };
 
     // TODO: consider using `MultiFetch`
-    'outer_loop: for unconf_msg_id in unconf_msgs.iter().map(|unconf_msg| unconf_msg.block_id()) {
+    'outer_loop: for unconf_block_id in unconf_blocks.iter().map(|unconf_block| unconf_block.block_id()) {
         // Skip those that were confirmed.
-        match Fetch::<BlockId, BlockMetadata>::fetch(storage, unconf_msg_id).map_err(|e| Error::Storage(Box::new(e)))? {
-            Some(msg_meta) => {
-                if msg_meta.flags().is_referenced() {
+        match Fetch::<BlockId, BlockMetadata>::fetch(storage, unconf_block_id)
+            .map_err(|e| Error::Storage(Box::new(e)))?
+        {
+            Some(block_meta) => {
+                if block_meta.flags().is_referenced() {
                     metrics.were_confirmed += 1;
                     continue;
                 } else {
                     // We log which blocks were never confirmed.
-                    log::trace!("'referenced' flag not set for {}", unconf_msg_id);
+                    log::trace!("'referenced' flag not set for {}", unconf_block_id);
 
                     // ---
                     // BUG/FIXME:
@@ -253,9 +255,9 @@ pub fn prune_unconfirmed_data<S: StorageBackend>(
                     // In other words: If we find at least one confirmed approver, then we know the flag wasn't set
                     // appropriatedly for the current block due to THE bug, and that we cannot prune it.
                     // ---
-                    let unconf_approvers = Fetch::<BlockId, Vec<BlockId>>::fetch(storage, unconf_msg_id)
+                    let unconf_approvers = Fetch::<BlockId, Vec<BlockId>>::fetch(storage, unconf_block_id)
                         .map_err(|e| Error::Storage(Box::new(e)))?
-                        .ok_or(Error::MissingApprovers(*unconf_msg_id))?;
+                        .ok_or(Error::MissingApprovers(*unconf_block_id))?;
 
                     for unconf_approver_id in unconf_approvers {
                         if let Some(unconf_approver_md) =
@@ -268,7 +270,7 @@ pub fn prune_unconfirmed_data<S: StorageBackend>(
                         }
                     }
 
-                    log::trace!("all of '{}'s approvers are flagged 'unreferenced'", unconf_msg_id);
+                    log::trace!("all of '{}'s approvers are flagged 'unreferenced'", unconf_block_id);
                 }
             }
             None => {
@@ -278,18 +280,18 @@ pub fn prune_unconfirmed_data<S: StorageBackend>(
         }
 
         // Delete those blocks that remained unconfirmed.
-        match Fetch::<BlockId, Block>::fetch(storage, unconf_msg_id).map_err(|e| Error::Storage(Box::new(e)))? {
-            Some(msg) => {
-                let parents = msg.parents();
+        match Fetch::<BlockId, Block>::fetch(storage, unconf_block_id).map_err(|e| Error::Storage(Box::new(e)))? {
+            Some(block) => {
+                let parents = block.parents();
 
                 // Add block data to the delete batch.
-                prune_block_and_metadata(storage, batch, unconf_msg_id)?;
+                prune_block_and_metadata(storage, batch, unconf_block_id)?;
 
-                log::trace!("Pruned unconfirmed msg {} at {}.", unconf_msg_id, prune_index);
+                log::trace!("Pruned unconfirmed block {} at {}.", unconf_block_id, prune_index);
 
                 // Add prunable edges to the delete batch.
                 for parent in parents.iter() {
-                    prune_edge(storage, batch, &(*parent, *unconf_msg_id))?;
+                    prune_edge(storage, batch, &(*parent, *unconf_block_id))?;
 
                     metrics.prunable_edges += 1;
                 }
@@ -303,7 +305,7 @@ pub fn prune_unconfirmed_data<S: StorageBackend>(
         Batch::<(MilestoneIndex, UnreferencedBlock), ()>::batch_delete(
             storage,
             batch,
-            &(prune_index, (*unconf_msg_id).into()),
+            &(prune_index, (*unconf_block_id).into()),
         )
         .map_err(|e| Error::Storage(Box::new(e)))?;
 

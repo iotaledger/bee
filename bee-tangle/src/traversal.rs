@@ -33,15 +33,15 @@ pub fn visit_parents_depth_first<Match, Apply, ElseApply, MissingApply, B: Stora
 
     while let Some(block_id) = parents.pop() {
         if visited.insert(block_id) {
-            let msg_meta = tangle.get_block_and_metadata(&block_id);
-            match msg_meta {
-                Some((msg, meta)) => {
-                    if matches(&block_id, &msg, &meta) {
-                        apply(&block_id, &msg, &meta);
+            let block_and_metatadata = tangle.get_block_and_metadata(&block_id);
+            match block_and_metatadata {
+                Some((block, metadata)) => {
+                    if matches(&block_id, &block, &metadata) {
+                        apply(&block_id, &block, &metadata);
 
-                        parents.extend_from_slice(msg.parents());
+                        parents.extend_from_slice(block.parents());
                     } else {
-                        else_apply(&block_id, &msg, &meta);
+                        else_apply(&block_id, &block, &metadata);
                     }
                 }
                 None => {

@@ -17,7 +17,7 @@ pub struct PruningMetrics {
 
 #[derive(Debug, Default)]
 pub struct ConfirmedDataPruningMetrics {
-    pub msg_already_visited: usize,
+    pub block_already_visited: usize,
     pub references_sep: usize,
     pub approver_cache_miss: usize,
     pub approver_cache_hit: usize,
