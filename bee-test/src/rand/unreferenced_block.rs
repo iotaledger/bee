@@ -5,7 +5,7 @@ use bee_tangle::unreferenced_block::UnreferencedBlock;
 
 use crate::rand::block::rand_block_id;
 
-/// Generates a random unrefere,ced block.
+/// Generates a random unreferenced block.
 pub fn rand_unreferenced_block() -> UnreferencedBlock {
     rand_block_id().into()
 }
