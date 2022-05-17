@@ -51,6 +51,20 @@ impl BasicOutputBuilder {
         })
     }
 
+    /// Sets the amount to the provided value.
+    #[inline(always)]
+    pub fn with_amount(mut self, amount: u64) -> Result<Self, Error> {
+        self.amount = OutputBuilderAmount::Amount(amount.try_into().map_err(Error::InvalidOutputAmount)?);
+        Ok(self)
+    }
+
+    /// Sets the amount to the minimum storage deposit.
+    #[inline(always)]
+    pub fn with_minimum_storage_deposit(mut self, byte_cost_config: ByteCostConfig) -> Self {
+        self.amount = OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config);
+        self
+    }
+
     ///
     #[inline(always)]
     pub fn add_native_token(mut self, native_token: NativeToken) -> Self {
