@@ -86,14 +86,18 @@ pub fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
     for _ in 0..10 {
         let (message_id, message) = (rand_message_id(), rand_message());
         Insert::<MessageId, Message>::insert_op(storage, &message_id, &message).unwrap();
-        Batch::<MessageId, Message>::batch_delete_op(storage, &mut batch, &message_id).unwrap();
+        storage
+            .batch_delete::<MessageId, Message>(&mut batch, &message_id)
+            .unwrap();
         message_ids.push(message_id);
         messages.push((message_id, None));
     }
 
     for _ in 0..10 {
         let (message_id, message) = (rand_message_id(), rand_message());
-        Batch::<MessageId, Message>::batch_insert_op(storage, &mut batch, &message_id, &message).unwrap();
+        storage
+            .batch_insert::<MessageId, Message>(&mut batch, &message_id, &message)
+            .unwrap();
         message_ids.push(message_id);
         messages.push((message_id, Some(message)));
     }

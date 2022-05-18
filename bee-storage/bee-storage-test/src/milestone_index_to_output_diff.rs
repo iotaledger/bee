@@ -84,14 +84,18 @@ pub fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &B) {
     for _ in 0..10 {
         let (index, output_diff) = (rand_milestone_index(), rand_output_diff());
         Insert::<MilestoneIndex, OutputDiff>::insert_op(storage, &index, &output_diff).unwrap();
-        Batch::<MilestoneIndex, OutputDiff>::batch_delete_op(storage, &mut batch, &index).unwrap();
+        storage
+            .batch_delete::<MilestoneIndex, OutputDiff>(&mut batch, &index)
+            .unwrap();
         indexes.push(index);
         output_diffs.push((index, None));
     }
 
     for _ in 0..10 {
         let (index, output_diff) = (rand_milestone_index(), rand_output_diff());
-        Batch::<MilestoneIndex, OutputDiff>::batch_insert_op(storage, &mut batch, &index, &output_diff).unwrap();
+        storage
+            .batch_insert::<MilestoneIndex, OutputDiff>(&mut batch, &index, &output_diff)
+            .unwrap();
         indexes.push(index);
         output_diffs.push((index, Some(output_diff)));
     }

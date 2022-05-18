@@ -73,7 +73,9 @@ pub fn index_to_message_id_access<B: StorageBackend>(storage: &B) {
     for _ in 0..10 {
         let (index, message_id) = (rand_indexation_payload().padded_index(), rand_message_id());
         Insert::<(PaddedIndex, MessageId), ()>::insert_op(storage, &(index, message_id), &()).unwrap();
-        Batch::<(PaddedIndex, MessageId), ()>::batch_delete_op(storage, &mut batch, &(index, message_id)).unwrap();
+        storage
+            .batch_delete::<(PaddedIndex, MessageId), ()>(&mut batch, &(index, message_id))
+            .unwrap();
     }
 
     let mut message_ids = HashMap::<PaddedIndex, Vec<MessageId>>::new();
@@ -82,7 +84,8 @@ pub fn index_to_message_id_access<B: StorageBackend>(storage: &B) {
         let index = rand_indexation_payload().padded_index();
         for _ in 0..5 {
             let message_id = rand_message_id();
-            Batch::<(PaddedIndex, MessageId), ()>::batch_insert_op(storage, &mut batch, &(index, message_id), &())
+            storage
+                .batch_insert::<(PaddedIndex, MessageId), ()>(&mut batch, &(index, message_id), &())
                 .unwrap();
             message_ids.entry(index).or_default().push(message_id);
         }

@@ -79,14 +79,18 @@ pub fn output_id_to_created_output_access<B: StorageBackend>(storage: &B) {
     for _ in 0..10 {
         let (output_id, created_output) = (rand_output_id(), rand_created_output());
         Insert::<OutputId, CreatedOutput>::insert_op(storage, &output_id, &created_output).unwrap();
-        Batch::<OutputId, CreatedOutput>::batch_delete_op(storage, &mut batch, &output_id).unwrap();
+        storage
+            .batch_delete::<OutputId, CreatedOutput>(&mut batch, &output_id)
+            .unwrap();
         output_ids.push(output_id);
         created_outputs.push((output_id, None));
     }
 
     for _ in 0..10 {
         let (output_id, created_output) = (rand_output_id(), rand_created_output());
-        Batch::<OutputId, CreatedOutput>::batch_insert_op(storage, &mut batch, &output_id, &created_output).unwrap();
+        storage
+            .batch_insert::<OutputId, CreatedOutput>(&mut batch, &output_id, &created_output)
+            .unwrap();
         output_ids.push(output_id);
         created_outputs.push((output_id, Some(created_output)));
     }

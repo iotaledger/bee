@@ -80,14 +80,16 @@ pub fn address_to_balance_access<B: StorageBackend>(storage: &B) {
     for _ in 0..10 {
         let (address, balance) = (rand_address(), rand_balance());
         Insert::<Address, Balance>::insert_op(storage, &address, &balance).unwrap();
-        Batch::<Address, Balance>::batch_delete_op(storage, &mut batch, &address).unwrap();
+        storage.batch_delete::<Address, Balance>(&mut batch, &address).unwrap();
         addresses.push(address);
         balances.push((address, None));
     }
 
     for _ in 0..10 {
         let (address, balance) = (rand_address(), rand_balance());
-        Batch::<Address, Balance>::batch_insert_op(storage, &mut batch, &address, &balance).unwrap();
+        storage
+            .batch_insert::<Address, Balance>(&mut batch, &address, &balance)
+            .unwrap();
         addresses.push(address);
         balances.push((address, Some(balance)));
     }

@@ -8,7 +8,7 @@ use std::{
 
 use bee_message::milestone::MilestoneIndex;
 use bee_runtime::event::Bus;
-use bee_storage::access::{Batch, Truncate};
+use bee_storage::{access::Truncate, backend::StorageBackendExt};
 use bee_tangle::{solid_entry_point::SolidEntryPoint, Tangle};
 use log::{debug, info};
 
@@ -115,7 +115,8 @@ pub async fn prune<S: StorageBackend>(
         // Write the new set of SEPs to the storage.
         let batch_new_seps = Instant::now();
         for (new_sep, index) in &new_seps {
-            Batch::<SolidEntryPoint, MilestoneIndex>::batch_insert_op(storage, &mut batch, new_sep, index)
+            storage
+                .batch_insert::<SolidEntryPoint, MilestoneIndex>(&mut batch, new_sep, index)
                 .map_err(|e| Error::Storage(Box::new(e)))?;
         }
         timings.batch_new_seps = batch_new_seps.elapsed();

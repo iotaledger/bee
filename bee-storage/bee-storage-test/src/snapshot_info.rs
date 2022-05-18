@@ -53,7 +53,9 @@ pub fn snapshot_info_access<B: StorageBackend>(storage: &B) {
 
     let mut batch = B::batch_begin();
 
-    Batch::<(), SnapshotInfo>::batch_insert_op(storage, &mut batch, &(), &snapshot_info).unwrap();
+    storage
+        .batch_insert::<(), SnapshotInfo>(&mut batch, &(), &snapshot_info)
+        .unwrap();
 
     storage.batch_commit(batch, true).unwrap();
 
@@ -62,7 +64,7 @@ pub fn snapshot_info_access<B: StorageBackend>(storage: &B) {
 
     let mut batch = B::batch_begin();
 
-    Batch::<(), SnapshotInfo>::batch_delete_op(storage, &mut batch, &()).unwrap();
+    storage.batch_delete::<(), SnapshotInfo>(&mut batch, &()).unwrap();
 
     storage.batch_commit(batch, true).unwrap();
 

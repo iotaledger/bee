@@ -4,7 +4,7 @@
 use bee_ledger::types::Unspent;
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Insert, Truncate},
-    backend,
+    backend::{self, StorageBackendExt},
 };
 use bee_test::rand::output::rand_unspent_output_id;
 
@@ -50,14 +50,14 @@ pub fn output_id_unspent_access<B: StorageBackend>(storage: &B) {
     for _ in 0..10 {
         let unspent = rand_unspent_output_id();
         Insert::<Unspent, ()>::insert_op(storage, &unspent, &()).unwrap();
-        Batch::<Unspent, ()>::batch_delete_op(storage, &mut batch, &unspent).unwrap();
+        storage.batch_delete::<Unspent, ()>(&mut batch, &unspent).unwrap();
     }
 
     let mut unspents = Vec::new();
 
     for _ in 0..10 {
         let unspent = rand_unspent_output_id();
-        Batch::<Unspent, ()>::batch_insert_op(storage, &mut batch, &unspent, &()).unwrap();
+        storage.batch_insert::<Unspent, ()>(&mut batch, &unspent, &()).unwrap();
         unspents.push(unspent);
     }
 

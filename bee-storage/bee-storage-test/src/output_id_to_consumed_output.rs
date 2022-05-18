@@ -79,14 +79,18 @@ pub fn output_id_to_consumed_output_access<B: StorageBackend>(storage: &B) {
     for _ in 0..10 {
         let (output_id, consumed_output) = (rand_output_id(), rand_consumed_output());
         Insert::<OutputId, ConsumedOutput>::insert_op(storage, &output_id, &consumed_output).unwrap();
-        Batch::<OutputId, ConsumedOutput>::batch_delete_op(storage, &mut batch, &output_id).unwrap();
+        storage
+            .batch_delete::<OutputId, ConsumedOutput>(&mut batch, &output_id)
+            .unwrap();
         output_ids.push(output_id);
         consumed_outputs.push((output_id, None));
     }
 
     for _ in 0..10 {
         let (output_id, consumed_output) = (rand_output_id(), rand_consumed_output());
-        Batch::<OutputId, ConsumedOutput>::batch_insert_op(storage, &mut batch, &output_id, &consumed_output).unwrap();
+        storage
+            .batch_insert::<OutputId, ConsumedOutput>(&mut batch, &output_id, &consumed_output)
+            .unwrap();
         output_ids.push(output_id);
         consumed_outputs.push((output_id, Some(consumed_output)));
     }

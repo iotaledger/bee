@@ -13,7 +13,7 @@ use bee_message::{
     },
     Message, MessageId,
 };
-use bee_storage::{access::Batch, backend::StorageBackendExt};
+use bee_storage::backend::StorageBackendExt;
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
@@ -286,12 +286,9 @@ pub fn batch_prunable_unconfirmed_data<S: StorageBackend>(
             }
         }
 
-        Batch::<(MilestoneIndex, UnreferencedMessage), ()>::batch_delete_op(
-            storage,
-            batch,
-            &(prune_index, (*unconf_msg_id).into()),
-        )
-        .map_err(|e| Error::Storage(Box::new(e)))?;
+        storage
+            .batch_delete::<(MilestoneIndex, UnreferencedMessage), ()>(batch, &(prune_index, (*unconf_msg_id).into()))
+            .map_err(|e| Error::Storage(Box::new(e)))?;
 
         metrics.prunable_messages += 1;
     }
@@ -323,9 +320,11 @@ fn prune_message_and_metadata<S: StorageBackend>(
     batch: &mut S::Batch,
     message_id: &MessageId,
 ) -> Result<(), Error> {
-    Batch::<MessageId, Message>::batch_delete_op(storage, batch, message_id)
+    storage
+        .batch_delete::<MessageId, Message>(batch, message_id)
         .map_err(|e| Error::Storage(Box::new(e)))?;
-    Batch::<MessageId, MessageMetadata>::batch_delete_op(storage, batch, message_id)
+    storage
+        .batch_delete::<MessageId, MessageMetadata>(batch, message_id)
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
     Ok(())
@@ -336,7 +335,8 @@ fn prune_edge<S: StorageBackend>(
     batch: &mut S::Batch,
     edge: &(MessageId, MessageId),
 ) -> Result<(), Error> {
-    Batch::<(MessageId, MessageId), ()>::batch_delete_op(storage, batch, edge)
+    storage
+        .batch_delete::<(MessageId, MessageId), ()>(batch, edge)
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
     Ok(())
@@ -347,14 +347,16 @@ fn prune_indexation_data<S: StorageBackend>(
     batch: &mut S::Batch,
     index_message_id: &(PaddedIndex, MessageId),
 ) -> Result<(), Error> {
-    Batch::<(PaddedIndex, MessageId), ()>::batch_delete_op(storage, batch, index_message_id)
+    storage
+        .batch_delete::<(PaddedIndex, MessageId), ()>(batch, index_message_id)
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
     Ok(())
 }
 
 fn prune_milestone<S: StorageBackend>(storage: &S, batch: &mut S::Batch, index: MilestoneIndex) -> Result<(), Error> {
-    Batch::<MilestoneIndex, Milestone>::batch_delete_op(storage, batch, &index)
+    storage
+        .batch_delete::<MilestoneIndex, Milestone>(batch, &index)
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
     Ok(())
@@ -366,9 +368,11 @@ fn prune_output_diff<S: StorageBackend>(storage: &S, batch: &mut S::Batch, index
         .map_err(|e| Error::Storage(Box::new(e)))?
     {
         for consumed_output in output_diff.consumed_outputs() {
-            Batch::<OutputId, ConsumedOutput>::batch_delete_op(storage, batch, consumed_output)
+            storage
+                .batch_delete::<OutputId, ConsumedOutput>(batch, consumed_output)
                 .map_err(|e| Error::Storage(Box::new(e)))?;
-            Batch::<OutputId, CreatedOutput>::batch_delete_op(storage, batch, consumed_output)
+            storage
+                .batch_delete::<OutputId, CreatedOutput>(batch, consumed_output)
                 .map_err(|e| Error::Storage(Box::new(e)))?;
         }
 
@@ -377,7 +381,8 @@ fn prune_output_diff<S: StorageBackend>(storage: &S, batch: &mut S::Batch, index
         }
     }
 
-    Batch::<MilestoneIndex, OutputDiff>::batch_delete_op(storage, batch, &index)
+    storage
+        .batch_delete::<MilestoneIndex, OutputDiff>(batch, &index)
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
     Ok(())
@@ -392,7 +397,8 @@ fn prune_receipts<S: StorageBackend>(storage: &S, batch: &mut S::Batch, index: M
 
     let mut num = 0;
     for receipt in receipts.into_iter() {
-        Batch::<(MilestoneIndex, Receipt), ()>::batch_delete_op(storage, batch, &(index, receipt))
+        storage
+            .batch_delete::<(MilestoneIndex, Receipt), ()>(batch, &(index, receipt))
             .map_err(|e| Error::Storage(Box::new(e)))?;
 
         num += 1;
@@ -426,7 +432,8 @@ fn unwrap_indexation(payload: Option<&Payload>) -> Option<&IndexationPayload> {
 fn prune_seps<S: StorageBackend>(storage: &S, batch: &mut S::Batch, seps: &[SolidEntryPoint]) -> Result<usize, Error> {
     let mut num = 0;
     for sep in seps {
-        Batch::<SolidEntryPoint, MilestoneIndex>::batch_delete_op(storage, batch, sep)
+        storage
+            .batch_delete::<SolidEntryPoint, MilestoneIndex>(batch, sep)
             .map_err(|e| Error::Storage(Box::new(e)))?;
 
         num += 1;

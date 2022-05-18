@@ -53,7 +53,9 @@ pub fn ledger_index_access<B: StorageBackend>(storage: &B) {
 
     let mut batch = B::batch_begin();
 
-    Batch::<(), LedgerIndex>::batch_insert_op(storage, &mut batch, &(), &index).unwrap();
+    storage
+        .batch_insert::<(), LedgerIndex>(&mut batch, &(), &index)
+        .unwrap();
 
     storage.batch_commit(batch, true).unwrap();
 
@@ -62,7 +64,7 @@ pub fn ledger_index_access<B: StorageBackend>(storage: &B) {
 
     let mut batch = B::batch_begin();
 
-    Batch::<(), LedgerIndex>::batch_delete_op(storage, &mut batch, &()).unwrap();
+    storage.batch_delete::<(), LedgerIndex>(&mut batch, &()).unwrap();
 
     storage.batch_commit(batch, true).unwrap();
 

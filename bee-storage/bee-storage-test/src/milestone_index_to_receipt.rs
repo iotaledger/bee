@@ -74,7 +74,9 @@ pub fn milestone_index_to_receipt_access<B: StorageBackend>(storage: &B) {
     for _ in 0..10 {
         let (index, receipt) = (rand_milestone_index(), rand_ledger_receipt());
         Insert::<(MilestoneIndex, Receipt), ()>::insert_op(storage, &(index, receipt.clone()), &()).unwrap();
-        Batch::<(MilestoneIndex, Receipt), ()>::batch_delete_op(storage, &mut batch, &(index, receipt)).unwrap();
+        storage
+            .batch_delete::<(MilestoneIndex, Receipt), ()>(&mut batch, &(index, receipt))
+            .unwrap();
     }
 
     let mut receipts = HashMap::<MilestoneIndex, Vec<Receipt>>::new();
@@ -83,13 +85,9 @@ pub fn milestone_index_to_receipt_access<B: StorageBackend>(storage: &B) {
         let index = rand_milestone_index();
         for _ in 0..5 {
             let receipt = rand_ledger_receipt();
-            Batch::<(MilestoneIndex, Receipt), ()>::batch_insert_op(
-                storage,
-                &mut batch,
-                &(index, receipt.clone()),
-                &(),
-            )
-            .unwrap();
+            storage
+                .batch_insert::<(MilestoneIndex, Receipt), ()>(&mut batch, &(index, receipt.clone()), &())
+                .unwrap();
             receipts.entry(index).or_default().push(receipt);
         }
     }

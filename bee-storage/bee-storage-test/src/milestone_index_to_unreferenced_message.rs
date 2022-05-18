@@ -85,12 +85,9 @@ pub fn milestone_index_to_unreferenced_message_access<B: StorageBackend>(storage
         let (index, unreferenced_message) = (rand_milestone_index(), rand_unreferenced_message());
         Insert::<(MilestoneIndex, UnreferencedMessage), ()>::insert_op(storage, &(index, unreferenced_message), &())
             .unwrap();
-        Batch::<(MilestoneIndex, UnreferencedMessage), ()>::batch_delete_op(
-            storage,
-            &mut batch,
-            &(index, unreferenced_message),
-        )
-        .unwrap();
+        storage
+            .batch_delete::<(MilestoneIndex, UnreferencedMessage), ()>(&mut batch, &(index, unreferenced_message))
+            .unwrap();
     }
 
     let mut unreferenced_messages = HashMap::<MilestoneIndex, Vec<UnreferencedMessage>>::new();
@@ -99,13 +96,13 @@ pub fn milestone_index_to_unreferenced_message_access<B: StorageBackend>(storage
         let index = rand_milestone_index();
         for _ in 0..5 {
             let unreferenced_message = rand_unreferenced_message();
-            Batch::<(MilestoneIndex, UnreferencedMessage), ()>::batch_insert_op(
-                storage,
-                &mut batch,
-                &(index, unreferenced_message),
-                &(),
-            )
-            .unwrap();
+            storage
+                .batch_insert::<(MilestoneIndex, UnreferencedMessage), ()>(
+                    &mut batch,
+                    &(index, unreferenced_message),
+                    &(),
+                )
+                .unwrap();
             unreferenced_messages
                 .entry(index)
                 .or_default()

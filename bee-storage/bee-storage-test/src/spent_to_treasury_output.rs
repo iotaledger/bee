@@ -73,7 +73,9 @@ pub fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
     for _ in 0..10 {
         let (spent, treasury_output) = (rand_bool(), rand_ledger_treasury_output());
         Insert::<(bool, TreasuryOutput), ()>::insert_op(storage, &(spent, treasury_output.clone()), &()).unwrap();
-        Batch::<(bool, TreasuryOutput), ()>::batch_delete_op(storage, &mut batch, &(spent, treasury_output)).unwrap();
+        storage
+            .batch_delete::<(bool, TreasuryOutput), ()>(&mut batch, &(spent, treasury_output))
+            .unwrap();
     }
 
     let mut treasury_outputs = HashMap::<bool, Vec<TreasuryOutput>>::new();
@@ -81,26 +83,18 @@ pub fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
     for _ in 0..10 {
         let spent = false;
         let treasury_output = rand_ledger_treasury_output();
-        Batch::<(bool, TreasuryOutput), ()>::batch_insert_op(
-            storage,
-            &mut batch,
-            &(spent, treasury_output.clone()),
-            &(),
-        )
-        .unwrap();
+        storage
+            .batch_insert::<(bool, TreasuryOutput), ()>(&mut batch, &(spent, treasury_output.clone()), &())
+            .unwrap();
         treasury_outputs.entry(spent).or_default().push(treasury_output);
     }
 
     for _ in 0..10 {
         let spent = true;
         let treasury_output = rand_ledger_treasury_output();
-        Batch::<(bool, TreasuryOutput), ()>::batch_insert_op(
-            storage,
-            &mut batch,
-            &(spent, treasury_output.clone()),
-            &(),
-        )
-        .unwrap();
+        storage
+            .batch_insert::<(bool, TreasuryOutput), ()>(&mut batch, &(spent, treasury_output.clone()), &())
+            .unwrap();
         treasury_outputs.entry(spent).or_default().push(treasury_output);
     }
 

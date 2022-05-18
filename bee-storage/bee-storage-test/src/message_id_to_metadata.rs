@@ -130,14 +130,18 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
     for _ in 0..10 {
         let (message_id, metadata) = (rand_message_id(), rand_message_metadata());
         InsertStrict::<MessageId, MessageMetadata>::insert_strict_op(storage, &message_id, &metadata).unwrap();
-        Batch::<MessageId, MessageMetadata>::batch_delete_op(storage, &mut batch, &message_id).unwrap();
+        storage
+            .batch_delete::<MessageId, MessageMetadata>(&mut batch, &message_id)
+            .unwrap();
         message_ids.push(message_id);
         metadatas.push((message_id, None));
     }
 
     for _ in 0..10 {
         let (message_id, metadata) = (rand_message_id(), rand_message_metadata());
-        Batch::<MessageId, MessageMetadata>::batch_insert_op(storage, &mut batch, &message_id, &metadata).unwrap();
+        storage
+            .batch_insert::<MessageId, MessageMetadata>(&mut batch, &message_id, &metadata)
+            .unwrap();
         message_ids.push(message_id);
         metadatas.push((message_id, Some(metadata)));
     }

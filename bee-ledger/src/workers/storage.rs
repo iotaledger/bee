@@ -119,10 +119,9 @@ pub(crate) fn insert_output_id_for_address_batch<B: StorageBackend>(
     output_id: &OutputId,
 ) -> Result<(), Error> {
     match address {
-        Address::Ed25519(address) => {
-            Batch::<(Ed25519Address, OutputId), ()>::batch_insert_op(storage, batch, &(*address, *output_id), &())
-                .map_err(|e| Error::Storage(Box::new(e)))
-        }
+        Address::Ed25519(address) => storage
+            .batch_insert::<(Ed25519Address, OutputId), ()>(batch, &(*address, *output_id), &())
+            .map_err(|e| Error::Storage(Box::new(e))),
     }
 }
 
@@ -133,10 +132,9 @@ pub(crate) fn delete_output_id_for_address_batch<B: StorageBackend>(
     output_id: &OutputId,
 ) -> Result<(), Error> {
     match address {
-        Address::Ed25519(address) => {
-            Batch::<(Ed25519Address, OutputId), ()>::batch_delete_op(storage, batch, &(*address, *output_id))
-                .map_err(|e| Error::Storage(Box::new(e)))
-        }
+        Address::Ed25519(address) => storage
+            .batch_delete::<(Ed25519Address, OutputId), ()>(batch, &(*address, *output_id))
+            .map_err(|e| Error::Storage(Box::new(e))),
     }
 }
 
@@ -146,9 +144,11 @@ pub(crate) fn insert_created_output_batch<B: StorageBackend>(
     output_id: &OutputId,
     output: &CreatedOutput,
 ) -> Result<(), Error> {
-    Batch::<OutputId, CreatedOutput>::batch_insert_op(storage, batch, output_id, output)
+    storage
+        .batch_insert::<OutputId, CreatedOutput>(batch, output_id, output)
         .map_err(|e| Error::Storage(Box::new(e)))?;
-    Batch::<Unspent, ()>::batch_insert_op(storage, batch, &(*output_id).into(), &())
+    storage
+        .batch_insert::<Unspent, ()>(batch, &(*output_id).into(), &())
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
     match output.inner() {
@@ -168,9 +168,11 @@ pub(crate) fn delete_created_output_batch<B: StorageBackend>(
     output_id: &OutputId,
     output: &CreatedOutput,
 ) -> Result<(), Error> {
-    Batch::<OutputId, CreatedOutput>::batch_delete_op(storage, batch, output_id)
+    storage
+        .batch_delete::<OutputId, CreatedOutput>(batch, output_id)
         .map_err(|e| Error::Storage(Box::new(e)))?;
-    Batch::<Unspent, ()>::batch_delete_op(storage, batch, &(*output_id).into())
+    storage
+        .batch_delete::<Unspent, ()>(batch, &(*output_id).into())
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
     match output.inner() {
@@ -204,9 +206,12 @@ pub(crate) fn insert_consumed_output_batch<B: StorageBackend>(
     output_id: &OutputId,
     output: &ConsumedOutput,
 ) -> Result<(), Error> {
-    Batch::<OutputId, ConsumedOutput>::batch_insert_op(storage, batch, output_id, output)
+    storage
+        .batch_insert::<OutputId, ConsumedOutput>(batch, output_id, output)
         .map_err(|e| Error::Storage(Box::new(e)))?;
-    Batch::<Unspent, ()>::batch_delete_op(storage, batch, &(*output_id).into()).map_err(|e| Error::Storage(Box::new(e)))
+    storage
+        .batch_delete::<Unspent, ()>(batch, &(*output_id).into())
+        .map_err(|e| Error::Storage(Box::new(e)))
 }
 
 pub(crate) fn delete_consumed_output_batch<B: StorageBackend>(
@@ -214,9 +219,11 @@ pub(crate) fn delete_consumed_output_batch<B: StorageBackend>(
     batch: &mut <B as BatchBuilder>::Batch,
     output_id: &OutputId,
 ) -> Result<(), Error> {
-    Batch::<OutputId, ConsumedOutput>::batch_delete_op(storage, batch, output_id)
+    storage
+        .batch_delete::<OutputId, ConsumedOutput>(batch, output_id)
         .map_err(|e| Error::Storage(Box::new(e)))?;
-    Batch::<Unspent, ()>::batch_insert_op(storage, batch, &(*output_id).into(), &())
+    storage
+        .batch_insert::<Unspent, ()>(batch, &(*output_id).into(), &())
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
@@ -239,10 +246,12 @@ pub(crate) fn apply_balance_diffs_batch<B: StorageBackend>(
         let balance = fetch_balance_or_default(storage, address)?.apply_diff(diff)?;
 
         if balance.amount() != 0 {
-            Batch::<Address, Balance>::batch_insert_op(storage, batch, address, &balance)
+            storage
+                .batch_insert::<Address, Balance>(batch, address, &balance)
                 .map_err(|e| Error::Storage(Box::new(e)))?;
         } else {
-            Batch::<Address, Balance>::batch_delete_op(storage, batch, address)
+            storage
+                .batch_delete::<Address, Balance>(batch, address)
                 .map_err(|e| Error::Storage(Box::new(e)))?;
         }
     }
@@ -293,13 +302,13 @@ pub(crate) fn apply_milestone<B: StorageBackend>(
         None
     };
 
-    Batch::<MilestoneIndex, OutputDiff>::batch_insert_op(
-        storage,
-        &mut batch,
-        &index,
-        &OutputDiff::new(created_output_ids, consumed_output_ids, treasury_diff),
-    )
-    .map_err(|e| Error::Storage(Box::new(e)))?;
+    storage
+        .batch_insert::<MilestoneIndex, OutputDiff>(
+            &mut batch,
+            &index,
+            &OutputDiff::new(created_output_ids, consumed_output_ids, treasury_diff),
+        )
+        .map_err(|e| Error::Storage(Box::new(e)))?;
 
     storage
         .batch_commit(batch, true)
@@ -335,7 +344,8 @@ pub(crate) fn rollback_milestone<B: StorageBackend>(
         unspend_treasury_output_batch(storage, &mut batch, migration.consumed_treasury())?;
     }
 
-    Batch::<MilestoneIndex, OutputDiff>::batch_delete_op(storage, &mut batch, &index)
+    storage
+        .batch_delete::<MilestoneIndex, OutputDiff>(&mut batch, &index)
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
     storage
@@ -363,7 +373,9 @@ pub(crate) fn insert_ledger_index_batch<B: StorageBackend>(
     batch: &mut <B as BatchBuilder>::Batch,
     index: &LedgerIndex,
 ) -> Result<(), Error> {
-    Batch::<(), LedgerIndex>::batch_insert_op(storage, batch, &(), index).map_err(|e| Error::Storage(Box::new(e)))
+    storage
+        .batch_insert::<(), LedgerIndex>(batch, &(), index)
+        .map_err(|e| Error::Storage(Box::new(e)))
 }
 
 pub(crate) fn fetch_ledger_index<B: StorageBackend>(storage: &B) -> Result<Option<LedgerIndex>, Error> {
@@ -377,13 +389,9 @@ pub(crate) fn insert_receipt_batch<B: StorageBackend>(
     batch: &mut <B as BatchBuilder>::Batch,
     receipt: &Receipt,
 ) -> Result<(), Error> {
-    Batch::<(MilestoneIndex, Receipt), ()>::batch_insert_op(
-        storage,
-        batch,
-        &(receipt.inner().migrated_at(), receipt.clone()),
-        &(),
-    )
-    .map_err(|e| Error::Storage(Box::new(e)))
+    storage
+        .batch_insert::<(MilestoneIndex, Receipt), ()>(batch, &(receipt.inner().migrated_at(), receipt.clone()), &())
+        .map_err(|e| Error::Storage(Box::new(e)))
 }
 
 pub(crate) fn delete_receipt_batch<B: StorageBackend>(
@@ -391,12 +399,9 @@ pub(crate) fn delete_receipt_batch<B: StorageBackend>(
     batch: &mut <B as BatchBuilder>::Batch,
     receipt: &Receipt,
 ) -> Result<(), Error> {
-    Batch::<(MilestoneIndex, Receipt), ()>::batch_delete_op(
-        storage,
-        batch,
-        &(receipt.inner().migrated_at(), receipt.clone()),
-    )
-    .map_err(|e| Error::Storage(Box::new(e)))
+    storage
+        .batch_delete::<(MilestoneIndex, Receipt), ()>(batch, &(receipt.inner().migrated_at(), receipt.clone()))
+        .map_err(|e| Error::Storage(Box::new(e)))
 }
 
 pub(crate) fn insert_snapshot_info<B: StorageBackend>(storage: &B, snapshot_info: &SnapshotInfo) -> Result<(), Error> {
@@ -447,7 +452,8 @@ pub(crate) fn insert_treasury_output_batch<B: StorageBackend>(
     batch: &mut <B as BatchBuilder>::Batch,
     treasury_output: &TreasuryOutput,
 ) -> Result<(), Error> {
-    Batch::<(bool, TreasuryOutput), ()>::batch_insert_op(storage, batch, &(false, treasury_output.clone()), &())
+    storage
+        .batch_insert::<(bool, TreasuryOutput), ()>(batch, &(false, treasury_output.clone()), &())
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
@@ -456,7 +462,8 @@ pub(crate) fn delete_treasury_output_batch<B: StorageBackend>(
     batch: &mut <B as BatchBuilder>::Batch,
     treasury_output: &TreasuryOutput,
 ) -> Result<(), Error> {
-    Batch::<(bool, TreasuryOutput), ()>::batch_delete_op(storage, batch, &(false, treasury_output.clone()))
+    storage
+        .batch_delete::<(bool, TreasuryOutput), ()>(batch, &(false, treasury_output.clone()))
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
@@ -465,9 +472,11 @@ pub(crate) fn spend_treasury_output_batch<B: StorageBackend>(
     batch: &mut <B as BatchBuilder>::Batch,
     treasury_output: &TreasuryOutput,
 ) -> Result<(), Error> {
-    Batch::<(bool, TreasuryOutput), ()>::batch_insert_op(storage, batch, &(true, treasury_output.clone()), &())
+    storage
+        .batch_insert::<(bool, TreasuryOutput), ()>(batch, &(true, treasury_output.clone()), &())
         .map_err(|e| Error::Storage(Box::new(e)))?;
-    Batch::<(bool, TreasuryOutput), ()>::batch_delete_op(storage, batch, &(false, treasury_output.clone()))
+    storage
+        .batch_delete::<(bool, TreasuryOutput), ()>(batch, &(false, treasury_output.clone()))
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
@@ -476,9 +485,11 @@ pub(crate) fn unspend_treasury_output_batch<B: StorageBackend>(
     batch: &mut <B as BatchBuilder>::Batch,
     treasury_output: &TreasuryOutput,
 ) -> Result<(), Error> {
-    Batch::<(bool, TreasuryOutput), ()>::batch_insert_op(storage, batch, &(false, treasury_output.clone()), &())
+    storage
+        .batch_insert::<(bool, TreasuryOutput), ()>(batch, &(false, treasury_output.clone()), &())
         .map_err(|e| Error::Storage(Box::new(e)))?;
-    Batch::<(bool, TreasuryOutput), ()>::batch_delete_op(storage, batch, &(true, treasury_output.clone()))
+    storage
+        .batch_delete::<(bool, TreasuryOutput), ()>(batch, &(true, treasury_output.clone()))
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 

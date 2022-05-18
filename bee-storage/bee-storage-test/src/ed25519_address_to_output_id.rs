@@ -76,7 +76,9 @@ pub fn ed25519_address_to_output_id_access<B: StorageBackend>(storage: &B) {
     for _ in 0..10 {
         let (address, output_id) = (rand_ed25519_address(), rand_output_id());
         Insert::<(Ed25519Address, OutputId), ()>::insert_op(storage, &(address, output_id), &()).unwrap();
-        Batch::<(Ed25519Address, OutputId), ()>::batch_delete_op(storage, &mut batch, &(address, output_id)).unwrap();
+        storage
+            .batch_delete::<(Ed25519Address, OutputId), ()>(&mut batch, &(address, output_id))
+            .unwrap();
     }
 
     let mut output_ids = HashMap::<Ed25519Address, Vec<OutputId>>::new();
@@ -85,7 +87,8 @@ pub fn ed25519_address_to_output_id_access<B: StorageBackend>(storage: &B) {
         let address = rand_ed25519_address();
         for _ in 0..5 {
             let output_id = rand_output_id();
-            Batch::<(Ed25519Address, OutputId), ()>::batch_insert_op(storage, &mut batch, &(address, output_id), &())
+            storage
+                .batch_insert::<(Ed25519Address, OutputId), ()>(&mut batch, &(address, output_id), &())
                 .unwrap();
             output_ids.entry(address).or_default().push(output_id);
         }

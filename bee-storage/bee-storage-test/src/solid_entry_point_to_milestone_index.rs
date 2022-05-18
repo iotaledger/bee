@@ -89,14 +89,18 @@ pub fn solid_entry_point_to_milestone_index_access<B: StorageBackend>(storage: &
     for _ in 0..10 {
         let (sep, index) = (rand_solid_entry_point(), rand_milestone_index());
         Insert::<SolidEntryPoint, MilestoneIndex>::insert_op(storage, &sep, &index).unwrap();
-        Batch::<SolidEntryPoint, MilestoneIndex>::batch_delete_op(storage, &mut batch, &sep).unwrap();
+        storage
+            .batch_delete::<SolidEntryPoint, MilestoneIndex>(&mut batch, &sep)
+            .unwrap();
         seps_ids.push(sep);
         seps.push((sep, None));
     }
 
     for _ in 0..10 {
         let (sep, index) = (rand_solid_entry_point(), rand_milestone_index());
-        Batch::<SolidEntryPoint, MilestoneIndex>::batch_insert_op(storage, &mut batch, &sep, &index).unwrap();
+        storage
+            .batch_insert::<SolidEntryPoint, MilestoneIndex>(&mut batch, &sep, &index)
+            .unwrap();
         seps_ids.push(sep);
         seps.push((sep, Some(index)));
     }
