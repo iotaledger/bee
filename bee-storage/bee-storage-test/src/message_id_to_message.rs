@@ -42,7 +42,8 @@ pub fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
 
     assert!(!storage.exist::<MessageId, Message>(&message_id).unwrap());
     assert!(storage.fetch::<MessageId, Message>(&message_id).unwrap().is_none());
-    let results = MultiFetch::<MessageId, Message>::multi_fetch_op(storage, &[message_id])
+    let results = storage
+        .multi_fetch::<MessageId, Message>(&[message_id])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
@@ -63,7 +64,8 @@ pub fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
         storage.fetch::<MessageId, Message>(&message_id).unwrap().unwrap(),
         message
     );
-    let results = MultiFetch::<MessageId, Message>::multi_fetch_op(storage, &[message_id])
+    let results = storage
+        .multi_fetch::<MessageId, Message>(&[message_id])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
@@ -73,7 +75,8 @@ pub fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
 
     assert!(!storage.exist::<MessageId, Message>(&message_id).unwrap());
     assert!(storage.fetch::<MessageId, Message>(&message_id).unwrap().is_none());
-    let results = MultiFetch::<MessageId, Message>::multi_fetch_op(storage, &[message_id])
+    let results = storage
+        .multi_fetch::<MessageId, Message>(&[message_id])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
@@ -115,7 +118,8 @@ pub fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(count, 10);
 
-    let results = MultiFetch::<MessageId, Message>::multi_fetch_op(storage, &message_ids)
+    let results = storage
+        .multi_fetch::<MessageId, Message>(&message_ids)
         .unwrap()
         .collect::<Vec<_>>();
 

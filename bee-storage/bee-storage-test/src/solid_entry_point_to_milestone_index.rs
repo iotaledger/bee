@@ -48,7 +48,8 @@ pub fn solid_entry_point_to_milestone_index_access<B: StorageBackend>(storage: &
             .unwrap()
             .is_none()
     );
-    let results = MultiFetch::<SolidEntryPoint, MilestoneIndex>::multi_fetch_op(storage, &[sep])
+    let results = storage
+        .multi_fetch::<SolidEntryPoint, MilestoneIndex>(&[sep])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
@@ -61,7 +62,8 @@ pub fn solid_entry_point_to_milestone_index_access<B: StorageBackend>(storage: &
         storage.fetch::<SolidEntryPoint, MilestoneIndex>(&sep).unwrap().unwrap(),
         index
     );
-    let results = MultiFetch::<SolidEntryPoint, MilestoneIndex>::multi_fetch_op(storage, &[sep])
+    let results = storage
+        .multi_fetch::<SolidEntryPoint, MilestoneIndex>(&[sep])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
@@ -76,7 +78,8 @@ pub fn solid_entry_point_to_milestone_index_access<B: StorageBackend>(storage: &
             .unwrap()
             .is_none()
     );
-    let results = MultiFetch::<SolidEntryPoint, MilestoneIndex>::multi_fetch_op(storage, &[sep])
+    let results = storage
+        .multi_fetch::<SolidEntryPoint, MilestoneIndex>(&[sep])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
@@ -118,7 +121,8 @@ pub fn solid_entry_point_to_milestone_index_access<B: StorageBackend>(storage: &
 
     assert_eq!(count, 10);
 
-    let results = MultiFetch::<SolidEntryPoint, MilestoneIndex>::multi_fetch_op(storage, &seps_ids)
+    let results = storage
+        .multi_fetch::<SolidEntryPoint, MilestoneIndex>(&seps_ids)
         .unwrap()
         .collect::<Vec<_>>();
 

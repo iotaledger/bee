@@ -50,7 +50,8 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
             .unwrap()
             .is_none()
     );
-    let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch_op(storage, &[message_id])
+    let results = storage
+        .multi_fetch::<MessageId, MessageMetadata>(&[message_id])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
@@ -81,7 +82,8 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
         "`InsertStrict` should not overwrite"
     );
 
-    let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch_op(storage, &[message_id])
+    let results = storage
+        .multi_fetch::<MessageId, MessageMetadata>(&[message_id])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
@@ -121,7 +123,8 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
             .is_none()
     );
 
-    let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch_op(storage, &[message_id])
+    let results = storage
+        .multi_fetch::<MessageId, MessageMetadata>(&[message_id])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
@@ -165,7 +168,8 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(count, 10);
 
-    let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch_op(storage, &message_ids)
+    let results = storage
+        .multi_fetch::<MessageId, MessageMetadata>(&message_ids)
         .unwrap()
         .collect::<Vec<_>>();
 

@@ -42,7 +42,8 @@ pub fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B) {
 
     assert!(!storage.exist::<MilestoneIndex, Milestone>(&index).unwrap());
     assert!(storage.fetch::<MilestoneIndex, Milestone>(&index).unwrap().is_none());
-    let results = MultiFetch::<MilestoneIndex, Milestone>::multi_fetch_op(storage, &[index])
+    let results = storage
+        .multi_fetch::<MilestoneIndex, Milestone>(&[index])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
@@ -55,7 +56,8 @@ pub fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B) {
         storage.fetch::<MilestoneIndex, Milestone>(&index).unwrap().unwrap(),
         milestone
     );
-    let results = MultiFetch::<MilestoneIndex, Milestone>::multi_fetch_op(storage, &[index])
+    let results = storage
+        .multi_fetch::<MilestoneIndex, Milestone>(&[index])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
@@ -65,7 +67,8 @@ pub fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B) {
 
     assert!(!storage.exist::<MilestoneIndex, Milestone>(&index).unwrap());
     assert!(storage.fetch::<MilestoneIndex, Milestone>(&index).unwrap().is_none());
-    let results = MultiFetch::<MilestoneIndex, Milestone>::multi_fetch_op(storage, &[index])
+    let results = storage
+        .multi_fetch::<MilestoneIndex, Milestone>(&[index])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
@@ -107,7 +110,8 @@ pub fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(count, 10);
 
-    let results = MultiFetch::<MilestoneIndex, Milestone>::multi_fetch_op(storage, &indexes)
+    let results = storage
+        .multi_fetch::<MilestoneIndex, Milestone>(&indexes)
         .unwrap()
         .collect::<Vec<_>>();
 

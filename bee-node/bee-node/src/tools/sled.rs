@@ -14,9 +14,7 @@ use bee_message::{
     payload::indexation::{IndexationPayload, PaddedIndex},
     Message, MessageId,
 };
-use bee_storage::{
-    backend::{StorageBackend, StorageBackendExt},
-};
+use bee_storage::backend::{StorageBackend, StorageBackendExt};
 use bee_storage_sled::{
     config::SledConfigBuilder,
     storage::{Error as BackendError, Storage},

@@ -44,7 +44,8 @@ pub fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &B) {
 
     assert!(!storage.exist::<MilestoneIndex, OutputDiff>(&index).unwrap());
     assert!(storage.fetch::<MilestoneIndex, OutputDiff>(&index).unwrap().is_none());
-    let results = MultiFetch::<MilestoneIndex, OutputDiff>::multi_fetch_op(storage, &[index])
+    let results = storage
+        .multi_fetch::<MilestoneIndex, OutputDiff>(&[index])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
@@ -63,7 +64,8 @@ pub fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &B) {
             .pack_new(),
         output_diff.pack_new()
     );
-    let results = MultiFetch::<MilestoneIndex, OutputDiff>::multi_fetch_op(storage, &[index])
+    let results = storage
+        .multi_fetch::<MilestoneIndex, OutputDiff>(&[index])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
@@ -73,7 +75,8 @@ pub fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &B) {
 
     assert!(!storage.exist::<MilestoneIndex, OutputDiff>(&index).unwrap());
     assert!(storage.fetch::<MilestoneIndex, OutputDiff>(&index).unwrap().is_none());
-    let results = MultiFetch::<MilestoneIndex, OutputDiff>::multi_fetch_op(storage, &[index])
+    let results = storage
+        .multi_fetch::<MilestoneIndex, OutputDiff>(&[index])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
@@ -117,7 +120,8 @@ pub fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(count, 10);
 
-    let results = MultiFetch::<MilestoneIndex, OutputDiff>::multi_fetch_op(storage, &indexes)
+    let results = storage
+        .multi_fetch::<MilestoneIndex, OutputDiff>(&indexes)
         .unwrap()
         .collect::<Vec<_>>();
 

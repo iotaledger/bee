@@ -43,7 +43,8 @@ pub fn output_id_to_created_output_access<B: StorageBackend>(storage: &B) {
 
     assert!(!storage.exist::<OutputId, CreatedOutput>(&output_id).unwrap());
     assert!(storage.fetch::<OutputId, CreatedOutput>(&output_id).unwrap().is_none());
-    let results = MultiFetch::<OutputId, CreatedOutput>::multi_fetch_op(storage, &[output_id])
+    let results = storage
+        .multi_fetch::<OutputId, CreatedOutput>(&[output_id])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
@@ -58,7 +59,8 @@ pub fn output_id_to_created_output_access<B: StorageBackend>(storage: &B) {
         storage.fetch::<OutputId, CreatedOutput>(&output_id).unwrap().unwrap(),
         created_output
     );
-    let results = MultiFetch::<OutputId, CreatedOutput>::multi_fetch_op(storage, &[output_id])
+    let results = storage
+        .multi_fetch::<OutputId, CreatedOutput>(&[output_id])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
@@ -68,7 +70,8 @@ pub fn output_id_to_created_output_access<B: StorageBackend>(storage: &B) {
 
     assert!(!storage.exist::<OutputId, CreatedOutput>(&output_id).unwrap());
     assert!(storage.fetch::<OutputId, CreatedOutput>(&output_id).unwrap().is_none());
-    let results = MultiFetch::<OutputId, CreatedOutput>::multi_fetch_op(storage, &[output_id])
+    let results = storage
+        .multi_fetch::<OutputId, CreatedOutput>(&[output_id])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
@@ -112,7 +115,8 @@ pub fn output_id_to_created_output_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(count, 10);
 
-    let results = MultiFetch::<OutputId, CreatedOutput>::multi_fetch_op(storage, &output_ids)
+    let results = storage
+        .multi_fetch::<OutputId, CreatedOutput>(&output_ids)
         .unwrap()
         .collect::<Vec<_>>();
 
