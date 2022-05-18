@@ -57,7 +57,7 @@ pub fn message_id_to_message_id_access<B: StorageBackend>(storage: &B) {
         vec![child]
     );
 
-    Delete::<(MessageId, MessageId), ()>::delete_op(storage, &(parent, child)).unwrap();
+    storage.delete::<(MessageId, MessageId), ()>(&(parent, child)).unwrap();
 
     assert!(!Exist::<(MessageId, MessageId), ()>::exist_op(storage, &(parent, child)).unwrap());
     assert!(

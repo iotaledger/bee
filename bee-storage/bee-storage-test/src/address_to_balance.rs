@@ -63,7 +63,7 @@ pub fn address_to_balance_access<B: StorageBackend>(storage: &B) {
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(Some(v))) if v == &balance));
 
-    Delete::<Address, Balance>::delete_op(storage, &address).unwrap();
+    storage.delete::<Address, Balance>(&address).unwrap();
 
     assert!(!Exist::<Address, Balance>::exist_op(storage, &address).unwrap());
     assert!(storage.fetch::<Address, Balance>(&address).unwrap().is_none());

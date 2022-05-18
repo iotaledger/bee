@@ -58,7 +58,9 @@ pub fn milestone_index_to_receipt_access<B: StorageBackend>(storage: &B) {
         vec![receipt.clone()]
     );
 
-    Delete::<(MilestoneIndex, Receipt), ()>::delete_op(storage, &(index, receipt.clone())).unwrap();
+    storage
+        .delete::<(MilestoneIndex, Receipt), ()>(&(index, receipt.clone()))
+        .unwrap();
 
     assert!(!Exist::<(MilestoneIndex, Receipt), ()>::exist_op(storage, &(index, receipt)).unwrap());
     assert!(

@@ -46,7 +46,7 @@ pub fn snapshot_info_access<B: StorageBackend>(storage: &B) {
     assert!(Exist::<(), SnapshotInfo>::exist_op(storage, &()).unwrap());
     assert_eq!(storage.fetch::<(), SnapshotInfo>(&()).unwrap().unwrap(), snapshot_info);
 
-    Delete::<(), SnapshotInfo>::delete_op(storage, &()).unwrap();
+    storage.delete::<(), SnapshotInfo>(&()).unwrap();
 
     assert!(!Exist::<(), SnapshotInfo>::exist_op(storage, &()).unwrap());
     assert!(storage.fetch::<(), SnapshotInfo>(&()).unwrap().is_none());

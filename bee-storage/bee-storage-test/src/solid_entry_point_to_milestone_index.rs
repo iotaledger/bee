@@ -67,7 +67,7 @@ pub fn solid_entry_point_to_milestone_index_access<B: StorageBackend>(storage: &
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(Some(v))) if v == &index));
 
-    Delete::<SolidEntryPoint, MilestoneIndex>::delete_op(storage, &sep).unwrap();
+    storage.delete::<SolidEntryPoint, MilestoneIndex>(&sep).unwrap();
 
     assert!(!Exist::<SolidEntryPoint, MilestoneIndex>::exist_op(storage, &sep).unwrap());
     assert!(

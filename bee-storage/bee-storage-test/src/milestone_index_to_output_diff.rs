@@ -67,7 +67,7 @@ pub fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &B) {
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(Some(v))) if v == &output_diff));
 
-    Delete::<MilestoneIndex, OutputDiff>::delete_op(storage, &index).unwrap();
+    storage.delete::<MilestoneIndex, OutputDiff>(&index).unwrap();
 
     assert!(!Exist::<MilestoneIndex, OutputDiff>::exist_op(storage, &index).unwrap());
     assert!(storage.fetch::<MilestoneIndex, OutputDiff>(&index).unwrap().is_none());

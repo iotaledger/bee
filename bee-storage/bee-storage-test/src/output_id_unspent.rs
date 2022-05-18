@@ -41,7 +41,7 @@ pub fn output_id_unspent_access<B: StorageBackend>(storage: &B) {
 
     assert!(Exist::<Unspent, ()>::exist_op(storage, &unspent).unwrap());
 
-    Delete::<Unspent, ()>::delete_op(storage, &unspent).unwrap();
+    storage.delete::<Unspent, ()>(&unspent).unwrap();
 
     assert!(!Exist::<Unspent, ()>::exist_op(storage, &unspent).unwrap());
 

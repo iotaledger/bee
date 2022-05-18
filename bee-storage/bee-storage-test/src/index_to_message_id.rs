@@ -57,7 +57,9 @@ pub fn index_to_message_id_access<B: StorageBackend>(storage: &B) {
         vec![message_id]
     );
 
-    Delete::<(PaddedIndex, MessageId), ()>::delete_op(storage, &(index, message_id)).unwrap();
+    storage
+        .delete::<(PaddedIndex, MessageId), ()>(&(index, message_id))
+        .unwrap();
 
     assert!(!Exist::<(PaddedIndex, MessageId), ()>::exist_op(storage, &(index, message_id)).unwrap());
     assert!(

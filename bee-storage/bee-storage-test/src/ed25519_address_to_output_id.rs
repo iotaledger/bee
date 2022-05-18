@@ -60,7 +60,9 @@ pub fn ed25519_address_to_output_id_access<B: StorageBackend>(storage: &B) {
         vec![output_id]
     );
 
-    Delete::<(Ed25519Address, OutputId), ()>::delete_op(storage, &(address, output_id)).unwrap();
+    storage
+        .delete::<(Ed25519Address, OutputId), ()>(&(address, output_id))
+        .unwrap();
 
     assert!(!Exist::<(Ed25519Address, OutputId), ()>::exist_op(storage, &(address, output_id)).unwrap());
     assert!(

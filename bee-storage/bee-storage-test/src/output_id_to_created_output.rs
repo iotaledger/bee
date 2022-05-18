@@ -62,7 +62,7 @@ pub fn output_id_to_created_output_access<B: StorageBackend>(storage: &B) {
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(Some(v))) if v == &created_output));
 
-    Delete::<OutputId, CreatedOutput>::delete_op(storage, &output_id).unwrap();
+    storage.delete::<OutputId, CreatedOutput>(&output_id).unwrap();
 
     assert!(!Exist::<OutputId, CreatedOutput>::exist_op(storage, &output_id).unwrap());
     assert!(storage.fetch::<OutputId, CreatedOutput>(&output_id).unwrap().is_none());

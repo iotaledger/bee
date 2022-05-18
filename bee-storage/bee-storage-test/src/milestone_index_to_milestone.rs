@@ -61,7 +61,7 @@ pub fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B) {
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(Some(v))) if v == &milestone));
 
-    Delete::<MilestoneIndex, Milestone>::delete_op(storage, &index).unwrap();
+    storage.delete::<MilestoneIndex, Milestone>(&index).unwrap();
 
     assert!(!Exist::<MilestoneIndex, Milestone>::exist_op(storage, &index).unwrap());
     assert!(storage.fetch::<MilestoneIndex, Milestone>(&index).unwrap().is_none());

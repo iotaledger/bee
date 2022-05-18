@@ -57,7 +57,9 @@ pub fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
         vec![treasury_output.clone()]
     );
 
-    Delete::<(bool, TreasuryOutput), ()>::delete_op(storage, &(spent, treasury_output.clone())).unwrap();
+    storage
+        .delete::<(bool, TreasuryOutput), ()>(&(spent, treasury_output.clone()))
+        .unwrap();
 
     assert!(!Exist::<(bool, TreasuryOutput), ()>::exist_op(storage, &(spent, treasury_output)).unwrap());
     assert!(

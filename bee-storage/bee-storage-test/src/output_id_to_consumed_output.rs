@@ -62,7 +62,7 @@ pub fn output_id_to_consumed_output_access<B: StorageBackend>(storage: &B) {
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(Some(v))) if v == &consumed_output));
 
-    Delete::<OutputId, ConsumedOutput>::delete_op(storage, &output_id).unwrap();
+    storage.delete::<OutputId, ConsumedOutput>(&output_id).unwrap();
 
     assert!(!Exist::<OutputId, ConsumedOutput>::exist_op(storage, &output_id).unwrap());
     assert!(storage.fetch::<OutputId, ConsumedOutput>(&output_id).unwrap().is_none());

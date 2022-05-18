@@ -69,7 +69,7 @@ pub fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(Some(v))) if v == &message));
 
-    Delete::<MessageId, Message>::delete_op(storage, &message_id).unwrap();
+    storage.delete::<MessageId, Message>(&message_id).unwrap();
 
     assert!(!Exist::<MessageId, Message>::exist_op(storage, &message_id).unwrap());
     assert!(storage.fetch::<MessageId, Message>(&message_id).unwrap().is_none());

@@ -107,7 +107,7 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
         Some(milestone_index),
     );
 
-    Delete::<MessageId, MessageMetadata>::delete_op(storage, &message_id).unwrap();
+    storage.delete::<MessageId, MessageMetadata>(&message_id).unwrap();
 
     assert!(!Exist::<MessageId, MessageMetadata>::exist_op(storage, &message_id).unwrap());
     assert!(

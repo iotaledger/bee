@@ -66,7 +66,9 @@ pub fn milestone_index_to_unreferenced_message_access<B: StorageBackend>(storage
         vec![unreferenced_message]
     );
 
-    Delete::<(MilestoneIndex, UnreferencedMessage), ()>::delete_op(storage, &(index, unreferenced_message)).unwrap();
+    storage
+        .delete::<(MilestoneIndex, UnreferencedMessage), ()>(&(index, unreferenced_message))
+        .unwrap();
 
     assert!(
         !Exist::<(MilestoneIndex, UnreferencedMessage), ()>::exist_op(storage, &(index, unreferenced_message)).unwrap()

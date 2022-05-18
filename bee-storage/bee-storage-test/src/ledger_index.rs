@@ -46,7 +46,7 @@ pub fn ledger_index_access<B: StorageBackend>(storage: &B) {
     assert!(Exist::<(), LedgerIndex>::exist_op(storage, &()).unwrap());
     assert_eq!(storage.fetch::<(), LedgerIndex>(&()).unwrap().unwrap(), index);
 
-    Delete::<(), LedgerIndex>::delete_op(storage, &()).unwrap();
+    storage.delete::<(), LedgerIndex>(&()).unwrap();
 
     assert!(!Exist::<(), LedgerIndex>::exist_op(storage, &()).unwrap());
     assert!(storage.fetch::<(), LedgerIndex>(&()).unwrap().is_none());
