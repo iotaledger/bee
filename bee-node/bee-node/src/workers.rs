@@ -7,7 +7,7 @@ use async_trait::async_trait;
 use bee_metrics::{metrics::process::ProcessMetrics, Registry};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use futures::StreamExt;
-use log::info;
+use log::{debug, info};
 use serde::Deserialize;
 use tokio::time::interval;
 use tokio_stream::wrappers::IntervalStream;
@@ -61,7 +61,9 @@ impl<N: Node> Worker<N> for MetricsRegistryWorker {
                 ShutdownStream::new(shutdown, IntervalStream::new(interval(PROCESS_METRICS_UPDATE_INTERVAL)));
 
             while ticker.next().await.is_some() {
-                process_metrics.update().await;
+                if let Err(e) = process_metrics.update().await {
+                    debug!("Cannot update process metrics: {e}.");
+                }
             }
         });
 

@@ -38,32 +38,58 @@ impl ProcessMetrics {
     ///  - cannot be spawned,
     ///  - returns an unsuccessful exit code,
     ///  - its output cannot be parsed.
-    pub async fn update(&self) {
+    pub async fn update(&self) -> Result<(), Box<dyn std::error::Error>> {
+        #[derive(Debug)]
+        enum UpdateError {
+            UnsuccessfulTermination(Option<i32>),
+            UnsupportedPlatform(&'static str),
+            CannotParseOutput(String),
+        }
+
+        impl std::error::Error for UpdateError {}
+
+        impl std::fmt::Display for UpdateError {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                match self {
+                    Self::UnsuccessfulTermination(code) => {
+                        write!(f, "unsuccessful termination with exit code: {code:?}")
+                    }
+                    Self::UnsupportedPlatform(platform) => write!(f, "unsupported platform: {platform:?}"),
+                    Self::CannotParseOutput(output) => write!(f, "cannot parse output: {output:?}"),
+                }
+            }
+        }
+
         if cfg!(unix) {
-            if let Ok(output) = Command::new("ps")
+            let output = Command::new("ps")
                 .arg("-o")
                 .arg("%cpu= rss=")
                 .arg("--pid")
                 .arg(&self.pid)
                 .output()
-                .await
-            {
-                if output.status.success() {
-                    if let Ok(stdout) = String::from_utf8(output.stdout) {
-                        if let Some((cpu_str, rss_str)) = stdout.trim_start().trim_end_matches('\n').split_once(' ') {
-                            if let Ok(value) = cpu_str.parse::<f64>() {
-                                self.cpu.set(value);
-                            }
+                .await?;
 
-                            if let Ok(value) = rss_str.parse::<u64>() {
-                                self.mem.set(value);
-                            }
-                        }
-                    }
-                }
+            if !output.status.success() {
+                return Err(Box::new(UpdateError::UnsuccessfulTermination(output.status.code())));
             }
+
+            let stdout = String::from_utf8(output.stdout)?;
+            let trimmed_stdout = stdout.trim_start().trim_end_matches('\n');
+
+            let (cpu_str, rss_str) = trimmed_stdout
+                .split_once(' ')
+                .ok_or_else(|| UpdateError::CannotParseOutput(trimmed_stdout.to_string()))?;
+
+            let cpu_value = cpu_str.parse::<f64>()?;
+            self.cpu.set(cpu_value);
+
+            let mem_value = rss_str.parse::<u64>()?;
+            self.mem.set(mem_value);
+
+            Ok(())
         } else {
             // FIXME: handle windows.
+            Err(Box::new(UpdateError::UnsupportedPlatform("")))
         }
     }
 }

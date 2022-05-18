@@ -13,7 +13,7 @@ async fn update_memory_usage(memory_usage: ProcessMetrics) {
         // Add 10KiB of data every second and update the metric.
         vec.extend_from_slice(&[0u8; 10240]);
 
-        memory_usage.update().await;
+        memory_usage.update().await.unwrap();
 
         tokio::time::sleep(Duration::from_secs(1)).await;
     }
