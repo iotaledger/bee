@@ -6,7 +6,7 @@ use bee_ledger::{
     workers::{consensus::ConsensusWorkerCommand, error::Error},
 };
 use bee_message::output::OutputId;
-use bee_storage::{backend::StorageBackendExt};
+use bee_storage::backend::StorageBackendExt;
 use futures::channel::oneshot;
 use log::error;
 use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
@@ -55,7 +55,7 @@ pub(crate) async fn output<B: StorageBackend>(
     })? {
         (Ok(response), ledger_index) => match response {
             Some(output) => {
-                let consumed_output = match args.storage.fetch_access::<OutputId, ConsumedOutput>(&output_id) {
+                let consumed_output = match args.storage.fetch::<OutputId, ConsumedOutput>(&output_id) {
                     Err(e) => {
                         error!("unable to fetch the output: {}", e);
                         return Err(reject::custom(CustomRejection::ServiceUnavailable(

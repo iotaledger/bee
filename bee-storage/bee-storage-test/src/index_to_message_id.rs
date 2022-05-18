@@ -43,7 +43,7 @@ pub fn index_to_message_id_access<B: StorageBackend>(storage: &B) {
     assert!(!Exist::<(PaddedIndex, MessageId), ()>::exist(storage, &(index, message_id)).unwrap());
     assert!(
         storage
-            .fetch_access::<PaddedIndex, Vec<MessageId>>(&index)
+            .fetch::<PaddedIndex, Vec<MessageId>>(&index)
             .unwrap()
             .unwrap()
             .is_empty()
@@ -53,10 +53,7 @@ pub fn index_to_message_id_access<B: StorageBackend>(storage: &B) {
 
     assert!(Exist::<(PaddedIndex, MessageId), ()>::exist(storage, &(index, message_id)).unwrap());
     assert_eq!(
-        storage
-            .fetch_access::<PaddedIndex, Vec<MessageId>>(&index)
-            .unwrap()
-            .unwrap(),
+        storage.fetch::<PaddedIndex, Vec<MessageId>>(&index).unwrap().unwrap(),
         vec![message_id]
     );
 
@@ -65,7 +62,7 @@ pub fn index_to_message_id_access<B: StorageBackend>(storage: &B) {
     assert!(!Exist::<(PaddedIndex, MessageId), ()>::exist(storage, &(index, message_id)).unwrap());
     assert!(
         storage
-            .fetch_access::<PaddedIndex, Vec<MessageId>>(&index)
+            .fetch::<PaddedIndex, Vec<MessageId>>(&index)
             .unwrap()
             .unwrap()
             .is_empty()

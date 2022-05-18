@@ -43,7 +43,7 @@ pub fn address_to_balance_access<B: StorageBackend>(storage: &B) {
     let (address, balance) = (rand_address(), rand_balance());
 
     assert!(!Exist::<Address, Balance>::exist(storage, &address).unwrap());
-    assert!(storage.fetch_access::<Address, Balance>(&address).unwrap().is_none());
+    assert!(storage.fetch::<Address, Balance>(&address).unwrap().is_none());
     let results = MultiFetch::<Address, Balance>::multi_fetch(storage, &[address])
         .unwrap()
         .collect::<Vec<_>>();
@@ -54,11 +54,7 @@ pub fn address_to_balance_access<B: StorageBackend>(storage: &B) {
 
     assert!(Exist::<Address, Balance>::exist(storage, &address).unwrap());
     assert_eq!(
-        storage
-            .fetch_access::<Address, Balance>(&address)
-            .unwrap()
-            .unwrap()
-            .pack_new(),
+        storage.fetch::<Address, Balance>(&address).unwrap().unwrap().pack_new(),
         balance.pack_new()
     );
     let results = MultiFetch::<Address, Balance>::multi_fetch(storage, &[address])
@@ -70,7 +66,7 @@ pub fn address_to_balance_access<B: StorageBackend>(storage: &B) {
     Delete::<Address, Balance>::delete(storage, &address).unwrap();
 
     assert!(!Exist::<Address, Balance>::exist(storage, &address).unwrap());
-    assert!(storage.fetch_access::<Address, Balance>(&address).unwrap().is_none());
+    assert!(storage.fetch::<Address, Balance>(&address).unwrap().is_none());
     let results = MultiFetch::<Address, Balance>::multi_fetch(storage, &[address])
         .unwrap()
         .collect::<Vec<_>>();

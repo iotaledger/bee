@@ -44,7 +44,7 @@ pub fn milestone_index_to_receipt_access<B: StorageBackend>(storage: &B) {
     assert!(!Exist::<(MilestoneIndex, Receipt), ()>::exist(storage, &(index, receipt.clone())).unwrap());
     assert!(
         storage
-            .fetch_access::<MilestoneIndex, Vec<Receipt>>(&index)
+            .fetch::<MilestoneIndex, Vec<Receipt>>(&index)
             .unwrap()
             .unwrap()
             .is_empty()
@@ -54,10 +54,7 @@ pub fn milestone_index_to_receipt_access<B: StorageBackend>(storage: &B) {
 
     assert!(Exist::<(MilestoneIndex, Receipt), ()>::exist(storage, &(index, receipt.clone())).unwrap());
     assert_eq!(
-        storage
-            .fetch_access::<MilestoneIndex, Vec<Receipt>>(&index)
-            .unwrap()
-            .unwrap(),
+        storage.fetch::<MilestoneIndex, Vec<Receipt>>(&index).unwrap().unwrap(),
         vec![receipt.clone()]
     );
 
@@ -66,7 +63,7 @@ pub fn milestone_index_to_receipt_access<B: StorageBackend>(storage: &B) {
     assert!(!Exist::<(MilestoneIndex, Receipt), ()>::exist(storage, &(index, receipt)).unwrap());
     assert!(
         storage
-            .fetch_access::<MilestoneIndex, Vec<Receipt>>(&index)
+            .fetch::<MilestoneIndex, Vec<Receipt>>(&index)
             .unwrap()
             .unwrap()
             .is_empty()

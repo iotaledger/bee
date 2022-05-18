@@ -43,7 +43,7 @@ pub fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
     assert!(!Exist::<(bool, TreasuryOutput), ()>::exist(storage, &(spent, treasury_output.clone())).unwrap());
     assert!(
         storage
-            .fetch_access::<bool, Vec<TreasuryOutput>>(&spent)
+            .fetch::<bool, Vec<TreasuryOutput>>(&spent)
             .unwrap()
             .unwrap()
             .is_empty()
@@ -53,10 +53,7 @@ pub fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
 
     assert!(Exist::<(bool, TreasuryOutput), ()>::exist(storage, &(spent, treasury_output.clone())).unwrap());
     assert_eq!(
-        storage
-            .fetch_access::<bool, Vec<TreasuryOutput>>(&spent)
-            .unwrap()
-            .unwrap(),
+        storage.fetch::<bool, Vec<TreasuryOutput>>(&spent).unwrap().unwrap(),
         vec![treasury_output.clone()]
     );
 
@@ -65,7 +62,7 @@ pub fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
     assert!(!Exist::<(bool, TreasuryOutput), ()>::exist(storage, &(spent, treasury_output)).unwrap());
     assert!(
         storage
-            .fetch_access::<bool, Vec<TreasuryOutput>>(&spent)
+            .fetch::<bool, Vec<TreasuryOutput>>(&spent)
             .unwrap()
             .unwrap()
             .is_empty()

@@ -346,7 +346,7 @@ pub(crate) fn rollback_milestone<B: StorageBackend>(
 #[cfg_attr(feature = "trace", trace_tools::observe)]
 pub(crate) fn fetch_balance<B: StorageBackend>(storage: &B, address: &Address) -> Result<Option<Balance>, Error> {
     storage
-        .fetch_access::<Address, Balance>(address)
+        .fetch::<Address, Balance>(address)
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
@@ -368,7 +368,7 @@ pub(crate) fn insert_ledger_index_batch<B: StorageBackend>(
 
 pub(crate) fn fetch_ledger_index<B: StorageBackend>(storage: &B) -> Result<Option<LedgerIndex>, Error> {
     storage
-        .fetch_access::<(), LedgerIndex>(&())
+        .fetch::<(), LedgerIndex>(&())
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
@@ -406,7 +406,7 @@ pub(crate) fn insert_snapshot_info<B: StorageBackend>(storage: &B, snapshot_info
 #[cfg_attr(feature = "trace", trace_tools::observe)]
 pub(crate) fn fetch_snapshot_info<B: StorageBackend>(storage: &B) -> Result<Option<SnapshotInfo>, Error> {
     storage
-        .fetch_access::<(), SnapshotInfo>(&())
+        .fetch::<(), SnapshotInfo>(&())
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
@@ -416,7 +416,7 @@ pub(crate) fn fetch_output<B: StorageBackend>(
     output_id: &OutputId,
 ) -> Result<Option<CreatedOutput>, Error> {
     storage
-        .fetch_access::<OutputId, CreatedOutput>(output_id)
+        .fetch::<OutputId, CreatedOutput>(output_id)
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
@@ -426,7 +426,7 @@ pub(crate) fn fetch_outputs_for_ed25519_address<B: StorageBackend>(
     address: &Ed25519Address,
 ) -> Result<Option<Vec<OutputId>>, Error> {
     storage
-        .fetch_access::<Ed25519Address, Vec<OutputId>>(address)
+        .fetch::<Ed25519Address, Vec<OutputId>>(address)
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
@@ -485,7 +485,7 @@ pub(crate) fn unspend_treasury_output_batch<B: StorageBackend>(
 /// Fetches the unspent treasury output from the storage.
 pub fn fetch_unspent_treasury_output<B: StorageBackend>(storage: &B) -> Result<TreasuryOutput, Error> {
     if let Some(outputs) = storage
-        .fetch_access::<bool, Vec<TreasuryOutput>>(&false)
+        .fetch::<bool, Vec<TreasuryOutput>>(&false)
         .map_err(|e| Error::Storage(Box::new(e)))?
     {
         match outputs.as_slice() {

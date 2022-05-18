@@ -46,7 +46,7 @@ pub fn milestone_index_to_unreferenced_message_access<B: StorageBackend>(storage
     );
     assert!(
         storage
-            .fetch_access::<MilestoneIndex, Vec<UnreferencedMessage>>(&index)
+            .fetch::<MilestoneIndex, Vec<UnreferencedMessage>>(&index)
             .unwrap()
             .unwrap()
             .is_empty()
@@ -59,7 +59,7 @@ pub fn milestone_index_to_unreferenced_message_access<B: StorageBackend>(storage
     );
     assert_eq!(
         storage
-            .fetch_access::<MilestoneIndex, Vec<UnreferencedMessage>>(&index)
+            .fetch::<MilestoneIndex, Vec<UnreferencedMessage>>(&index)
             .unwrap()
             .unwrap(),
         vec![unreferenced_message]
@@ -72,7 +72,7 @@ pub fn milestone_index_to_unreferenced_message_access<B: StorageBackend>(storage
     );
     assert!(
         storage
-            .fetch_access::<MilestoneIndex, Vec<UnreferencedMessage>>(&index)
+            .fetch::<MilestoneIndex, Vec<UnreferencedMessage>>(&index)
             .unwrap()
             .unwrap()
             .is_empty()

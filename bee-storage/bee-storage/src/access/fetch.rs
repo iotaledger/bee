@@ -7,5 +7,5 @@ use crate::backend::StorageBackend;
 /// therefore, it should be explicitly implemented for the corresponding `StorageBackend`.
 pub trait Fetch<K, V>: StorageBackend {
     /// Fetches the value associated with the key from the storage.
-    fn fetch(&self, key: &K) -> Result<Option<V>, Self::Error>;
+    fn fetch_op(&self, key: &K) -> Result<Option<V>, Self::Error>;
 }

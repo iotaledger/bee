@@ -23,7 +23,7 @@ use bee_tangle::{
 use crate::{storage::Storage, trees::*};
 
 impl Fetch<u8, System> for Storage {
-    fn fetch(&self, &key: &u8) -> Result<Option<System>, <Self as StorageBackend>::Error> {
+    fn fetch_op(&self, &key: &u8) -> Result<Option<System>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .get(&[key])?
@@ -33,7 +33,7 @@ impl Fetch<u8, System> for Storage {
 }
 
 impl Fetch<MessageId, Message> for Storage {
-    fn fetch(&self, message_id: &MessageId) -> Result<Option<Message>, <Self as StorageBackend>::Error> {
+    fn fetch_op(&self, message_id: &MessageId) -> Result<Option<Message>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_MESSAGE_ID_TO_MESSAGE)?
@@ -44,7 +44,7 @@ impl Fetch<MessageId, Message> for Storage {
 }
 
 impl Fetch<MessageId, MessageMetadata> for Storage {
-    fn fetch(&self, message_id: &MessageId) -> Result<Option<MessageMetadata>, <Self as StorageBackend>::Error> {
+    fn fetch_op(&self, message_id: &MessageId) -> Result<Option<MessageMetadata>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_MESSAGE_ID_TO_METADATA)?
@@ -55,7 +55,7 @@ impl Fetch<MessageId, MessageMetadata> for Storage {
 }
 
 impl Fetch<MessageId, Vec<MessageId>> for Storage {
-    fn fetch(&self, parent: &MessageId) -> Result<Option<Vec<MessageId>>, <Self as StorageBackend>::Error> {
+    fn fetch_op(&self, parent: &MessageId) -> Result<Option<Vec<MessageId>>, <Self as StorageBackend>::Error> {
         Ok(Some(
             self.inner
                 .open_tree(TREE_MESSAGE_ID_TO_MESSAGE_ID)?
@@ -74,7 +74,7 @@ impl Fetch<MessageId, Vec<MessageId>> for Storage {
 }
 
 impl Fetch<PaddedIndex, Vec<MessageId>> for Storage {
-    fn fetch(&self, index: &PaddedIndex) -> Result<Option<Vec<MessageId>>, <Self as StorageBackend>::Error> {
+    fn fetch_op(&self, index: &PaddedIndex) -> Result<Option<Vec<MessageId>>, <Self as StorageBackend>::Error> {
         Ok(Some(
             self.inner
                 .open_tree(TREE_INDEX_TO_MESSAGE_ID)?
@@ -93,7 +93,7 @@ impl Fetch<PaddedIndex, Vec<MessageId>> for Storage {
 }
 
 impl Fetch<OutputId, CreatedOutput> for Storage {
-    fn fetch(&self, output_id: &OutputId) -> Result<Option<CreatedOutput>, <Self as StorageBackend>::Error> {
+    fn fetch_op(&self, output_id: &OutputId) -> Result<Option<CreatedOutput>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_OUTPUT_ID_TO_CREATED_OUTPUT)?
@@ -104,7 +104,7 @@ impl Fetch<OutputId, CreatedOutput> for Storage {
 }
 
 impl Fetch<OutputId, ConsumedOutput> for Storage {
-    fn fetch(&self, output_id: &OutputId) -> Result<Option<ConsumedOutput>, <Self as StorageBackend>::Error> {
+    fn fetch_op(&self, output_id: &OutputId) -> Result<Option<ConsumedOutput>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_OUTPUT_ID_TO_CONSUMED_OUTPUT)?
@@ -115,7 +115,7 @@ impl Fetch<OutputId, ConsumedOutput> for Storage {
 }
 
 impl Fetch<Ed25519Address, Vec<OutputId>> for Storage {
-    fn fetch(&self, address: &Ed25519Address) -> Result<Option<Vec<OutputId>>, <Self as StorageBackend>::Error> {
+    fn fetch_op(&self, address: &Ed25519Address) -> Result<Option<Vec<OutputId>>, <Self as StorageBackend>::Error> {
         Ok(Some(
             self.inner
                 .open_tree(TREE_ED25519_ADDRESS_TO_OUTPUT_ID)?
@@ -135,7 +135,7 @@ impl Fetch<Ed25519Address, Vec<OutputId>> for Storage {
 }
 
 impl Fetch<(), LedgerIndex> for Storage {
-    fn fetch(&self, (): &()) -> Result<Option<LedgerIndex>, <Self as StorageBackend>::Error> {
+    fn fetch_op(&self, (): &()) -> Result<Option<LedgerIndex>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_LEDGER_INDEX)?
@@ -146,7 +146,7 @@ impl Fetch<(), LedgerIndex> for Storage {
 }
 
 impl Fetch<MilestoneIndex, Milestone> for Storage {
-    fn fetch(&self, index: &MilestoneIndex) -> Result<Option<Milestone>, <Self as StorageBackend>::Error> {
+    fn fetch_op(&self, index: &MilestoneIndex) -> Result<Option<Milestone>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_MILESTONE_INDEX_TO_MILESTONE)?
@@ -157,7 +157,7 @@ impl Fetch<MilestoneIndex, Milestone> for Storage {
 }
 
 impl Fetch<(), SnapshotInfo> for Storage {
-    fn fetch(&self, (): &()) -> Result<Option<SnapshotInfo>, <Self as StorageBackend>::Error> {
+    fn fetch_op(&self, (): &()) -> Result<Option<SnapshotInfo>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_SNAPSHOT_INFO)?
@@ -168,7 +168,7 @@ impl Fetch<(), SnapshotInfo> for Storage {
 }
 
 impl Fetch<SolidEntryPoint, MilestoneIndex> for Storage {
-    fn fetch(&self, sep: &SolidEntryPoint) -> Result<Option<MilestoneIndex>, <Self as StorageBackend>::Error> {
+    fn fetch_op(&self, sep: &SolidEntryPoint) -> Result<Option<MilestoneIndex>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)?
@@ -179,7 +179,7 @@ impl Fetch<SolidEntryPoint, MilestoneIndex> for Storage {
 }
 
 impl Fetch<MilestoneIndex, OutputDiff> for Storage {
-    fn fetch(&self, index: &MilestoneIndex) -> Result<Option<OutputDiff>, <Self as StorageBackend>::Error> {
+    fn fetch_op(&self, index: &MilestoneIndex) -> Result<Option<OutputDiff>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_MILESTONE_INDEX_TO_OUTPUT_DIFF)?
@@ -190,7 +190,7 @@ impl Fetch<MilestoneIndex, OutputDiff> for Storage {
 }
 
 impl Fetch<Address, Balance> for Storage {
-    fn fetch(&self, address: &Address) -> Result<Option<Balance>, <Self as StorageBackend>::Error> {
+    fn fetch_op(&self, address: &Address) -> Result<Option<Balance>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_ADDRESS_TO_BALANCE)?
@@ -201,7 +201,7 @@ impl Fetch<Address, Balance> for Storage {
 }
 
 impl Fetch<MilestoneIndex, Vec<UnreferencedMessage>> for Storage {
-    fn fetch(
+    fn fetch_op(
         &self,
         index: &MilestoneIndex,
     ) -> Result<Option<Vec<UnreferencedMessage>>, <Self as StorageBackend>::Error> {
@@ -222,7 +222,7 @@ impl Fetch<MilestoneIndex, Vec<UnreferencedMessage>> for Storage {
 }
 
 impl Fetch<MilestoneIndex, Vec<Receipt>> for Storage {
-    fn fetch(&self, index: &MilestoneIndex) -> Result<Option<Vec<Receipt>>, <Self as StorageBackend>::Error> {
+    fn fetch_op(&self, index: &MilestoneIndex) -> Result<Option<Vec<Receipt>>, <Self as StorageBackend>::Error> {
         Ok(Some(
             self.inner
                 .open_tree(TREE_MILESTONE_INDEX_TO_RECEIPT)?
@@ -240,7 +240,7 @@ impl Fetch<MilestoneIndex, Vec<Receipt>> for Storage {
 }
 
 impl Fetch<bool, Vec<TreasuryOutput>> for Storage {
-    fn fetch(&self, spent: &bool) -> Result<Option<Vec<TreasuryOutput>>, <Self as StorageBackend>::Error> {
+    fn fetch_op(&self, spent: &bool) -> Result<Option<Vec<TreasuryOutput>>, <Self as StorageBackend>::Error> {
         Ok(Some(
             self.inner
                 .open_tree(TREE_SPENT_TO_TREASURY_OUTPUT)?

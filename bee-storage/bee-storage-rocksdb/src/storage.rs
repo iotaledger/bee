@@ -184,7 +184,7 @@ impl StorageBackend for Storage {
     fn start(config: Self::Config) -> Result<Self, Self::Error> {
         let storage = Self::new(config)?;
 
-        match storage.fetch_access::<u8, System>(&SYSTEM_VERSION_KEY)? {
+        match storage.fetch::<u8, System>(&SYSTEM_VERSION_KEY)? {
             Some(System::Version(version)) => {
                 if version != STORAGE_VERSION {
                     return Err(Error::VersionMismatch(version, STORAGE_VERSION));
@@ -218,7 +218,7 @@ impl StorageBackend for Storage {
     }
 
     fn get_health(&self) -> Result<Option<StorageHealth>, Self::Error> {
-        Ok(match self.fetch_access::<u8, System>(&SYSTEM_HEALTH_KEY)? {
+        Ok(match self.fetch::<u8, System>(&SYSTEM_HEALTH_KEY)? {
             Some(System::Health(health)) => Some(health),
             None => None,
             _ => panic!("Another system value was inserted on the health key."),

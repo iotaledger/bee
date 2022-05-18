@@ -63,7 +63,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
         CF_SYSTEM => match &tool.command {
             RocksdbCommand::Fetch { key } => {
                 let key = u8::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?;
-                let value = storage.fetch_access::<u8, System>(&key)?;
+                let value = storage.fetch::<u8, System>(&key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
@@ -79,7 +79,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
         CF_MESSAGE_ID_TO_MESSAGE => match &tool.command {
             RocksdbCommand::Fetch { key } => {
                 let key = MessageId::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?;
-                let value = storage.fetch_access::<MessageId, Message>(&key)?;
+                let value = storage.fetch::<MessageId, Message>(&key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
@@ -95,7 +95,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
         CF_MESSAGE_ID_TO_METADATA => match &tool.command {
             RocksdbCommand::Fetch { key } => {
                 let key = MessageId::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?;
-                let value = storage.fetch_access::<MessageId, MessageMetadata>(&key)?;
+                let value = storage.fetch::<MessageId, MessageMetadata>(&key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
@@ -111,7 +111,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
         CF_MESSAGE_ID_TO_MESSAGE_ID => match &tool.command {
             RocksdbCommand::Fetch { key } => {
                 let key = MessageId::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?;
-                let value = storage.fetch_access::<MessageId, Vec<MessageId>>(&key)?;
+                let value = storage.fetch::<MessageId, Vec<MessageId>>(&key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
@@ -132,7 +132,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 )
                 .map_err(|_| RocksdbError::InvalidKey(key.clone()))?
                 .padded_index();
-                let value = storage.fetch_access::<PaddedIndex, Vec<MessageId>>(&key)?;
+                let value = storage.fetch::<PaddedIndex, Vec<MessageId>>(&key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
@@ -148,7 +148,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
         CF_OUTPUT_ID_TO_CREATED_OUTPUT => match &tool.command {
             RocksdbCommand::Fetch { key } => {
                 let key = OutputId::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?;
-                let value = storage.fetch_access::<OutputId, CreatedOutput>(&key)?;
+                let value = storage.fetch::<OutputId, CreatedOutput>(&key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
@@ -164,7 +164,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
         CF_OUTPUT_ID_TO_CONSUMED_OUTPUT => match &tool.command {
             RocksdbCommand::Fetch { key } => {
                 let key = OutputId::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?;
-                let value = storage.fetch_access::<OutputId, ConsumedOutput>(&key)?;
+                let value = storage.fetch::<OutputId, ConsumedOutput>(&key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
@@ -196,7 +196,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
         CF_ED25519_ADDRESS_TO_OUTPUT_ID => match &tool.command {
             RocksdbCommand::Fetch { key } => {
                 let key = Ed25519Address::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?;
-                let value = storage.fetch_access::<Ed25519Address, Vec<OutputId>>(&key)?;
+                let value = storage.fetch::<Ed25519Address, Vec<OutputId>>(&key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
@@ -223,7 +223,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
         CF_MILESTONE_INDEX_TO_MILESTONE => match &tool.command {
             RocksdbCommand::Fetch { key } => {
                 let key = MilestoneIndex(u32::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?);
-                let value = storage.fetch_access::<MilestoneIndex, Milestone>(&key)?;
+                let value = storage.fetch::<MilestoneIndex, Milestone>(&key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
@@ -251,7 +251,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
             RocksdbCommand::Fetch { key } => {
                 let key =
                     SolidEntryPoint::from(MessageId::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?);
-                let value = storage.fetch_access::<SolidEntryPoint, MilestoneIndex>(&key)?;
+                let value = storage.fetch::<SolidEntryPoint, MilestoneIndex>(&key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
@@ -267,7 +267,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
         CF_MILESTONE_INDEX_TO_OUTPUT_DIFF => match &tool.command {
             RocksdbCommand::Fetch { key } => {
                 let key = MilestoneIndex(u32::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?);
-                let value = storage.fetch_access::<MilestoneIndex, OutputDiff>(&key)?;
+                let value = storage.fetch::<MilestoneIndex, OutputDiff>(&key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
@@ -284,7 +284,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
             RocksdbCommand::Fetch { key } => {
                 let key =
                     Address::from(Ed25519Address::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?);
-                let value = storage.fetch_access::<Address, Balance>(&key)?;
+                let value = storage.fetch::<Address, Balance>(&key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
@@ -300,7 +300,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
         CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE => match &tool.command {
             RocksdbCommand::Fetch { key } => {
                 let key = MilestoneIndex(u32::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?);
-                let value = storage.fetch_access::<MilestoneIndex, Vec<UnreferencedMessage>>(&key)?;
+                let value = storage.fetch::<MilestoneIndex, Vec<UnreferencedMessage>>(&key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
@@ -316,7 +316,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
         CF_MILESTONE_INDEX_TO_RECEIPT => match &tool.command {
             RocksdbCommand::Fetch { key } => {
                 let key = MilestoneIndex(u32::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?);
-                let value = storage.fetch_access::<MilestoneIndex, Vec<Receipt>>(&key)?;
+                let value = storage.fetch::<MilestoneIndex, Vec<Receipt>>(&key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
@@ -332,7 +332,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
         CF_SPENT_TO_TREASURY_OUTPUT => match &tool.command {
             RocksdbCommand::Fetch { key } => {
                 let key = bool::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?;
-                let value = storage.fetch_access::<bool, Vec<TreasuryOutput>>(&key)?;
+                let value = storage.fetch::<bool, Vec<TreasuryOutput>>(&key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }

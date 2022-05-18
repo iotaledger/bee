@@ -43,7 +43,7 @@ pub fn message_id_to_message_id_access<B: StorageBackend>(storage: &B) {
     assert!(!Exist::<(MessageId, MessageId), ()>::exist(storage, &(parent, child)).unwrap());
     assert!(
         storage
-            .fetch_access::<MessageId, Vec<MessageId>>(&parent)
+            .fetch::<MessageId, Vec<MessageId>>(&parent)
             .unwrap()
             .unwrap()
             .is_empty()
@@ -53,10 +53,7 @@ pub fn message_id_to_message_id_access<B: StorageBackend>(storage: &B) {
 
     assert!(Exist::<(MessageId, MessageId), ()>::exist(storage, &(parent, child)).unwrap());
     assert_eq!(
-        storage
-            .fetch_access::<MessageId, Vec<MessageId>>(&parent)
-            .unwrap()
-            .unwrap(),
+        storage.fetch::<MessageId, Vec<MessageId>>(&parent).unwrap().unwrap(),
         vec![child]
     );
 
@@ -65,7 +62,7 @@ pub fn message_id_to_message_id_access<B: StorageBackend>(storage: &B) {
     assert!(!Exist::<(MessageId, MessageId), ()>::exist(storage, &(parent, child)).unwrap());
     assert!(
         storage
-            .fetch_access::<MessageId, Vec<MessageId>>(&parent)
+            .fetch::<MessageId, Vec<MessageId>>(&parent)
             .unwrap()
             .unwrap()
             .is_empty()

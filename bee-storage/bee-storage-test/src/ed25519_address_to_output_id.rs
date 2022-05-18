@@ -43,7 +43,7 @@ pub fn ed25519_address_to_output_id_access<B: StorageBackend>(storage: &B) {
     assert!(!Exist::<(Ed25519Address, OutputId), ()>::exist(storage, &(address, output_id)).unwrap());
     assert!(
         storage
-            .fetch_access::<Ed25519Address, Vec<OutputId>>(&address)
+            .fetch::<Ed25519Address, Vec<OutputId>>(&address)
             .unwrap()
             .unwrap()
             .is_empty()
@@ -54,7 +54,7 @@ pub fn ed25519_address_to_output_id_access<B: StorageBackend>(storage: &B) {
     assert!(Exist::<(Ed25519Address, OutputId), ()>::exist(storage, &(address, output_id)).unwrap());
     assert_eq!(
         storage
-            .fetch_access::<Ed25519Address, Vec<OutputId>>(&address)
+            .fetch::<Ed25519Address, Vec<OutputId>>(&address)
             .unwrap()
             .unwrap(),
         vec![output_id]
@@ -65,7 +65,7 @@ pub fn ed25519_address_to_output_id_access<B: StorageBackend>(storage: &B) {
     assert!(!Exist::<(Ed25519Address, OutputId), ()>::exist(storage, &(address, output_id)).unwrap());
     assert!(
         storage
-            .fetch_access::<Ed25519Address, Vec<OutputId>>(&address)
+            .fetch::<Ed25519Address, Vec<OutputId>>(&address)
             .unwrap()
             .unwrap()
             .is_empty()

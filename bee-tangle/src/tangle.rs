@@ -110,7 +110,7 @@ impl<B: StorageBackend> Tangle<B> {
     /// Get the milestone from the tangle that corresponds to the given milestone index.
     #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn get_milestone(&self, index: MilestoneIndex) -> Option<Milestone> {
-        self.storage.fetch(&index).unwrap_or_else(|e| {
+        self.storage.fetch_op(&index).unwrap_or_else(|e| {
             warn!("Failed to fetch milestone {:?}", e);
             None
         })
@@ -350,14 +350,14 @@ impl<B: StorageBackend> Tangle<B> {
     /// Get the data of a vertex associated with the given `message_id`.
     #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn get(&self, message_id: &MessageId) -> Option<Message> {
-        self.storage.fetch(message_id).unwrap_or_default()
+        self.storage.fetch_op(message_id).unwrap_or_default()
     }
 
     /// Get the data and metadata of a vertex associated with the given `message_id`.
     #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn get_message_and_metadata(&self, message_id: &MessageId) -> Option<(Message, MessageMetadata)> {
-        let msg = self.storage.fetch(message_id).unwrap_or_default()?;
-        let meta = self.storage.fetch(message_id).unwrap_or_default()?;
+        let msg = self.storage.fetch_op(message_id).unwrap_or_default()?;
+        let meta = self.storage.fetch_op(message_id).unwrap_or_default()?;
 
         Some((msg, meta))
     }
@@ -371,7 +371,7 @@ impl<B: StorageBackend> Tangle<B> {
     /// Get the metadata of a vertex associated with the given `message_id`.
     #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn get_metadata(&self, message_id: &MessageId) -> Option<MessageMetadata> {
-        self.storage.fetch(message_id).unwrap_or_default()
+        self.storage.fetch_op(message_id).unwrap_or_default()
     }
 
     /// Updates the metadata of a vertex.
@@ -393,6 +393,6 @@ impl<B: StorageBackend> Tangle<B> {
     /// Returns the children of a vertex, if we know about them.
     #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn get_children(&self, message_id: &MessageId) -> Option<Vec<MessageId>> {
-        self.storage.fetch(message_id).unwrap_or_default()
+        self.storage.fetch_op(message_id).unwrap_or_default()
     }
 }

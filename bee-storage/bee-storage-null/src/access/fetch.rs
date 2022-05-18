@@ -6,7 +6,7 @@ use bee_storage::access::Fetch;
 use crate::Storage;
 
 impl<K, V> Fetch<K, V> for Storage {
-    fn fetch(&self, _key: &K) -> Result<Option<V>, Self::Error> {
+    fn fetch_op(&self, _key: &K) -> Result<Option<V>, Self::Error> {
         Ok(None)
     }
 }

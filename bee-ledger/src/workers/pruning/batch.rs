@@ -13,10 +13,7 @@ use bee_message::{
     },
     Message, MessageId,
 };
-use bee_storage::{
-    access::{Batch},
-    backend::StorageBackendExt,
-};
+use bee_storage::{access::Batch, backend::StorageBackendExt};
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
@@ -61,7 +58,7 @@ pub fn batch_prunable_confirmed_data<S: StorageBackend>(
 
     // Get the `MessageId` of the milestone we are about to prune from the storage.
     let prune_id = *storage
-        .fetch_access::<MilestoneIndex, Milestone>(&prune_index)
+        .fetch::<MilestoneIndex, Milestone>(&prune_index)
         .map_err(|e| Error::Storage(Box::new(e)))?
         .ok_or(Error::MissingMilestone(prune_index))?
         .message_id();
@@ -84,7 +81,7 @@ pub fn batch_prunable_confirmed_data<S: StorageBackend>(
 
         // Get the `Message` for `message_id`.
         let msg = match storage
-            .fetch_access::<MessageId, Message>(&message_id)
+            .fetch::<MessageId, Message>(&message_id)
             .map_err(|e| Error::Storage(Box::new(e)))?
             .ok_or(Error::MissingMessage(message_id))
         {
@@ -139,7 +136,7 @@ pub fn batch_prunable_confirmed_data<S: StorageBackend>(
 
         // Fetch its approvers from the storage.
         let approvers = storage
-            .fetch_access::<MessageId, Vec<MessageId>>(&message_id)
+            .fetch::<MessageId, Vec<MessageId>>(&message_id)
             .map_err(|e| Error::Storage(Box::new(e)))?
             .ok_or(Error::MissingApprovers(message_id))?;
 
@@ -169,7 +166,7 @@ pub fn batch_prunable_confirmed_data<S: StorageBackend>(
                 metrics.approver_cache_miss += 1;
 
                 let unvisited_md = storage
-                    .fetch_access::<MessageId, MessageMetadata>(&unvisited_id)
+                    .fetch::<MessageId, MessageMetadata>(&unvisited_id)
                     .map_err(|e| Error::Storage(Box::new(e)))?
                     .ok_or(Error::MissingMetadata(unvisited_id))?;
 
@@ -215,7 +212,7 @@ pub fn batch_prunable_unconfirmed_data<S: StorageBackend>(
     let mut metrics = UnconfirmedDataPruningMetrics::default();
 
     let unconf_msgs = match storage
-        .fetch_access::<MilestoneIndex, Vec<UnreferencedMessage>>(&prune_index)
+        .fetch::<MilestoneIndex, Vec<UnreferencedMessage>>(&prune_index)
         .map_err(|e| Error::Storage(Box::new(e)))?
     {
         Some(unconf_msgs) => {
@@ -235,7 +232,7 @@ pub fn batch_prunable_unconfirmed_data<S: StorageBackend>(
     // TODO: consider using `MultiFetch`
     'next_unconf_msg: for unconf_msg_id in unconf_msgs.iter().map(|unconf_msg| unconf_msg.message_id()) {
         match storage
-            .fetch_access::<MessageId, MessageMetadata>(unconf_msg_id)
+            .fetch::<MessageId, MessageMetadata>(unconf_msg_id)
             .map_err(|e| Error::Storage(Box::new(e)))?
         {
             Some(msg_meta) => {
@@ -254,7 +251,7 @@ pub fn batch_prunable_unconfirmed_data<S: StorageBackend>(
 
         // Delete those messages that remained unconfirmed.
         match storage
-            .fetch_access::<MessageId, Message>(unconf_msg_id)
+            .fetch::<MessageId, Message>(unconf_msg_id)
             .map_err(|e| Error::Storage(Box::new(e)))?
         {
             Some(msg) => {
@@ -363,7 +360,7 @@ fn prune_milestone<S: StorageBackend>(storage: &S, batch: &mut S::Batch, index: 
 
 fn prune_output_diff<S: StorageBackend>(storage: &S, batch: &mut S::Batch, index: MilestoneIndex) -> Result<(), Error> {
     if let Some(output_diff) = storage
-        .fetch_access::<MilestoneIndex, OutputDiff>(&index)
+        .fetch::<MilestoneIndex, OutputDiff>(&index)
         .map_err(|e| Error::Storage(Box::new(e)))?
     {
         for consumed_output in output_diff.consumed_outputs() {
@@ -386,7 +383,7 @@ fn prune_output_diff<S: StorageBackend>(storage: &S, batch: &mut S::Batch, index
 
 fn prune_receipts<S: StorageBackend>(storage: &S, batch: &mut S::Batch, index: MilestoneIndex) -> Result<usize, Error> {
     let receipts = storage
-        .fetch_access::<MilestoneIndex, Vec<Receipt>>(&index)
+        .fetch::<MilestoneIndex, Vec<Receipt>>(&index)
         .map_err(|e| Error::Storage(Box::new(e)))?
         // Fine since Fetch of a Vec<_> always returns Some(Vec<_>).
         .unwrap();

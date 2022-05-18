@@ -65,7 +65,7 @@ pub trait StorageBackendExt: StorageBackend {
         Self: Exist<K, V>;
 
     /// Fetches the value associated with the key from the storage.
-    fn fetch_access<K, V>(&self, key: &K) -> Result<Option<V>, Self::Error>
+    fn fetch<K, V>(&self, key: &K) -> Result<Option<V>, Self::Error>
     where
         Self: Fetch<K, V>;
 
@@ -139,11 +139,11 @@ impl<S: StorageBackend> StorageBackendExt for S {
     }
 
     #[inline(always)]
-    fn fetch_access<K, V>(&self, key: &K) -> Result<Option<V>, Self::Error>
+    fn fetch<K, V>(&self, key: &K) -> Result<Option<V>, Self::Error>
     where
         Self: Fetch<K, V>,
     {
-        Fetch::<K, V>::fetch(self, key)
+        Fetch::<K, V>::fetch_op(self, key)
     }
 
     #[inline(always)]

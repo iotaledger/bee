@@ -3,7 +3,7 @@
 
 use bee_ledger::types::CreatedOutput;
 use bee_message::{output::OutputId, payload::transaction::TransactionId};
-use bee_storage::{backend::StorageBackendExt};
+use bee_storage::backend::StorageBackendExt;
 use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
 use crate::endpoints::{
@@ -34,14 +34,11 @@ pub(crate) fn transaction_included_message<B: StorageBackend>(
     // Safe to unwrap since 0 is a valid index;
     let output_id = OutputId::new(transaction_id, 0).unwrap();
 
-    match args
-        .storage
-        .fetch_access::<OutputId, CreatedOutput>(&output_id)
-        .map_err(|_| {
-            reject::custom(CustomRejection::ServiceUnavailable(
-                "Can not fetch from storage".to_string(),
-            ))
-        })? {
+    match args.storage.fetch::<OutputId, CreatedOutput>(&output_id).map_err(|_| {
+        reject::custom(CustomRejection::ServiceUnavailable(
+            "Can not fetch from storage".to_string(),
+        ))
+    })? {
         Some(output) => message::message(*output.message_id(), args),
         None => Err(reject::custom(CustomRejection::NotFound(
             "Can not find output".to_string(),

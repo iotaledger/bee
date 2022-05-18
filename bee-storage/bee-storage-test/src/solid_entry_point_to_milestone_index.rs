@@ -44,7 +44,7 @@ pub fn solid_entry_point_to_milestone_index_access<B: StorageBackend>(storage: &
     assert!(!Exist::<SolidEntryPoint, MilestoneIndex>::exist(storage, &sep).unwrap());
     assert!(
         storage
-            .fetch_access::<SolidEntryPoint, MilestoneIndex>(&sep)
+            .fetch::<SolidEntryPoint, MilestoneIndex>(&sep)
             .unwrap()
             .is_none()
     );
@@ -58,10 +58,7 @@ pub fn solid_entry_point_to_milestone_index_access<B: StorageBackend>(storage: &
 
     assert!(Exist::<SolidEntryPoint, MilestoneIndex>::exist(storage, &sep).unwrap());
     assert_eq!(
-        storage
-            .fetch_access::<SolidEntryPoint, MilestoneIndex>(&sep)
-            .unwrap()
-            .unwrap(),
+        storage.fetch::<SolidEntryPoint, MilestoneIndex>(&sep).unwrap().unwrap(),
         index
     );
     let results = MultiFetch::<SolidEntryPoint, MilestoneIndex>::multi_fetch(storage, &[sep])
@@ -75,7 +72,7 @@ pub fn solid_entry_point_to_milestone_index_access<B: StorageBackend>(storage: &
     assert!(!Exist::<SolidEntryPoint, MilestoneIndex>::exist(storage, &sep).unwrap());
     assert!(
         storage
-            .fetch_access::<SolidEntryPoint, MilestoneIndex>(&sep)
+            .fetch::<SolidEntryPoint, MilestoneIndex>(&sep)
             .unwrap()
             .is_none()
     );

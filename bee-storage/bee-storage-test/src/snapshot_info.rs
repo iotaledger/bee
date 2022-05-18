@@ -39,20 +39,17 @@ pub fn snapshot_info_access<B: StorageBackend>(storage: &B) {
     let snapshot_info = rand_snapshot_info();
 
     assert!(!Exist::<(), SnapshotInfo>::exist(storage, &()).unwrap());
-    assert!(storage.fetch_access::<(), SnapshotInfo>(&()).unwrap().is_none());
+    assert!(storage.fetch::<(), SnapshotInfo>(&()).unwrap().is_none());
 
     Insert::<(), SnapshotInfo>::insert(storage, &(), &snapshot_info).unwrap();
 
     assert!(Exist::<(), SnapshotInfo>::exist(storage, &()).unwrap());
-    assert_eq!(
-        storage.fetch_access::<(), SnapshotInfo>(&()).unwrap().unwrap(),
-        snapshot_info
-    );
+    assert_eq!(storage.fetch::<(), SnapshotInfo>(&()).unwrap().unwrap(), snapshot_info);
 
     Delete::<(), SnapshotInfo>::delete(storage, &()).unwrap();
 
     assert!(!Exist::<(), SnapshotInfo>::exist(storage, &()).unwrap());
-    assert!(storage.fetch_access::<(), SnapshotInfo>(&()).unwrap().is_none());
+    assert!(storage.fetch::<(), SnapshotInfo>(&()).unwrap().is_none());
 
     let mut batch = B::batch_begin();
 
@@ -61,10 +58,7 @@ pub fn snapshot_info_access<B: StorageBackend>(storage: &B) {
     storage.batch_commit(batch, true).unwrap();
 
     assert!(Exist::<(), SnapshotInfo>::exist(storage, &()).unwrap());
-    assert_eq!(
-        storage.fetch_access::<(), SnapshotInfo>(&()).unwrap().unwrap(),
-        snapshot_info
-    );
+    assert_eq!(storage.fetch::<(), SnapshotInfo>(&()).unwrap().unwrap(), snapshot_info);
 
     let mut batch = B::batch_begin();
 
@@ -73,7 +67,7 @@ pub fn snapshot_info_access<B: StorageBackend>(storage: &B) {
     storage.batch_commit(batch, true).unwrap();
 
     assert!(!Exist::<(), SnapshotInfo>::exist(storage, &()).unwrap());
-    assert!(storage.fetch_access::<(), SnapshotInfo>(&()).unwrap().is_none());
+    assert!(storage.fetch::<(), SnapshotInfo>(&()).unwrap().is_none());
 
     Insert::<(), SnapshotInfo>::insert(storage, &(), &snapshot_info).unwrap();
 

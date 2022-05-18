@@ -42,12 +42,7 @@ pub fn output_id_to_consumed_output_access<B: StorageBackend>(storage: &B) {
     let (output_id, consumed_output) = (rand_output_id(), rand_consumed_output());
 
     assert!(!Exist::<OutputId, ConsumedOutput>::exist(storage, &output_id).unwrap());
-    assert!(
-        storage
-            .fetch_access::<OutputId, ConsumedOutput>(&output_id)
-            .unwrap()
-            .is_none()
-    );
+    assert!(storage.fetch::<OutputId, ConsumedOutput>(&output_id).unwrap().is_none());
     let results = MultiFetch::<OutputId, ConsumedOutput>::multi_fetch(storage, &[output_id])
         .unwrap()
         .collect::<Vec<_>>();
@@ -58,10 +53,7 @@ pub fn output_id_to_consumed_output_access<B: StorageBackend>(storage: &B) {
 
     assert!(Exist::<OutputId, ConsumedOutput>::exist(storage, &output_id).unwrap());
     assert_eq!(
-        storage
-            .fetch_access::<OutputId, ConsumedOutput>(&output_id)
-            .unwrap()
-            .unwrap(),
+        storage.fetch::<OutputId, ConsumedOutput>(&output_id).unwrap().unwrap(),
         consumed_output
     );
     let results = MultiFetch::<OutputId, ConsumedOutput>::multi_fetch(storage, &[output_id])
@@ -73,12 +65,7 @@ pub fn output_id_to_consumed_output_access<B: StorageBackend>(storage: &B) {
     Delete::<OutputId, ConsumedOutput>::delete(storage, &output_id).unwrap();
 
     assert!(!Exist::<OutputId, ConsumedOutput>::exist(storage, &output_id).unwrap());
-    assert!(
-        storage
-            .fetch_access::<OutputId, ConsumedOutput>(&output_id)
-            .unwrap()
-            .is_none()
-    );
+    assert!(storage.fetch::<OutputId, ConsumedOutput>(&output_id).unwrap().is_none());
     let results = MultiFetch::<OutputId, ConsumedOutput>::multi_fetch(storage, &[output_id])
         .unwrap()
         .collect::<Vec<_>>();

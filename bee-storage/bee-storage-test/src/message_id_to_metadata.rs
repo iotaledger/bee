@@ -46,7 +46,7 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
     assert!(!Exist::<MessageId, MessageMetadata>::exist(storage, &message_id).unwrap());
     assert!(
         storage
-            .fetch_access::<MessageId, MessageMetadata>(&message_id)
+            .fetch::<MessageId, MessageMetadata>(&message_id)
             .unwrap()
             .is_none()
     );
@@ -70,7 +70,7 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
     }
     assert_eq!(
         storage
-            .fetch_access::<MessageId, MessageMetadata>(&message_id)
+            .fetch::<MessageId, MessageMetadata>(&message_id)
             .unwrap()
             .unwrap(),
         metadata,
@@ -85,7 +85,7 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
 
     let milestone_index = {
         let index = storage
-            .fetch_access::<MessageId, MessageMetadata>(&message_id)
+            .fetch::<MessageId, MessageMetadata>(&message_id)
             .unwrap()
             .unwrap()
             .milestone_index();
@@ -100,7 +100,7 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(
         storage
-            .fetch_access::<MessageId, MessageMetadata>(&message_id)
+            .fetch::<MessageId, MessageMetadata>(&message_id)
             .unwrap()
             .unwrap()
             .milestone_index(),
@@ -112,7 +112,7 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
     assert!(!Exist::<MessageId, MessageMetadata>::exist(storage, &message_id).unwrap());
     assert!(
         storage
-            .fetch_access::<MessageId, MessageMetadata>(&message_id)
+            .fetch::<MessageId, MessageMetadata>(&message_id)
             .unwrap()
             .is_none()
     );
