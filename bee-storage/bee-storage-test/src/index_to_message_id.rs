@@ -111,7 +111,7 @@ pub fn index_to_message_id_access<B: StorageBackend>(storage: &B) {
 
     storage.batch_commit(batch, true).unwrap();
 
-    let iter = AsIterator::<(PaddedIndex, MessageId), ()>::iter_op(storage).unwrap();
+    let iter = storage.iter::<(PaddedIndex, MessageId), ()>().unwrap();
     let mut count = 0;
 
     for result in iter {
@@ -124,7 +124,7 @@ pub fn index_to_message_id_access<B: StorageBackend>(storage: &B) {
 
     Truncate::<(PaddedIndex, MessageId), ()>::truncate_op(storage).unwrap();
 
-    let mut iter = AsIterator::<(PaddedIndex, MessageId), ()>::iter_op(storage).unwrap();
+    let mut iter = storage.iter::<(PaddedIndex, MessageId), ()>().unwrap();
 
     assert!(iter.next().is_none());
 }

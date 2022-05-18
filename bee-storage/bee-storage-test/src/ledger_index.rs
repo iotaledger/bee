@@ -73,7 +73,7 @@ pub fn ledger_index_access<B: StorageBackend>(storage: &B) {
 
     storage.insert::<(), LedgerIndex>(&(), &index).unwrap();
 
-    let iter = AsIterator::<(), LedgerIndex>::iter_op(storage).unwrap();
+    let iter = storage.iter::<(), LedgerIndex>().unwrap();
     let mut count = 0;
 
     for result in iter {
@@ -88,7 +88,7 @@ pub fn ledger_index_access<B: StorageBackend>(storage: &B) {
 
     assert!(!storage.exist::<(), LedgerIndex>(&()).unwrap());
 
-    let mut iter = AsIterator::<(), LedgerIndex>::iter_op(storage).unwrap();
+    let mut iter = storage.iter::<(), LedgerIndex>().unwrap();
 
     assert!(iter.next().is_none());
 }

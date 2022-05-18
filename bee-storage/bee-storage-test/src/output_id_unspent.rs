@@ -63,7 +63,7 @@ pub fn output_id_unspent_access<B: StorageBackend>(storage: &B) {
 
     storage.batch_commit(batch, true).unwrap();
 
-    let iter = AsIterator::<Unspent, ()>::iter_op(storage).unwrap();
+    let iter = storage.iter::<Unspent, ()>().unwrap();
     let mut count = 0;
 
     for result in iter {
@@ -76,7 +76,7 @@ pub fn output_id_unspent_access<B: StorageBackend>(storage: &B) {
 
     Truncate::<Unspent, ()>::truncate_op(storage).unwrap();
 
-    let mut iter = AsIterator::<Unspent, ()>::iter_op(storage).unwrap();
+    let mut iter = storage.iter::<Unspent, ()>().unwrap();
 
     assert!(iter.next().is_none());
 }

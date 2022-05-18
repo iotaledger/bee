@@ -15,7 +15,6 @@ use bee_message::{
     Message, MessageId,
 };
 use bee_storage::{
-    access::AsIterator,
     backend::{StorageBackend, StorageBackendExt},
 };
 use bee_storage_sled::{
@@ -67,7 +66,7 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             SledCommand::Iterator => {
-                let iterator = AsIterator::<MessageId, Message>::iter_op(storage)?;
+                let iterator = storage.iter::<MessageId, Message>()?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -83,7 +82,7 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             SledCommand::Iterator => {
-                let iterator = AsIterator::<MessageId, MessageMetadata>::iter_op(storage)?;
+                let iterator = storage.iter::<MessageId, MessageMetadata>()?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -99,7 +98,7 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             SledCommand::Iterator => {
-                let iterator = AsIterator::<(MessageId, MessageId), ()>::iter_op(storage)?;
+                let iterator = storage.iter::<(MessageId, MessageId), ()>()?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -120,7 +119,7 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             SledCommand::Iterator => {
-                let iterator = AsIterator::<(PaddedIndex, MessageId), ()>::iter_op(storage)?;
+                let iterator = storage.iter::<(PaddedIndex, MessageId), ()>()?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -136,7 +135,7 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             SledCommand::Iterator => {
-                let iterator = AsIterator::<OutputId, CreatedOutput>::iter_op(storage)?;
+                let iterator = storage.iter::<OutputId, CreatedOutput>()?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -152,7 +151,7 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             SledCommand::Iterator => {
-                let iterator = AsIterator::<OutputId, ConsumedOutput>::iter_op(storage)?;
+                let iterator = storage.iter::<OutputId, ConsumedOutput>()?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -168,7 +167,7 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             SledCommand::Iterator => {
-                let iterator = AsIterator::<Unspent, ()>::iter_op(storage)?;
+                let iterator = storage.iter::<Unspent, ()>()?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -184,7 +183,7 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             SledCommand::Iterator => {
-                let iterator = AsIterator::<(Ed25519Address, OutputId), ()>::iter_op(storage)?;
+                let iterator = storage.iter::<(Ed25519Address, OutputId), ()>()?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -195,7 +194,7 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
         TREE_LEDGER_INDEX => match &tool.command {
             SledCommand::Fetch { key: _key } => return Err(SledError::UnsupportedCommand),
             SledCommand::Iterator => {
-                let iterator = AsIterator::<(), LedgerIndex>::iter_op(storage)?;
+                let iterator = storage.iter::<(), LedgerIndex>()?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -211,7 +210,7 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             SledCommand::Iterator => {
-                let iterator = AsIterator::<MilestoneIndex, Milestone>::iter_op(storage)?;
+                let iterator = storage.iter::<MilestoneIndex, Milestone>()?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -222,7 +221,7 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
         TREE_SNAPSHOT_INFO => match &tool.command {
             SledCommand::Fetch { key: _key } => return Err(SledError::UnsupportedCommand),
             SledCommand::Iterator => {
-                let iterator = AsIterator::<(), SnapshotInfo>::iter_op(storage)?;
+                let iterator = storage.iter::<(), SnapshotInfo>()?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -239,7 +238,7 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             SledCommand::Iterator => {
-                let iterator = AsIterator::<SolidEntryPoint, MilestoneIndex>::iter_op(storage)?;
+                let iterator = storage.iter::<SolidEntryPoint, MilestoneIndex>()?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -255,7 +254,7 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             SledCommand::Iterator => {
-                let iterator = AsIterator::<MilestoneIndex, OutputDiff>::iter_op(storage)?;
+                let iterator = storage.iter::<MilestoneIndex, OutputDiff>()?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -271,7 +270,7 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             SledCommand::Iterator => {
-                let iterator = AsIterator::<Address, Balance>::iter_op(storage)?;
+                let iterator = storage.iter::<Address, Balance>()?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -287,7 +286,7 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             SledCommand::Iterator => {
-                let iterator = AsIterator::<(MilestoneIndex, UnreferencedMessage), ()>::iter_op(storage)?;
+                let iterator = storage.iter::<(MilestoneIndex, UnreferencedMessage), ()>()?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -303,7 +302,7 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             SledCommand::Iterator => {
-                let iterator = AsIterator::<(MilestoneIndex, Receipt), ()>::iter_op(storage)?;
+                let iterator = storage.iter::<(MilestoneIndex, Receipt), ()>()?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -319,7 +318,7 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             SledCommand::Iterator => {
-                let iterator = AsIterator::<(bool, TreasuryOutput), ()>::iter_op(storage)?;
+                let iterator = storage.iter::<(bool, TreasuryOutput), ()>()?;
 
                 for result in iterator {
                     let (key, value) = result?;

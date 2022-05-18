@@ -154,7 +154,7 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
 
     storage.batch_commit(batch, true).unwrap();
 
-    let iter = AsIterator::<MessageId, MessageMetadata>::iter_op(storage).unwrap();
+    let iter = storage.iter::<MessageId, MessageMetadata>().unwrap();
     let mut count = 0;
 
     for result in iter {
@@ -177,7 +177,7 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
 
     Truncate::<MessageId, MessageMetadata>::truncate_op(storage).unwrap();
 
-    let mut iter = AsIterator::<MessageId, MessageMetadata>::iter_op(storage).unwrap();
+    let mut iter = storage.iter::<MessageId, MessageMetadata>().unwrap();
 
     assert!(iter.next().is_none());
 }

@@ -6,7 +6,10 @@ use std::{any::TypeId, collections::HashMap};
 use async_trait::async_trait;
 use bee_message::milestone::MilestoneIndex;
 use bee_runtime::{node::Node, worker::Worker};
-use bee_storage::{access::AsIterator, backend::StorageBackend as _, system::StorageHealth};
+use bee_storage::{
+    backend::{StorageBackend as _, StorageBackendExt},
+    system::StorageHealth,
+};
 use bee_tangle::{solid_entry_point::SolidEntryPoint, Tangle, TangleWorker};
 use log::info;
 use time_helper as time;
@@ -59,7 +62,8 @@ where
             return Err(e);
         }
 
-        let solid_entry_points = AsIterator::<SolidEntryPoint, MilestoneIndex>::iter_op(&*storage)
+        let solid_entry_points = storage
+            .iter::<SolidEntryPoint, MilestoneIndex>()
             .map_err(|e| Error::Storage(Box::new(e)))?
             .map(|result| result.map_err(|e| Error::Storage(Box::new(e))))
             .collect::<Result<HashMap<SolidEntryPoint, MilestoneIndex>, _>>()?;

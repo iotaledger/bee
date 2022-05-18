@@ -97,7 +97,7 @@ pub fn message_id_to_message_id_access<B: StorageBackend>(storage: &B) {
 
     storage.batch_commit(batch, true).unwrap();
 
-    let iter = AsIterator::<(MessageId, MessageId), ()>::iter_op(storage).unwrap();
+    let iter = storage.iter::<(MessageId, MessageId), ()>().unwrap();
     let mut count = 0;
 
     for result in iter {
@@ -110,7 +110,7 @@ pub fn message_id_to_message_id_access<B: StorageBackend>(storage: &B) {
 
     Truncate::<(MessageId, MessageId), ()>::truncate_op(storage).unwrap();
 
-    let mut iter = AsIterator::<(MessageId, MessageId), ()>::iter_op(storage).unwrap();
+    let mut iter = storage.iter::<(MessageId, MessageId), ()>().unwrap();
 
     assert!(iter.next().is_none());
 }

@@ -106,7 +106,7 @@ pub fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &B) {
 
     storage.batch_commit(batch, true).unwrap();
 
-    let iter = AsIterator::<MilestoneIndex, OutputDiff>::iter_op(storage).unwrap();
+    let iter = storage.iter::<MilestoneIndex, OutputDiff>().unwrap();
     let mut count = 0;
 
     for result in iter {
@@ -129,7 +129,7 @@ pub fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &B) {
 
     Truncate::<MilestoneIndex, OutputDiff>::truncate_op(storage).unwrap();
 
-    let mut iter = AsIterator::<MilestoneIndex, OutputDiff>::iter_op(storage).unwrap();
+    let mut iter = storage.iter::<MilestoneIndex, OutputDiff>().unwrap();
 
     assert!(iter.next().is_none());
 }

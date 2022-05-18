@@ -114,7 +114,7 @@ pub fn ed25519_address_to_output_id_access<B: StorageBackend>(storage: &B) {
 
     storage.batch_commit(batch, true).unwrap();
 
-    let iter = AsIterator::<(Ed25519Address, OutputId), ()>::iter_op(storage).unwrap();
+    let iter = storage.iter::<(Ed25519Address, OutputId), ()>().unwrap();
     let mut count = 0;
 
     for result in iter {
@@ -127,7 +127,7 @@ pub fn ed25519_address_to_output_id_access<B: StorageBackend>(storage: &B) {
 
     Truncate::<(Ed25519Address, OutputId), ()>::truncate_op(storage).unwrap();
 
-    let mut iter = AsIterator::<(Ed25519Address, OutputId), ()>::iter_op(storage).unwrap();
+    let mut iter = storage.iter::<(Ed25519Address, OutputId), ()>().unwrap();
 
     assert!(iter.next().is_none());
 }

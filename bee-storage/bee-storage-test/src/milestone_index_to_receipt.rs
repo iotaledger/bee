@@ -112,7 +112,7 @@ pub fn milestone_index_to_receipt_access<B: StorageBackend>(storage: &B) {
 
     storage.batch_commit(batch, true).unwrap();
 
-    let iter = AsIterator::<(MilestoneIndex, Receipt), ()>::iter_op(storage).unwrap();
+    let iter = storage.iter::<(MilestoneIndex, Receipt), ()>().unwrap();
     let mut count = 0;
 
     for result in iter {
@@ -125,7 +125,7 @@ pub fn milestone_index_to_receipt_access<B: StorageBackend>(storage: &B) {
 
     Truncate::<(MilestoneIndex, Receipt), ()>::truncate_op(storage).unwrap();
 
-    let mut iter = AsIterator::<(MilestoneIndex, Receipt), ()>::iter_op(storage).unwrap();
+    let mut iter = storage.iter::<(MilestoneIndex, Receipt), ()>().unwrap();
 
     assert!(iter.next().is_none());
 }

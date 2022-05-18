@@ -73,7 +73,7 @@ pub fn snapshot_info_access<B: StorageBackend>(storage: &B) {
 
     storage.insert::<(), SnapshotInfo>(&(), &snapshot_info).unwrap();
 
-    let iter = AsIterator::<(), SnapshotInfo>::iter_op(storage).unwrap();
+    let iter = storage.iter::<(), SnapshotInfo>().unwrap();
     let mut count = 0;
 
     for result in iter {
@@ -88,7 +88,7 @@ pub fn snapshot_info_access<B: StorageBackend>(storage: &B) {
 
     assert!(!storage.exist::<(), SnapshotInfo>(&()).unwrap());
 
-    let mut iter = AsIterator::<(), SnapshotInfo>::iter_op(storage).unwrap();
+    let mut iter = storage.iter::<(), SnapshotInfo>().unwrap();
 
     assert!(iter.next().is_none());
 }

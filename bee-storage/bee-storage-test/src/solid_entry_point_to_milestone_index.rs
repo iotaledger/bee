@@ -107,7 +107,7 @@ pub fn solid_entry_point_to_milestone_index_access<B: StorageBackend>(storage: &
 
     storage.batch_commit(batch, true).unwrap();
 
-    let iter = AsIterator::<SolidEntryPoint, MilestoneIndex>::iter_op(storage).unwrap();
+    let iter = storage.iter::<SolidEntryPoint, MilestoneIndex>().unwrap();
     let mut count = 0;
 
     for result in iter {
@@ -130,7 +130,7 @@ pub fn solid_entry_point_to_milestone_index_access<B: StorageBackend>(storage: &
 
     Truncate::<SolidEntryPoint, MilestoneIndex>::truncate_op(storage).unwrap();
 
-    let mut iter = AsIterator::<SolidEntryPoint, MilestoneIndex>::iter_op(storage).unwrap();
+    let mut iter = storage.iter::<SolidEntryPoint, MilestoneIndex>().unwrap();
 
     assert!(iter.next().is_none());
 }

@@ -118,7 +118,7 @@ pub fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
 
     storage.batch_commit(batch, true).unwrap();
 
-    let iter = AsIterator::<(bool, TreasuryOutput), ()>::iter_op(storage).unwrap();
+    let iter = storage.iter::<(bool, TreasuryOutput), ()>().unwrap();
     let mut count = 0;
 
     for result in iter {
@@ -131,7 +131,7 @@ pub fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
 
     Truncate::<(bool, TreasuryOutput), ()>::truncate_op(storage).unwrap();
 
-    let mut iter = AsIterator::<(bool, TreasuryOutput), ()>::iter_op(storage).unwrap();
+    let mut iter = storage.iter::<(bool, TreasuryOutput), ()>().unwrap();
 
     assert!(iter.next().is_none());
 }

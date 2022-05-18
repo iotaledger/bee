@@ -122,7 +122,7 @@ pub fn milestone_index_to_unreferenced_message_access<B: StorageBackend>(storage
 
     storage.batch_commit(batch, true).unwrap();
 
-    let iter = AsIterator::<(MilestoneIndex, UnreferencedMessage), ()>::iter_op(storage).unwrap();
+    let iter = storage.iter::<(MilestoneIndex, UnreferencedMessage), ()>().unwrap();
     let mut count = 0;
 
     for result in iter {
@@ -135,7 +135,7 @@ pub fn milestone_index_to_unreferenced_message_access<B: StorageBackend>(storage
 
     Truncate::<(MilestoneIndex, UnreferencedMessage), ()>::truncate_op(storage).unwrap();
 
-    let mut iter = AsIterator::<(MilestoneIndex, UnreferencedMessage), ()>::iter_op(storage).unwrap();
+    let mut iter = storage.iter::<(MilestoneIndex, UnreferencedMessage), ()>().unwrap();
 
     assert!(iter.next().is_none());
 }

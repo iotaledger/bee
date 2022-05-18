@@ -6,7 +6,7 @@ use bee_message::{
     constants::IOTA_SUPPLY,
     output::{self, dust_outputs_max},
 };
-use bee_storage::access::AsIterator;
+use bee_storage::backend::StorageBackendExt;
 
 use crate::{
     types::{Balance, Unspent},
@@ -17,7 +17,7 @@ use crate::{
 };
 
 fn validate_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury: u64) -> Result<(), Error> {
-    let iterator = AsIterator::<Unspent, ()>::iter_op(storage).map_err(|e| Error::Storage(Box::new(e)))?;
+    let iterator = storage.iter::<Unspent, ()>().map_err(|e| Error::Storage(Box::new(e)))?;
     let mut supply: u64 = 0;
 
     for result in iterator {
@@ -47,7 +47,9 @@ fn validate_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury: u64) 
 }
 
 fn validate_ledger_balance_state<B: StorageBackend>(storage: &B, treasury: u64) -> Result<(), Error> {
-    let iterator = AsIterator::<Address, Balance>::iter_op(storage).map_err(|e| Error::Storage(Box::new(e)))?;
+    let iterator = storage
+        .iter::<Address, Balance>()
+        .map_err(|e| Error::Storage(Box::new(e)))?;
     let mut supply: u64 = 0;
 
     for result in iterator {

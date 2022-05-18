@@ -96,7 +96,7 @@ pub fn address_to_balance_access<B: StorageBackend>(storage: &B) {
 
     storage.batch_commit(batch, true).unwrap();
 
-    let iter = AsIterator::<Address, Balance>::iter_op(storage).unwrap();
+    let iter = storage.iter::<Address, Balance>().unwrap();
     let mut count = 0;
 
     for result in iter {
@@ -119,7 +119,7 @@ pub fn address_to_balance_access<B: StorageBackend>(storage: &B) {
 
     Truncate::<Address, Balance>::truncate_op(storage).unwrap();
 
-    let mut iter = AsIterator::<Address, Balance>::iter_op(storage).unwrap();
+    let mut iter = storage.iter::<Address, Balance>().unwrap();
 
     assert!(iter.next().is_none());
 }

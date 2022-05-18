@@ -101,7 +101,7 @@ pub fn output_id_to_created_output_access<B: StorageBackend>(storage: &B) {
 
     storage.batch_commit(batch, true).unwrap();
 
-    let iter = AsIterator::<OutputId, CreatedOutput>::iter_op(storage).unwrap();
+    let iter = storage.iter::<OutputId, CreatedOutput>().unwrap();
     let mut count = 0;
 
     for result in iter {
@@ -124,7 +124,7 @@ pub fn output_id_to_created_output_access<B: StorageBackend>(storage: &B) {
 
     Truncate::<OutputId, CreatedOutput>::truncate_op(storage).unwrap();
 
-    let mut iter = AsIterator::<OutputId, CreatedOutput>::iter_op(storage).unwrap();
+    let mut iter = storage.iter::<OutputId, CreatedOutput>().unwrap();
 
     assert!(iter.next().is_none());
 }
