@@ -7,4 +7,4 @@ pub mod process;
 #[cfg(feature = "sync")]
 pub mod sync;
 
-pub use prometheus_client::metrics::{counter, gauge};
+pub use prometheus_client::metrics::{counter, gauge, histogram};
