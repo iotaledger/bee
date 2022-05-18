@@ -58,7 +58,7 @@ pub enum ConflictReason {
     InputUtxoNotFound = 3,
     /// The created amount does not match the consumed amount.
     CreatedConsumedAmountMismatch = 4,
-    /// The unlock block signature is invalid.
+    /// The unlock signature is invalid.
     InvalidSignature = 5,
     /// The configured timelock is not yet expired.
     TimelockNotExpired = 6,
@@ -66,7 +66,7 @@ pub enum ConflictReason {
     InvalidNativeTokens = 7,
     /// Storage deposit return mismatch.
     StorageDepositReturnUnfulfilled = 8,
-    /// An invalid unlock block was used.
+    /// An invalid unlock was used.
     InvalidUnlock = 9,
     /// The inputs commitments do not match.
     InputsCommitmentsMismatch = 10,

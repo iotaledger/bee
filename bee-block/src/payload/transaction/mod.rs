@@ -40,7 +40,7 @@ impl TransactionPayload {
         &self.essence
     }
 
-    /// Return unlock blocks of a [`TransactionPayload`].
+    /// Return unlocks of a [`TransactionPayload`].
     pub fn unlocks(&self) -> &Unlocks {
         &self.unlocks
     }

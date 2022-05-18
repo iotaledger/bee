@@ -5,8 +5,8 @@ use derive_more::From;
 
 use crate::address::Address;
 
-/// Defines the State Controller Address that owns this output, that is, it can unlock it with the proper Unlock Block
-/// in a transaction that state transitions the alias output.
+/// Defines the State Controller Address that owns this output, that is, it can unlock it with the proper Unlock in a
+/// transaction that state transitions the alias output.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From, packable::Packable)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct StateControllerAddressUnlockCondition(Address);

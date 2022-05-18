@@ -23,8 +23,7 @@ fn kind() {
     assert_eq!(TransactionPayload::KIND, 6);
 }
 
-// Validate that attempting to construct a `TransactionPayload` with too few unlock blocks is an
-// error.
+// Validate that attempting to construct a `TransactionPayload` with too few unlocks is an error.
 #[test]
 fn builder_no_essence_too_few_unlocks() {
     // Construct a transaction essence with two inputs and one output.
@@ -49,7 +48,7 @@ fn builder_no_essence_too_few_unlocks() {
             .unwrap(),
     );
 
-    // Construct a list with a single unlock block, whereas we have 2 tx inputs.
+    // Construct a list with a single unlock, whereas we have 2 tx inputs.
     let pub_key_bytes: [u8; 32] = prefix_hex::decode(ED25519_PUBLIC_KEY).unwrap();
     let sig_bytes: [u8; 64] = prefix_hex::decode(ED25519_SIGNATURE).unwrap();
     let signature = Ed25519Signature::new(pub_key_bytes, sig_bytes);
@@ -62,8 +61,7 @@ fn builder_no_essence_too_few_unlocks() {
             if input_count == 2 && unlock_count == 1));
 }
 
-// Validate that attempting to construct a `TransactionPayload` with too many unlock blocks is an
-// error.
+// Validate that attempting to construct a `TransactionPayload` with too many unlocks is an error.
 #[test]
 fn builder_no_essence_too_many_unlocks() {
     // Construct a transaction essence with one input and one output.
@@ -87,7 +85,7 @@ fn builder_no_essence_too_many_unlocks() {
             .unwrap(),
     );
 
-    // Construct a list of two unlock blocks, whereas we only have 1 tx input.
+    // Construct a list of two unlocks, whereas we only have 1 tx input.
     let pub_key_bytes: [u8; 32] = prefix_hex::decode(ED25519_PUBLIC_KEY).unwrap();
     let sig_bytes: [u8; 64] = prefix_hex::decode(ED25519_SIGNATURE).unwrap();
     let signature = Ed25519Signature::new(pub_key_bytes, sig_bytes);
@@ -127,7 +125,7 @@ fn pack_unpack_valid() {
             .unwrap(),
     );
 
-    // Construct a list of two unlock blocks, whereas we only have 1 tx input.
+    // Construct a list of two unlocks, whereas we only have 1 tx input.
     let pub_key_bytes: [u8; 32] = prefix_hex::decode(ED25519_PUBLIC_KEY).unwrap();
     let sig_bytes: [u8; 64] = prefix_hex::decode(ED25519_SIGNATURE).unwrap();
     let signature = Ed25519Signature::new(pub_key_bytes, sig_bytes);
@@ -169,7 +167,7 @@ fn getters() {
             .unwrap(),
     );
 
-    // Construct a list of two unlock blocks, whereas we only have 1 tx input.
+    // Construct a list of two unlocks, whereas we only have 1 tx input.
     let pub_key_bytes: [u8; 32] = prefix_hex::decode(ED25519_PUBLIC_KEY).unwrap();
     let sig_bytes: [u8; 64] = prefix_hex::decode(ED25519_SIGNATURE).unwrap();
     let signature = Ed25519Signature::new(pub_key_bytes, sig_bytes);

@@ -5,7 +5,7 @@ use derive_more::From;
 
 use crate::address::Address;
 
-/// Defines the Address that owns this output, that is, it can unlock it with the proper Unlock Block in a transaction.
+/// Defines the Address that owns this output, that is, it can unlock it with the proper Unlock in a transaction.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From, packable::Packable)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AddressUnlockCondition(Address);
