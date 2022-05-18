@@ -37,7 +37,7 @@ pub enum Error {
     DuplicateUtxo(UtxoInput),
     ExpirationUnlockConditionZero,
     FeaturesNotUniqueSorted,
-    InputUnlockCountMismatch { input_count: usize, block_count: usize },
+    InputUnlockCountMismatch { input_count: usize, unlock_count: usize },
     InvalidAddress,
     InvalidAddressKind(u8),
     InvalidAliasIndex(<UnlockIndex as TryFrom<u16>>::Error),
@@ -134,7 +134,7 @@ impl fmt::Display for Error {
             Error::CreatedNativeTokensAmountOverflow => write!(f, "created native tokens amount overflow"),
             Error::CryptoError(e) => write!(f, "cryptographic error: {}", e),
             Error::DuplicateSignatureUnlock(index) => {
-                write!(f, "duplicate signature unlock block at index: {0}", index)
+                write!(f, "duplicate signature unlock at index: {0}", index)
             }
             Error::DuplicateUtxo(utxo) => write!(f, "duplicate UTXO {:?} in inputs", utxo),
             Error::ExpirationUnlockConditionZero => {
@@ -146,12 +146,12 @@ impl fmt::Display for Error {
             Error::FeaturesNotUniqueSorted => write!(f, "features are not unique and/or sorted"),
             Error::InputUnlockCountMismatch {
                 input_count,
-                block_count,
+                unlock_count,
             } => {
                 write!(
                     f,
-                    "input count and unlock block count mismatch: {} != {}",
-                    input_count, block_count
+                    "input count and unlock count mismatch: {} != {}",
+                    input_count, unlock_count
                 )
             }
             Error::InvalidAddress => write!(f, "invalid address provided"),
@@ -239,16 +239,16 @@ impl fmt::Display for Error {
                 write!(f, "invalid transaction native tokens count: {}", count)
             }
             Error::InvalidTreasuryOutputAmount(amount) => write!(f, "invalid treasury amount: {}", amount),
-            Error::InvalidUnlockCount(count) => write!(f, "invalid unlock block count: {}", count),
-            Error::InvalidUnlockKind(k) => write!(f, "invalid unlock block kind: {}", k),
+            Error::InvalidUnlockCount(count) => write!(f, "invalid unlock count: {}", count),
+            Error::InvalidUnlockKind(k) => write!(f, "invalid unlock kind: {}", k),
             Error::InvalidUnlockReference(index) => {
-                write!(f, "invalid unlock block reference: {0}", index)
+                write!(f, "invalid unlock reference: {0}", index)
             }
             Error::InvalidUnlockAlias(index) => {
-                write!(f, "invalid unlock block alias: {0}", index)
+                write!(f, "invalid unlock alias: {0}", index)
             }
             Error::InvalidUnlockNft(index) => {
-                write!(f, "invalid unlock block nft: {0}", index)
+                write!(f, "invalid unlock nft: {0}", index)
             }
             Error::InvalidUnlockConditionCount(count) => write!(f, "invalid unlock condition count: {}", count),
             Error::InvalidUnlockConditionKind(k) => write!(f, "invalid unlock condition kind: {}", k),

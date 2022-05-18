@@ -58,8 +58,8 @@ fn builder_no_essence_too_few_unlocks() {
 
     assert!(matches!(
             TransactionPayload::new(essence, unlocks),
-            Err(Error::InputUnlockCountMismatch{input_count, block_count})
-            if input_count == 2 && block_count == 1));
+            Err(Error::InputUnlockCountMismatch{input_count, unlock_count})
+            if input_count == 2 && unlock_count == 1));
 }
 
 // Validate that attempting to construct a `TransactionPayload` with too many unlock blocks is an
@@ -98,8 +98,8 @@ fn builder_no_essence_too_many_unlocks() {
 
     assert!(matches!(
             TransactionPayload::new(essence, unlocks),
-            Err(Error::InputUnlockCountMismatch{input_count, block_count})
-            if input_count == 1 && block_count == 2));
+            Err(Error::InputUnlockCountMismatch{input_count, unlock_count})
+            if input_count == 1 && unlock_count == 2));
 }
 
 // Validate that a `unpack` ∘ `pack` round-trip results in the original block.

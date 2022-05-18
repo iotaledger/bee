@@ -86,7 +86,7 @@ fn verify_essence_unlocks(essence: &TransactionEssence, unlocks: &Unlocks) -> Re
             if essence.inputs().len() != unlocks.len() {
                 return Err(Error::InputUnlockCountMismatch {
                     input_count: essence.inputs().len(),
-                    block_count: unlocks.len(),
+                    unlock_count: unlocks.len(),
                 });
             }
         }
