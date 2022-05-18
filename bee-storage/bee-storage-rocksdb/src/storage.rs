@@ -190,7 +190,7 @@ impl StorageBackend for Storage {
                     return Err(Error::VersionMismatch(version, STORAGE_VERSION));
                 }
             }
-            None => storage.insert::<u8, System>(&SYSTEM_VERSION_KEY, &System::Version(STORAGE_VERSION))?,
+            None => storage.insert(&SYSTEM_VERSION_KEY, &System::Version(STORAGE_VERSION))?,
             _ => panic!("Another system value was inserted on the version key."),
         }
 
@@ -226,6 +226,6 @@ impl StorageBackend for Storage {
     }
 
     fn set_health(&self, health: StorageHealth) -> Result<(), Self::Error> {
-        self.insert::<u8, System>(&SYSTEM_HEALTH_KEY, &System::Health(health))
+        self.insert(&SYSTEM_HEALTH_KEY, &System::Health(health))
     }
 }

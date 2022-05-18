@@ -49,9 +49,7 @@ pub fn message_id_to_message_id_access<B: StorageBackend>(storage: &B) {
             .is_empty()
     );
 
-    storage
-        .insert::<(MessageId, MessageId), ()>(&(parent, child), &())
-        .unwrap();
+    storage.insert(&(parent, child), &()).unwrap();
 
     assert!(storage.exist::<(MessageId, MessageId), ()>(&(parent, child)).unwrap());
     assert_eq!(
@@ -74,9 +72,7 @@ pub fn message_id_to_message_id_access<B: StorageBackend>(storage: &B) {
 
     for _ in 0..10 {
         let (parent, child) = (rand_message_id(), rand_message_id());
-        storage
-            .insert::<(MessageId, MessageId), ()>(&(parent, child), &())
-            .unwrap();
+        storage.insert(&(parent, child), &()).unwrap();
         storage
             .batch_delete::<(MessageId, MessageId), ()>(&mut batch, &(parent, child))
             .unwrap();
@@ -88,9 +84,7 @@ pub fn message_id_to_message_id_access<B: StorageBackend>(storage: &B) {
         let parent = rand_message_id();
         for _ in 0..5 {
             let child = rand_message_id();
-            storage
-                .batch_insert::<(MessageId, MessageId), ()>(&mut batch, &(parent, child), &())
-                .unwrap();
+            storage.batch_insert(&mut batch, &(parent, child), &()).unwrap();
             edges.entry(parent).or_default().push(child);
         }
     }

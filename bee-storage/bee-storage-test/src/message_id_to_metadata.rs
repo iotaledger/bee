@@ -44,12 +44,10 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
     let (message_id, metadata) = (rand_message_id(), rand_message_metadata());
 
     assert!(!storage.exist::<MessageId, MessageMetadata>(&message_id).unwrap());
-    assert!(
-        storage
-            .fetch::<MessageId, MessageMetadata>(&message_id)
-            .unwrap()
-            .is_none()
-    );
+    assert!(storage
+        .fetch::<MessageId, MessageMetadata>(&message_id)
+        .unwrap()
+        .is_none());
     let results = storage
         .multi_fetch::<MessageId, MessageMetadata>(&[message_id])
         .unwrap()
@@ -57,9 +55,7 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(None))));
 
-    storage
-        .insert_strict::<MessageId, MessageMetadata>(&message_id, &metadata)
-        .unwrap();
+    storage.insert_strict(&message_id, &metadata).unwrap();
     assert!(storage.exist::<MessageId, MessageMetadata>(&message_id).unwrap());
 
     // calling `insert_strict` with the same `MessageId` but a different `MessageMetadata` should
@@ -69,9 +65,7 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
         let mut metadata = metadata.clone();
         metadata.set_milestone_index(MilestoneIndex(index));
 
-        storage
-            .insert_strict::<MessageId, MessageMetadata>(&message_id, &metadata)
-            .unwrap();
+        storage.insert_strict(&message_id, &metadata).unwrap();
     }
     assert_eq!(
         storage
@@ -100,8 +94,8 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
     };
 
     storage
-        .update::<MessageId, MessageMetadata, _>(&message_id, |metadata: &mut MessageMetadata| {
-            metadata.set_milestone_index(milestone_index);
+        .update(&message_id, |metadata: &mut MessageMetadata| {
+            metadata.set_milestone_index(milestone_index)
         })
         .unwrap();
 
@@ -117,12 +111,10 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
     storage.delete::<MessageId, MessageMetadata>(&message_id).unwrap();
 
     assert!(!storage.exist::<MessageId, MessageMetadata>(&message_id).unwrap());
-    assert!(
-        storage
-            .fetch::<MessageId, MessageMetadata>(&message_id)
-            .unwrap()
-            .is_none()
-    );
+    assert!(storage
+        .fetch::<MessageId, MessageMetadata>(&message_id)
+        .unwrap()
+        .is_none());
 
     let results = storage
         .multi_fetch::<MessageId, MessageMetadata>(&[message_id])
@@ -137,9 +129,7 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
 
     for _ in 0..10 {
         let (message_id, metadata) = (rand_message_id(), rand_message_metadata());
-        storage
-            .insert_strict::<MessageId, MessageMetadata>(&message_id, &metadata)
-            .unwrap();
+        storage.insert_strict(&message_id, &metadata).unwrap();
         storage
             .batch_delete::<MessageId, MessageMetadata>(&mut batch, &message_id)
             .unwrap();
@@ -149,9 +139,7 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
 
     for _ in 0..10 {
         let (message_id, metadata) = (rand_message_id(), rand_message_metadata());
-        storage
-            .batch_insert::<MessageId, MessageMetadata>(&mut batch, &message_id, &metadata)
-            .unwrap();
+        storage.batch_insert(&mut batch, &message_id, &metadata).unwrap();
         message_ids.push(message_id);
         metadatas.push((message_id, Some(metadata)));
     }

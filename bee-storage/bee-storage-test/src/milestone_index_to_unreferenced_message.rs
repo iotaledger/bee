@@ -54,9 +54,7 @@ pub fn milestone_index_to_unreferenced_message_access<B: StorageBackend>(storage
             .is_empty()
     );
 
-    storage
-        .insert::<(MilestoneIndex, UnreferencedMessage), ()>(&(index, unreferenced_message), &())
-        .unwrap();
+    storage.insert(&(index, unreferenced_message), &()).unwrap();
 
     assert!(
         storage
@@ -92,9 +90,7 @@ pub fn milestone_index_to_unreferenced_message_access<B: StorageBackend>(storage
 
     for _ in 0..10 {
         let (index, unreferenced_message) = (rand_milestone_index(), rand_unreferenced_message());
-        storage
-            .insert::<(MilestoneIndex, UnreferencedMessage), ()>(&(index, unreferenced_message), &())
-            .unwrap();
+        storage.insert(&(index, unreferenced_message), &()).unwrap();
         storage
             .batch_delete::<(MilestoneIndex, UnreferencedMessage), ()>(&mut batch, &(index, unreferenced_message))
             .unwrap();
@@ -107,11 +103,7 @@ pub fn milestone_index_to_unreferenced_message_access<B: StorageBackend>(storage
         for _ in 0..5 {
             let unreferenced_message = rand_unreferenced_message();
             storage
-                .batch_insert::<(MilestoneIndex, UnreferencedMessage), ()>(
-                    &mut batch,
-                    &(index, unreferenced_message),
-                    &(),
-                )
+                .batch_insert(&mut batch, &(index, unreferenced_message), &())
                 .unwrap();
             unreferenced_messages
                 .entry(index)

@@ -53,9 +53,7 @@ pub fn ed25519_address_to_output_id_access<B: StorageBackend>(storage: &B) {
             .is_empty()
     );
 
-    storage
-        .insert::<(Ed25519Address, OutputId), ()>(&(address, output_id), &())
-        .unwrap();
+    storage.insert(&(address, output_id), &()).unwrap();
 
     assert!(
         storage
@@ -91,9 +89,7 @@ pub fn ed25519_address_to_output_id_access<B: StorageBackend>(storage: &B) {
 
     for _ in 0..10 {
         let (address, output_id) = (rand_ed25519_address(), rand_output_id());
-        storage
-            .insert::<(Ed25519Address, OutputId), ()>(&(address, output_id), &())
-            .unwrap();
+        storage.insert(&(address, output_id), &()).unwrap();
         storage
             .batch_delete::<(Ed25519Address, OutputId), ()>(&mut batch, &(address, output_id))
             .unwrap();
@@ -105,9 +101,7 @@ pub fn ed25519_address_to_output_id_access<B: StorageBackend>(storage: &B) {
         let address = rand_ed25519_address();
         for _ in 0..5 {
             let output_id = rand_output_id();
-            storage
-                .batch_insert::<(Ed25519Address, OutputId), ()>(&mut batch, &(address, output_id), &())
-                .unwrap();
+            storage.batch_insert(&mut batch, &(address, output_id), &()).unwrap();
             output_ids.entry(address).or_default().push(output_id);
         }
     }

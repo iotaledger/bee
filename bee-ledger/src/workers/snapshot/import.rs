@@ -55,7 +55,7 @@ fn import_solid_entry_points<R: Read, B: StorageBackend>(
         .map_err(|e| Error::Storage(Box::new(e)))?;
     for _ in 0..sep_count {
         storage
-            .insert::<SolidEntryPoint, MilestoneIndex>(&SolidEntryPoint::unpack(reader)?, &index)
+            .insert(&SolidEntryPoint::unpack(reader)?, &index)
             .map_err(|e| Error::Storage(Box::new(e)))?;
     }
 

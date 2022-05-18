@@ -53,9 +53,7 @@ pub fn index_to_message_id_access<B: StorageBackend>(storage: &B) {
             .is_empty()
     );
 
-    storage
-        .insert::<(PaddedIndex, MessageId), ()>(&(index, message_id), &())
-        .unwrap();
+    storage.insert(&(index, message_id), &()).unwrap();
 
     assert!(
         storage
@@ -88,9 +86,7 @@ pub fn index_to_message_id_access<B: StorageBackend>(storage: &B) {
 
     for _ in 0..10 {
         let (index, message_id) = (rand_indexation_payload().padded_index(), rand_message_id());
-        storage
-            .insert::<(PaddedIndex, MessageId), ()>(&(index, message_id), &())
-            .unwrap();
+        storage.insert(&(index, message_id), &()).unwrap();
         storage
             .batch_delete::<(PaddedIndex, MessageId), ()>(&mut batch, &(index, message_id))
             .unwrap();
@@ -102,9 +98,7 @@ pub fn index_to_message_id_access<B: StorageBackend>(storage: &B) {
         let index = rand_indexation_payload().padded_index();
         for _ in 0..5 {
             let message_id = rand_message_id();
-            storage
-                .batch_insert::<(PaddedIndex, MessageId), ()>(&mut batch, &(index, message_id), &())
-                .unwrap();
+            storage.batch_insert(&mut batch, &(index, message_id), &()).unwrap();
             message_ids.entry(index).or_default().push(message_id);
         }
     }

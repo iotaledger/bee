@@ -47,11 +47,7 @@ where
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
             while let Some(UnreferencedMessageInserterWorkerEvent(message_id, index)) = receiver.next().await {
-                if let Err(e) = storage.batch_insert::<(MilestoneIndex, UnreferencedMessage), ()>(
-                    &mut batch,
-                    &(index, UnreferencedMessage::from(message_id)),
-                    &(),
-                ) {
+                if let Err(e) = storage.batch_insert(&mut batch, &(index, UnreferencedMessage::from(message_id)), &()) {
                     error!("Batch inserting unreferenced message failed: {:?}.", e);
                 }
 
@@ -78,10 +74,7 @@ where
             while let Some(Some(UnreferencedMessageInserterWorkerEvent(message_id, index))) =
                 receiver.next().now_or_never()
             {
-                if let Err(e) = storage.insert::<(MilestoneIndex, UnreferencedMessage), ()>(
-                    &(index, UnreferencedMessage::from(message_id)),
-                    &(),
-                ) {
+                if let Err(e) = storage.insert(&(index, UnreferencedMessage::from(message_id)), &()) {
                     error!("Inserting unreferenced message failed: {:?}.", e);
                 }
                 counter += 1;

@@ -54,9 +54,7 @@ pub fn milestone_index_to_receipt_access<B: StorageBackend>(storage: &B) {
             .is_empty()
     );
 
-    storage
-        .insert::<(MilestoneIndex, Receipt), ()>(&(index, receipt.clone()), &())
-        .unwrap();
+    storage.insert(&(index, receipt.clone()), &()).unwrap();
 
     assert!(
         storage
@@ -89,9 +87,7 @@ pub fn milestone_index_to_receipt_access<B: StorageBackend>(storage: &B) {
 
     for _ in 0..10 {
         let (index, receipt) = (rand_milestone_index(), rand_ledger_receipt());
-        storage
-            .insert::<(MilestoneIndex, Receipt), ()>(&(index, receipt.clone()), &())
-            .unwrap();
+        storage.insert(&(index, receipt.clone()), &()).unwrap();
         storage
             .batch_delete::<(MilestoneIndex, Receipt), ()>(&mut batch, &(index, receipt))
             .unwrap();
@@ -104,7 +100,7 @@ pub fn milestone_index_to_receipt_access<B: StorageBackend>(storage: &B) {
         for _ in 0..5 {
             let receipt = rand_ledger_receipt();
             storage
-                .batch_insert::<(MilestoneIndex, Receipt), ()>(&mut batch, &(index, receipt.clone()), &())
+                .batch_insert(&mut batch, &(index, receipt.clone()), &())
                 .unwrap();
             receipts.entry(index).or_default().push(receipt);
         }

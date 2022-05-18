@@ -41,7 +41,7 @@ pub fn ledger_index_access<B: StorageBackend>(storage: &B) {
     assert!(!storage.exist::<(), LedgerIndex>(&()).unwrap());
     assert!(storage.fetch::<(), LedgerIndex>(&()).unwrap().is_none());
 
-    storage.insert::<(), LedgerIndex>(&(), &index).unwrap();
+    storage.insert(&(), &index).unwrap();
 
     assert!(storage.exist::<(), LedgerIndex>(&()).unwrap());
     assert_eq!(storage.fetch::<(), LedgerIndex>(&()).unwrap().unwrap(), index);
@@ -53,9 +53,7 @@ pub fn ledger_index_access<B: StorageBackend>(storage: &B) {
 
     let mut batch = B::batch_begin();
 
-    storage
-        .batch_insert::<(), LedgerIndex>(&mut batch, &(), &index)
-        .unwrap();
+    storage.batch_insert(&mut batch, &(), &index).unwrap();
 
     storage.batch_commit(batch, true).unwrap();
 
@@ -71,7 +69,7 @@ pub fn ledger_index_access<B: StorageBackend>(storage: &B) {
     assert!(!storage.exist::<(), LedgerIndex>(&()).unwrap());
     assert!(storage.fetch::<(), LedgerIndex>(&()).unwrap().is_none());
 
-    storage.insert::<(), LedgerIndex>(&(), &index).unwrap();
+    storage.insert(&(), &index).unwrap();
 
     let iter = storage.iter::<(), LedgerIndex>().unwrap();
     let mut count = 0;

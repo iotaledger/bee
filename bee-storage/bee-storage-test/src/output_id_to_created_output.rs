@@ -50,9 +50,7 @@ pub fn output_id_to_created_output_access<B: StorageBackend>(storage: &B) {
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(None))));
 
-    storage
-        .insert::<OutputId, CreatedOutput>(&output_id, &created_output)
-        .unwrap();
+    storage.insert(&output_id, &created_output).unwrap();
 
     assert!(storage.exist::<OutputId, CreatedOutput>(&output_id).unwrap());
     assert_eq!(
@@ -83,9 +81,7 @@ pub fn output_id_to_created_output_access<B: StorageBackend>(storage: &B) {
 
     for _ in 0..10 {
         let (output_id, created_output) = (rand_output_id(), rand_created_output());
-        storage
-            .insert::<OutputId, CreatedOutput>(&output_id, &created_output)
-            .unwrap();
+        storage.insert(&output_id, &created_output).unwrap();
         storage
             .batch_delete::<OutputId, CreatedOutput>(&mut batch, &output_id)
             .unwrap();
@@ -95,9 +91,7 @@ pub fn output_id_to_created_output_access<B: StorageBackend>(storage: &B) {
 
     for _ in 0..10 {
         let (output_id, created_output) = (rand_output_id(), rand_created_output());
-        storage
-            .batch_insert::<OutputId, CreatedOutput>(&mut batch, &output_id, &created_output)
-            .unwrap();
+        storage.batch_insert(&mut batch, &output_id, &created_output).unwrap();
         output_ids.push(output_id);
         created_outputs.push((output_id, Some(created_output)));
     }

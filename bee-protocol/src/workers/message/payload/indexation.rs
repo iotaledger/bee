@@ -5,7 +5,7 @@ use std::{any::TypeId, convert::Infallible};
 
 use async_trait::async_trait;
 use bee_message::{
-    payload::{indexation::PaddedIndex, transaction::Essence, Payload},
+    payload::{transaction::Essence, Payload},
     Message, MessageId,
 };
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
@@ -57,7 +57,7 @@ fn process<B: StorageBackend>(storage: &B, metrics: &NodeMetrics, message_id: Me
 
     metrics.indexation_payloads_inc(1);
 
-    if let Err(e) = storage.insert::<(PaddedIndex, MessageId), ()>(&(indexation.padded_index(), message_id), &()) {
+    if let Err(e) = storage.insert(&(indexation.padded_index(), message_id), &()) {
         error!(
             "Inserting indexation payload for message {} failed: {:?}.",
             message_id, e

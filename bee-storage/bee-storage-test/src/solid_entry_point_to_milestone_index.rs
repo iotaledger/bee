@@ -55,7 +55,7 @@ pub fn solid_entry_point_to_milestone_index_access<B: StorageBackend>(storage: &
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(None))));
 
-    storage.insert::<SolidEntryPoint, MilestoneIndex>(&sep, &index).unwrap();
+    storage.insert(&sep, &index).unwrap();
 
     assert!(storage.exist::<SolidEntryPoint, MilestoneIndex>(&sep).unwrap());
     assert_eq!(
@@ -91,7 +91,7 @@ pub fn solid_entry_point_to_milestone_index_access<B: StorageBackend>(storage: &
 
     for _ in 0..10 {
         let (sep, index) = (rand_solid_entry_point(), rand_milestone_index());
-        storage.insert::<SolidEntryPoint, MilestoneIndex>(&sep, &index).unwrap();
+        storage.insert(&sep, &index).unwrap();
         storage
             .batch_delete::<SolidEntryPoint, MilestoneIndex>(&mut batch, &sep)
             .unwrap();
@@ -101,9 +101,7 @@ pub fn solid_entry_point_to_milestone_index_access<B: StorageBackend>(storage: &
 
     for _ in 0..10 {
         let (sep, index) = (rand_solid_entry_point(), rand_milestone_index());
-        storage
-            .batch_insert::<SolidEntryPoint, MilestoneIndex>(&mut batch, &sep, &index)
-            .unwrap();
+        storage.batch_insert(&mut batch, &sep, &index).unwrap();
         seps_ids.push(sep);
         seps.push((sep, Some(index)));
     }

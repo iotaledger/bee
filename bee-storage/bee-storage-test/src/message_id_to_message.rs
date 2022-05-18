@@ -49,10 +49,10 @@ pub fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(None))));
 
-    storage.insert::<MessageId, Message>(&message_id, &message).unwrap();
+    storage.insert(&message_id, &message).unwrap();
 
     let message = rand_message();
-    storage.insert::<MessageId, Message>(&message_id, &message).unwrap();
+    storage.insert(&message_id, &message).unwrap();
     assert_eq!(
         storage.fetch::<MessageId, Message>(&message_id).unwrap().as_ref(),
         Some(&message),
@@ -88,7 +88,7 @@ pub fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
 
     for _ in 0..10 {
         let (message_id, message) = (rand_message_id(), rand_message());
-        storage.insert::<MessageId, Message>(&message_id, &message).unwrap();
+        storage.insert(&message_id, &message).unwrap();
         storage
             .batch_delete::<MessageId, Message>(&mut batch, &message_id)
             .unwrap();
@@ -98,9 +98,7 @@ pub fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
 
     for _ in 0..10 {
         let (message_id, message) = (rand_message_id(), rand_message());
-        storage
-            .batch_insert::<MessageId, Message>(&mut batch, &message_id, &message)
-            .unwrap();
+        storage.batch_insert(&mut batch, &message_id, &message).unwrap();
         message_ids.push(message_id);
         messages.push((message_id, Some(message)));
     }

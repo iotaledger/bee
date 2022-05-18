@@ -116,7 +116,7 @@ pub async fn prune<S: StorageBackend>(
         let batch_new_seps = Instant::now();
         for (new_sep, index) in &new_seps {
             storage
-                .batch_insert::<SolidEntryPoint, MilestoneIndex>(&mut batch, new_sep, index)
+                .batch_insert(&mut batch, new_sep, index)
                 .map_err(|e| Error::Storage(Box::new(e)))?;
         }
         timings.batch_new_seps = batch_new_seps.elapsed();
