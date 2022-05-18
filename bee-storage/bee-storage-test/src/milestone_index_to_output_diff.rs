@@ -131,7 +131,7 @@ pub fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &B) {
         assert_eq!(diff, result.unwrap());
     }
 
-    Truncate::<MilestoneIndex, OutputDiff>::truncate_op(storage).unwrap();
+    storage.truncate::<MilestoneIndex, OutputDiff>().unwrap();
 
     let mut iter = storage.iter::<MilestoneIndex, OutputDiff>().unwrap();
 

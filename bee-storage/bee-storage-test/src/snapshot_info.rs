@@ -84,7 +84,7 @@ pub fn snapshot_info_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(count, 1);
 
-    Truncate::<(), SnapshotInfo>::truncate_op(storage).unwrap();
+    storage.truncate::<(), SnapshotInfo>().unwrap();
 
     assert!(!storage.exist::<(), SnapshotInfo>(&()).unwrap());
 

@@ -8,7 +8,7 @@ use std::{
 
 use bee_message::milestone::MilestoneIndex;
 use bee_runtime::event::Bus;
-use bee_storage::{access::Truncate, backend::StorageBackendExt};
+use bee_storage::backend::StorageBackendExt;
 use bee_tangle::{solid_entry_point::SolidEntryPoint, Tangle};
 use log::{debug, info};
 
@@ -151,7 +151,8 @@ pub async fn prune<S: StorageBackend>(
         // TODO: consider batching deletes rather than using Truncate. Is one faster than the other? Do we care if its
         // atomic or not?
         let truncate_old_seps = Instant::now();
-        Truncate::<SolidEntryPoint, MilestoneIndex>::truncate_op(storage)
+        storage
+            .truncate::<SolidEntryPoint, MilestoneIndex>()
             .expect("truncating solid entry points failed");
         timings.truncate_curr_seps = truncate_old_seps.elapsed();
 

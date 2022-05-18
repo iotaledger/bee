@@ -133,7 +133,7 @@ pub fn milestone_index_to_unreferenced_message_access<B: StorageBackend>(storage
 
     assert_eq!(count, unreferenced_messages.iter().fold(0, |acc, v| acc + v.1.len()));
 
-    Truncate::<(MilestoneIndex, UnreferencedMessage), ()>::truncate_op(storage).unwrap();
+    storage.truncate::<(MilestoneIndex, UnreferencedMessage), ()>().unwrap();
 
     let mut iter = storage.iter::<(MilestoneIndex, UnreferencedMessage), ()>().unwrap();
 

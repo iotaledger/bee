@@ -84,7 +84,7 @@ pub fn ledger_index_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(count, 1);
 
-    Truncate::<(), LedgerIndex>::truncate_op(storage).unwrap();
+    storage.truncate::<(), LedgerIndex>().unwrap();
 
     assert!(!storage.exist::<(), LedgerIndex>(&()).unwrap());
 

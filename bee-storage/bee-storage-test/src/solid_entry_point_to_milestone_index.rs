@@ -132,7 +132,7 @@ pub fn solid_entry_point_to_milestone_index_access<B: StorageBackend>(storage: &
         assert_eq!(index, result.unwrap());
     }
 
-    Truncate::<SolidEntryPoint, MilestoneIndex>::truncate_op(storage).unwrap();
+    storage.truncate::<SolidEntryPoint, MilestoneIndex>().unwrap();
 
     let mut iter = storage.iter::<SolidEntryPoint, MilestoneIndex>().unwrap();
 

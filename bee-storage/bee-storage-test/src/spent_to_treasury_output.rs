@@ -129,7 +129,7 @@ pub fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(count, treasury_outputs.iter().fold(0, |acc, v| acc + v.1.len()));
 
-    Truncate::<(bool, TreasuryOutput), ()>::truncate_op(storage).unwrap();
+    storage.truncate::<(bool, TreasuryOutput), ()>().unwrap();
 
     let mut iter = storage.iter::<(bool, TreasuryOutput), ()>().unwrap();
 

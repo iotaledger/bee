@@ -123,7 +123,7 @@ pub fn milestone_index_to_receipt_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(count, receipts.iter().fold(0, |acc, v| acc + v.1.len()));
 
-    Truncate::<(MilestoneIndex, Receipt), ()>::truncate_op(storage).unwrap();
+    storage.truncate::<(MilestoneIndex, Receipt), ()>().unwrap();
 
     let mut iter = storage.iter::<(MilestoneIndex, Receipt), ()>().unwrap();
 

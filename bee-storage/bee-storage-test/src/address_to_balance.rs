@@ -121,7 +121,7 @@ pub fn address_to_balance_access<B: StorageBackend>(storage: &B) {
         assert_eq!(balance, result.unwrap());
     }
 
-    Truncate::<Address, Balance>::truncate_op(storage).unwrap();
+    storage.truncate::<Address, Balance>().unwrap();
 
     let mut iter = storage.iter::<Address, Balance>().unwrap();
 

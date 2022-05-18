@@ -121,7 +121,7 @@ pub fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B) {
         assert_eq!(milestone, result.unwrap());
     }
 
-    Truncate::<MilestoneIndex, Milestone>::truncate_op(storage).unwrap();
+    storage.truncate::<MilestoneIndex, Milestone>().unwrap();
 
     let mut iter = storage.iter::<MilestoneIndex, Milestone>().unwrap();
 

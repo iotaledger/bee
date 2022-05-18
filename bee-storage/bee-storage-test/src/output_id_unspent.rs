@@ -74,7 +74,7 @@ pub fn output_id_unspent_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(count, unspents.len());
 
-    Truncate::<Unspent, ()>::truncate_op(storage).unwrap();
+    storage.truncate::<Unspent, ()>().unwrap();
 
     let mut iter = storage.iter::<Unspent, ()>().unwrap();
 

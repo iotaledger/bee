@@ -122,7 +122,7 @@ pub fn index_to_message_id_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(count, message_ids.iter().fold(0, |acc, v| acc + v.1.len()));
 
-    Truncate::<(PaddedIndex, MessageId), ()>::truncate_op(storage).unwrap();
+    storage.truncate::<(PaddedIndex, MessageId), ()>().unwrap();
 
     let mut iter = storage.iter::<(PaddedIndex, MessageId), ()>().unwrap();
 

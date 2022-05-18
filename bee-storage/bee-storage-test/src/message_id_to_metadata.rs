@@ -179,7 +179,7 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
         assert_eq!(metadata, result.unwrap());
     }
 
-    Truncate::<MessageId, MessageMetadata>::truncate_op(storage).unwrap();
+    storage.truncate::<MessageId, MessageMetadata>().unwrap();
 
     let mut iter = storage.iter::<MessageId, MessageMetadata>().unwrap();
 

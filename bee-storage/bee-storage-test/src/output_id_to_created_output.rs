@@ -126,7 +126,7 @@ pub fn output_id_to_created_output_access<B: StorageBackend>(storage: &B) {
         assert_eq!(created_output, result.unwrap());
     }
 
-    Truncate::<OutputId, CreatedOutput>::truncate_op(storage).unwrap();
+    storage.truncate::<OutputId, CreatedOutput>().unwrap();
 
     let mut iter = storage.iter::<OutputId, CreatedOutput>().unwrap();
 

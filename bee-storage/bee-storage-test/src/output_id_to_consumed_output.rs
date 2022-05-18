@@ -126,7 +126,7 @@ pub fn output_id_to_consumed_output_access<B: StorageBackend>(storage: &B) {
         assert_eq!(consumed_output, result.unwrap());
     }
 
-    Truncate::<OutputId, ConsumedOutput>::truncate_op(storage).unwrap();
+    storage.truncate::<OutputId, ConsumedOutput>().unwrap();
 
     let mut iter = storage.iter::<OutputId, ConsumedOutput>().unwrap();
 

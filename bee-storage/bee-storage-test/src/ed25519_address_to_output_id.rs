@@ -125,7 +125,7 @@ pub fn ed25519_address_to_output_id_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(count, output_ids.iter().fold(0, |acc, v| acc + v.1.len()));
 
-    Truncate::<(Ed25519Address, OutputId), ()>::truncate_op(storage).unwrap();
+    storage.truncate::<(Ed25519Address, OutputId), ()>().unwrap();
 
     let mut iter = storage.iter::<(Ed25519Address, OutputId), ()>().unwrap();
 

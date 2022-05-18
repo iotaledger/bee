@@ -108,7 +108,7 @@ pub fn message_id_to_message_id_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(count, edges.iter().fold(0, |acc, v| acc + v.1.len()));
 
-    Truncate::<(MessageId, MessageId), ()>::truncate_op(storage).unwrap();
+    storage.truncate::<(MessageId, MessageId), ()>().unwrap();
 
     let mut iter = storage.iter::<(MessageId, MessageId), ()>().unwrap();
 
