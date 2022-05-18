@@ -124,8 +124,7 @@ pub struct MetricsResponse {
 /// Returns non-lazy tips.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct TipsResponse {
-    #[serde(rename = "tipBlockIds")]
-    pub tip_block_ids: Vec<String>,
+    pub tips: Vec<String>,
 }
 
 impl BodyInner for TipsResponse {}
