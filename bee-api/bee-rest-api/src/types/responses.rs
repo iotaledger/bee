@@ -181,8 +181,7 @@ pub struct BlockChildrenResponse {
     #[serde(rename = "maxResults")]
     pub max_results: usize,
     pub count: usize,
-    #[serde(rename = "childrenBlockIds")]
-    pub children_block_ids: Vec<String>,
+    pub children: Vec<String>,
 }
 
 impl BodyInner for BlockChildrenResponse {}

@@ -49,6 +49,6 @@ pub fn block_children<B: StorageBackend>(
         block_id: block_id.to_string(),
         max_results,
         count,
-        children_block_ids: children.iter().map(BlockId::to_string).collect(),
+        children: children.iter().map(BlockId::to_string).collect(),
     }))
 }
