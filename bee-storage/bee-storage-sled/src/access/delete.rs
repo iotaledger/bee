@@ -23,7 +23,7 @@ use bee_tangle::{
 use crate::{storage::Storage, trees::*};
 
 impl Delete<MessageId, Message> for Storage {
-    fn delete(&self, message_id: &MessageId) -> Result<(), <Self as StorageBackend>::Error> {
+    fn delete_op(&self, message_id: &MessageId) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner.open_tree(TREE_MESSAGE_ID_TO_MESSAGE)?.remove(message_id)?;
 
         Ok(())
@@ -31,7 +31,7 @@ impl Delete<MessageId, Message> for Storage {
 }
 
 impl Delete<MessageId, MessageMetadata> for Storage {
-    fn delete(&self, message_id: &MessageId) -> Result<(), <Self as StorageBackend>::Error> {
+    fn delete_op(&self, message_id: &MessageId) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner.open_tree(TREE_MESSAGE_ID_TO_METADATA)?.remove(message_id)?;
 
         Ok(())
@@ -39,7 +39,7 @@ impl Delete<MessageId, MessageMetadata> for Storage {
 }
 
 impl Delete<(MessageId, MessageId), ()> for Storage {
-    fn delete(&self, (parent, child): &(MessageId, MessageId)) -> Result<(), <Self as StorageBackend>::Error> {
+    fn delete_op(&self, (parent, child): &(MessageId, MessageId)) -> Result<(), <Self as StorageBackend>::Error> {
         let mut key = parent.as_ref().to_vec();
         key.extend_from_slice(child.as_ref());
 
@@ -50,7 +50,7 @@ impl Delete<(MessageId, MessageId), ()> for Storage {
 }
 
 impl Delete<(PaddedIndex, MessageId), ()> for Storage {
-    fn delete(&self, (index, message_id): &(PaddedIndex, MessageId)) -> Result<(), <Self as StorageBackend>::Error> {
+    fn delete_op(&self, (index, message_id): &(PaddedIndex, MessageId)) -> Result<(), <Self as StorageBackend>::Error> {
         let mut key = index.as_ref().to_vec();
         key.extend_from_slice(message_id.as_ref());
 
@@ -61,7 +61,7 @@ impl Delete<(PaddedIndex, MessageId), ()> for Storage {
 }
 
 impl Delete<OutputId, CreatedOutput> for Storage {
-    fn delete(&self, output_id: &OutputId) -> Result<(), <Self as StorageBackend>::Error> {
+    fn delete_op(&self, output_id: &OutputId) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
             .open_tree(TREE_OUTPUT_ID_TO_CREATED_OUTPUT)?
             .remove(output_id.pack_new())?;
@@ -71,7 +71,7 @@ impl Delete<OutputId, CreatedOutput> for Storage {
 }
 
 impl Delete<OutputId, ConsumedOutput> for Storage {
-    fn delete(&self, output_id: &OutputId) -> Result<(), <Self as StorageBackend>::Error> {
+    fn delete_op(&self, output_id: &OutputId) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
             .open_tree(TREE_OUTPUT_ID_TO_CONSUMED_OUTPUT)?
             .remove(output_id.pack_new())?;
@@ -81,7 +81,7 @@ impl Delete<OutputId, ConsumedOutput> for Storage {
 }
 
 impl Delete<Unspent, ()> for Storage {
-    fn delete(&self, unspent: &Unspent) -> Result<(), <Self as StorageBackend>::Error> {
+    fn delete_op(&self, unspent: &Unspent) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
             .open_tree(TREE_OUTPUT_ID_UNSPENT)?
             .remove(unspent.pack_new())?;
@@ -91,7 +91,10 @@ impl Delete<Unspent, ()> for Storage {
 }
 
 impl Delete<(Ed25519Address, OutputId), ()> for Storage {
-    fn delete(&self, (address, output_id): &(Ed25519Address, OutputId)) -> Result<(), <Self as StorageBackend>::Error> {
+    fn delete_op(
+        &self,
+        (address, output_id): &(Ed25519Address, OutputId),
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         let mut key = address.as_ref().to_vec();
         key.extend_from_slice(&output_id.pack_new());
 
@@ -102,7 +105,7 @@ impl Delete<(Ed25519Address, OutputId), ()> for Storage {
 }
 
 impl Delete<(), LedgerIndex> for Storage {
-    fn delete(&self, (): &()) -> Result<(), <Self as StorageBackend>::Error> {
+    fn delete_op(&self, (): &()) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner.open_tree(TREE_LEDGER_INDEX)?.remove([0x00u8])?;
 
         Ok(())
@@ -110,7 +113,7 @@ impl Delete<(), LedgerIndex> for Storage {
 }
 
 impl Delete<MilestoneIndex, Milestone> for Storage {
-    fn delete(&self, index: &MilestoneIndex) -> Result<(), <Self as StorageBackend>::Error> {
+    fn delete_op(&self, index: &MilestoneIndex) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
             .open_tree(TREE_MILESTONE_INDEX_TO_MILESTONE)?
             .remove(index.pack_new())?;
@@ -120,7 +123,7 @@ impl Delete<MilestoneIndex, Milestone> for Storage {
 }
 
 impl Delete<(), SnapshotInfo> for Storage {
-    fn delete(&self, (): &()) -> Result<(), <Self as StorageBackend>::Error> {
+    fn delete_op(&self, (): &()) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner.open_tree(TREE_SNAPSHOT_INFO)?.remove([0x00u8])?;
 
         Ok(())
@@ -128,7 +131,7 @@ impl Delete<(), SnapshotInfo> for Storage {
 }
 
 impl Delete<SolidEntryPoint, MilestoneIndex> for Storage {
-    fn delete(&self, sep: &SolidEntryPoint) -> Result<(), <Self as StorageBackend>::Error> {
+    fn delete_op(&self, sep: &SolidEntryPoint) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
             .open_tree(TREE_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)?
             .remove(sep.as_ref())?;
@@ -138,7 +141,7 @@ impl Delete<SolidEntryPoint, MilestoneIndex> for Storage {
 }
 
 impl Delete<MilestoneIndex, OutputDiff> for Storage {
-    fn delete(&self, index: &MilestoneIndex) -> Result<(), <Self as StorageBackend>::Error> {
+    fn delete_op(&self, index: &MilestoneIndex) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
             .open_tree(TREE_MILESTONE_INDEX_TO_OUTPUT_DIFF)?
             .remove(index.pack_new())?;
@@ -148,7 +151,7 @@ impl Delete<MilestoneIndex, OutputDiff> for Storage {
 }
 
 impl Delete<Address, Balance> for Storage {
-    fn delete(&self, address: &Address) -> Result<(), <Self as StorageBackend>::Error> {
+    fn delete_op(&self, address: &Address) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
             .open_tree(TREE_ADDRESS_TO_BALANCE)?
             .remove(address.pack_new())?;
@@ -158,7 +161,7 @@ impl Delete<Address, Balance> for Storage {
 }
 
 impl Delete<(MilestoneIndex, UnreferencedMessage), ()> for Storage {
-    fn delete(
+    fn delete_op(
         &self,
         (index, unreferenced_message): &(MilestoneIndex, UnreferencedMessage),
     ) -> Result<(), <Self as StorageBackend>::Error> {
@@ -174,7 +177,7 @@ impl Delete<(MilestoneIndex, UnreferencedMessage), ()> for Storage {
 }
 
 impl Delete<(MilestoneIndex, Receipt), ()> for Storage {
-    fn delete(&self, (index, receipt): &(MilestoneIndex, Receipt)) -> Result<(), <Self as StorageBackend>::Error> {
+    fn delete_op(&self, (index, receipt): &(MilestoneIndex, Receipt)) -> Result<(), <Self as StorageBackend>::Error> {
         let mut key = index.pack_new();
         key.extend_from_slice(&receipt.pack_new());
 
@@ -185,7 +188,7 @@ impl Delete<(MilestoneIndex, Receipt), ()> for Storage {
 }
 
 impl Delete<(bool, TreasuryOutput), ()> for Storage {
-    fn delete(&self, (spent, output): &(bool, TreasuryOutput)) -> Result<(), <Self as StorageBackend>::Error> {
+    fn delete_op(&self, (spent, output): &(bool, TreasuryOutput)) -> Result<(), <Self as StorageBackend>::Error> {
         let mut key = spent.pack_new();
         key.extend_from_slice(&output.pack_new());
 

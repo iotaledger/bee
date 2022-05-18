@@ -115,7 +115,7 @@ pub async fn prune<S: StorageBackend>(
         // Write the new set of SEPs to the storage.
         let batch_new_seps = Instant::now();
         for (new_sep, index) in &new_seps {
-            Batch::<SolidEntryPoint, MilestoneIndex>::batch_insert(storage, &mut batch, new_sep, index)
+            Batch::<SolidEntryPoint, MilestoneIndex>::batch_insert_op(storage, &mut batch, new_sep, index)
                 .map_err(|e| Error::Storage(Box::new(e)))?;
         }
         timings.batch_new_seps = batch_new_seps.elapsed();
@@ -150,7 +150,8 @@ pub async fn prune<S: StorageBackend>(
         // TODO: consider batching deletes rather than using Truncate. Is one faster than the other? Do we care if its
         // atomic or not?
         let truncate_old_seps = Instant::now();
-        Truncate::<SolidEntryPoint, MilestoneIndex>::truncate(storage).expect("truncating solid entry points failed");
+        Truncate::<SolidEntryPoint, MilestoneIndex>::truncate_op(storage)
+            .expect("truncating solid entry points failed");
         timings.truncate_curr_seps = truncate_old_seps.elapsed();
 
         // Execute the batch operation.

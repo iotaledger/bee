@@ -10,5 +10,5 @@ pub trait AsIterator<'a, K, V>: StorageBackend {
     type AsIter: Iterator<Item = Result<(K, V), Self::Error>>;
 
     /// Returns a `Iterator` object for the provided <K, V> collection.
-    fn iter(&'a self) -> Result<Self::AsIter, Self::Error>;
+    fn iter_op(&'a self) -> Result<Self::AsIter, Self::Error>;
 }

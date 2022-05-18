@@ -23,7 +23,7 @@ use bee_tangle::{
 use crate::{storage::Storage, trees::*};
 
 impl Exist<MessageId, Message> for Storage {
-    fn exist(&self, message_id: &MessageId) -> Result<bool, <Self as StorageBackend>::Error> {
+    fn exist_op(&self, message_id: &MessageId) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_MESSAGE_ID_TO_MESSAGE)?
@@ -32,7 +32,7 @@ impl Exist<MessageId, Message> for Storage {
 }
 
 impl Exist<MessageId, MessageMetadata> for Storage {
-    fn exist(&self, message_id: &MessageId) -> Result<bool, <Self as StorageBackend>::Error> {
+    fn exist_op(&self, message_id: &MessageId) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_MESSAGE_ID_TO_METADATA)?
@@ -41,7 +41,7 @@ impl Exist<MessageId, MessageMetadata> for Storage {
 }
 
 impl Exist<(MessageId, MessageId), ()> for Storage {
-    fn exist(&self, (parent, child): &(MessageId, MessageId)) -> Result<bool, <Self as StorageBackend>::Error> {
+    fn exist_op(&self, (parent, child): &(MessageId, MessageId)) -> Result<bool, <Self as StorageBackend>::Error> {
         let mut key = parent.as_ref().to_vec();
         key.extend_from_slice(child.as_ref());
 
@@ -50,7 +50,10 @@ impl Exist<(MessageId, MessageId), ()> for Storage {
 }
 
 impl Exist<(PaddedIndex, MessageId), ()> for Storage {
-    fn exist(&self, (index, message_id): &(PaddedIndex, MessageId)) -> Result<bool, <Self as StorageBackend>::Error> {
+    fn exist_op(
+        &self,
+        (index, message_id): &(PaddedIndex, MessageId),
+    ) -> Result<bool, <Self as StorageBackend>::Error> {
         let mut key = index.as_ref().to_vec();
         key.extend_from_slice(message_id.as_ref());
 
@@ -59,7 +62,7 @@ impl Exist<(PaddedIndex, MessageId), ()> for Storage {
 }
 
 impl Exist<OutputId, CreatedOutput> for Storage {
-    fn exist(&self, output_id: &OutputId) -> Result<bool, <Self as StorageBackend>::Error> {
+    fn exist_op(&self, output_id: &OutputId) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_OUTPUT_ID_TO_CREATED_OUTPUT)?
@@ -68,7 +71,7 @@ impl Exist<OutputId, CreatedOutput> for Storage {
 }
 
 impl Exist<OutputId, ConsumedOutput> for Storage {
-    fn exist(&self, output_id: &OutputId) -> Result<bool, <Self as StorageBackend>::Error> {
+    fn exist_op(&self, output_id: &OutputId) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_OUTPUT_ID_TO_CONSUMED_OUTPUT)?
@@ -77,7 +80,7 @@ impl Exist<OutputId, ConsumedOutput> for Storage {
 }
 
 impl Exist<Unspent, ()> for Storage {
-    fn exist(&self, unspent: &Unspent) -> Result<bool, <Self as StorageBackend>::Error> {
+    fn exist_op(&self, unspent: &Unspent) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_OUTPUT_ID_UNSPENT)?
@@ -86,7 +89,7 @@ impl Exist<Unspent, ()> for Storage {
 }
 
 impl Exist<(Ed25519Address, OutputId), ()> for Storage {
-    fn exist(
+    fn exist_op(
         &self,
         (address, output_id): &(Ed25519Address, OutputId),
     ) -> Result<bool, <Self as StorageBackend>::Error> {
@@ -101,13 +104,13 @@ impl Exist<(Ed25519Address, OutputId), ()> for Storage {
 }
 
 impl Exist<(), LedgerIndex> for Storage {
-    fn exist(&self, (): &()) -> Result<bool, <Self as StorageBackend>::Error> {
+    fn exist_op(&self, (): &()) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self.inner.open_tree(TREE_LEDGER_INDEX)?.contains_key([0x00u8])?)
     }
 }
 
 impl Exist<MilestoneIndex, Milestone> for Storage {
-    fn exist(&self, index: &MilestoneIndex) -> Result<bool, <Self as StorageBackend>::Error> {
+    fn exist_op(&self, index: &MilestoneIndex) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_MILESTONE_INDEX_TO_MILESTONE)?
@@ -116,13 +119,13 @@ impl Exist<MilestoneIndex, Milestone> for Storage {
 }
 
 impl Exist<(), SnapshotInfo> for Storage {
-    fn exist(&self, (): &()) -> Result<bool, <Self as StorageBackend>::Error> {
+    fn exist_op(&self, (): &()) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self.inner.open_tree(TREE_SNAPSHOT_INFO)?.contains_key([0x00u8])?)
     }
 }
 
 impl Exist<SolidEntryPoint, MilestoneIndex> for Storage {
-    fn exist(&self, sep: &SolidEntryPoint) -> Result<bool, <Self as StorageBackend>::Error> {
+    fn exist_op(&self, sep: &SolidEntryPoint) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)?
@@ -131,7 +134,7 @@ impl Exist<SolidEntryPoint, MilestoneIndex> for Storage {
 }
 
 impl Exist<MilestoneIndex, OutputDiff> for Storage {
-    fn exist(&self, index: &MilestoneIndex) -> Result<bool, <Self as StorageBackend>::Error> {
+    fn exist_op(&self, index: &MilestoneIndex) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_MILESTONE_INDEX_TO_OUTPUT_DIFF)?
@@ -140,7 +143,7 @@ impl Exist<MilestoneIndex, OutputDiff> for Storage {
 }
 
 impl Exist<Address, Balance> for Storage {
-    fn exist(&self, address: &Address) -> Result<bool, <Self as StorageBackend>::Error> {
+    fn exist_op(&self, address: &Address) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_ADDRESS_TO_BALANCE)?
@@ -149,7 +152,7 @@ impl Exist<Address, Balance> for Storage {
 }
 
 impl Exist<(MilestoneIndex, UnreferencedMessage), ()> for Storage {
-    fn exist(
+    fn exist_op(
         &self,
         (index, unreferenced_message): &(MilestoneIndex, UnreferencedMessage),
     ) -> Result<bool, <Self as StorageBackend>::Error> {
@@ -164,7 +167,7 @@ impl Exist<(MilestoneIndex, UnreferencedMessage), ()> for Storage {
 }
 
 impl Exist<(MilestoneIndex, Receipt), ()> for Storage {
-    fn exist(&self, (index, receipt): &(MilestoneIndex, Receipt)) -> Result<bool, <Self as StorageBackend>::Error> {
+    fn exist_op(&self, (index, receipt): &(MilestoneIndex, Receipt)) -> Result<bool, <Self as StorageBackend>::Error> {
         let mut key = index.pack_new();
         key.extend_from_slice(&receipt.pack_new());
 
@@ -176,7 +179,7 @@ impl Exist<(MilestoneIndex, Receipt), ()> for Storage {
 }
 
 impl Exist<(bool, TreasuryOutput), ()> for Storage {
-    fn exist(&self, (spent, output): &(bool, TreasuryOutput)) -> Result<bool, <Self as StorageBackend>::Error> {
+    fn exist_op(&self, (spent, output): &(bool, TreasuryOutput)) -> Result<bool, <Self as StorageBackend>::Error> {
         let mut key = spent.pack_new();
         key.extend_from_slice(&output.pack_new());
 

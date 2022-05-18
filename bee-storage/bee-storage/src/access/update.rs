@@ -7,5 +7,5 @@ use crate::backend::StorageBackend;
 /// therefore, it should be explicitly implemented for the corresponding `StorageBackend`.
 pub trait Update<K, V>: StorageBackend {
     /// Fetches the value for the key `K` and updates it using `f`.
-    fn update(&self, key: &K, f: impl FnMut(&mut V)) -> Result<(), Self::Error>;
+    fn update_op(&self, key: &K, f: impl FnMut(&mut V)) -> Result<(), Self::Error>;
 }

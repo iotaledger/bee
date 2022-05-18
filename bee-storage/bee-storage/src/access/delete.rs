@@ -7,5 +7,5 @@ use crate::backend::StorageBackend;
 /// therefore, it should be explicitly implemented for the corresponding `StorageBackend`.
 pub trait Delete<K, V>: StorageBackend {
     /// Deletes the value associated with the key from the storage.
-    fn delete(&self, key: &K) -> Result<(), Self::Error>;
+    fn delete_op(&self, key: &K) -> Result<(), Self::Error>;
 }

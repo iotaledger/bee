@@ -40,7 +40,7 @@ impl<T> StorageBackend for T where
 pub fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
     let (spent, treasury_output) = (rand_bool(), rand_ledger_treasury_output());
 
-    assert!(!Exist::<(bool, TreasuryOutput), ()>::exist(storage, &(spent, treasury_output.clone())).unwrap());
+    assert!(!Exist::<(bool, TreasuryOutput), ()>::exist_op(storage, &(spent, treasury_output.clone())).unwrap());
     assert!(
         storage
             .fetch::<bool, Vec<TreasuryOutput>>(&spent)
@@ -49,17 +49,17 @@ pub fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
             .is_empty()
     );
 
-    Insert::<(bool, TreasuryOutput), ()>::insert(storage, &(spent, treasury_output.clone()), &()).unwrap();
+    Insert::<(bool, TreasuryOutput), ()>::insert_op(storage, &(spent, treasury_output.clone()), &()).unwrap();
 
-    assert!(Exist::<(bool, TreasuryOutput), ()>::exist(storage, &(spent, treasury_output.clone())).unwrap());
+    assert!(Exist::<(bool, TreasuryOutput), ()>::exist_op(storage, &(spent, treasury_output.clone())).unwrap());
     assert_eq!(
         storage.fetch::<bool, Vec<TreasuryOutput>>(&spent).unwrap().unwrap(),
         vec![treasury_output.clone()]
     );
 
-    Delete::<(bool, TreasuryOutput), ()>::delete(storage, &(spent, treasury_output.clone())).unwrap();
+    Delete::<(bool, TreasuryOutput), ()>::delete_op(storage, &(spent, treasury_output.clone())).unwrap();
 
-    assert!(!Exist::<(bool, TreasuryOutput), ()>::exist(storage, &(spent, treasury_output)).unwrap());
+    assert!(!Exist::<(bool, TreasuryOutput), ()>::exist_op(storage, &(spent, treasury_output)).unwrap());
     assert!(
         storage
             .fetch::<bool, Vec<TreasuryOutput>>(&spent)
@@ -72,8 +72,8 @@ pub fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
 
     for _ in 0..10 {
         let (spent, treasury_output) = (rand_bool(), rand_ledger_treasury_output());
-        Insert::<(bool, TreasuryOutput), ()>::insert(storage, &(spent, treasury_output.clone()), &()).unwrap();
-        Batch::<(bool, TreasuryOutput), ()>::batch_delete(storage, &mut batch, &(spent, treasury_output)).unwrap();
+        Insert::<(bool, TreasuryOutput), ()>::insert_op(storage, &(spent, treasury_output.clone()), &()).unwrap();
+        Batch::<(bool, TreasuryOutput), ()>::batch_delete_op(storage, &mut batch, &(spent, treasury_output)).unwrap();
     }
 
     let mut treasury_outputs = HashMap::<bool, Vec<TreasuryOutput>>::new();
@@ -81,22 +81,32 @@ pub fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
     for _ in 0..10 {
         let spent = false;
         let treasury_output = rand_ledger_treasury_output();
-        Batch::<(bool, TreasuryOutput), ()>::batch_insert(storage, &mut batch, &(spent, treasury_output.clone()), &())
-            .unwrap();
+        Batch::<(bool, TreasuryOutput), ()>::batch_insert_op(
+            storage,
+            &mut batch,
+            &(spent, treasury_output.clone()),
+            &(),
+        )
+        .unwrap();
         treasury_outputs.entry(spent).or_default().push(treasury_output);
     }
 
     for _ in 0..10 {
         let spent = true;
         let treasury_output = rand_ledger_treasury_output();
-        Batch::<(bool, TreasuryOutput), ()>::batch_insert(storage, &mut batch, &(spent, treasury_output.clone()), &())
-            .unwrap();
+        Batch::<(bool, TreasuryOutput), ()>::batch_insert_op(
+            storage,
+            &mut batch,
+            &(spent, treasury_output.clone()),
+            &(),
+        )
+        .unwrap();
         treasury_outputs.entry(spent).or_default().push(treasury_output);
     }
 
     storage.batch_commit(batch, true).unwrap();
 
-    let iter = AsIterator::<(bool, TreasuryOutput), ()>::iter(storage).unwrap();
+    let iter = AsIterator::<(bool, TreasuryOutput), ()>::iter_op(storage).unwrap();
     let mut count = 0;
 
     for result in iter {
@@ -107,9 +117,9 @@ pub fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(count, treasury_outputs.iter().fold(0, |acc, v| acc + v.1.len()));
 
-    Truncate::<(bool, TreasuryOutput), ()>::truncate(storage).unwrap();
+    Truncate::<(bool, TreasuryOutput), ()>::truncate_op(storage).unwrap();
 
-    let mut iter = AsIterator::<(bool, TreasuryOutput), ()>::iter(storage).unwrap();
+    let mut iter = AsIterator::<(bool, TreasuryOutput), ()>::iter_op(storage).unwrap();
 
     assert!(iter.next().is_none());
 }

@@ -24,7 +24,7 @@ use crate::storage::Storage;
 macro_rules! impl_delete {
     ($key:ty, $value:ty, $field:ident) => {
         impl Delete<$key, $value> for Storage {
-            fn delete(&self, k: &$key) -> Result<(), <Self as StorageBackend>::Error> {
+            fn delete_op(&self, k: &$key) -> Result<(), <Self as StorageBackend>::Error> {
                 self.inner.write()?.$field.delete(k);
 
                 Ok(())

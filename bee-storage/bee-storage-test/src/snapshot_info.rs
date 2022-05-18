@@ -38,40 +38,40 @@ impl<T> StorageBackend for T where
 pub fn snapshot_info_access<B: StorageBackend>(storage: &B) {
     let snapshot_info = rand_snapshot_info();
 
-    assert!(!Exist::<(), SnapshotInfo>::exist(storage, &()).unwrap());
+    assert!(!Exist::<(), SnapshotInfo>::exist_op(storage, &()).unwrap());
     assert!(storage.fetch::<(), SnapshotInfo>(&()).unwrap().is_none());
 
-    Insert::<(), SnapshotInfo>::insert(storage, &(), &snapshot_info).unwrap();
+    Insert::<(), SnapshotInfo>::insert_op(storage, &(), &snapshot_info).unwrap();
 
-    assert!(Exist::<(), SnapshotInfo>::exist(storage, &()).unwrap());
+    assert!(Exist::<(), SnapshotInfo>::exist_op(storage, &()).unwrap());
     assert_eq!(storage.fetch::<(), SnapshotInfo>(&()).unwrap().unwrap(), snapshot_info);
 
-    Delete::<(), SnapshotInfo>::delete(storage, &()).unwrap();
+    Delete::<(), SnapshotInfo>::delete_op(storage, &()).unwrap();
 
-    assert!(!Exist::<(), SnapshotInfo>::exist(storage, &()).unwrap());
+    assert!(!Exist::<(), SnapshotInfo>::exist_op(storage, &()).unwrap());
     assert!(storage.fetch::<(), SnapshotInfo>(&()).unwrap().is_none());
 
     let mut batch = B::batch_begin();
 
-    Batch::<(), SnapshotInfo>::batch_insert(storage, &mut batch, &(), &snapshot_info).unwrap();
+    Batch::<(), SnapshotInfo>::batch_insert_op(storage, &mut batch, &(), &snapshot_info).unwrap();
 
     storage.batch_commit(batch, true).unwrap();
 
-    assert!(Exist::<(), SnapshotInfo>::exist(storage, &()).unwrap());
+    assert!(Exist::<(), SnapshotInfo>::exist_op(storage, &()).unwrap());
     assert_eq!(storage.fetch::<(), SnapshotInfo>(&()).unwrap().unwrap(), snapshot_info);
 
     let mut batch = B::batch_begin();
 
-    Batch::<(), SnapshotInfo>::batch_delete(storage, &mut batch, &()).unwrap();
+    Batch::<(), SnapshotInfo>::batch_delete_op(storage, &mut batch, &()).unwrap();
 
     storage.batch_commit(batch, true).unwrap();
 
-    assert!(!Exist::<(), SnapshotInfo>::exist(storage, &()).unwrap());
+    assert!(!Exist::<(), SnapshotInfo>::exist_op(storage, &()).unwrap());
     assert!(storage.fetch::<(), SnapshotInfo>(&()).unwrap().is_none());
 
-    Insert::<(), SnapshotInfo>::insert(storage, &(), &snapshot_info).unwrap();
+    Insert::<(), SnapshotInfo>::insert_op(storage, &(), &snapshot_info).unwrap();
 
-    let iter = AsIterator::<(), SnapshotInfo>::iter(storage).unwrap();
+    let iter = AsIterator::<(), SnapshotInfo>::iter_op(storage).unwrap();
     let mut count = 0;
 
     for result in iter {
@@ -82,11 +82,11 @@ pub fn snapshot_info_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(count, 1);
 
-    Truncate::<(), SnapshotInfo>::truncate(storage).unwrap();
+    Truncate::<(), SnapshotInfo>::truncate_op(storage).unwrap();
 
-    assert!(!Exist::<(), SnapshotInfo>::exist(storage, &()).unwrap());
+    assert!(!Exist::<(), SnapshotInfo>::exist_op(storage, &()).unwrap());
 
-    let mut iter = AsIterator::<(), SnapshotInfo>::iter(storage).unwrap();
+    let mut iter = AsIterator::<(), SnapshotInfo>::iter_op(storage).unwrap();
 
     assert!(iter.next().is_none());
 }

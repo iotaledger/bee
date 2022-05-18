@@ -17,11 +17,11 @@ impl BatchBuilder for Storage {
 }
 
 impl<K, V> Batch<K, V> for Storage {
-    fn batch_insert(&self, _batch: &mut Self::Batch, _key: &K, _value: &V) -> Result<(), Self::Error> {
+    fn batch_insert_op(&self, _batch: &mut Self::Batch, _key: &K, _value: &V) -> Result<(), Self::Error> {
         Ok(())
     }
 
-    fn batch_delete(&self, _batch: &mut Self::Batch, _key: &K) -> Result<(), Self::Error> {
+    fn batch_delete_op(&self, _batch: &mut Self::Batch, _key: &K) -> Result<(), Self::Error> {
         Ok(())
     }
 }

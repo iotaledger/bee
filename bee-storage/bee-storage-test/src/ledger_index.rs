@@ -38,40 +38,40 @@ impl<T> StorageBackend for T where
 pub fn ledger_index_access<B: StorageBackend>(storage: &B) {
     let index = LedgerIndex::from(MilestoneIndex::from(42));
 
-    assert!(!Exist::<(), LedgerIndex>::exist(storage, &()).unwrap());
+    assert!(!Exist::<(), LedgerIndex>::exist_op(storage, &()).unwrap());
     assert!(storage.fetch::<(), LedgerIndex>(&()).unwrap().is_none());
 
-    Insert::<(), LedgerIndex>::insert(storage, &(), &index).unwrap();
+    Insert::<(), LedgerIndex>::insert_op(storage, &(), &index).unwrap();
 
-    assert!(Exist::<(), LedgerIndex>::exist(storage, &()).unwrap());
+    assert!(Exist::<(), LedgerIndex>::exist_op(storage, &()).unwrap());
     assert_eq!(storage.fetch::<(), LedgerIndex>(&()).unwrap().unwrap(), index);
 
-    Delete::<(), LedgerIndex>::delete(storage, &()).unwrap();
+    Delete::<(), LedgerIndex>::delete_op(storage, &()).unwrap();
 
-    assert!(!Exist::<(), LedgerIndex>::exist(storage, &()).unwrap());
+    assert!(!Exist::<(), LedgerIndex>::exist_op(storage, &()).unwrap());
     assert!(storage.fetch::<(), LedgerIndex>(&()).unwrap().is_none());
 
     let mut batch = B::batch_begin();
 
-    Batch::<(), LedgerIndex>::batch_insert(storage, &mut batch, &(), &index).unwrap();
+    Batch::<(), LedgerIndex>::batch_insert_op(storage, &mut batch, &(), &index).unwrap();
 
     storage.batch_commit(batch, true).unwrap();
 
-    assert!(Exist::<(), LedgerIndex>::exist(storage, &()).unwrap());
+    assert!(Exist::<(), LedgerIndex>::exist_op(storage, &()).unwrap());
     assert_eq!(storage.fetch::<(), LedgerIndex>(&()).unwrap().unwrap(), index);
 
     let mut batch = B::batch_begin();
 
-    Batch::<(), LedgerIndex>::batch_delete(storage, &mut batch, &()).unwrap();
+    Batch::<(), LedgerIndex>::batch_delete_op(storage, &mut batch, &()).unwrap();
 
     storage.batch_commit(batch, true).unwrap();
 
-    assert!(!Exist::<(), LedgerIndex>::exist(storage, &()).unwrap());
+    assert!(!Exist::<(), LedgerIndex>::exist_op(storage, &()).unwrap());
     assert!(storage.fetch::<(), LedgerIndex>(&()).unwrap().is_none());
 
-    Insert::<(), LedgerIndex>::insert(storage, &(), &index).unwrap();
+    Insert::<(), LedgerIndex>::insert_op(storage, &(), &index).unwrap();
 
-    let iter = AsIterator::<(), LedgerIndex>::iter(storage).unwrap();
+    let iter = AsIterator::<(), LedgerIndex>::iter_op(storage).unwrap();
     let mut count = 0;
 
     for result in iter {
@@ -82,11 +82,11 @@ pub fn ledger_index_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(count, 1);
 
-    Truncate::<(), LedgerIndex>::truncate(storage).unwrap();
+    Truncate::<(), LedgerIndex>::truncate_op(storage).unwrap();
 
-    assert!(!Exist::<(), LedgerIndex>::exist(storage, &()).unwrap());
+    assert!(!Exist::<(), LedgerIndex>::exist_op(storage, &()).unwrap());
 
-    let mut iter = AsIterator::<(), LedgerIndex>::iter(storage).unwrap();
+    let mut iter = AsIterator::<(), LedgerIndex>::iter_op(storage).unwrap();
 
     assert!(iter.next().is_none());
 }

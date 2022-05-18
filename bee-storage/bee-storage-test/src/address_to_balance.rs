@@ -42,32 +42,32 @@ impl<T> StorageBackend for T where
 pub fn address_to_balance_access<B: StorageBackend>(storage: &B) {
     let (address, balance) = (rand_address(), rand_balance());
 
-    assert!(!Exist::<Address, Balance>::exist(storage, &address).unwrap());
+    assert!(!Exist::<Address, Balance>::exist_op(storage, &address).unwrap());
     assert!(storage.fetch::<Address, Balance>(&address).unwrap().is_none());
-    let results = MultiFetch::<Address, Balance>::multi_fetch(storage, &[address])
+    let results = MultiFetch::<Address, Balance>::multi_fetch_op(storage, &[address])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(None))));
 
-    Insert::<Address, Balance>::insert(storage, &address, &balance).unwrap();
+    Insert::<Address, Balance>::insert_op(storage, &address, &balance).unwrap();
 
-    assert!(Exist::<Address, Balance>::exist(storage, &address).unwrap());
+    assert!(Exist::<Address, Balance>::exist_op(storage, &address).unwrap());
     assert_eq!(
         storage.fetch::<Address, Balance>(&address).unwrap().unwrap().pack_new(),
         balance.pack_new()
     );
-    let results = MultiFetch::<Address, Balance>::multi_fetch(storage, &[address])
+    let results = MultiFetch::<Address, Balance>::multi_fetch_op(storage, &[address])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(Some(v))) if v == &balance));
 
-    Delete::<Address, Balance>::delete(storage, &address).unwrap();
+    Delete::<Address, Balance>::delete_op(storage, &address).unwrap();
 
-    assert!(!Exist::<Address, Balance>::exist(storage, &address).unwrap());
+    assert!(!Exist::<Address, Balance>::exist_op(storage, &address).unwrap());
     assert!(storage.fetch::<Address, Balance>(&address).unwrap().is_none());
-    let results = MultiFetch::<Address, Balance>::multi_fetch(storage, &[address])
+    let results = MultiFetch::<Address, Balance>::multi_fetch_op(storage, &[address])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
@@ -79,22 +79,22 @@ pub fn address_to_balance_access<B: StorageBackend>(storage: &B) {
 
     for _ in 0..10 {
         let (address, balance) = (rand_address(), rand_balance());
-        Insert::<Address, Balance>::insert(storage, &address, &balance).unwrap();
-        Batch::<Address, Balance>::batch_delete(storage, &mut batch, &address).unwrap();
+        Insert::<Address, Balance>::insert_op(storage, &address, &balance).unwrap();
+        Batch::<Address, Balance>::batch_delete_op(storage, &mut batch, &address).unwrap();
         addresses.push(address);
         balances.push((address, None));
     }
 
     for _ in 0..10 {
         let (address, balance) = (rand_address(), rand_balance());
-        Batch::<Address, Balance>::batch_insert(storage, &mut batch, &address, &balance).unwrap();
+        Batch::<Address, Balance>::batch_insert_op(storage, &mut batch, &address, &balance).unwrap();
         addresses.push(address);
         balances.push((address, Some(balance)));
     }
 
     storage.batch_commit(batch, true).unwrap();
 
-    let iter = AsIterator::<Address, Balance>::iter(storage).unwrap();
+    let iter = AsIterator::<Address, Balance>::iter_op(storage).unwrap();
     let mut count = 0;
 
     for result in iter {
@@ -105,7 +105,7 @@ pub fn address_to_balance_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(count, 10);
 
-    let results = MultiFetch::<Address, Balance>::multi_fetch(storage, &addresses)
+    let results = MultiFetch::<Address, Balance>::multi_fetch_op(storage, &addresses)
         .unwrap()
         .collect::<Vec<_>>();
 
@@ -115,9 +115,9 @@ pub fn address_to_balance_access<B: StorageBackend>(storage: &B) {
         assert_eq!(balance, result.unwrap());
     }
 
-    Truncate::<Address, Balance>::truncate(storage).unwrap();
+    Truncate::<Address, Balance>::truncate_op(storage).unwrap();
 
-    let mut iter = AsIterator::<Address, Balance>::iter(storage).unwrap();
+    let mut iter = AsIterator::<Address, Balance>::iter_op(storage).unwrap();
 
     assert!(iter.next().is_none());
 }

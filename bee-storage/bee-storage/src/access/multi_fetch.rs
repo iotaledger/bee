@@ -10,5 +10,5 @@ pub trait MultiFetch<'a, K, V>: StorageBackend {
     type Iter: 'a + Iterator<Item = Result<Option<V>, Self::Error>>;
 
     /// Fetches the values associated with the keys from the storage.
-    fn multi_fetch(&'a self, keys: &'a [K]) -> Result<Self::Iter, Self::Error>;
+    fn multi_fetch_op(&'a self, keys: &'a [K]) -> Result<Self::Iter, Self::Error>;
 }

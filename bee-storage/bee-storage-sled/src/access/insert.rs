@@ -27,7 +27,7 @@ use bee_tangle::{
 use crate::{storage::Storage, trees::*};
 
 impl Insert<u8, System> for Storage {
-    fn insert(&self, key: &u8, value: &System) -> Result<(), <Self as StorageBackend>::Error> {
+    fn insert_op(&self, key: &u8, value: &System) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner.insert(&[*key], value.pack_new())?;
 
         Ok(())
@@ -35,7 +35,7 @@ impl Insert<u8, System> for Storage {
 }
 
 impl Insert<MessageId, Message> for Storage {
-    fn insert(&self, message_id: &MessageId, message: &Message) -> Result<(), <Self as StorageBackend>::Error> {
+    fn insert_op(&self, message_id: &MessageId, message: &Message) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
             .open_tree(TREE_MESSAGE_ID_TO_MESSAGE)?
             .insert(message_id, message.pack_new())?;
@@ -45,7 +45,7 @@ impl Insert<MessageId, Message> for Storage {
 }
 
 impl InsertStrict<MessageId, MessageMetadata> for Storage {
-    fn insert_strict(
+    fn insert_strict_op(
         &self,
         message_id: &MessageId,
         metadata: &MessageMetadata,
@@ -61,7 +61,11 @@ impl InsertStrict<MessageId, MessageMetadata> for Storage {
 }
 
 impl Insert<(MessageId, MessageId), ()> for Storage {
-    fn insert(&self, (parent, child): &(MessageId, MessageId), (): &()) -> Result<(), <Self as StorageBackend>::Error> {
+    fn insert_op(
+        &self,
+        (parent, child): &(MessageId, MessageId),
+        (): &(),
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         let mut key = parent.as_ref().to_vec();
         key.extend_from_slice(child.as_ref());
 
@@ -72,7 +76,7 @@ impl Insert<(MessageId, MessageId), ()> for Storage {
 }
 
 impl Insert<(PaddedIndex, MessageId), ()> for Storage {
-    fn insert(
+    fn insert_op(
         &self,
         (index, message_id): &(PaddedIndex, MessageId),
         (): &(),
@@ -87,7 +91,7 @@ impl Insert<(PaddedIndex, MessageId), ()> for Storage {
 }
 
 impl Insert<OutputId, CreatedOutput> for Storage {
-    fn insert(&self, output_id: &OutputId, output: &CreatedOutput) -> Result<(), <Self as StorageBackend>::Error> {
+    fn insert_op(&self, output_id: &OutputId, output: &CreatedOutput) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
             .open_tree(TREE_OUTPUT_ID_TO_CREATED_OUTPUT)?
             .insert(output_id.pack_new(), output.pack_new())?;
@@ -97,7 +101,7 @@ impl Insert<OutputId, CreatedOutput> for Storage {
 }
 
 impl Insert<OutputId, ConsumedOutput> for Storage {
-    fn insert(&self, output_id: &OutputId, output: &ConsumedOutput) -> Result<(), <Self as StorageBackend>::Error> {
+    fn insert_op(&self, output_id: &OutputId, output: &ConsumedOutput) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
             .open_tree(TREE_OUTPUT_ID_TO_CONSUMED_OUTPUT)?
             .insert(output_id.pack_new(), output.pack_new())?;
@@ -107,7 +111,7 @@ impl Insert<OutputId, ConsumedOutput> for Storage {
 }
 
 impl Insert<Unspent, ()> for Storage {
-    fn insert(&self, unspent: &Unspent, (): &()) -> Result<(), <Self as StorageBackend>::Error> {
+    fn insert_op(&self, unspent: &Unspent, (): &()) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
             .open_tree(TREE_OUTPUT_ID_UNSPENT)?
             .insert(unspent.pack_new(), &[])?;
@@ -117,7 +121,7 @@ impl Insert<Unspent, ()> for Storage {
 }
 
 impl Insert<(Ed25519Address, OutputId), ()> for Storage {
-    fn insert(
+    fn insert_op(
         &self,
         (address, output_id): &(Ed25519Address, OutputId),
         (): &(),
@@ -134,7 +138,7 @@ impl Insert<(Ed25519Address, OutputId), ()> for Storage {
 }
 
 impl Insert<(), LedgerIndex> for Storage {
-    fn insert(&self, (): &(), index: &LedgerIndex) -> Result<(), <Self as StorageBackend>::Error> {
+    fn insert_op(&self, (): &(), index: &LedgerIndex) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
             .open_tree(TREE_LEDGER_INDEX)?
             .insert([0x00u8], index.pack_new())?;
@@ -144,7 +148,7 @@ impl Insert<(), LedgerIndex> for Storage {
 }
 
 impl Insert<MilestoneIndex, Milestone> for Storage {
-    fn insert(&self, index: &MilestoneIndex, milestone: &Milestone) -> Result<(), <Self as StorageBackend>::Error> {
+    fn insert_op(&self, index: &MilestoneIndex, milestone: &Milestone) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
             .open_tree(TREE_MILESTONE_INDEX_TO_MILESTONE)?
             .insert(index.pack_new(), milestone.pack_new())?;
@@ -154,7 +158,7 @@ impl Insert<MilestoneIndex, Milestone> for Storage {
 }
 
 impl Insert<(), SnapshotInfo> for Storage {
-    fn insert(&self, (): &(), info: &SnapshotInfo) -> Result<(), <Self as StorageBackend>::Error> {
+    fn insert_op(&self, (): &(), info: &SnapshotInfo) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
             .open_tree(TREE_SNAPSHOT_INFO)?
             .insert([0x00u8], info.pack_new())?;
@@ -164,7 +168,7 @@ impl Insert<(), SnapshotInfo> for Storage {
 }
 
 impl Insert<SolidEntryPoint, MilestoneIndex> for Storage {
-    fn insert(&self, sep: &SolidEntryPoint, index: &MilestoneIndex) -> Result<(), <Self as StorageBackend>::Error> {
+    fn insert_op(&self, sep: &SolidEntryPoint, index: &MilestoneIndex) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
             .open_tree(TREE_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)?
             .insert(sep.as_ref(), index.pack_new())?;
@@ -174,7 +178,7 @@ impl Insert<SolidEntryPoint, MilestoneIndex> for Storage {
 }
 
 impl Insert<MilestoneIndex, OutputDiff> for Storage {
-    fn insert(&self, index: &MilestoneIndex, diff: &OutputDiff) -> Result<(), <Self as StorageBackend>::Error> {
+    fn insert_op(&self, index: &MilestoneIndex, diff: &OutputDiff) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
             .open_tree(TREE_MILESTONE_INDEX_TO_OUTPUT_DIFF)?
             .insert(index.pack_new(), diff.pack_new())?;
@@ -184,7 +188,7 @@ impl Insert<MilestoneIndex, OutputDiff> for Storage {
 }
 
 impl Insert<Address, Balance> for Storage {
-    fn insert(&self, address: &Address, balance: &Balance) -> Result<(), <Self as StorageBackend>::Error> {
+    fn insert_op(&self, address: &Address, balance: &Balance) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
             .open_tree(TREE_ADDRESS_TO_BALANCE)?
             .insert(address.pack_new(), balance.pack_new())?;
@@ -194,7 +198,7 @@ impl Insert<Address, Balance> for Storage {
 }
 
 impl Insert<(MilestoneIndex, UnreferencedMessage), ()> for Storage {
-    fn insert(
+    fn insert_op(
         &self,
         (index, unreferenced_message): &(MilestoneIndex, UnreferencedMessage),
         (): &(),
@@ -211,7 +215,7 @@ impl Insert<(MilestoneIndex, UnreferencedMessage), ()> for Storage {
 }
 
 impl Insert<(MilestoneIndex, Receipt), ()> for Storage {
-    fn insert(
+    fn insert_op(
         &self,
         (index, receipt): &(MilestoneIndex, Receipt),
         (): &(),
@@ -228,7 +232,11 @@ impl Insert<(MilestoneIndex, Receipt), ()> for Storage {
 }
 
 impl Insert<(bool, TreasuryOutput), ()> for Storage {
-    fn insert(&self, (spent, output): &(bool, TreasuryOutput), (): &()) -> Result<(), <Self as StorageBackend>::Error> {
+    fn insert_op(
+        &self,
+        (spent, output): &(bool, TreasuryOutput),
+        (): &(),
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         let mut key = spent.pack_new();
         key.extend_from_slice(&output.pack_new());
 

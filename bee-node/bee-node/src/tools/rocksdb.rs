@@ -68,7 +68,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let iterator = AsIterator::<u8, System>::iter(storage)?;
+                let iterator = AsIterator::<u8, System>::iter_op(storage)?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -84,7 +84,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let iterator = AsIterator::<MessageId, Message>::iter(storage)?;
+                let iterator = AsIterator::<MessageId, Message>::iter_op(storage)?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -100,7 +100,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let iterator = AsIterator::<MessageId, MessageMetadata>::iter(storage)?;
+                let iterator = AsIterator::<MessageId, MessageMetadata>::iter_op(storage)?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -116,7 +116,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let iterator = AsIterator::<(MessageId, MessageId), ()>::iter(storage)?;
+                let iterator = AsIterator::<(MessageId, MessageId), ()>::iter_op(storage)?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -137,7 +137,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let iterator = AsIterator::<(PaddedIndex, MessageId), ()>::iter(storage)?;
+                let iterator = AsIterator::<(PaddedIndex, MessageId), ()>::iter_op(storage)?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -153,7 +153,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let iterator = AsIterator::<OutputId, CreatedOutput>::iter(storage)?;
+                let iterator = AsIterator::<OutputId, CreatedOutput>::iter_op(storage)?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -169,7 +169,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let iterator = AsIterator::<OutputId, ConsumedOutput>::iter(storage)?;
+                let iterator = AsIterator::<OutputId, ConsumedOutput>::iter_op(storage)?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -180,12 +180,12 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
         CF_OUTPUT_ID_UNSPENT => match &tool.command {
             RocksdbCommand::Fetch { key } => {
                 let key = Unspent::from(OutputId::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?);
-                let value = Exist::<Unspent, ()>::exist(storage, &key)?;
+                let value = Exist::<Unspent, ()>::exist_op(storage, &key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let iterator = AsIterator::<Unspent, ()>::iter(storage)?;
+                let iterator = AsIterator::<Unspent, ()>::iter_op(storage)?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -201,7 +201,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let iterator = AsIterator::<(Ed25519Address, OutputId), ()>::iter(storage)?;
+                let iterator = AsIterator::<(Ed25519Address, OutputId), ()>::iter_op(storage)?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -212,7 +212,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
         CF_LEDGER_INDEX => match &tool.command {
             RocksdbCommand::Fetch { key: _key } => return Err(RocksdbError::UnsupportedCommand),
             RocksdbCommand::Iterator => {
-                let iterator = AsIterator::<(), LedgerIndex>::iter(storage)?;
+                let iterator = AsIterator::<(), LedgerIndex>::iter_op(storage)?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -228,7 +228,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let iterator = AsIterator::<MilestoneIndex, Milestone>::iter(storage)?;
+                let iterator = AsIterator::<MilestoneIndex, Milestone>::iter_op(storage)?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -239,7 +239,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
         CF_SNAPSHOT_INFO => match &tool.command {
             RocksdbCommand::Fetch { key: _key } => return Err(RocksdbError::UnsupportedCommand),
             RocksdbCommand::Iterator => {
-                let iterator = AsIterator::<(), SnapshotInfo>::iter(storage)?;
+                let iterator = AsIterator::<(), SnapshotInfo>::iter_op(storage)?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -256,7 +256,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let iterator = AsIterator::<SolidEntryPoint, MilestoneIndex>::iter(storage)?;
+                let iterator = AsIterator::<SolidEntryPoint, MilestoneIndex>::iter_op(storage)?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -272,7 +272,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let iterator = AsIterator::<MilestoneIndex, OutputDiff>::iter(storage)?;
+                let iterator = AsIterator::<MilestoneIndex, OutputDiff>::iter_op(storage)?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -289,7 +289,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let iterator = AsIterator::<Address, Balance>::iter(storage)?;
+                let iterator = AsIterator::<Address, Balance>::iter_op(storage)?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -305,7 +305,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let iterator = AsIterator::<(MilestoneIndex, UnreferencedMessage), ()>::iter(storage)?;
+                let iterator = AsIterator::<(MilestoneIndex, UnreferencedMessage), ()>::iter_op(storage)?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -321,7 +321,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let iterator = AsIterator::<(MilestoneIndex, Receipt), ()>::iter(storage)?;
+                let iterator = AsIterator::<(MilestoneIndex, Receipt), ()>::iter_op(storage)?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -337,7 +337,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let iterator = AsIterator::<(bool, TreasuryOutput), ()>::iter(storage)?;
+                let iterator = AsIterator::<(bool, TreasuryOutput), ()>::iter_op(storage)?;
 
                 for result in iterator {
                     let (key, value) = result?;

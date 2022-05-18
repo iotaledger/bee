@@ -59,7 +59,7 @@ where
             return Err(e);
         }
 
-        let solid_entry_points = AsIterator::<SolidEntryPoint, MilestoneIndex>::iter(&*storage)
+        let solid_entry_points = AsIterator::<SolidEntryPoint, MilestoneIndex>::iter_op(&*storage)
             .map_err(|e| Error::Storage(Box::new(e)))?
             .map(|result| result.map_err(|e| Error::Storage(Box::new(e))))
             .collect::<Result<HashMap<SolidEntryPoint, MilestoneIndex>, _>>()?;

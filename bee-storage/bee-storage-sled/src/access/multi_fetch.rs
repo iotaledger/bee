@@ -65,7 +65,7 @@ impl<'a, K: Packable, V: Packable, E: From<sled::Error>> Iterator for DbIter<'a,
 impl<'a> MultiFetch<'a, u8, System> for Storage {
     type Iter = DbIter<'a, u8, System, <Self as StorageBackend>::Error>;
 
-    fn multi_fetch(&'a self, keys: &'a [u8]) -> Result<Self::Iter, <Self as StorageBackend>::Error> {
+    fn multi_fetch_op(&'a self, keys: &'a [u8]) -> Result<Self::Iter, <Self as StorageBackend>::Error> {
         Ok(DbIter {
             db: &self.inner,
             keys: keys.iter(),
@@ -79,7 +79,7 @@ macro_rules! impl_multi_fetch {
         impl<'a> MultiFetch<'a, $key, $value> for Storage {
             type Iter = TreeIter<'a, $key, $value, <Self as StorageBackend>::Error>;
 
-            fn multi_fetch(&'a self, keys: &'a [$key]) -> Result<Self::Iter, <Self as StorageBackend>::Error> {
+            fn multi_fetch_op(&'a self, keys: &'a [$key]) -> Result<Self::Iter, <Self as StorageBackend>::Error> {
                 Ok(TreeIter {
                     tree: self.inner.open_tree($cf)?,
                     keys: keys.iter(),

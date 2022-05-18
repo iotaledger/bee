@@ -28,7 +28,7 @@ use crate::storage::Storage;
 macro_rules! impl_insert {
     ($key:ty, $value:ty, $field:ident) => {
         impl Insert<$key, $value> for Storage {
-            fn insert(&self, k: &$key, v: &$value) -> Result<(), <Self as StorageBackend>::Error> {
+            fn insert_op(&self, k: &$key, v: &$value) -> Result<(), <Self as StorageBackend>::Error> {
                 self.inner.write()?.$field.insert(k, v);
 
                 Ok(())
@@ -60,7 +60,7 @@ impl_insert!((MilestoneIndex, Receipt), (), milestone_index_to_receipt);
 impl_insert!((bool, TreasuryOutput), (), spent_to_treasury_output);
 
 impl InsertStrict<MessageId, MessageMetadata> for Storage {
-    fn insert_strict(&self, k: &MessageId, v: &MessageMetadata) -> Result<(), <Self as StorageBackend>::Error> {
+    fn insert_strict_op(&self, k: &MessageId, v: &MessageMetadata) -> Result<(), <Self as StorageBackend>::Error> {
         let mut guard = self.inner.write()?;
 
         if !guard.message_id_to_metadata.exist(k) {

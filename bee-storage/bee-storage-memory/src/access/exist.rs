@@ -24,7 +24,7 @@ use crate::storage::Storage;
 macro_rules! impl_exist {
     ($key:ty, $value:ty, $field:ident) => {
         impl Exist<$key, $value> for Storage {
-            fn exist(&self, k: &$key) -> Result<bool, <Self as StorageBackend>::Error> {
+            fn exist_op(&self, k: &$key) -> Result<bool, <Self as StorageBackend>::Error> {
                 Ok(self.inner.read()?.$field.exist(k))
             }
         }

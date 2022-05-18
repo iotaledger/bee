@@ -40,32 +40,32 @@ impl<T> StorageBackend for T where
 pub fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B) {
     let (index, milestone) = (rand_milestone_index(), rand_milestone());
 
-    assert!(!Exist::<MilestoneIndex, Milestone>::exist(storage, &index).unwrap());
+    assert!(!Exist::<MilestoneIndex, Milestone>::exist_op(storage, &index).unwrap());
     assert!(storage.fetch::<MilestoneIndex, Milestone>(&index).unwrap().is_none());
-    let results = MultiFetch::<MilestoneIndex, Milestone>::multi_fetch(storage, &[index])
+    let results = MultiFetch::<MilestoneIndex, Milestone>::multi_fetch_op(storage, &[index])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(None))));
 
-    Insert::<MilestoneIndex, Milestone>::insert(storage, &index, &milestone).unwrap();
+    Insert::<MilestoneIndex, Milestone>::insert_op(storage, &index, &milestone).unwrap();
 
-    assert!(Exist::<MilestoneIndex, Milestone>::exist(storage, &index).unwrap());
+    assert!(Exist::<MilestoneIndex, Milestone>::exist_op(storage, &index).unwrap());
     assert_eq!(
         storage.fetch::<MilestoneIndex, Milestone>(&index).unwrap().unwrap(),
         milestone
     );
-    let results = MultiFetch::<MilestoneIndex, Milestone>::multi_fetch(storage, &[index])
+    let results = MultiFetch::<MilestoneIndex, Milestone>::multi_fetch_op(storage, &[index])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(Some(v))) if v == &milestone));
 
-    Delete::<MilestoneIndex, Milestone>::delete(storage, &index).unwrap();
+    Delete::<MilestoneIndex, Milestone>::delete_op(storage, &index).unwrap();
 
-    assert!(!Exist::<MilestoneIndex, Milestone>::exist(storage, &index).unwrap());
+    assert!(!Exist::<MilestoneIndex, Milestone>::exist_op(storage, &index).unwrap());
     assert!(storage.fetch::<MilestoneIndex, Milestone>(&index).unwrap().is_none());
-    let results = MultiFetch::<MilestoneIndex, Milestone>::multi_fetch(storage, &[index])
+    let results = MultiFetch::<MilestoneIndex, Milestone>::multi_fetch_op(storage, &[index])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
@@ -77,22 +77,22 @@ pub fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B) {
 
     for _ in 0..10 {
         let (index, milestone) = (rand_milestone_index(), rand_milestone());
-        Insert::<MilestoneIndex, Milestone>::insert(storage, &index, &milestone).unwrap();
-        Batch::<MilestoneIndex, Milestone>::batch_delete(storage, &mut batch, &index).unwrap();
+        Insert::<MilestoneIndex, Milestone>::insert_op(storage, &index, &milestone).unwrap();
+        Batch::<MilestoneIndex, Milestone>::batch_delete_op(storage, &mut batch, &index).unwrap();
         indexes.push(index);
         milestones.push((index, None));
     }
 
     for _ in 0..10 {
         let (index, milestone) = (rand_milestone_index(), rand_milestone());
-        Batch::<MilestoneIndex, Milestone>::batch_insert(storage, &mut batch, &index, &milestone).unwrap();
+        Batch::<MilestoneIndex, Milestone>::batch_insert_op(storage, &mut batch, &index, &milestone).unwrap();
         indexes.push(index);
         milestones.push((index, Some(milestone)));
     }
 
     storage.batch_commit(batch, true).unwrap();
 
-    let iter = AsIterator::<MilestoneIndex, Milestone>::iter(storage).unwrap();
+    let iter = AsIterator::<MilestoneIndex, Milestone>::iter_op(storage).unwrap();
     let mut count = 0;
 
     for result in iter {
@@ -103,7 +103,7 @@ pub fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(count, 10);
 
-    let results = MultiFetch::<MilestoneIndex, Milestone>::multi_fetch(storage, &indexes)
+    let results = MultiFetch::<MilestoneIndex, Milestone>::multi_fetch_op(storage, &indexes)
         .unwrap()
         .collect::<Vec<_>>();
 
@@ -113,9 +113,9 @@ pub fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B) {
         assert_eq!(milestone, result.unwrap());
     }
 
-    Truncate::<MilestoneIndex, Milestone>::truncate(storage).unwrap();
+    Truncate::<MilestoneIndex, Milestone>::truncate_op(storage).unwrap();
 
-    let mut iter = AsIterator::<MilestoneIndex, Milestone>::iter(storage).unwrap();
+    let mut iter = AsIterator::<MilestoneIndex, Milestone>::iter_op(storage).unwrap();
 
     assert!(iter.next().is_none());
 }

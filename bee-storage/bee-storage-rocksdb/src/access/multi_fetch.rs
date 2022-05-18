@@ -44,7 +44,7 @@ macro_rules! impl_multi_fetch {
         impl<'a> MultiFetch<'a, $key, $value> for Storage {
             type Iter = MultiIter<'a, $value, <Self as StorageBackend>::Error>;
 
-            fn multi_fetch(&'a self, keys: &[$key]) -> Result<Self::Iter, <Self as StorageBackend>::Error> {
+            fn multi_fetch_op(&'a self, keys: &[$key]) -> Result<Self::Iter, <Self as StorageBackend>::Error> {
                 let cf = self.cf_handle($cf)?;
 
                 Ok(MultiIter {
@@ -72,7 +72,7 @@ impl_multi_fetch!(Address, Balance, CF_ADDRESS_TO_BALANCE);
 impl<'a> MultiFetch<'a, MessageId, MessageMetadata> for Storage {
     type Iter = MultiIter<'a, MessageMetadata, <Self as StorageBackend>::Error>;
 
-    fn multi_fetch(&'a self, keys: &[MessageId]) -> Result<Self::Iter, <Self as StorageBackend>::Error> {
+    fn multi_fetch_op(&'a self, keys: &[MessageId]) -> Result<Self::Iter, <Self as StorageBackend>::Error> {
         let cf = self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?;
 
         Ok(MultiIter {

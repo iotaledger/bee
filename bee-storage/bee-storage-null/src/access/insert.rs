@@ -6,13 +6,13 @@ use bee_storage::access::{Insert, InsertStrict};
 use crate::Storage;
 
 impl<K, V> Insert<K, V> for Storage {
-    fn insert(&self, _key: &K, _value: &V) -> Result<(), Self::Error> {
+    fn insert_op(&self, _key: &K, _value: &V) -> Result<(), Self::Error> {
         Ok(())
     }
 }
 
 impl<K, V> InsertStrict<K, V> for Storage {
-    fn insert_strict(&self, _key: &K, _value: &V) -> Result<(), Self::Error> {
+    fn insert_strict_op(&self, _key: &K, _value: &V) -> Result<(), Self::Error> {
         Ok(())
     }
 }

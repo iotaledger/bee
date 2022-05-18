@@ -42,7 +42,7 @@ pub fn milestone_index_to_unreferenced_message_access<B: StorageBackend>(storage
     let (index, unreferenced_message) = (rand_milestone_index(), rand_unreferenced_message());
 
     assert!(
-        !Exist::<(MilestoneIndex, UnreferencedMessage), ()>::exist(storage, &(index, unreferenced_message)).unwrap()
+        !Exist::<(MilestoneIndex, UnreferencedMessage), ()>::exist_op(storage, &(index, unreferenced_message)).unwrap()
     );
     assert!(
         storage
@@ -52,10 +52,11 @@ pub fn milestone_index_to_unreferenced_message_access<B: StorageBackend>(storage
             .is_empty()
     );
 
-    Insert::<(MilestoneIndex, UnreferencedMessage), ()>::insert(storage, &(index, unreferenced_message), &()).unwrap();
+    Insert::<(MilestoneIndex, UnreferencedMessage), ()>::insert_op(storage, &(index, unreferenced_message), &())
+        .unwrap();
 
     assert!(
-        Exist::<(MilestoneIndex, UnreferencedMessage), ()>::exist(storage, &(index, unreferenced_message)).unwrap()
+        Exist::<(MilestoneIndex, UnreferencedMessage), ()>::exist_op(storage, &(index, unreferenced_message)).unwrap()
     );
     assert_eq!(
         storage
@@ -65,10 +66,10 @@ pub fn milestone_index_to_unreferenced_message_access<B: StorageBackend>(storage
         vec![unreferenced_message]
     );
 
-    Delete::<(MilestoneIndex, UnreferencedMessage), ()>::delete(storage, &(index, unreferenced_message)).unwrap();
+    Delete::<(MilestoneIndex, UnreferencedMessage), ()>::delete_op(storage, &(index, unreferenced_message)).unwrap();
 
     assert!(
-        !Exist::<(MilestoneIndex, UnreferencedMessage), ()>::exist(storage, &(index, unreferenced_message)).unwrap()
+        !Exist::<(MilestoneIndex, UnreferencedMessage), ()>::exist_op(storage, &(index, unreferenced_message)).unwrap()
     );
     assert!(
         storage
@@ -82,9 +83,9 @@ pub fn milestone_index_to_unreferenced_message_access<B: StorageBackend>(storage
 
     for _ in 0..10 {
         let (index, unreferenced_message) = (rand_milestone_index(), rand_unreferenced_message());
-        Insert::<(MilestoneIndex, UnreferencedMessage), ()>::insert(storage, &(index, unreferenced_message), &())
+        Insert::<(MilestoneIndex, UnreferencedMessage), ()>::insert_op(storage, &(index, unreferenced_message), &())
             .unwrap();
-        Batch::<(MilestoneIndex, UnreferencedMessage), ()>::batch_delete(
+        Batch::<(MilestoneIndex, UnreferencedMessage), ()>::batch_delete_op(
             storage,
             &mut batch,
             &(index, unreferenced_message),
@@ -98,7 +99,7 @@ pub fn milestone_index_to_unreferenced_message_access<B: StorageBackend>(storage
         let index = rand_milestone_index();
         for _ in 0..5 {
             let unreferenced_message = rand_unreferenced_message();
-            Batch::<(MilestoneIndex, UnreferencedMessage), ()>::batch_insert(
+            Batch::<(MilestoneIndex, UnreferencedMessage), ()>::batch_insert_op(
                 storage,
                 &mut batch,
                 &(index, unreferenced_message),
@@ -114,7 +115,7 @@ pub fn milestone_index_to_unreferenced_message_access<B: StorageBackend>(storage
 
     storage.batch_commit(batch, true).unwrap();
 
-    let iter = AsIterator::<(MilestoneIndex, UnreferencedMessage), ()>::iter(storage).unwrap();
+    let iter = AsIterator::<(MilestoneIndex, UnreferencedMessage), ()>::iter_op(storage).unwrap();
     let mut count = 0;
 
     for result in iter {
@@ -125,9 +126,9 @@ pub fn milestone_index_to_unreferenced_message_access<B: StorageBackend>(storage
 
     assert_eq!(count, unreferenced_messages.iter().fold(0, |acc, v| acc + v.1.len()));
 
-    Truncate::<(MilestoneIndex, UnreferencedMessage), ()>::truncate(storage).unwrap();
+    Truncate::<(MilestoneIndex, UnreferencedMessage), ()>::truncate_op(storage).unwrap();
 
-    let mut iter = AsIterator::<(MilestoneIndex, UnreferencedMessage), ()>::iter(storage).unwrap();
+    let mut iter = AsIterator::<(MilestoneIndex, UnreferencedMessage), ()>::iter_op(storage).unwrap();
 
     assert!(iter.next().is_none());
 }

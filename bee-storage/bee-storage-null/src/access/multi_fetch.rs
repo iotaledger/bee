@@ -29,7 +29,7 @@ impl<K, V> Iterator for MultiIter<K, V> {
 impl<'a, K: 'a, V: 'a> MultiFetch<'a, K, V> for Storage {
     type Iter = MultiIter<K, V>;
 
-    fn multi_fetch(&'a self, _keys: &'a [K]) -> Result<Self::Iter, Self::Error> {
+    fn multi_fetch_op(&'a self, _keys: &'a [K]) -> Result<Self::Iter, Self::Error> {
         Ok(MultiIter::new())
     }
 }

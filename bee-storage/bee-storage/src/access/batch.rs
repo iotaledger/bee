@@ -23,7 +23,7 @@ pub trait BatchBuilder: StorageBackend {
 /// therefore, it should be explicitly implemented for the corresponding `StorageBackend`.
 pub trait Batch<K, V>: BatchBuilder {
     /// Add Insert batch operation for the provided key value pair into the Batch memory buffer.
-    fn batch_insert(&self, batch: &mut Self::Batch, key: &K, value: &V) -> Result<(), Self::Error>;
+    fn batch_insert_op(&self, batch: &mut Self::Batch, key: &K, value: &V) -> Result<(), Self::Error>;
     /// Add Delete batch operation for the provided key value pair into the Batch memory buffer.
-    fn batch_delete(&self, batch: &mut Self::Batch, key: &K) -> Result<(), Self::Error>;
+    fn batch_delete_op(&self, batch: &mut Self::Batch, key: &K) -> Result<(), Self::Error>;
 }

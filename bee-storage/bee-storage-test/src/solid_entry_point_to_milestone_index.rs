@@ -41,42 +41,42 @@ impl<T> StorageBackend for T where
 pub fn solid_entry_point_to_milestone_index_access<B: StorageBackend>(storage: &B) {
     let (sep, index) = (rand_solid_entry_point(), rand_milestone_index());
 
-    assert!(!Exist::<SolidEntryPoint, MilestoneIndex>::exist(storage, &sep).unwrap());
+    assert!(!Exist::<SolidEntryPoint, MilestoneIndex>::exist_op(storage, &sep).unwrap());
     assert!(
         storage
             .fetch::<SolidEntryPoint, MilestoneIndex>(&sep)
             .unwrap()
             .is_none()
     );
-    let results = MultiFetch::<SolidEntryPoint, MilestoneIndex>::multi_fetch(storage, &[sep])
+    let results = MultiFetch::<SolidEntryPoint, MilestoneIndex>::multi_fetch_op(storage, &[sep])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(None))));
 
-    Insert::<SolidEntryPoint, MilestoneIndex>::insert(storage, &sep, &index).unwrap();
+    Insert::<SolidEntryPoint, MilestoneIndex>::insert_op(storage, &sep, &index).unwrap();
 
-    assert!(Exist::<SolidEntryPoint, MilestoneIndex>::exist(storage, &sep).unwrap());
+    assert!(Exist::<SolidEntryPoint, MilestoneIndex>::exist_op(storage, &sep).unwrap());
     assert_eq!(
         storage.fetch::<SolidEntryPoint, MilestoneIndex>(&sep).unwrap().unwrap(),
         index
     );
-    let results = MultiFetch::<SolidEntryPoint, MilestoneIndex>::multi_fetch(storage, &[sep])
+    let results = MultiFetch::<SolidEntryPoint, MilestoneIndex>::multi_fetch_op(storage, &[sep])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(Some(v))) if v == &index));
 
-    Delete::<SolidEntryPoint, MilestoneIndex>::delete(storage, &sep).unwrap();
+    Delete::<SolidEntryPoint, MilestoneIndex>::delete_op(storage, &sep).unwrap();
 
-    assert!(!Exist::<SolidEntryPoint, MilestoneIndex>::exist(storage, &sep).unwrap());
+    assert!(!Exist::<SolidEntryPoint, MilestoneIndex>::exist_op(storage, &sep).unwrap());
     assert!(
         storage
             .fetch::<SolidEntryPoint, MilestoneIndex>(&sep)
             .unwrap()
             .is_none()
     );
-    let results = MultiFetch::<SolidEntryPoint, MilestoneIndex>::multi_fetch(storage, &[sep])
+    let results = MultiFetch::<SolidEntryPoint, MilestoneIndex>::multi_fetch_op(storage, &[sep])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
@@ -88,22 +88,22 @@ pub fn solid_entry_point_to_milestone_index_access<B: StorageBackend>(storage: &
 
     for _ in 0..10 {
         let (sep, index) = (rand_solid_entry_point(), rand_milestone_index());
-        Insert::<SolidEntryPoint, MilestoneIndex>::insert(storage, &sep, &index).unwrap();
-        Batch::<SolidEntryPoint, MilestoneIndex>::batch_delete(storage, &mut batch, &sep).unwrap();
+        Insert::<SolidEntryPoint, MilestoneIndex>::insert_op(storage, &sep, &index).unwrap();
+        Batch::<SolidEntryPoint, MilestoneIndex>::batch_delete_op(storage, &mut batch, &sep).unwrap();
         seps_ids.push(sep);
         seps.push((sep, None));
     }
 
     for _ in 0..10 {
         let (sep, index) = (rand_solid_entry_point(), rand_milestone_index());
-        Batch::<SolidEntryPoint, MilestoneIndex>::batch_insert(storage, &mut batch, &sep, &index).unwrap();
+        Batch::<SolidEntryPoint, MilestoneIndex>::batch_insert_op(storage, &mut batch, &sep, &index).unwrap();
         seps_ids.push(sep);
         seps.push((sep, Some(index)));
     }
 
     storage.batch_commit(batch, true).unwrap();
 
-    let iter = AsIterator::<SolidEntryPoint, MilestoneIndex>::iter(storage).unwrap();
+    let iter = AsIterator::<SolidEntryPoint, MilestoneIndex>::iter_op(storage).unwrap();
     let mut count = 0;
 
     for result in iter {
@@ -114,7 +114,7 @@ pub fn solid_entry_point_to_milestone_index_access<B: StorageBackend>(storage: &
 
     assert_eq!(count, 10);
 
-    let results = MultiFetch::<SolidEntryPoint, MilestoneIndex>::multi_fetch(storage, &seps_ids)
+    let results = MultiFetch::<SolidEntryPoint, MilestoneIndex>::multi_fetch_op(storage, &seps_ids)
         .unwrap()
         .collect::<Vec<_>>();
 
@@ -124,9 +124,9 @@ pub fn solid_entry_point_to_milestone_index_access<B: StorageBackend>(storage: &
         assert_eq!(index, result.unwrap());
     }
 
-    Truncate::<SolidEntryPoint, MilestoneIndex>::truncate(storage).unwrap();
+    Truncate::<SolidEntryPoint, MilestoneIndex>::truncate_op(storage).unwrap();
 
-    let mut iter = AsIterator::<SolidEntryPoint, MilestoneIndex>::iter(storage).unwrap();
+    let mut iter = AsIterator::<SolidEntryPoint, MilestoneIndex>::iter_op(storage).unwrap();
 
     assert!(iter.next().is_none());
 }

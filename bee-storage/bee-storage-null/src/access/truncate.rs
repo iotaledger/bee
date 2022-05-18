@@ -6,7 +6,7 @@ use bee_storage::access::Truncate;
 use crate::Storage;
 
 impl<K, V> Truncate<K, V> for Storage {
-    fn truncate(&self) -> Result<(), Self::Error> {
+    fn truncate_op(&self) -> Result<(), Self::Error> {
         Ok(())
     }
 }

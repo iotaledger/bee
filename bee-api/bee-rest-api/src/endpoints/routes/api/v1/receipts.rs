@@ -25,7 +25,7 @@ pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter
 
 pub(crate) fn receipts<B: StorageBackend>(args: ApiArgsFullNode<B>) -> Result<impl Reply, Rejection> {
     let mut receipts_dto = Vec::new();
-    let iterator = AsIterator::<(MilestoneIndex, Receipt), ()>::iter(&*args.storage)
+    let iterator = AsIterator::<(MilestoneIndex, Receipt), ()>::iter_op(&*args.storage)
         .map_err(|_| CustomRejection::InternalError)?;
 
     for result in iterator {

@@ -111,7 +111,7 @@ impl<S: StorageBackend> StorageBackendExt for S {
     where
         Self: Batch<K, V>,
     {
-        Batch::<K, V>::batch_insert(self, batch, key, value)
+        Batch::<K, V>::batch_insert_op(self, batch, key, value)
     }
 
     #[inline(always)]
@@ -119,7 +119,7 @@ impl<S: StorageBackend> StorageBackendExt for S {
     where
         Self: Batch<K, V>,
     {
-        Batch::<K, V>::batch_delete(self, batch, key)
+        Batch::<K, V>::batch_delete_op(self, batch, key)
     }
 
     #[inline(always)]
@@ -127,7 +127,7 @@ impl<S: StorageBackend> StorageBackendExt for S {
     where
         Self: Delete<K, V>,
     {
-        Delete::<K, V>::delete(self, key)
+        Delete::<K, V>::delete_op(self, key)
     }
 
     #[inline(always)]
@@ -135,7 +135,7 @@ impl<S: StorageBackend> StorageBackendExt for S {
     where
         Self: Exist<K, V>,
     {
-        Exist::<K, V>::exist(self, key)
+        Exist::<K, V>::exist_op(self, key)
     }
 
     #[inline(always)]
@@ -151,7 +151,7 @@ impl<S: StorageBackend> StorageBackendExt for S {
     where
         Self: Insert<K, V>,
     {
-        Insert::<K, V>::insert(self, key, value)
+        Insert::<K, V>::insert_op(self, key, value)
     }
 
     #[inline(always)]
@@ -159,7 +159,7 @@ impl<S: StorageBackend> StorageBackendExt for S {
     where
         Self: InsertStrict<K, V>,
     {
-        InsertStrict::<K, V>::insert_strict(self, key, value)
+        InsertStrict::<K, V>::insert_strict_op(self, key, value)
     }
 
     #[inline(always)]
@@ -167,7 +167,7 @@ impl<S: StorageBackend> StorageBackendExt for S {
     where
         Self: AsIterator<'a, K, V>,
     {
-        AsIterator::<'a, K, V>::iter(self)
+        AsIterator::<'a, K, V>::iter_op(self)
     }
 
     #[inline(always)]
@@ -175,7 +175,7 @@ impl<S: StorageBackend> StorageBackendExt for S {
     where
         Self: MultiFetch<'a, K, V>,
     {
-        MultiFetch::<'a, K, V>::multi_fetch(self, keys)
+        MultiFetch::<'a, K, V>::multi_fetch_op(self, keys)
     }
 
     #[inline(always)]
@@ -183,7 +183,7 @@ impl<S: StorageBackend> StorageBackendExt for S {
     where
         Self: Truncate<K, V>,
     {
-        Truncate::<K, V>::truncate(self)
+        Truncate::<K, V>::truncate_op(self)
     }
 
     #[inline(always)]
@@ -191,6 +191,6 @@ impl<S: StorageBackend> StorageBackendExt for S {
     where
         Self: Update<K, V>,
     {
-        Update::<K, V>::update(self, key, f)
+        Update::<K, V>::update_op(self, key, f)
     }
 }

@@ -7,5 +7,5 @@ use crate::backend::StorageBackend;
 /// therefore, it should be explicitly implemented for the corresponding `StorageBackend`.
 pub trait Truncate<K, V>: StorageBackend {
     /// Truncates all the entries associated with the (K, V) pair from the storage.
-    fn truncate(&self) -> Result<(), Self::Error>;
+    fn truncate_op(&self) -> Result<(), Self::Error>;
 }

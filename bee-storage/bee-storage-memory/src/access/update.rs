@@ -12,7 +12,7 @@ use crate::storage::Storage;
 macro_rules! impl_update {
     ($key:ty, $value:ty, $field:ident) => {
         impl Update<$key, $value> for Storage {
-            fn update(&self, k: &$key, f: impl FnMut(&mut $value)) -> Result<(), <Self as StorageBackend>::Error> {
+            fn update_op(&self, k: &$key, f: impl FnMut(&mut $value)) -> Result<(), <Self as StorageBackend>::Error> {
                 Ok(self.inner.write()?.$field.update(k, f))
             }
         }

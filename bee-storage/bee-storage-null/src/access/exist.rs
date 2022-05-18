@@ -6,7 +6,7 @@ use bee_storage::access::Exist;
 use crate::Storage;
 
 impl<K, V> Exist<K, V> for Storage {
-    fn exist(&self, _key: &K) -> Result<bool, Self::Error> {
+    fn exist_op(&self, _key: &K) -> Result<bool, Self::Error> {
         Ok(false)
     }
 }

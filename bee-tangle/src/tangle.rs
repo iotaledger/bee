@@ -69,15 +69,15 @@ impl<B: StorageBackend> Tangle<B> {
     #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn insert(&self, message: &Message, message_id: &MessageId, metadata: &MessageMetadata) {
         self.storage
-            .insert(message_id, message)
+            .insert_op(message_id, message)
             .ok()
             .and_then(|()| {
-                self.storage.insert_strict(message_id, metadata).ok()?;
+                self.storage.insert_strict_op(message_id, metadata).ok()?;
 
                 let message_id = *message_id;
                 for &parent in message.parents().iter() {
                     self.storage
-                        .insert(&(parent, message_id), &())
+                        .insert_op(&(parent, message_id), &())
                         .unwrap_or_else(|e| warn!("Failed to update approvers for message {:?}", e));
                 }
                 Some(())
@@ -103,7 +103,7 @@ impl<B: StorageBackend> Tangle<B> {
             metadata.set_omrsi_and_ymrsi(index, index);
         });
         self.storage
-            .insert(&idx, &milestone)
+            .insert_op(&idx, &milestone)
             .unwrap_or_else(|e| warn!("Failed to insert milestone message {:?}", e));
     }
 
@@ -131,7 +131,7 @@ impl<B: StorageBackend> Tangle<B> {
     /// Return whether the tangle contains the given milestone index.
     #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn contains_milestone(&self, index: MilestoneIndex) -> bool {
-        self.storage.exist(&index).unwrap_or_default()
+        self.storage.exist_op(&index).unwrap_or_default()
     }
 
     /// Get the index of the latest milestone.
@@ -365,7 +365,7 @@ impl<B: StorageBackend> Tangle<B> {
     /// Returns whether the message is stored in the Tangle.
     #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn contains(&self, message_id: &MessageId) -> bool {
-        self.storage.exist(message_id).unwrap_or_default()
+        self.storage.exist_op(message_id).unwrap_or_default()
     }
 
     /// Get the metadata of a vertex associated with the given `message_id`.
@@ -384,7 +384,7 @@ impl<B: StorageBackend> Tangle<B> {
         let mut output = None;
 
         self.storage
-            .update(message_id, |metadata| output = Some(update(metadata)))
+            .update_op(message_id, |metadata| output = Some(update(metadata)))
             .unwrap_or_default();
 
         output

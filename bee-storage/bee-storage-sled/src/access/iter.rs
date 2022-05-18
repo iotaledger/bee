@@ -44,7 +44,7 @@ macro_rules! impl_iter {
         impl<'a> AsIterator<'a, $key, $value> for Storage {
             type AsIter = StorageIterator<'a, $key, $value>;
 
-            fn iter(&'a self) -> Result<Self::AsIter, <Self as StorageBackend>::Error> {
+            fn iter_op(&'a self) -> Result<Self::AsIter, <Self as StorageBackend>::Error> {
                 Ok(StorageIterator::new(self.inner.open_tree($cf)?.iter()))
             }
         }
@@ -301,7 +301,7 @@ impl<'a> StorageIterator<'a, (bool, TreasuryOutput), ()> {
 impl<'a> AsIterator<'a, u8, System> for Storage {
     type AsIter = StorageIterator<'a, u8, System>;
 
-    fn iter(&'a self) -> Result<Self::AsIter, <Self as StorageBackend>::Error> {
+    fn iter_op(&'a self) -> Result<Self::AsIter, <Self as StorageBackend>::Error> {
         Ok(StorageIterator::new(self.inner.iter()))
     }
 }

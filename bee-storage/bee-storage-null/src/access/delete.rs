@@ -6,7 +6,7 @@ use bee_storage::access::Delete;
 use crate::Storage;
 
 impl<K, V> Delete<K, V> for Storage {
-    fn delete(&self, _key: &K) -> Result<(), Self::Error> {
+    fn delete_op(&self, _key: &K) -> Result<(), Self::Error> {
         Ok(())
     }
 }

@@ -28,7 +28,7 @@ impl<K, V> Iterator for StorageIterator<K, V> {
 impl<'a, K, V> AsIterator<'a, K, V> for Storage {
     type AsIter = StorageIterator<K, V>;
 
-    fn iter(&'a self) -> Result<Self::AsIter, Self::Error> {
+    fn iter_op(&'a self) -> Result<Self::AsIter, Self::Error> {
         Ok(StorageIterator::new())
     }
 }

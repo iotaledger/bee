@@ -41,32 +41,32 @@ impl<T> StorageBackend for T where
 pub fn output_id_to_created_output_access<B: StorageBackend>(storage: &B) {
     let (output_id, created_output) = (rand_output_id(), rand_created_output());
 
-    assert!(!Exist::<OutputId, CreatedOutput>::exist(storage, &output_id).unwrap());
+    assert!(!Exist::<OutputId, CreatedOutput>::exist_op(storage, &output_id).unwrap());
     assert!(storage.fetch::<OutputId, CreatedOutput>(&output_id).unwrap().is_none());
-    let results = MultiFetch::<OutputId, CreatedOutput>::multi_fetch(storage, &[output_id])
+    let results = MultiFetch::<OutputId, CreatedOutput>::multi_fetch_op(storage, &[output_id])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(None))));
 
-    Insert::<OutputId, CreatedOutput>::insert(storage, &output_id, &created_output).unwrap();
+    Insert::<OutputId, CreatedOutput>::insert_op(storage, &output_id, &created_output).unwrap();
 
-    assert!(Exist::<OutputId, CreatedOutput>::exist(storage, &output_id).unwrap());
+    assert!(Exist::<OutputId, CreatedOutput>::exist_op(storage, &output_id).unwrap());
     assert_eq!(
         storage.fetch::<OutputId, CreatedOutput>(&output_id).unwrap().unwrap(),
         created_output
     );
-    let results = MultiFetch::<OutputId, CreatedOutput>::multi_fetch(storage, &[output_id])
+    let results = MultiFetch::<OutputId, CreatedOutput>::multi_fetch_op(storage, &[output_id])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(Some(v))) if v == &created_output));
 
-    Delete::<OutputId, CreatedOutput>::delete(storage, &output_id).unwrap();
+    Delete::<OutputId, CreatedOutput>::delete_op(storage, &output_id).unwrap();
 
-    assert!(!Exist::<OutputId, CreatedOutput>::exist(storage, &output_id).unwrap());
+    assert!(!Exist::<OutputId, CreatedOutput>::exist_op(storage, &output_id).unwrap());
     assert!(storage.fetch::<OutputId, CreatedOutput>(&output_id).unwrap().is_none());
-    let results = MultiFetch::<OutputId, CreatedOutput>::multi_fetch(storage, &[output_id])
+    let results = MultiFetch::<OutputId, CreatedOutput>::multi_fetch_op(storage, &[output_id])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
@@ -78,22 +78,22 @@ pub fn output_id_to_created_output_access<B: StorageBackend>(storage: &B) {
 
     for _ in 0..10 {
         let (output_id, created_output) = (rand_output_id(), rand_created_output());
-        Insert::<OutputId, CreatedOutput>::insert(storage, &output_id, &created_output).unwrap();
-        Batch::<OutputId, CreatedOutput>::batch_delete(storage, &mut batch, &output_id).unwrap();
+        Insert::<OutputId, CreatedOutput>::insert_op(storage, &output_id, &created_output).unwrap();
+        Batch::<OutputId, CreatedOutput>::batch_delete_op(storage, &mut batch, &output_id).unwrap();
         output_ids.push(output_id);
         created_outputs.push((output_id, None));
     }
 
     for _ in 0..10 {
         let (output_id, created_output) = (rand_output_id(), rand_created_output());
-        Batch::<OutputId, CreatedOutput>::batch_insert(storage, &mut batch, &output_id, &created_output).unwrap();
+        Batch::<OutputId, CreatedOutput>::batch_insert_op(storage, &mut batch, &output_id, &created_output).unwrap();
         output_ids.push(output_id);
         created_outputs.push((output_id, Some(created_output)));
     }
 
     storage.batch_commit(batch, true).unwrap();
 
-    let iter = AsIterator::<OutputId, CreatedOutput>::iter(storage).unwrap();
+    let iter = AsIterator::<OutputId, CreatedOutput>::iter_op(storage).unwrap();
     let mut count = 0;
 
     for result in iter {
@@ -104,7 +104,7 @@ pub fn output_id_to_created_output_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(count, 10);
 
-    let results = MultiFetch::<OutputId, CreatedOutput>::multi_fetch(storage, &output_ids)
+    let results = MultiFetch::<OutputId, CreatedOutput>::multi_fetch_op(storage, &output_ids)
         .unwrap()
         .collect::<Vec<_>>();
 
@@ -114,9 +114,9 @@ pub fn output_id_to_created_output_access<B: StorageBackend>(storage: &B) {
         assert_eq!(created_output, result.unwrap());
     }
 
-    Truncate::<OutputId, CreatedOutput>::truncate(storage).unwrap();
+    Truncate::<OutputId, CreatedOutput>::truncate_op(storage).unwrap();
 
-    let mut iter = AsIterator::<OutputId, CreatedOutput>::iter(storage).unwrap();
+    let mut iter = AsIterator::<OutputId, CreatedOutput>::iter_op(storage).unwrap();
 
     assert!(iter.next().is_none());
 }

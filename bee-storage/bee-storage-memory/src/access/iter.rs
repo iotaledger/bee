@@ -29,7 +29,7 @@ macro_rules! impl_iter {
         impl<'a> AsIterator<'a, ($key, $value), ()> for Storage {
             type AsIter = VecTableIter<$key, $value>;
 
-            fn iter(&'a self) -> Result<Self::AsIter, <Self as StorageBackend>::Error> {
+            fn iter_op(&'a self) -> Result<Self::AsIter, <Self as StorageBackend>::Error> {
                 Ok(self.inner.read()?.$field.iter())
             }
         }
@@ -39,7 +39,7 @@ macro_rules! impl_iter {
         impl<'a> AsIterator<'a, (), $value> for Storage {
             type AsIter = SingletonTableIter<$value>;
 
-            fn iter(&'a self) -> Result<Self::AsIter, <Self as StorageBackend>::Error> {
+            fn iter_op(&'a self) -> Result<Self::AsIter, <Self as StorageBackend>::Error> {
                 Ok(self.inner.read()?.$field.iter())
             }
         }
@@ -48,7 +48,7 @@ macro_rules! impl_iter {
         impl<'a> AsIterator<'a, $key, $value> for Storage {
             type AsIter = TableIter<$key, $value>;
 
-            fn iter(&'a self) -> Result<Self::AsIter, <Self as StorageBackend>::Error> {
+            fn iter_op(&'a self) -> Result<Self::AsIter, <Self as StorageBackend>::Error> {
                 Ok(self.inner.read()?.$field.iter())
             }
         }

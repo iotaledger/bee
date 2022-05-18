@@ -35,35 +35,35 @@ impl<T> StorageBackend for T where
 pub fn output_id_unspent_access<B: StorageBackend>(storage: &B) {
     let unspent = rand_unspent_output_id();
 
-    assert!(!Exist::<Unspent, ()>::exist(storage, &unspent).unwrap());
+    assert!(!Exist::<Unspent, ()>::exist_op(storage, &unspent).unwrap());
 
-    Insert::<Unspent, ()>::insert(storage, &unspent, &()).unwrap();
+    Insert::<Unspent, ()>::insert_op(storage, &unspent, &()).unwrap();
 
-    assert!(Exist::<Unspent, ()>::exist(storage, &unspent).unwrap());
+    assert!(Exist::<Unspent, ()>::exist_op(storage, &unspent).unwrap());
 
-    Delete::<Unspent, ()>::delete(storage, &unspent).unwrap();
+    Delete::<Unspent, ()>::delete_op(storage, &unspent).unwrap();
 
-    assert!(!Exist::<Unspent, ()>::exist(storage, &unspent).unwrap());
+    assert!(!Exist::<Unspent, ()>::exist_op(storage, &unspent).unwrap());
 
     let mut batch = B::batch_begin();
 
     for _ in 0..10 {
         let unspent = rand_unspent_output_id();
-        Insert::<Unspent, ()>::insert(storage, &unspent, &()).unwrap();
-        Batch::<Unspent, ()>::batch_delete(storage, &mut batch, &unspent).unwrap();
+        Insert::<Unspent, ()>::insert_op(storage, &unspent, &()).unwrap();
+        Batch::<Unspent, ()>::batch_delete_op(storage, &mut batch, &unspent).unwrap();
     }
 
     let mut unspents = Vec::new();
 
     for _ in 0..10 {
         let unspent = rand_unspent_output_id();
-        Batch::<Unspent, ()>::batch_insert(storage, &mut batch, &unspent, &()).unwrap();
+        Batch::<Unspent, ()>::batch_insert_op(storage, &mut batch, &unspent, &()).unwrap();
         unspents.push(unspent);
     }
 
     storage.batch_commit(batch, true).unwrap();
 
-    let iter = AsIterator::<Unspent, ()>::iter(storage).unwrap();
+    let iter = AsIterator::<Unspent, ()>::iter_op(storage).unwrap();
     let mut count = 0;
 
     for result in iter {
@@ -74,9 +74,9 @@ pub fn output_id_unspent_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(count, unspents.len());
 
-    Truncate::<Unspent, ()>::truncate(storage).unwrap();
+    Truncate::<Unspent, ()>::truncate_op(storage).unwrap();
 
-    let mut iter = AsIterator::<Unspent, ()>::iter(storage).unwrap();
+    let mut iter = AsIterator::<Unspent, ()>::iter_op(storage).unwrap();
 
     assert!(iter.next().is_none());
 }

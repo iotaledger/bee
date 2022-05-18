@@ -58,7 +58,7 @@ fn process<B: StorageBackend>(storage: &B, metrics: &NodeMetrics, message_id: Me
     metrics.indexation_payloads_inc(1);
 
     if let Err(e) =
-        Insert::<(PaddedIndex, MessageId), ()>::insert(&*storage, &(indexation.padded_index(), message_id), &())
+        Insert::<(PaddedIndex, MessageId), ()>::insert_op(&*storage, &(indexation.padded_index(), message_id), &())
     {
         error!(
             "Inserting indexation payload for message {} failed: {:?}.",

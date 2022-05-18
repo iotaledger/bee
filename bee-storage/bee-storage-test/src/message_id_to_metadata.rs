@@ -43,21 +43,21 @@ impl<T> StorageBackend for T where
 pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
     let (message_id, metadata) = (rand_message_id(), rand_message_metadata());
 
-    assert!(!Exist::<MessageId, MessageMetadata>::exist(storage, &message_id).unwrap());
+    assert!(!Exist::<MessageId, MessageMetadata>::exist_op(storage, &message_id).unwrap());
     assert!(
         storage
             .fetch::<MessageId, MessageMetadata>(&message_id)
             .unwrap()
             .is_none()
     );
-    let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch(storage, &[message_id])
+    let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch_op(storage, &[message_id])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(None))));
 
-    InsertStrict::<MessageId, MessageMetadata>::insert_strict(storage, &message_id, &metadata).unwrap();
-    assert!(Exist::<MessageId, MessageMetadata>::exist(storage, &message_id).unwrap());
+    InsertStrict::<MessageId, MessageMetadata>::insert_strict_op(storage, &message_id, &metadata).unwrap();
+    assert!(Exist::<MessageId, MessageMetadata>::exist_op(storage, &message_id).unwrap());
 
     // calling `insert_strict` with the same `MessageId` but a different `MessageMetadata` should
     // not overwrite the old value.
@@ -66,7 +66,7 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
         let mut metadata = metadata.clone();
         metadata.set_milestone_index(MilestoneIndex(index));
 
-        InsertStrict::<MessageId, MessageMetadata>::insert_strict(storage, &message_id, &metadata).unwrap();
+        InsertStrict::<MessageId, MessageMetadata>::insert_strict_op(storage, &message_id, &metadata).unwrap();
     }
     assert_eq!(
         storage
@@ -77,7 +77,7 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
         "`InsertStrict` should not overwrite"
     );
 
-    let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch(storage, &[message_id])
+    let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch_op(storage, &[message_id])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
@@ -93,7 +93,7 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
         MilestoneIndex(index.map_or(0, |i| i.wrapping_add(1)))
     };
 
-    Update::<MessageId, MessageMetadata>::update(storage, &message_id, |metadata: &mut MessageMetadata| {
+    Update::<MessageId, MessageMetadata>::update_op(storage, &message_id, |metadata: &mut MessageMetadata| {
         metadata.set_milestone_index(milestone_index);
     })
     .unwrap();
@@ -107,9 +107,9 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
         Some(milestone_index),
     );
 
-    Delete::<MessageId, MessageMetadata>::delete(storage, &message_id).unwrap();
+    Delete::<MessageId, MessageMetadata>::delete_op(storage, &message_id).unwrap();
 
-    assert!(!Exist::<MessageId, MessageMetadata>::exist(storage, &message_id).unwrap());
+    assert!(!Exist::<MessageId, MessageMetadata>::exist_op(storage, &message_id).unwrap());
     assert!(
         storage
             .fetch::<MessageId, MessageMetadata>(&message_id)
@@ -117,7 +117,7 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
             .is_none()
     );
 
-    let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch(storage, &[message_id])
+    let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch_op(storage, &[message_id])
         .unwrap()
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
@@ -129,22 +129,22 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
 
     for _ in 0..10 {
         let (message_id, metadata) = (rand_message_id(), rand_message_metadata());
-        InsertStrict::<MessageId, MessageMetadata>::insert_strict(storage, &message_id, &metadata).unwrap();
-        Batch::<MessageId, MessageMetadata>::batch_delete(storage, &mut batch, &message_id).unwrap();
+        InsertStrict::<MessageId, MessageMetadata>::insert_strict_op(storage, &message_id, &metadata).unwrap();
+        Batch::<MessageId, MessageMetadata>::batch_delete_op(storage, &mut batch, &message_id).unwrap();
         message_ids.push(message_id);
         metadatas.push((message_id, None));
     }
 
     for _ in 0..10 {
         let (message_id, metadata) = (rand_message_id(), rand_message_metadata());
-        Batch::<MessageId, MessageMetadata>::batch_insert(storage, &mut batch, &message_id, &metadata).unwrap();
+        Batch::<MessageId, MessageMetadata>::batch_insert_op(storage, &mut batch, &message_id, &metadata).unwrap();
         message_ids.push(message_id);
         metadatas.push((message_id, Some(metadata)));
     }
 
     storage.batch_commit(batch, true).unwrap();
 
-    let iter = AsIterator::<MessageId, MessageMetadata>::iter(storage).unwrap();
+    let iter = AsIterator::<MessageId, MessageMetadata>::iter_op(storage).unwrap();
     let mut count = 0;
 
     for result in iter {
@@ -155,7 +155,7 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(count, 10);
 
-    let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch(storage, &message_ids)
+    let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch_op(storage, &message_ids)
         .unwrap()
         .collect::<Vec<_>>();
 
@@ -165,9 +165,9 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
         assert_eq!(metadata, result.unwrap());
     }
 
-    Truncate::<MessageId, MessageMetadata>::truncate(storage).unwrap();
+    Truncate::<MessageId, MessageMetadata>::truncate_op(storage).unwrap();
 
-    let mut iter = AsIterator::<MessageId, MessageMetadata>::iter(storage).unwrap();
+    let mut iter = AsIterator::<MessageId, MessageMetadata>::iter_op(storage).unwrap();
 
     assert!(iter.next().is_none());
 }

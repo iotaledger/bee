@@ -6,7 +6,7 @@ use bee_storage::access::Update;
 use crate::Storage;
 
 impl<K, V> Update<K, V> for Storage {
-    fn update(&self, _key: &K, _f: impl FnMut(&mut V)) -> Result<(), Self::Error> {
+    fn update_op(&self, _key: &K, _f: impl FnMut(&mut V)) -> Result<(), Self::Error> {
         Ok(())
     }
 }

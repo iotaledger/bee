@@ -40,7 +40,7 @@ impl<T> StorageBackend for T where
 pub fn ed25519_address_to_output_id_access<B: StorageBackend>(storage: &B) {
     let (address, output_id) = (rand_ed25519_address(), rand_output_id());
 
-    assert!(!Exist::<(Ed25519Address, OutputId), ()>::exist(storage, &(address, output_id)).unwrap());
+    assert!(!Exist::<(Ed25519Address, OutputId), ()>::exist_op(storage, &(address, output_id)).unwrap());
     assert!(
         storage
             .fetch::<Ed25519Address, Vec<OutputId>>(&address)
@@ -49,9 +49,9 @@ pub fn ed25519_address_to_output_id_access<B: StorageBackend>(storage: &B) {
             .is_empty()
     );
 
-    Insert::<(Ed25519Address, OutputId), ()>::insert(storage, &(address, output_id), &()).unwrap();
+    Insert::<(Ed25519Address, OutputId), ()>::insert_op(storage, &(address, output_id), &()).unwrap();
 
-    assert!(Exist::<(Ed25519Address, OutputId), ()>::exist(storage, &(address, output_id)).unwrap());
+    assert!(Exist::<(Ed25519Address, OutputId), ()>::exist_op(storage, &(address, output_id)).unwrap());
     assert_eq!(
         storage
             .fetch::<Ed25519Address, Vec<OutputId>>(&address)
@@ -60,9 +60,9 @@ pub fn ed25519_address_to_output_id_access<B: StorageBackend>(storage: &B) {
         vec![output_id]
     );
 
-    Delete::<(Ed25519Address, OutputId), ()>::delete(storage, &(address, output_id)).unwrap();
+    Delete::<(Ed25519Address, OutputId), ()>::delete_op(storage, &(address, output_id)).unwrap();
 
-    assert!(!Exist::<(Ed25519Address, OutputId), ()>::exist(storage, &(address, output_id)).unwrap());
+    assert!(!Exist::<(Ed25519Address, OutputId), ()>::exist_op(storage, &(address, output_id)).unwrap());
     assert!(
         storage
             .fetch::<Ed25519Address, Vec<OutputId>>(&address)
@@ -75,8 +75,8 @@ pub fn ed25519_address_to_output_id_access<B: StorageBackend>(storage: &B) {
 
     for _ in 0..10 {
         let (address, output_id) = (rand_ed25519_address(), rand_output_id());
-        Insert::<(Ed25519Address, OutputId), ()>::insert(storage, &(address, output_id), &()).unwrap();
-        Batch::<(Ed25519Address, OutputId), ()>::batch_delete(storage, &mut batch, &(address, output_id)).unwrap();
+        Insert::<(Ed25519Address, OutputId), ()>::insert_op(storage, &(address, output_id), &()).unwrap();
+        Batch::<(Ed25519Address, OutputId), ()>::batch_delete_op(storage, &mut batch, &(address, output_id)).unwrap();
     }
 
     let mut output_ids = HashMap::<Ed25519Address, Vec<OutputId>>::new();
@@ -85,7 +85,7 @@ pub fn ed25519_address_to_output_id_access<B: StorageBackend>(storage: &B) {
         let address = rand_ed25519_address();
         for _ in 0..5 {
             let output_id = rand_output_id();
-            Batch::<(Ed25519Address, OutputId), ()>::batch_insert(storage, &mut batch, &(address, output_id), &())
+            Batch::<(Ed25519Address, OutputId), ()>::batch_insert_op(storage, &mut batch, &(address, output_id), &())
                 .unwrap();
             output_ids.entry(address).or_default().push(output_id);
         }
@@ -93,7 +93,7 @@ pub fn ed25519_address_to_output_id_access<B: StorageBackend>(storage: &B) {
 
     storage.batch_commit(batch, true).unwrap();
 
-    let iter = AsIterator::<(Ed25519Address, OutputId), ()>::iter(storage).unwrap();
+    let iter = AsIterator::<(Ed25519Address, OutputId), ()>::iter_op(storage).unwrap();
     let mut count = 0;
 
     for result in iter {
@@ -104,9 +104,9 @@ pub fn ed25519_address_to_output_id_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(count, output_ids.iter().fold(0, |acc, v| acc + v.1.len()));
 
-    Truncate::<(Ed25519Address, OutputId), ()>::truncate(storage).unwrap();
+    Truncate::<(Ed25519Address, OutputId), ()>::truncate_op(storage).unwrap();
 
-    let mut iter = AsIterator::<(Ed25519Address, OutputId), ()>::iter(storage).unwrap();
+    let mut iter = AsIterator::<(Ed25519Address, OutputId), ()>::iter_op(storage).unwrap();
 
     assert!(iter.next().is_none());
 }

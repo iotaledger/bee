@@ -87,7 +87,7 @@ impl BatchBuilder for Storage {
 macro_rules! impl_batch {
     ($key:ty, $value:ty, $field:ident) => {
         impl Batch<$key, $value> for Storage {
-            fn batch_insert(
+            fn batch_insert_op(
                 &self,
                 batch: &mut Self::Batch,
                 key: &$key,
@@ -98,7 +98,11 @@ macro_rules! impl_batch {
                 Ok(())
             }
 
-            fn batch_delete(&self, batch: &mut Self::Batch, key: &$key) -> Result<(), <Self as StorageBackend>::Error> {
+            fn batch_delete_op(
+                &self,
+                batch: &mut Self::Batch,
+                key: &$key,
+            ) -> Result<(), <Self as StorageBackend>::Error> {
                 batch.$field.delete(key);
 
                 Ok(())

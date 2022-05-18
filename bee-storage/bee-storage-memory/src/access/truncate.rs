@@ -24,7 +24,7 @@ use crate::storage::Storage;
 macro_rules! impl_truncate {
     ($key:ty, $value:ty, $field:ident) => {
         impl Truncate<$key, $value> for Storage {
-            fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
+            fn truncate_op(&self) -> Result<(), <Self as StorageBackend>::Error> {
                 self.inner.write()?.$field.truncate();
 
                 Ok(())

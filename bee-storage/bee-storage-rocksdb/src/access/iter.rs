@@ -48,7 +48,7 @@ macro_rules! impl_iter {
         impl<'a> AsIterator<'a, $key, $value> for Storage {
             type AsIter = StorageIterator<'a, $key, $value>;
 
-            fn iter(&'a self) -> Result<Self::AsIter, <Self as StorageBackend>::Error> {
+            fn iter_op(&'a self) -> Result<Self::AsIter, <Self as StorageBackend>::Error> {
                 Ok(StorageIterator::new(
                     self.inner.iterator_cf(self.cf_handle($cf)?, IteratorMode::Start),
                     None,
@@ -328,7 +328,7 @@ impl_iter!((bool, TreasuryOutput), (), CF_SPENT_TO_TREASURY_OUTPUT);
 impl<'a> AsIterator<'a, MessageId, MessageMetadata> for Storage {
     type AsIter = StorageIterator<'a, MessageId, MessageMetadata>;
 
-    fn iter(&'a self) -> Result<Self::AsIter, <Self as StorageBackend>::Error> {
+    fn iter_op(&'a self) -> Result<Self::AsIter, <Self as StorageBackend>::Error> {
         Ok(StorageIterator::new(
             self.inner
                 .iterator_cf(self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?, IteratorMode::Start),

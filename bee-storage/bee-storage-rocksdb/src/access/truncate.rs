@@ -25,7 +25,7 @@ use crate::{
 macro_rules! impl_truncate {
     ($key:ty, $value:ty, $cf:expr) => {
         impl Truncate<$key, $value> for Storage {
-            fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
+            fn truncate_op(&self) -> Result<(), <Self as StorageBackend>::Error> {
                 let cf_handle = self.cf_handle($cf)?;
 
                 let mut iter = self.inner.raw_iterator_cf(cf_handle);
@@ -83,7 +83,7 @@ impl_truncate!((MilestoneIndex, Receipt), (), CF_MILESTONE_INDEX_TO_RECEIPT);
 impl_truncate!((bool, TreasuryOutput), (), CF_SPENT_TO_TREASURY_OUTPUT);
 
 impl Truncate<MessageId, MessageMetadata> for Storage {
-    fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
+    fn truncate_op(&self) -> Result<(), <Self as StorageBackend>::Error> {
         let guard = self.locks.message_id_to_metadata.read();
 
         let cf_handle = self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?;

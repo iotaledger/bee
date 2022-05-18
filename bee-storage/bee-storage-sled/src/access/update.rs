@@ -11,7 +11,7 @@ use bee_tangle::metadata::MessageMetadata;
 use crate::{storage::Storage, trees::*};
 
 impl Update<MessageId, MessageMetadata> for Storage {
-    fn update(&self, message_id: &MessageId, mut f: impl FnMut(&mut MessageMetadata)) -> Result<(), Self::Error> {
+    fn update_op(&self, message_id: &MessageId, mut f: impl FnMut(&mut MessageMetadata)) -> Result<(), Self::Error> {
         self.inner
             .open_tree(TREE_MESSAGE_ID_TO_METADATA)?
             .fetch_and_update(message_id, move |opt_bytes| {

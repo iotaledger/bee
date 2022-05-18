@@ -7,5 +7,5 @@ use crate::backend::StorageBackend;
 /// therefore, it should be explicitly implemented for the corresponding `StorageBackend`.
 pub trait Exist<K, V>: StorageBackend {
     /// Checks if a value exists in the storage for the given key.
-    fn exist(&self, key: &K) -> Result<bool, Self::Error>;
+    fn exist_op(&self, key: &K) -> Result<bool, Self::Error>;
 }

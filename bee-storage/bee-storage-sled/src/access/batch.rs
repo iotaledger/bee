@@ -68,7 +68,7 @@ impl BatchBuilder for Storage {
 }
 
 impl Batch<MessageId, Message> for Storage {
-    fn batch_insert(
+    fn batch_insert_op(
         &self,
         batch: &mut Self::Batch,
         message_id: &MessageId,
@@ -87,7 +87,7 @@ impl Batch<MessageId, Message> for Storage {
         Ok(())
     }
 
-    fn batch_delete(
+    fn batch_delete_op(
         &self,
         batch: &mut Self::Batch,
         message_id: &MessageId,
@@ -103,7 +103,7 @@ impl Batch<MessageId, Message> for Storage {
 }
 
 impl Batch<MessageId, MessageMetadata> for Storage {
-    fn batch_insert(
+    fn batch_insert_op(
         &self,
         batch: &mut Self::Batch,
         message_id: &MessageId,
@@ -122,7 +122,7 @@ impl Batch<MessageId, MessageMetadata> for Storage {
         Ok(())
     }
 
-    fn batch_delete(
+    fn batch_delete_op(
         &self,
         batch: &mut Self::Batch,
         message_id: &MessageId,
@@ -138,7 +138,7 @@ impl Batch<MessageId, MessageMetadata> for Storage {
 }
 
 impl Batch<(MessageId, MessageId), ()> for Storage {
-    fn batch_insert(
+    fn batch_insert_op(
         &self,
         batch: &mut Self::Batch,
         (parent, child): &(MessageId, MessageId),
@@ -157,7 +157,7 @@ impl Batch<(MessageId, MessageId), ()> for Storage {
         Ok(())
     }
 
-    fn batch_delete(
+    fn batch_delete_op(
         &self,
         batch: &mut Self::Batch,
         (parent, child): &(MessageId, MessageId),
@@ -177,7 +177,7 @@ impl Batch<(MessageId, MessageId), ()> for Storage {
 }
 
 impl Batch<(PaddedIndex, MessageId), ()> for Storage {
-    fn batch_insert(
+    fn batch_insert_op(
         &self,
         batch: &mut Self::Batch,
         (index, message_id): &(PaddedIndex, MessageId),
@@ -196,7 +196,7 @@ impl Batch<(PaddedIndex, MessageId), ()> for Storage {
         Ok(())
     }
 
-    fn batch_delete(
+    fn batch_delete_op(
         &self,
         batch: &mut Self::Batch,
         (index, message_id): &(PaddedIndex, MessageId),
@@ -216,7 +216,7 @@ impl Batch<(PaddedIndex, MessageId), ()> for Storage {
 }
 
 impl Batch<OutputId, CreatedOutput> for Storage {
-    fn batch_insert(
+    fn batch_insert_op(
         &self,
         batch: &mut Self::Batch,
         output_id: &OutputId,
@@ -238,7 +238,7 @@ impl Batch<OutputId, CreatedOutput> for Storage {
         Ok(())
     }
 
-    fn batch_delete(
+    fn batch_delete_op(
         &self,
         batch: &mut Self::Batch,
         output_id: &OutputId,
@@ -258,7 +258,7 @@ impl Batch<OutputId, CreatedOutput> for Storage {
 }
 
 impl Batch<OutputId, ConsumedOutput> for Storage {
-    fn batch_insert(
+    fn batch_insert_op(
         &self,
         batch: &mut Self::Batch,
         output_id: &OutputId,
@@ -280,7 +280,7 @@ impl Batch<OutputId, ConsumedOutput> for Storage {
         Ok(())
     }
 
-    fn batch_delete(
+    fn batch_delete_op(
         &self,
         batch: &mut Self::Batch,
         output_id: &OutputId,
@@ -300,7 +300,7 @@ impl Batch<OutputId, ConsumedOutput> for Storage {
 }
 
 impl Batch<Unspent, ()> for Storage {
-    fn batch_insert(&self, batch: &mut Self::Batch, unspent: &Unspent, (): &()) -> Result<(), Self::Error> {
+    fn batch_insert_op(&self, batch: &mut Self::Batch, unspent: &Unspent, (): &()) -> Result<(), Self::Error> {
         batch.key_buf.clear();
         // Packing to bytes can't fail.
         unspent.pack(&mut batch.key_buf).unwrap();
@@ -314,7 +314,7 @@ impl Batch<Unspent, ()> for Storage {
         Ok(())
     }
 
-    fn batch_delete(&self, batch: &mut Self::Batch, unspent: &Unspent) -> Result<(), Self::Error> {
+    fn batch_delete_op(&self, batch: &mut Self::Batch, unspent: &Unspent) -> Result<(), Self::Error> {
         batch.key_buf.clear();
         // Packing to bytes can't fail.
         unspent.pack(&mut batch.key_buf).unwrap();
@@ -330,7 +330,7 @@ impl Batch<Unspent, ()> for Storage {
 }
 
 impl Batch<(Ed25519Address, OutputId), ()> for Storage {
-    fn batch_insert(
+    fn batch_insert_op(
         &self,
         batch: &mut Self::Batch,
         (address, output_id): &(Ed25519Address, OutputId),
@@ -349,7 +349,7 @@ impl Batch<(Ed25519Address, OutputId), ()> for Storage {
         Ok(())
     }
 
-    fn batch_delete(
+    fn batch_delete_op(
         &self,
         batch: &mut Self::Batch,
         (address, output_id): &(Ed25519Address, OutputId),
@@ -369,7 +369,7 @@ impl Batch<(Ed25519Address, OutputId), ()> for Storage {
 }
 
 impl Batch<(), LedgerIndex> for Storage {
-    fn batch_insert(
+    fn batch_insert_op(
         &self,
         batch: &mut Self::Batch,
         (): &(),
@@ -388,7 +388,7 @@ impl Batch<(), LedgerIndex> for Storage {
         Ok(())
     }
 
-    fn batch_delete(&self, batch: &mut Self::Batch, (): &()) -> Result<(), <Self as StorageBackend>::Error> {
+    fn batch_delete_op(&self, batch: &mut Self::Batch, (): &()) -> Result<(), <Self as StorageBackend>::Error> {
         batch.inner.entry(TREE_LEDGER_INDEX).or_default().remove(&[0x00u8]);
 
         Ok(())
@@ -396,7 +396,7 @@ impl Batch<(), LedgerIndex> for Storage {
 }
 
 impl Batch<MilestoneIndex, Milestone> for Storage {
-    fn batch_insert(
+    fn batch_insert_op(
         &self,
         batch: &mut Self::Batch,
         index: &MilestoneIndex,
@@ -418,7 +418,7 @@ impl Batch<MilestoneIndex, Milestone> for Storage {
         Ok(())
     }
 
-    fn batch_delete(
+    fn batch_delete_op(
         &self,
         batch: &mut Self::Batch,
         index: &MilestoneIndex,
@@ -438,7 +438,7 @@ impl Batch<MilestoneIndex, Milestone> for Storage {
 }
 
 impl Batch<(), SnapshotInfo> for Storage {
-    fn batch_insert(
+    fn batch_insert_op(
         &self,
         batch: &mut Self::Batch,
         (): &(),
@@ -457,7 +457,7 @@ impl Batch<(), SnapshotInfo> for Storage {
         Ok(())
     }
 
-    fn batch_delete(&self, batch: &mut Self::Batch, (): &()) -> Result<(), <Self as StorageBackend>::Error> {
+    fn batch_delete_op(&self, batch: &mut Self::Batch, (): &()) -> Result<(), <Self as StorageBackend>::Error> {
         batch.inner.entry(TREE_SNAPSHOT_INFO).or_default().remove(&[0x00u8]);
 
         Ok(())
@@ -465,7 +465,7 @@ impl Batch<(), SnapshotInfo> for Storage {
 }
 
 impl Batch<SolidEntryPoint, MilestoneIndex> for Storage {
-    fn batch_insert(
+    fn batch_insert_op(
         &self,
         batch: &mut Self::Batch,
         sep: &SolidEntryPoint,
@@ -487,7 +487,7 @@ impl Batch<SolidEntryPoint, MilestoneIndex> for Storage {
         Ok(())
     }
 
-    fn batch_delete(&self, batch: &mut Self::Batch, sep: &SolidEntryPoint) -> Result<(), Self::Error> {
+    fn batch_delete_op(&self, batch: &mut Self::Batch, sep: &SolidEntryPoint) -> Result<(), Self::Error> {
         batch.key_buf.clear();
         // Packing to bytes can't fail.
         sep.pack(&mut batch.key_buf).unwrap();
@@ -503,7 +503,7 @@ impl Batch<SolidEntryPoint, MilestoneIndex> for Storage {
 }
 
 impl Batch<MilestoneIndex, OutputDiff> for Storage {
-    fn batch_insert(
+    fn batch_insert_op(
         &self,
         batch: &mut Self::Batch,
         index: &MilestoneIndex,
@@ -525,7 +525,7 @@ impl Batch<MilestoneIndex, OutputDiff> for Storage {
         Ok(())
     }
 
-    fn batch_delete(
+    fn batch_delete_op(
         &self,
         batch: &mut Self::Batch,
         index: &MilestoneIndex,
@@ -545,7 +545,7 @@ impl Batch<MilestoneIndex, OutputDiff> for Storage {
 }
 
 impl Batch<Address, Balance> for Storage {
-    fn batch_insert(
+    fn batch_insert_op(
         &self,
         batch: &mut Self::Batch,
         address: &Address,
@@ -560,7 +560,11 @@ impl Batch<Address, Balance> for Storage {
         Ok(())
     }
 
-    fn batch_delete(&self, batch: &mut Self::Batch, address: &Address) -> Result<(), <Self as StorageBackend>::Error> {
+    fn batch_delete_op(
+        &self,
+        batch: &mut Self::Batch,
+        address: &Address,
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         batch
             .inner
             .entry(TREE_ADDRESS_TO_BALANCE)
@@ -572,7 +576,7 @@ impl Batch<Address, Balance> for Storage {
 }
 
 impl Batch<(MilestoneIndex, UnreferencedMessage), ()> for Storage {
-    fn batch_insert(
+    fn batch_insert_op(
         &self,
         batch: &mut Self::Batch,
         (index, unreferenced_message): &(MilestoneIndex, UnreferencedMessage),
@@ -591,7 +595,7 @@ impl Batch<(MilestoneIndex, UnreferencedMessage), ()> for Storage {
         Ok(())
     }
 
-    fn batch_delete(
+    fn batch_delete_op(
         &self,
         batch: &mut Self::Batch,
         (index, unreferenced_message): &(MilestoneIndex, UnreferencedMessage),
@@ -611,7 +615,7 @@ impl Batch<(MilestoneIndex, UnreferencedMessage), ()> for Storage {
 }
 
 impl Batch<(MilestoneIndex, Receipt), ()> for Storage {
-    fn batch_insert(
+    fn batch_insert_op(
         &self,
         batch: &mut Self::Batch,
         (index, receipt): &(MilestoneIndex, Receipt),
@@ -630,7 +634,7 @@ impl Batch<(MilestoneIndex, Receipt), ()> for Storage {
         Ok(())
     }
 
-    fn batch_delete(
+    fn batch_delete_op(
         &self,
         batch: &mut Self::Batch,
         (index, receipt): &(MilestoneIndex, Receipt),
@@ -650,7 +654,7 @@ impl Batch<(MilestoneIndex, Receipt), ()> for Storage {
 }
 
 impl Batch<(bool, TreasuryOutput), ()> for Storage {
-    fn batch_insert(
+    fn batch_insert_op(
         &self,
         batch: &mut Self::Batch,
         (spent, output): &(bool, TreasuryOutput),
@@ -669,7 +673,7 @@ impl Batch<(bool, TreasuryOutput), ()> for Storage {
         Ok(())
     }
 
-    fn batch_delete(
+    fn batch_delete_op(
         &self,
         batch: &mut Self::Batch,
         (spent, output): &(bool, TreasuryOutput),
