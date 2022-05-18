@@ -44,10 +44,12 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
     let (message_id, metadata) = (rand_message_id(), rand_message_metadata());
 
     assert!(!storage.exist::<MessageId, MessageMetadata>(&message_id).unwrap());
-    assert!(storage
-        .fetch::<MessageId, MessageMetadata>(&message_id)
-        .unwrap()
-        .is_none());
+    assert!(
+        storage
+            .fetch::<MessageId, MessageMetadata>(&message_id)
+            .unwrap()
+            .is_none()
+    );
     let results = storage
         .multi_fetch::<MessageId, MessageMetadata>(&[message_id])
         .unwrap()
@@ -111,10 +113,12 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
     storage.delete::<MessageId, MessageMetadata>(&message_id).unwrap();
 
     assert!(!storage.exist::<MessageId, MessageMetadata>(&message_id).unwrap());
-    assert!(storage
-        .fetch::<MessageId, MessageMetadata>(&message_id)
-        .unwrap()
-        .is_none());
+    assert!(
+        storage
+            .fetch::<MessageId, MessageMetadata>(&message_id)
+            .unwrap()
+            .is_none()
+    );
 
     let results = storage
         .multi_fetch::<MessageId, MessageMetadata>(&[message_id])
