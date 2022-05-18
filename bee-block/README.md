@@ -1,9 +1,10 @@
 # bee-block
 
 Strict implementations of:
-- [RFC 0017: tangle-block](https://github.com/iotaledger/protocol-rfcs/blob/master/text/0017-tangle-block/0017-tangle-block.md)
-- [RFC 0018: transaction-payload](https://github.com/iotaledger/protocol-rfcs/blob/master/text/0018-transaction-payload/0018-transaction-payload.md)
-- [RFC 0019: milestone-payload](https://github.com/iotaledger/protocol-rfcs/blob/master/text/0019-milestone-payload/0019-milestone-payload.md)
-- [RFC 0020: bech32-address-format](https://github.com/iotaledger/protocol-rfcs/blob/master/text/0020-bech32-address-format/0020-bech32-address-format.md)
-- [PR 0040: Output Types For Tokenization and Smart Contracts](https://github.com/iotaledger/protocol-rfcs/pull/38)
-- [PR 0040: Update Transaction Payload RFC with New Output Types](https://github.com/iotaledger/protocol-rfcs/pull/40)
+- [TIP-0011: Bech32 Address Format](https://github.com/iotaledger/tips/blob/main/tips/TIP-0011/tip-0011.md)
+- [TIP-0018: Multi-Asset Ledger and ISC Support](https://github.com/lzpap/tips/blob/master/tips/TIP-0018/tip-0018.md)
+- [TIP-0019: Dust Protection Based on Byte Costs](https://github.com/muXxer/protocol-rfcs/blob/master/tips/TIP-0019/tip-0019.md)
+- [TIP-0020: Transaction Payload with TIP-18 Output Types](https://github.com/lzpap/tips/blob/tx-updates/tips/TIP-0020/tip-0020.md)
+- [TIP-0023: Tagged Data Payload](https://github.com/Wollac/protocol-rfcs/blob/tagged-data/tips/TIP-0023/tip-0023.md)
+- [TIP-0024: Tangle Block](https://github.com/Wollac/protocol-rfcs/blob/tangle-message-data/tips/TIP-0024/tip-0024.md)
+- [TIP-0029: Milestone Payload](https://github.com/iotaledger/tips/blob/milestone-with-signature-blocks/tips/TIP-0029/tip-0029.md)

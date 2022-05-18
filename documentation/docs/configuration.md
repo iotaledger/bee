@@ -11,7 +11,7 @@ keywords:
 ---
 # Configuration
 
-Here, you will find the more technical references of Bee. 
+Here, you will find the more technical references of Bee.
 
 Bee uses the Toml standard as a configuration file. If you are unsure about syntax, you can have a look at the [official Toml specifications](https://toml.io).
 
@@ -131,7 +131,7 @@ alias   = "yet another peer"
 
 | Name                 | Description           | Type           |
 | :------------------- | :-------------------- | :------------- |
-| block_worker_cache | TO-DO                 | integer[usize] |
+| block_worker_cache   | TO-DO                 | integer[usize] |
 | status_interval      | status interval in ms | integer[u64]   |
 | ms_sync_count        | milestone sync count  | integer[u32]   |
 

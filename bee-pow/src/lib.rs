@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //! Contains traits and implementations to provide and score Proof of Work.
-//! RFC <https://github.com/Wollac/protocol-rfcs/blob/block-pow/text/0024-block-pow/0024-block-pow.md>.
+//! TIP <https://github.com/iotaledger/tips/blob/main/tips/TIP-0012/tip-0012.md>.
 
 #![cfg_attr(doc_cfg, feature(doc_cfg))]
 #![warn(missing_docs)]

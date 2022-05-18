@@ -4,7 +4,7 @@
 use bee_pow::score::PoWScorer;
 
 // Tests are from:
-// https://github.com/Wollac/protocol-rfcs/blob/block-pow/text/0024-block-pow/0024-block-pow.md#example
+// https://github.com/iotaledger/tips/blob/main/tips/TIP-0012/tip-0012.md#example
 // https://github.com/Wollac/iota-crypto-demo/blob/master/pkg/pow/pow_test.go#L26
 
 #[test]
