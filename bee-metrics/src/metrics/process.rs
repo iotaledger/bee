@@ -32,12 +32,9 @@ impl ProcessMetrics {
         (MemoryUsage(self.mem.clone()), CpuUsage(self.cpu.clone()))
     }
 
-    /// Updates the metrics values.
-    ///
-    /// The value is not updated if the command used to retrieve the new value:
-    ///  - cannot be spawned,
-    ///  - returns an unsuccessful exit code,
-    ///  - its output cannot be parsed.
+    /// Updates the metrics values. Returns an error if it was not possible to fetch the values
+    /// from the respective OS command:
+    /// - `ps` for unix-like platforms.
     pub async fn update(&self) -> Result<(), Box<dyn std::error::Error>> {
         #[derive(Debug)]
         enum UpdateError {
