@@ -5,6 +5,7 @@ use bee_message::milestone::MilestoneIndex;
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate},
     backend,
+    backend::StorageBackendExt,
 };
 use bee_tangle::solid_entry_point::SolidEntryPoint;
 use bee_test::rand::{milestone::rand_milestone_index, solid_entry_point::rand_solid_entry_point};
@@ -42,7 +43,8 @@ pub fn solid_entry_point_to_milestone_index_access<B: StorageBackend>(storage: &
 
     assert!(!Exist::<SolidEntryPoint, MilestoneIndex>::exist(storage, &sep).unwrap());
     assert!(
-        Fetch::<SolidEntryPoint, MilestoneIndex>::fetch(storage, &sep)
+        storage
+            .fetch_access::<SolidEntryPoint, MilestoneIndex>(&sep)
             .unwrap()
             .is_none()
     );
@@ -56,7 +58,8 @@ pub fn solid_entry_point_to_milestone_index_access<B: StorageBackend>(storage: &
 
     assert!(Exist::<SolidEntryPoint, MilestoneIndex>::exist(storage, &sep).unwrap());
     assert_eq!(
-        Fetch::<SolidEntryPoint, MilestoneIndex>::fetch(storage, &sep)
+        storage
+            .fetch_access::<SolidEntryPoint, MilestoneIndex>(&sep)
             .unwrap()
             .unwrap(),
         index
@@ -71,7 +74,8 @@ pub fn solid_entry_point_to_milestone_index_access<B: StorageBackend>(storage: &
 
     assert!(!Exist::<SolidEntryPoint, MilestoneIndex>::exist(storage, &sep).unwrap());
     assert!(
-        Fetch::<SolidEntryPoint, MilestoneIndex>::fetch(storage, &sep)
+        storage
+            .fetch_access::<SolidEntryPoint, MilestoneIndex>(&sep)
             .unwrap()
             .is_none()
     );

@@ -3,7 +3,7 @@
 
 use bee_ledger::types::Receipt;
 use bee_message::milestone::MilestoneIndex;
-use bee_storage::access::Fetch;
+use bee_storage::{backend::StorageBackendExt};
 use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
 
 use crate::{
@@ -35,7 +35,9 @@ pub(crate) fn receipts_at<B: StorageBackend>(
 ) -> Result<impl Reply, Rejection> {
     let mut receipts_dto = Vec::new();
 
-    if let Some(receipts) = Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(&*args.storage, &milestone_index)
+    if let Some(receipts) = args
+        .storage
+        .fetch_access::<MilestoneIndex, Vec<Receipt>>(&milestone_index)
         .map_err(|_| CustomRejection::InternalError)?
     {
         for receipt in receipts {

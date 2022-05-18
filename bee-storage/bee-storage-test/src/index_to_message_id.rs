@@ -7,6 +7,7 @@ use bee_message::{payload::indexation::PaddedIndex, MessageId};
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend,
+    backend::StorageBackendExt,
 };
 use bee_test::rand::{message::rand_message_id, payload::rand_indexation_payload};
 
@@ -41,7 +42,8 @@ pub fn index_to_message_id_access<B: StorageBackend>(storage: &B) {
 
     assert!(!Exist::<(PaddedIndex, MessageId), ()>::exist(storage, &(index, message_id)).unwrap());
     assert!(
-        Fetch::<PaddedIndex, Vec<MessageId>>::fetch(storage, &index)
+        storage
+            .fetch_access::<PaddedIndex, Vec<MessageId>>(&index)
             .unwrap()
             .unwrap()
             .is_empty()
@@ -51,7 +53,8 @@ pub fn index_to_message_id_access<B: StorageBackend>(storage: &B) {
 
     assert!(Exist::<(PaddedIndex, MessageId), ()>::exist(storage, &(index, message_id)).unwrap());
     assert_eq!(
-        Fetch::<PaddedIndex, Vec<MessageId>>::fetch(storage, &index)
+        storage
+            .fetch_access::<PaddedIndex, Vec<MessageId>>(&index)
             .unwrap()
             .unwrap(),
         vec![message_id]
@@ -61,7 +64,8 @@ pub fn index_to_message_id_access<B: StorageBackend>(storage: &B) {
 
     assert!(!Exist::<(PaddedIndex, MessageId), ()>::exist(storage, &(index, message_id)).unwrap());
     assert!(
-        Fetch::<PaddedIndex, Vec<MessageId>>::fetch(storage, &index)
+        storage
+            .fetch_access::<PaddedIndex, Vec<MessageId>>(&index)
             .unwrap()
             .unwrap()
             .is_empty()

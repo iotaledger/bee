@@ -8,7 +8,7 @@ use bee_runtime::{
     shutdown_stream::ShutdownStream,
     worker::{Error as WorkerError, Worker},
 };
-use bee_storage::access::{Batch, BatchBuilder, Insert};
+use bee_storage::{access::BatchBuilder, backend::StorageBackendExt};
 use bee_tangle::unreferenced_message::UnreferencedMessage;
 use futures::{future::FutureExt, stream::StreamExt};
 use log::{debug, error, info};
@@ -47,8 +47,7 @@ where
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
             while let Some(UnreferencedMessageInserterWorkerEvent(message_id, index)) = receiver.next().await {
-                if let Err(e) = Batch::<(MilestoneIndex, UnreferencedMessage), ()>::batch_insert(
-                    &*storage,
+                if let Err(e) = storage.batch_insert::<(MilestoneIndex, UnreferencedMessage), ()>(
                     &mut batch,
                     &(index, UnreferencedMessage::from(message_id)),
                     &(),
@@ -79,8 +78,7 @@ where
             while let Some(Some(UnreferencedMessageInserterWorkerEvent(message_id, index))) =
                 receiver.next().now_or_never()
             {
-                if let Err(e) = Insert::<(MilestoneIndex, UnreferencedMessage), ()>::insert(
-                    &*storage,
+                if let Err(e) = storage.insert::<(MilestoneIndex, UnreferencedMessage), ()>(
                     &(index, UnreferencedMessage::from(message_id)),
                     &(),
                 ) {

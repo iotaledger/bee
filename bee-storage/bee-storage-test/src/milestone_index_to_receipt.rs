@@ -8,6 +8,7 @@ use bee_message::milestone::MilestoneIndex;
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend,
+    backend::StorageBackendExt,
 };
 use bee_test::rand::{milestone::rand_milestone_index, receipt::rand_ledger_receipt};
 
@@ -42,7 +43,8 @@ pub fn milestone_index_to_receipt_access<B: StorageBackend>(storage: &B) {
 
     assert!(!Exist::<(MilestoneIndex, Receipt), ()>::exist(storage, &(index, receipt.clone())).unwrap());
     assert!(
-        Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(storage, &index)
+        storage
+            .fetch_access::<MilestoneIndex, Vec<Receipt>>(&index)
             .unwrap()
             .unwrap()
             .is_empty()
@@ -52,7 +54,8 @@ pub fn milestone_index_to_receipt_access<B: StorageBackend>(storage: &B) {
 
     assert!(Exist::<(MilestoneIndex, Receipt), ()>::exist(storage, &(index, receipt.clone())).unwrap());
     assert_eq!(
-        Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(storage, &index)
+        storage
+            .fetch_access::<MilestoneIndex, Vec<Receipt>>(&index)
             .unwrap()
             .unwrap(),
         vec![receipt.clone()]
@@ -62,7 +65,8 @@ pub fn milestone_index_to_receipt_access<B: StorageBackend>(storage: &B) {
 
     assert!(!Exist::<(MilestoneIndex, Receipt), ()>::exist(storage, &(index, receipt)).unwrap());
     assert!(
-        Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(storage, &index)
+        storage
+            .fetch_access::<MilestoneIndex, Vec<Receipt>>(&index)
             .unwrap()
             .unwrap()
             .is_empty()

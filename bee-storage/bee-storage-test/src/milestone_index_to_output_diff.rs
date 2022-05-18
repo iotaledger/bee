@@ -7,6 +7,7 @@ use bee_message::milestone::MilestoneIndex;
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate},
     backend,
+    backend::StorageBackendExt,
 };
 use bee_test::rand::{milestone::rand_milestone_index, output_diff::rand_output_diff};
 
@@ -43,7 +44,8 @@ pub fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &B) {
 
     assert!(!Exist::<MilestoneIndex, OutputDiff>::exist(storage, &index).unwrap());
     assert!(
-        Fetch::<MilestoneIndex, OutputDiff>::fetch(storage, &index)
+        storage
+            .fetch_access::<MilestoneIndex, OutputDiff>(&index)
             .unwrap()
             .is_none()
     );
@@ -57,7 +59,8 @@ pub fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &B) {
 
     assert!(Exist::<MilestoneIndex, OutputDiff>::exist(storage, &index).unwrap());
     assert_eq!(
-        Fetch::<MilestoneIndex, OutputDiff>::fetch(storage, &index)
+        storage
+            .fetch_access::<MilestoneIndex, OutputDiff>(&index)
             .unwrap()
             .unwrap()
             .pack_new(),
@@ -73,7 +76,8 @@ pub fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &B) {
 
     assert!(!Exist::<MilestoneIndex, OutputDiff>::exist(storage, &index).unwrap());
     assert!(
-        Fetch::<MilestoneIndex, OutputDiff>::fetch(storage, &index)
+        storage
+            .fetch_access::<MilestoneIndex, OutputDiff>(&index)
             .unwrap()
             .is_none()
     );

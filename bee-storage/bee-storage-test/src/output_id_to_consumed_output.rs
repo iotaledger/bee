@@ -6,6 +6,7 @@ use bee_message::output::OutputId;
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate},
     backend,
+    backend::StorageBackendExt,
 };
 use bee_test::rand::output::{rand_consumed_output, rand_output_id};
 
@@ -42,7 +43,8 @@ pub fn output_id_to_consumed_output_access<B: StorageBackend>(storage: &B) {
 
     assert!(!Exist::<OutputId, ConsumedOutput>::exist(storage, &output_id).unwrap());
     assert!(
-        Fetch::<OutputId, ConsumedOutput>::fetch(storage, &output_id)
+        storage
+            .fetch_access::<OutputId, ConsumedOutput>(&output_id)
             .unwrap()
             .is_none()
     );
@@ -56,7 +58,8 @@ pub fn output_id_to_consumed_output_access<B: StorageBackend>(storage: &B) {
 
     assert!(Exist::<OutputId, ConsumedOutput>::exist(storage, &output_id).unwrap());
     assert_eq!(
-        Fetch::<OutputId, ConsumedOutput>::fetch(storage, &output_id)
+        storage
+            .fetch_access::<OutputId, ConsumedOutput>(&output_id)
             .unwrap()
             .unwrap(),
         consumed_output
@@ -71,7 +74,8 @@ pub fn output_id_to_consumed_output_access<B: StorageBackend>(storage: &B) {
 
     assert!(!Exist::<OutputId, ConsumedOutput>::exist(storage, &output_id).unwrap());
     assert!(
-        Fetch::<OutputId, ConsumedOutput>::fetch(storage, &output_id)
+        storage
+            .fetch_access::<OutputId, ConsumedOutput>(&output_id)
             .unwrap()
             .is_none()
     );

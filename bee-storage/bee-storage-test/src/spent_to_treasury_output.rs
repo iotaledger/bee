@@ -7,6 +7,7 @@ use bee_ledger::types::TreasuryOutput;
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend,
+    backend::StorageBackendExt,
 };
 use bee_test::rand::{bool::rand_bool, output::rand_ledger_treasury_output};
 
@@ -41,7 +42,8 @@ pub fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
 
     assert!(!Exist::<(bool, TreasuryOutput), ()>::exist(storage, &(spent, treasury_output.clone())).unwrap());
     assert!(
-        Fetch::<bool, Vec<TreasuryOutput>>::fetch(storage, &spent)
+        storage
+            .fetch_access::<bool, Vec<TreasuryOutput>>(&spent)
             .unwrap()
             .unwrap()
             .is_empty()
@@ -51,7 +53,8 @@ pub fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
 
     assert!(Exist::<(bool, TreasuryOutput), ()>::exist(storage, &(spent, treasury_output.clone())).unwrap());
     assert_eq!(
-        Fetch::<bool, Vec<TreasuryOutput>>::fetch(storage, &spent)
+        storage
+            .fetch_access::<bool, Vec<TreasuryOutput>>(&spent)
             .unwrap()
             .unwrap(),
         vec![treasury_output.clone()]
@@ -61,7 +64,8 @@ pub fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
 
     assert!(!Exist::<(bool, TreasuryOutput), ()>::exist(storage, &(spent, treasury_output)).unwrap());
     assert!(
-        Fetch::<bool, Vec<TreasuryOutput>>::fetch(storage, &spent)
+        storage
+            .fetch_access::<bool, Vec<TreasuryOutput>>(&spent)
             .unwrap()
             .unwrap()
             .is_empty()

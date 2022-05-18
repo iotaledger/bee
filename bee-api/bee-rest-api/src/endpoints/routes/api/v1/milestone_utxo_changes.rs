@@ -3,7 +3,7 @@
 
 use bee_ledger::types::OutputDiff;
 use bee_message::milestone::MilestoneIndex;
-use bee_storage::access::Fetch;
+use bee_storage::{backend::StorageBackendExt};
 use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
 use crate::{
@@ -34,7 +34,9 @@ pub(crate) fn milestone_utxo_changes<B: StorageBackend>(
     index: MilestoneIndex,
     args: ApiArgsFullNode<B>,
 ) -> Result<impl Reply, Rejection> {
-    let fetched = Fetch::<MilestoneIndex, OutputDiff>::fetch(&*args.storage, &index)
+    let fetched = args
+        .storage
+        .fetch_access::<MilestoneIndex, OutputDiff>(&index)
         .map_err(|_| {
             reject::custom(CustomRejection::ServiceUnavailable(
                 "can not fetch from storage".to_string(),

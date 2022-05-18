@@ -15,8 +15,8 @@ use bee_message::{
     Message, MessageId,
 };
 use bee_storage::{
-    access::{AsIterator, Exist, Fetch},
-    backend::StorageBackend,
+    access::{AsIterator, Exist},
+    backend::{StorageBackend, StorageBackendExt},
 };
 use bee_storage_sled::{
     config::SledConfigBuilder,
@@ -62,7 +62,7 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
         TREE_MESSAGE_ID_TO_MESSAGE => match &tool.command {
             SledCommand::Fetch { key } => {
                 let key = MessageId::from_str(key).map_err(|_| SledError::InvalidKey(key.clone()))?;
-                let value = Fetch::<MessageId, Message>::fetch(storage, &key)?;
+                let value = storage.fetch_access::<MessageId, Message>(&key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
@@ -78,7 +78,7 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
         TREE_MESSAGE_ID_TO_METADATA => match &tool.command {
             SledCommand::Fetch { key } => {
                 let key = MessageId::from_str(key).map_err(|_| SledError::InvalidKey(key.clone()))?;
-                let value = Fetch::<MessageId, MessageMetadata>::fetch(storage, &key)?;
+                let value = storage.fetch_access::<MessageId, MessageMetadata>(&key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
@@ -94,7 +94,7 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
         TREE_MESSAGE_ID_TO_MESSAGE_ID => match &tool.command {
             SledCommand::Fetch { key } => {
                 let key = MessageId::from_str(key).map_err(|_| SledError::InvalidKey(key.clone()))?;
-                let value = Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &key)?;
+                let value = storage.fetch_access::<MessageId, Vec<MessageId>>(&key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
@@ -115,7 +115,7 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
                 )
                 .map_err(|_| SledError::InvalidKey(key.clone()))?
                 .padded_index();
-                let value = Fetch::<PaddedIndex, Vec<MessageId>>::fetch(storage, &key)?;
+                let value = storage.fetch_access::<PaddedIndex, Vec<MessageId>>(&key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
@@ -131,7 +131,7 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
         TREE_OUTPUT_ID_TO_CREATED_OUTPUT => match &tool.command {
             SledCommand::Fetch { key } => {
                 let key = OutputId::from_str(key).map_err(|_| SledError::InvalidKey(key.clone()))?;
-                let value = Fetch::<OutputId, CreatedOutput>::fetch(storage, &key)?;
+                let value = storage.fetch_access::<OutputId, CreatedOutput>(&key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
@@ -147,7 +147,7 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
         TREE_OUTPUT_ID_TO_CONSUMED_OUTPUT => match &tool.command {
             SledCommand::Fetch { key } => {
                 let key = OutputId::from_str(key).map_err(|_| SledError::InvalidKey(key.clone()))?;
-                let value = Fetch::<OutputId, ConsumedOutput>::fetch(storage, &key)?;
+                let value = storage.fetch_access::<OutputId, ConsumedOutput>(&key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
@@ -179,7 +179,7 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
         TREE_ED25519_ADDRESS_TO_OUTPUT_ID => match &tool.command {
             SledCommand::Fetch { key } => {
                 let key = Ed25519Address::from_str(key).map_err(|_| SledError::InvalidKey(key.clone()))?;
-                let value = Fetch::<Ed25519Address, Vec<OutputId>>::fetch(storage, &key)?;
+                let value = storage.fetch_access::<Ed25519Address, Vec<OutputId>>(&key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
@@ -206,7 +206,7 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
         TREE_MILESTONE_INDEX_TO_MILESTONE => match &tool.command {
             SledCommand::Fetch { key } => {
                 let key = MilestoneIndex(u32::from_str(key).map_err(|_| SledError::InvalidKey(key.clone()))?);
-                let value = Fetch::<MilestoneIndex, Milestone>::fetch(storage, &key)?;
+                let value = storage.fetch_access::<MilestoneIndex, Milestone>(&key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
@@ -234,7 +234,7 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
             SledCommand::Fetch { key } => {
                 let key =
                     SolidEntryPoint::from(MessageId::from_str(key).map_err(|_| SledError::InvalidKey(key.clone()))?);
-                let value = Fetch::<SolidEntryPoint, MilestoneIndex>::fetch(storage, &key)?;
+                let value = storage.fetch_access::<SolidEntryPoint, MilestoneIndex>(&key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
@@ -250,7 +250,7 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
         TREE_MILESTONE_INDEX_TO_OUTPUT_DIFF => match &tool.command {
             SledCommand::Fetch { key } => {
                 let key = MilestoneIndex(u32::from_str(key).map_err(|_| SledError::InvalidKey(key.clone()))?);
-                let value = Fetch::<MilestoneIndex, OutputDiff>::fetch(storage, &key)?;
+                let value = storage.fetch_access::<MilestoneIndex, OutputDiff>(&key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
@@ -266,7 +266,7 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
         TREE_ADDRESS_TO_BALANCE => match &tool.command {
             SledCommand::Fetch { key } => {
                 let key = Address::from(Ed25519Address::from_str(key).map_err(|_| SledError::InvalidKey(key.clone()))?);
-                let value = Fetch::<Address, Balance>::fetch(storage, &key)?;
+                let value = storage.fetch_access::<Address, Balance>(&key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
@@ -282,7 +282,7 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
         TREE_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE => match &tool.command {
             SledCommand::Fetch { key } => {
                 let key = MilestoneIndex(u32::from_str(key).map_err(|_| SledError::InvalidKey(key.clone()))?);
-                let value = Fetch::<MilestoneIndex, Vec<UnreferencedMessage>>::fetch(storage, &key)?;
+                let value = storage.fetch_access::<MilestoneIndex, Vec<UnreferencedMessage>>(&key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
@@ -298,7 +298,7 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
         TREE_MILESTONE_INDEX_TO_RECEIPT => match &tool.command {
             SledCommand::Fetch { key } => {
                 let key = MilestoneIndex(u32::from_str(key).map_err(|_| SledError::InvalidKey(key.clone()))?);
-                let value = Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(storage, &key)?;
+                let value = storage.fetch_access::<MilestoneIndex, Vec<Receipt>>(&key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
@@ -314,7 +314,7 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
         TREE_SPENT_TO_TREASURY_OUTPUT => match &tool.command {
             SledCommand::Fetch { key } => {
                 let key = bool::from_str(key).map_err(|_| SledError::InvalidKey(key.clone()))?;
-                let value = Fetch::<bool, Vec<TreasuryOutput>>::fetch(storage, &key)?;
+                let value = storage.fetch_access::<bool, Vec<TreasuryOutput>>(&key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }

@@ -7,7 +7,7 @@ use bee_message::{
     payload::indexation::{IndexationPayload, PaddedIndex},
     MessageId,
 };
-use bee_storage::access::Fetch;
+use bee_storage::{backend::StorageBackendExt};
 use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
 use crate::{
@@ -46,7 +46,7 @@ pub(crate) fn messages_find<B: StorageBackend>(
         .map_err(|_| reject::custom(CustomRejection::BadRequest("Invalid index".to_owned())))?;
     let hashed_index = IndexationPayload::new(&index_bytes, &[]).unwrap().padded_index();
 
-    let all_message_ids = match Fetch::<PaddedIndex, Vec<MessageId>>::fetch(&*args.storage, &hashed_index) {
+    let all_message_ids = match args.storage.fetch_access::<PaddedIndex, Vec<MessageId>>(&hashed_index) {
         Ok(result) => match result {
             Some(ids) => ids,
             None => vec![],

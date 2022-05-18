@@ -5,6 +5,7 @@ use bee_message::{Message, MessageId};
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate},
     backend,
+    backend::StorageBackendExt,
 };
 use bee_test::rand::message::{rand_message, rand_message_id};
 
@@ -41,7 +42,8 @@ pub fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
 
     assert!(!Exist::<MessageId, Message>::exist(storage, &message_id).unwrap());
     assert!(
-        Fetch::<MessageId, Message>::fetch(storage, &message_id)
+        storage
+            .fetch_access::<MessageId, Message>(&message_id)
             .unwrap()
             .is_none()
     );
@@ -56,7 +58,8 @@ pub fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
     let message = rand_message();
     Insert::<MessageId, Message>::insert(storage, &message_id, &message).unwrap();
     assert_eq!(
-        Fetch::<MessageId, Message>::fetch(storage, &message_id)
+        storage
+            .fetch_access::<MessageId, Message>(&message_id)
             .unwrap()
             .as_ref(),
         Some(&message),
@@ -65,7 +68,8 @@ pub fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
 
     assert!(Exist::<MessageId, Message>::exist(storage, &message_id).unwrap());
     assert_eq!(
-        Fetch::<MessageId, Message>::fetch(storage, &message_id)
+        storage
+            .fetch_access::<MessageId, Message>(&message_id)
             .unwrap()
             .unwrap(),
         message
@@ -80,7 +84,8 @@ pub fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
 
     assert!(!Exist::<MessageId, Message>::exist(storage, &message_id).unwrap());
     assert!(
-        Fetch::<MessageId, Message>::fetch(storage, &message_id)
+        storage
+            .fetch_access::<MessageId, Message>(&message_id)
             .unwrap()
             .is_none()
     );

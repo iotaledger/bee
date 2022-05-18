@@ -7,6 +7,7 @@ use bee_message::MessageId;
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend,
+    backend::StorageBackendExt,
 };
 use bee_test::rand::message::rand_message_id;
 
@@ -41,7 +42,8 @@ pub fn message_id_to_message_id_access<B: StorageBackend>(storage: &B) {
 
     assert!(!Exist::<(MessageId, MessageId), ()>::exist(storage, &(parent, child)).unwrap());
     assert!(
-        Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &parent)
+        storage
+            .fetch_access::<MessageId, Vec<MessageId>>(&parent)
             .unwrap()
             .unwrap()
             .is_empty()
@@ -51,7 +53,8 @@ pub fn message_id_to_message_id_access<B: StorageBackend>(storage: &B) {
 
     assert!(Exist::<(MessageId, MessageId), ()>::exist(storage, &(parent, child)).unwrap());
     assert_eq!(
-        Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &parent)
+        storage
+            .fetch_access::<MessageId, Vec<MessageId>>(&parent)
             .unwrap()
             .unwrap(),
         vec![child]
@@ -61,7 +64,8 @@ pub fn message_id_to_message_id_access<B: StorageBackend>(storage: &B) {
 
     assert!(!Exist::<(MessageId, MessageId), ()>::exist(storage, &(parent, child)).unwrap());
     assert!(
-        Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &parent)
+        storage
+            .fetch_access::<MessageId, Vec<MessageId>>(&parent)
             .unwrap()
             .unwrap()
             .is_empty()

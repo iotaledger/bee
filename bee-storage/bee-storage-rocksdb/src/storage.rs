@@ -6,8 +6,8 @@ use bee_message::{
     MESSAGE_ID_LENGTH,
 };
 pub use bee_storage::{
-    access::{Fetch, Insert},
-    backend::StorageBackend,
+    access::Insert,
+    backend::{StorageBackend, StorageBackendExt},
     system::{StorageHealth, StorageVersion, System, SYSTEM_HEALTH_KEY, SYSTEM_VERSION_KEY},
 };
 use parking_lot::RwLock;
@@ -184,7 +184,7 @@ impl StorageBackend for Storage {
     fn start(config: Self::Config) -> Result<Self, Self::Error> {
         let storage = Self::new(config)?;
 
-        match Fetch::<u8, System>::fetch(&storage, &SYSTEM_VERSION_KEY)? {
+        match storage.fetch_access::<u8, System>(&SYSTEM_VERSION_KEY)? {
             Some(System::Version(version)) => {
                 if version != STORAGE_VERSION {
                     return Err(Error::VersionMismatch(version, STORAGE_VERSION));
@@ -218,7 +218,7 @@ impl StorageBackend for Storage {
     }
 
     fn get_health(&self) -> Result<Option<StorageHealth>, Self::Error> {
-        Ok(match Fetch::<u8, System>::fetch(self, &SYSTEM_HEALTH_KEY)? {
+        Ok(match self.fetch_access::<u8, System>(&SYSTEM_HEALTH_KEY)? {
             Some(System::Health(health)) => Some(health),
             None => None,
             _ => panic!("Another system value was inserted on the health key."),

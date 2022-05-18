@@ -7,6 +7,7 @@ use bee_message::{address::Ed25519Address, output::OutputId};
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend,
+    backend::StorageBackendExt,
 };
 use bee_test::rand::{address::rand_ed25519_address, output::rand_output_id};
 
@@ -41,7 +42,8 @@ pub fn ed25519_address_to_output_id_access<B: StorageBackend>(storage: &B) {
 
     assert!(!Exist::<(Ed25519Address, OutputId), ()>::exist(storage, &(address, output_id)).unwrap());
     assert!(
-        Fetch::<Ed25519Address, Vec<OutputId>>::fetch(storage, &address)
+        storage
+            .fetch_access::<Ed25519Address, Vec<OutputId>>(&address)
             .unwrap()
             .unwrap()
             .is_empty()
@@ -51,7 +53,8 @@ pub fn ed25519_address_to_output_id_access<B: StorageBackend>(storage: &B) {
 
     assert!(Exist::<(Ed25519Address, OutputId), ()>::exist(storage, &(address, output_id)).unwrap());
     assert_eq!(
-        Fetch::<Ed25519Address, Vec<OutputId>>::fetch(storage, &address)
+        storage
+            .fetch_access::<Ed25519Address, Vec<OutputId>>(&address)
             .unwrap()
             .unwrap(),
         vec![output_id]
@@ -61,7 +64,8 @@ pub fn ed25519_address_to_output_id_access<B: StorageBackend>(storage: &B) {
 
     assert!(!Exist::<(Ed25519Address, OutputId), ()>::exist(storage, &(address, output_id)).unwrap());
     assert!(
-        Fetch::<Ed25519Address, Vec<OutputId>>::fetch(storage, &address)
+        storage
+            .fetch_access::<Ed25519Address, Vec<OutputId>>(&address)
             .unwrap()
             .unwrap()
             .is_empty()

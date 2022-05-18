@@ -7,6 +7,7 @@ use bee_message::address::Address;
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate},
     backend,
+    backend::StorageBackendExt,
 };
 use bee_test::rand::{address::rand_address, balance::rand_balance};
 
@@ -42,7 +43,7 @@ pub fn address_to_balance_access<B: StorageBackend>(storage: &B) {
     let (address, balance) = (rand_address(), rand_balance());
 
     assert!(!Exist::<Address, Balance>::exist(storage, &address).unwrap());
-    assert!(Fetch::<Address, Balance>::fetch(storage, &address).unwrap().is_none());
+    assert!(storage.fetch_access::<Address, Balance>(&address).unwrap().is_none());
     let results = MultiFetch::<Address, Balance>::multi_fetch(storage, &[address])
         .unwrap()
         .collect::<Vec<_>>();
@@ -53,7 +54,8 @@ pub fn address_to_balance_access<B: StorageBackend>(storage: &B) {
 
     assert!(Exist::<Address, Balance>::exist(storage, &address).unwrap());
     assert_eq!(
-        Fetch::<Address, Balance>::fetch(storage, &address)
+        storage
+            .fetch_access::<Address, Balance>(&address)
             .unwrap()
             .unwrap()
             .pack_new(),
@@ -68,7 +70,7 @@ pub fn address_to_balance_access<B: StorageBackend>(storage: &B) {
     Delete::<Address, Balance>::delete(storage, &address).unwrap();
 
     assert!(!Exist::<Address, Balance>::exist(storage, &address).unwrap());
-    assert!(Fetch::<Address, Balance>::fetch(storage, &address).unwrap().is_none());
+    assert!(storage.fetch_access::<Address, Balance>(&address).unwrap().is_none());
     let results = MultiFetch::<Address, Balance>::multi_fetch(storage, &[address])
         .unwrap()
         .collect::<Vec<_>>();

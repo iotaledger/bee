@@ -5,6 +5,7 @@ use bee_message::milestone::{Milestone, MilestoneIndex};
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate},
     backend,
+    backend::StorageBackendExt,
 };
 use bee_test::rand::milestone::{rand_milestone, rand_milestone_index};
 
@@ -41,7 +42,8 @@ pub fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B) {
 
     assert!(!Exist::<MilestoneIndex, Milestone>::exist(storage, &index).unwrap());
     assert!(
-        Fetch::<MilestoneIndex, Milestone>::fetch(storage, &index)
+        storage
+            .fetch_access::<MilestoneIndex, Milestone>(&index)
             .unwrap()
             .is_none()
     );
@@ -55,7 +57,8 @@ pub fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B) {
 
     assert!(Exist::<MilestoneIndex, Milestone>::exist(storage, &index).unwrap());
     assert_eq!(
-        Fetch::<MilestoneIndex, Milestone>::fetch(storage, &index)
+        storage
+            .fetch_access::<MilestoneIndex, Milestone>(&index)
             .unwrap()
             .unwrap(),
         milestone
@@ -70,7 +73,8 @@ pub fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B) {
 
     assert!(!Exist::<MilestoneIndex, Milestone>::exist(storage, &index).unwrap());
     assert!(
-        Fetch::<MilestoneIndex, Milestone>::fetch(storage, &index)
+        storage
+            .fetch_access::<MilestoneIndex, Milestone>(&index)
             .unwrap()
             .is_none()
     );

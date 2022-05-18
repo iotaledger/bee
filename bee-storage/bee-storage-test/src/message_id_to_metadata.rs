@@ -5,6 +5,7 @@ use bee_message::{prelude::MilestoneIndex, MessageId};
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, InsertStrict, MultiFetch, Truncate, Update},
     backend,
+    backend::StorageBackendExt,
 };
 use bee_tangle::metadata::MessageMetadata;
 use bee_test::rand::{message::rand_message_id, metadata::rand_message_metadata};
@@ -44,7 +45,8 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
 
     assert!(!Exist::<MessageId, MessageMetadata>::exist(storage, &message_id).unwrap());
     assert!(
-        Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
+        storage
+            .fetch_access::<MessageId, MessageMetadata>(&message_id)
             .unwrap()
             .is_none()
     );
@@ -67,7 +69,8 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
         InsertStrict::<MessageId, MessageMetadata>::insert_strict(storage, &message_id, &metadata).unwrap();
     }
     assert_eq!(
-        Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
+        storage
+            .fetch_access::<MessageId, MessageMetadata>(&message_id)
             .unwrap()
             .unwrap(),
         metadata,
@@ -81,7 +84,8 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
     assert!(matches!(results.get(0), Some(Ok(Some(v))) if v == &metadata));
 
     let milestone_index = {
-        let index = Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
+        let index = storage
+            .fetch_access::<MessageId, MessageMetadata>(&message_id)
             .unwrap()
             .unwrap()
             .milestone_index();
@@ -95,7 +99,8 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
     .unwrap();
 
     assert_eq!(
-        Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
+        storage
+            .fetch_access::<MessageId, MessageMetadata>(&message_id)
             .unwrap()
             .unwrap()
             .milestone_index(),
@@ -106,7 +111,8 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
 
     assert!(!Exist::<MessageId, MessageMetadata>::exist(storage, &message_id).unwrap());
     assert!(
-        Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
+        storage
+            .fetch_access::<MessageId, MessageMetadata>(&message_id)
             .unwrap()
             .is_none()
     );

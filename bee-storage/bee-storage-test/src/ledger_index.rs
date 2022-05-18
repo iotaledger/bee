@@ -6,6 +6,7 @@ use bee_message::milestone::MilestoneIndex;
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend,
+    backend::StorageBackendExt,
 };
 
 pub trait StorageBackend:
@@ -38,17 +39,17 @@ pub fn ledger_index_access<B: StorageBackend>(storage: &B) {
     let index = LedgerIndex::from(MilestoneIndex::from(42));
 
     assert!(!Exist::<(), LedgerIndex>::exist(storage, &()).unwrap());
-    assert!(Fetch::<(), LedgerIndex>::fetch(storage, &()).unwrap().is_none());
+    assert!(storage.fetch_access::<(), LedgerIndex>(&()).unwrap().is_none());
 
     Insert::<(), LedgerIndex>::insert(storage, &(), &index).unwrap();
 
     assert!(Exist::<(), LedgerIndex>::exist(storage, &()).unwrap());
-    assert_eq!(Fetch::<(), LedgerIndex>::fetch(storage, &()).unwrap().unwrap(), index);
+    assert_eq!(storage.fetch_access::<(), LedgerIndex>(&()).unwrap().unwrap(), index);
 
     Delete::<(), LedgerIndex>::delete(storage, &()).unwrap();
 
     assert!(!Exist::<(), LedgerIndex>::exist(storage, &()).unwrap());
-    assert!(Fetch::<(), LedgerIndex>::fetch(storage, &()).unwrap().is_none());
+    assert!(storage.fetch_access::<(), LedgerIndex>(&()).unwrap().is_none());
 
     let mut batch = B::batch_begin();
 
@@ -57,7 +58,7 @@ pub fn ledger_index_access<B: StorageBackend>(storage: &B) {
     storage.batch_commit(batch, true).unwrap();
 
     assert!(Exist::<(), LedgerIndex>::exist(storage, &()).unwrap());
-    assert_eq!(Fetch::<(), LedgerIndex>::fetch(storage, &()).unwrap().unwrap(), index);
+    assert_eq!(storage.fetch_access::<(), LedgerIndex>(&()).unwrap().unwrap(), index);
 
     let mut batch = B::batch_begin();
 
@@ -66,7 +67,7 @@ pub fn ledger_index_access<B: StorageBackend>(storage: &B) {
     storage.batch_commit(batch, true).unwrap();
 
     assert!(!Exist::<(), LedgerIndex>::exist(storage, &()).unwrap());
-    assert!(Fetch::<(), LedgerIndex>::fetch(storage, &()).unwrap().is_none());
+    assert!(storage.fetch_access::<(), LedgerIndex>(&()).unwrap().is_none());
 
     Insert::<(), LedgerIndex>::insert(storage, &(), &index).unwrap();
 

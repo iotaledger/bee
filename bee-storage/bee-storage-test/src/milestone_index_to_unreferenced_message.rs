@@ -7,6 +7,7 @@ use bee_message::milestone::MilestoneIndex;
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend,
+    backend::StorageBackendExt,
 };
 use bee_tangle::unreferenced_message::UnreferencedMessage;
 use bee_test::rand::{milestone::rand_milestone_index, unreferenced_message::rand_unreferenced_message};
@@ -44,7 +45,8 @@ pub fn milestone_index_to_unreferenced_message_access<B: StorageBackend>(storage
         !Exist::<(MilestoneIndex, UnreferencedMessage), ()>::exist(storage, &(index, unreferenced_message)).unwrap()
     );
     assert!(
-        Fetch::<MilestoneIndex, Vec<UnreferencedMessage>>::fetch(storage, &index)
+        storage
+            .fetch_access::<MilestoneIndex, Vec<UnreferencedMessage>>(&index)
             .unwrap()
             .unwrap()
             .is_empty()
@@ -56,7 +58,8 @@ pub fn milestone_index_to_unreferenced_message_access<B: StorageBackend>(storage
         Exist::<(MilestoneIndex, UnreferencedMessage), ()>::exist(storage, &(index, unreferenced_message)).unwrap()
     );
     assert_eq!(
-        Fetch::<MilestoneIndex, Vec<UnreferencedMessage>>::fetch(storage, &index)
+        storage
+            .fetch_access::<MilestoneIndex, Vec<UnreferencedMessage>>(&index)
             .unwrap()
             .unwrap(),
         vec![unreferenced_message]
@@ -68,7 +71,8 @@ pub fn milestone_index_to_unreferenced_message_access<B: StorageBackend>(storage
         !Exist::<(MilestoneIndex, UnreferencedMessage), ()>::exist(storage, &(index, unreferenced_message)).unwrap()
     );
     assert!(
-        Fetch::<MilestoneIndex, Vec<UnreferencedMessage>>::fetch(storage, &index)
+        storage
+            .fetch_access::<MilestoneIndex, Vec<UnreferencedMessage>>(&index)
             .unwrap()
             .unwrap()
             .is_empty()

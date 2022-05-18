@@ -5,6 +5,7 @@ use bee_ledger::types::snapshot::SnapshotInfo;
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend,
+    backend::StorageBackendExt,
 };
 use bee_test::rand::snapshot::rand_snapshot_info;
 
@@ -38,20 +39,20 @@ pub fn snapshot_info_access<B: StorageBackend>(storage: &B) {
     let snapshot_info = rand_snapshot_info();
 
     assert!(!Exist::<(), SnapshotInfo>::exist(storage, &()).unwrap());
-    assert!(Fetch::<(), SnapshotInfo>::fetch(storage, &()).unwrap().is_none());
+    assert!(storage.fetch_access::<(), SnapshotInfo>(&()).unwrap().is_none());
 
     Insert::<(), SnapshotInfo>::insert(storage, &(), &snapshot_info).unwrap();
 
     assert!(Exist::<(), SnapshotInfo>::exist(storage, &()).unwrap());
     assert_eq!(
-        Fetch::<(), SnapshotInfo>::fetch(storage, &()).unwrap().unwrap(),
+        storage.fetch_access::<(), SnapshotInfo>(&()).unwrap().unwrap(),
         snapshot_info
     );
 
     Delete::<(), SnapshotInfo>::delete(storage, &()).unwrap();
 
     assert!(!Exist::<(), SnapshotInfo>::exist(storage, &()).unwrap());
-    assert!(Fetch::<(), SnapshotInfo>::fetch(storage, &()).unwrap().is_none());
+    assert!(storage.fetch_access::<(), SnapshotInfo>(&()).unwrap().is_none());
 
     let mut batch = B::batch_begin();
 
@@ -61,7 +62,7 @@ pub fn snapshot_info_access<B: StorageBackend>(storage: &B) {
 
     assert!(Exist::<(), SnapshotInfo>::exist(storage, &()).unwrap());
     assert_eq!(
-        Fetch::<(), SnapshotInfo>::fetch(storage, &()).unwrap().unwrap(),
+        storage.fetch_access::<(), SnapshotInfo>(&()).unwrap().unwrap(),
         snapshot_info
     );
 
@@ -72,7 +73,7 @@ pub fn snapshot_info_access<B: StorageBackend>(storage: &B) {
     storage.batch_commit(batch, true).unwrap();
 
     assert!(!Exist::<(), SnapshotInfo>::exist(storage, &()).unwrap());
-    assert!(Fetch::<(), SnapshotInfo>::fetch(storage, &()).unwrap().is_none());
+    assert!(storage.fetch_access::<(), SnapshotInfo>(&()).unwrap().is_none());
 
     Insert::<(), SnapshotInfo>::insert(storage, &(), &snapshot_info).unwrap();
 
