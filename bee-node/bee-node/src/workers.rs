@@ -7,7 +7,7 @@ use async_trait::async_trait;
 use bee_metrics::{metrics::process::ProcessMetrics, Registry};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use futures::StreamExt;
-use log::info;
+use log::{info, warn};
 use serde::Deserialize;
 use tokio::time::interval;
 use tokio_stream::wrappers::IntervalStream;
@@ -53,7 +53,7 @@ impl<N: Node> Worker<N> for MetricsRegistryWorker {
         let process_metrics = ProcessMetrics::new(config.pid);
 
         if let Err(e) = process_metrics.update().await {
-            info!("Cannot update process metrics: {e}.");
+            warn!("Cannot update process metrics: {e}.");
         }
 
         let (mem_metric, cpu_metric) = process_metrics.metrics();
