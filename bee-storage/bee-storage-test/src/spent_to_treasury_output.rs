@@ -40,7 +40,11 @@ impl<T> StorageBackend for T where
 pub fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
     let (spent, treasury_output) = (rand_bool(), rand_ledger_treasury_output());
 
-    assert!(!Exist::<(bool, TreasuryOutput), ()>::exist_op(storage, &(spent, treasury_output.clone())).unwrap());
+    assert!(
+        !storage
+            .exist::<(bool, TreasuryOutput), ()>(&(spent, treasury_output.clone()))
+            .unwrap()
+    );
     assert!(
         storage
             .fetch::<bool, Vec<TreasuryOutput>>(&spent)
@@ -51,7 +55,11 @@ pub fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
 
     Insert::<(bool, TreasuryOutput), ()>::insert_op(storage, &(spent, treasury_output.clone()), &()).unwrap();
 
-    assert!(Exist::<(bool, TreasuryOutput), ()>::exist_op(storage, &(spent, treasury_output.clone())).unwrap());
+    assert!(
+        storage
+            .exist::<(bool, TreasuryOutput), ()>(&(spent, treasury_output.clone()))
+            .unwrap()
+    );
     assert_eq!(
         storage.fetch::<bool, Vec<TreasuryOutput>>(&spent).unwrap().unwrap(),
         vec![treasury_output.clone()]
@@ -61,7 +69,11 @@ pub fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
         .delete::<(bool, TreasuryOutput), ()>(&(spent, treasury_output.clone()))
         .unwrap();
 
-    assert!(!Exist::<(bool, TreasuryOutput), ()>::exist_op(storage, &(spent, treasury_output)).unwrap());
+    assert!(
+        !storage
+            .exist::<(bool, TreasuryOutput), ()>(&(spent, treasury_output))
+            .unwrap()
+    );
     assert!(
         storage
             .fetch::<bool, Vec<TreasuryOutput>>(&spent)

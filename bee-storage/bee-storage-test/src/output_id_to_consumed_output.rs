@@ -41,7 +41,7 @@ impl<T> StorageBackend for T where
 pub fn output_id_to_consumed_output_access<B: StorageBackend>(storage: &B) {
     let (output_id, consumed_output) = (rand_output_id(), rand_consumed_output());
 
-    assert!(!Exist::<OutputId, ConsumedOutput>::exist_op(storage, &output_id).unwrap());
+    assert!(!storage.exist::<OutputId, ConsumedOutput>(&output_id).unwrap());
     assert!(storage.fetch::<OutputId, ConsumedOutput>(&output_id).unwrap().is_none());
     let results = MultiFetch::<OutputId, ConsumedOutput>::multi_fetch_op(storage, &[output_id])
         .unwrap()
@@ -51,7 +51,7 @@ pub fn output_id_to_consumed_output_access<B: StorageBackend>(storage: &B) {
 
     Insert::<OutputId, ConsumedOutput>::insert_op(storage, &output_id, &consumed_output).unwrap();
 
-    assert!(Exist::<OutputId, ConsumedOutput>::exist_op(storage, &output_id).unwrap());
+    assert!(storage.exist::<OutputId, ConsumedOutput>(&output_id).unwrap());
     assert_eq!(
         storage.fetch::<OutputId, ConsumedOutput>(&output_id).unwrap().unwrap(),
         consumed_output
@@ -64,7 +64,7 @@ pub fn output_id_to_consumed_output_access<B: StorageBackend>(storage: &B) {
 
     storage.delete::<OutputId, ConsumedOutput>(&output_id).unwrap();
 
-    assert!(!Exist::<OutputId, ConsumedOutput>::exist_op(storage, &output_id).unwrap());
+    assert!(!storage.exist::<OutputId, ConsumedOutput>(&output_id).unwrap());
     assert!(storage.fetch::<OutputId, ConsumedOutput>(&output_id).unwrap().is_none());
     let results = MultiFetch::<OutputId, ConsumedOutput>::multi_fetch_op(storage, &[output_id])
         .unwrap()

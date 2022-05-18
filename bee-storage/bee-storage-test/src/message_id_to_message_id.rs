@@ -40,7 +40,7 @@ impl<T> StorageBackend for T where
 pub fn message_id_to_message_id_access<B: StorageBackend>(storage: &B) {
     let (parent, child) = (rand_message_id(), rand_message_id());
 
-    assert!(!Exist::<(MessageId, MessageId), ()>::exist_op(storage, &(parent, child)).unwrap());
+    assert!(!storage.exist::<(MessageId, MessageId), ()>(&(parent, child)).unwrap());
     assert!(
         storage
             .fetch::<MessageId, Vec<MessageId>>(&parent)
@@ -51,7 +51,7 @@ pub fn message_id_to_message_id_access<B: StorageBackend>(storage: &B) {
 
     Insert::<(MessageId, MessageId), ()>::insert_op(storage, &(parent, child), &()).unwrap();
 
-    assert!(Exist::<(MessageId, MessageId), ()>::exist_op(storage, &(parent, child)).unwrap());
+    assert!(storage.exist::<(MessageId, MessageId), ()>(&(parent, child)).unwrap());
     assert_eq!(
         storage.fetch::<MessageId, Vec<MessageId>>(&parent).unwrap().unwrap(),
         vec![child]
@@ -59,7 +59,7 @@ pub fn message_id_to_message_id_access<B: StorageBackend>(storage: &B) {
 
     storage.delete::<(MessageId, MessageId), ()>(&(parent, child)).unwrap();
 
-    assert!(!Exist::<(MessageId, MessageId), ()>::exist_op(storage, &(parent, child)).unwrap());
+    assert!(!storage.exist::<(MessageId, MessageId), ()>(&(parent, child)).unwrap());
     assert!(
         storage
             .fetch::<MessageId, Vec<MessageId>>(&parent)

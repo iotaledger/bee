@@ -40,7 +40,7 @@ impl<T> StorageBackend for T where
 pub fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
     let (message_id, message) = (rand_message_id(), rand_message());
 
-    assert!(!Exist::<MessageId, Message>::exist_op(storage, &message_id).unwrap());
+    assert!(!storage.exist::<MessageId, Message>(&message_id).unwrap());
     assert!(storage.fetch::<MessageId, Message>(&message_id).unwrap().is_none());
     let results = MultiFetch::<MessageId, Message>::multi_fetch_op(storage, &[message_id])
         .unwrap()
@@ -58,7 +58,7 @@ pub fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
         "insert should overwrite"
     );
 
-    assert!(Exist::<MessageId, Message>::exist_op(storage, &message_id).unwrap());
+    assert!(storage.exist::<MessageId, Message>(&message_id).unwrap());
     assert_eq!(
         storage.fetch::<MessageId, Message>(&message_id).unwrap().unwrap(),
         message
@@ -71,7 +71,7 @@ pub fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
 
     storage.delete::<MessageId, Message>(&message_id).unwrap();
 
-    assert!(!Exist::<MessageId, Message>::exist_op(storage, &message_id).unwrap());
+    assert!(!storage.exist::<MessageId, Message>(&message_id).unwrap());
     assert!(storage.fetch::<MessageId, Message>(&message_id).unwrap().is_none());
     let results = MultiFetch::<MessageId, Message>::multi_fetch_op(storage, &[message_id])
         .unwrap()

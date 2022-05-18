@@ -436,7 +436,9 @@ pub(crate) fn fetch_outputs_for_ed25519_address<B: StorageBackend>(
 }
 
 pub(crate) fn is_output_unspent<B: StorageBackend>(storage: &B, output_id: &OutputId) -> Result<bool, Error> {
-    Exist::<Unspent, ()>::exist_op(storage, &(*output_id).into()).map_err(|e| Error::Storage(Box::new(e)))
+    storage
+        .exist::<Unspent, ()>(&(*output_id).into())
+        .map_err(|e| Error::Storage(Box::new(e)))
 }
 
 pub(crate) fn insert_treasury_output<B: StorageBackend>(

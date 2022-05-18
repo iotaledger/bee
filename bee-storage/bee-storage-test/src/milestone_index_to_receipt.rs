@@ -41,7 +41,11 @@ impl<T> StorageBackend for T where
 pub fn milestone_index_to_receipt_access<B: StorageBackend>(storage: &B) {
     let (index, receipt) = (rand_milestone_index(), rand_ledger_receipt());
 
-    assert!(!Exist::<(MilestoneIndex, Receipt), ()>::exist_op(storage, &(index, receipt.clone())).unwrap());
+    assert!(
+        !storage
+            .exist::<(MilestoneIndex, Receipt), ()>(&(index, receipt.clone()))
+            .unwrap()
+    );
     assert!(
         storage
             .fetch::<MilestoneIndex, Vec<Receipt>>(&index)
@@ -52,7 +56,11 @@ pub fn milestone_index_to_receipt_access<B: StorageBackend>(storage: &B) {
 
     Insert::<(MilestoneIndex, Receipt), ()>::insert_op(storage, &(index, receipt.clone()), &()).unwrap();
 
-    assert!(Exist::<(MilestoneIndex, Receipt), ()>::exist_op(storage, &(index, receipt.clone())).unwrap());
+    assert!(
+        storage
+            .exist::<(MilestoneIndex, Receipt), ()>(&(index, receipt.clone()))
+            .unwrap()
+    );
     assert_eq!(
         storage.fetch::<MilestoneIndex, Vec<Receipt>>(&index).unwrap().unwrap(),
         vec![receipt.clone()]
@@ -62,7 +70,11 @@ pub fn milestone_index_to_receipt_access<B: StorageBackend>(storage: &B) {
         .delete::<(MilestoneIndex, Receipt), ()>(&(index, receipt.clone()))
         .unwrap();
 
-    assert!(!Exist::<(MilestoneIndex, Receipt), ()>::exist_op(storage, &(index, receipt)).unwrap());
+    assert!(
+        !storage
+            .exist::<(MilestoneIndex, Receipt), ()>(&(index, receipt))
+            .unwrap()
+    );
     assert!(
         storage
             .fetch::<MilestoneIndex, Vec<Receipt>>(&index)

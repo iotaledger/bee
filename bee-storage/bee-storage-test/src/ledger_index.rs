@@ -38,17 +38,17 @@ impl<T> StorageBackend for T where
 pub fn ledger_index_access<B: StorageBackend>(storage: &B) {
     let index = LedgerIndex::from(MilestoneIndex::from(42));
 
-    assert!(!Exist::<(), LedgerIndex>::exist_op(storage, &()).unwrap());
+    assert!(!storage.exist::<(), LedgerIndex>(&()).unwrap());
     assert!(storage.fetch::<(), LedgerIndex>(&()).unwrap().is_none());
 
     Insert::<(), LedgerIndex>::insert_op(storage, &(), &index).unwrap();
 
-    assert!(Exist::<(), LedgerIndex>::exist_op(storage, &()).unwrap());
+    assert!(storage.exist::<(), LedgerIndex>(&()).unwrap());
     assert_eq!(storage.fetch::<(), LedgerIndex>(&()).unwrap().unwrap(), index);
 
     storage.delete::<(), LedgerIndex>(&()).unwrap();
 
-    assert!(!Exist::<(), LedgerIndex>::exist_op(storage, &()).unwrap());
+    assert!(!storage.exist::<(), LedgerIndex>(&()).unwrap());
     assert!(storage.fetch::<(), LedgerIndex>(&()).unwrap().is_none());
 
     let mut batch = B::batch_begin();
@@ -59,7 +59,7 @@ pub fn ledger_index_access<B: StorageBackend>(storage: &B) {
 
     storage.batch_commit(batch, true).unwrap();
 
-    assert!(Exist::<(), LedgerIndex>::exist_op(storage, &()).unwrap());
+    assert!(storage.exist::<(), LedgerIndex>(&()).unwrap());
     assert_eq!(storage.fetch::<(), LedgerIndex>(&()).unwrap().unwrap(), index);
 
     let mut batch = B::batch_begin();
@@ -68,7 +68,7 @@ pub fn ledger_index_access<B: StorageBackend>(storage: &B) {
 
     storage.batch_commit(batch, true).unwrap();
 
-    assert!(!Exist::<(), LedgerIndex>::exist_op(storage, &()).unwrap());
+    assert!(!storage.exist::<(), LedgerIndex>(&()).unwrap());
     assert!(storage.fetch::<(), LedgerIndex>(&()).unwrap().is_none());
 
     Insert::<(), LedgerIndex>::insert_op(storage, &(), &index).unwrap();
@@ -86,7 +86,7 @@ pub fn ledger_index_access<B: StorageBackend>(storage: &B) {
 
     Truncate::<(), LedgerIndex>::truncate_op(storage).unwrap();
 
-    assert!(!Exist::<(), LedgerIndex>::exist_op(storage, &()).unwrap());
+    assert!(!storage.exist::<(), LedgerIndex>(&()).unwrap());
 
     let mut iter = AsIterator::<(), LedgerIndex>::iter_op(storage).unwrap();
 

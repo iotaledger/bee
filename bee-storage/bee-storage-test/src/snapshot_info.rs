@@ -38,17 +38,17 @@ impl<T> StorageBackend for T where
 pub fn snapshot_info_access<B: StorageBackend>(storage: &B) {
     let snapshot_info = rand_snapshot_info();
 
-    assert!(!Exist::<(), SnapshotInfo>::exist_op(storage, &()).unwrap());
+    assert!(!storage.exist::<(), SnapshotInfo>(&()).unwrap());
     assert!(storage.fetch::<(), SnapshotInfo>(&()).unwrap().is_none());
 
     Insert::<(), SnapshotInfo>::insert_op(storage, &(), &snapshot_info).unwrap();
 
-    assert!(Exist::<(), SnapshotInfo>::exist_op(storage, &()).unwrap());
+    assert!(storage.exist::<(), SnapshotInfo>(&()).unwrap());
     assert_eq!(storage.fetch::<(), SnapshotInfo>(&()).unwrap().unwrap(), snapshot_info);
 
     storage.delete::<(), SnapshotInfo>(&()).unwrap();
 
-    assert!(!Exist::<(), SnapshotInfo>::exist_op(storage, &()).unwrap());
+    assert!(!storage.exist::<(), SnapshotInfo>(&()).unwrap());
     assert!(storage.fetch::<(), SnapshotInfo>(&()).unwrap().is_none());
 
     let mut batch = B::batch_begin();
@@ -59,7 +59,7 @@ pub fn snapshot_info_access<B: StorageBackend>(storage: &B) {
 
     storage.batch_commit(batch, true).unwrap();
 
-    assert!(Exist::<(), SnapshotInfo>::exist_op(storage, &()).unwrap());
+    assert!(storage.exist::<(), SnapshotInfo>(&()).unwrap());
     assert_eq!(storage.fetch::<(), SnapshotInfo>(&()).unwrap().unwrap(), snapshot_info);
 
     let mut batch = B::batch_begin();
@@ -68,7 +68,7 @@ pub fn snapshot_info_access<B: StorageBackend>(storage: &B) {
 
     storage.batch_commit(batch, true).unwrap();
 
-    assert!(!Exist::<(), SnapshotInfo>::exist_op(storage, &()).unwrap());
+    assert!(!storage.exist::<(), SnapshotInfo>(&()).unwrap());
     assert!(storage.fetch::<(), SnapshotInfo>(&()).unwrap().is_none());
 
     Insert::<(), SnapshotInfo>::insert_op(storage, &(), &snapshot_info).unwrap();
@@ -86,7 +86,7 @@ pub fn snapshot_info_access<B: StorageBackend>(storage: &B) {
 
     Truncate::<(), SnapshotInfo>::truncate_op(storage).unwrap();
 
-    assert!(!Exist::<(), SnapshotInfo>::exist_op(storage, &()).unwrap());
+    assert!(!storage.exist::<(), SnapshotInfo>(&()).unwrap());
 
     let mut iter = AsIterator::<(), SnapshotInfo>::iter_op(storage).unwrap();
 

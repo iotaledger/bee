@@ -35,15 +35,15 @@ impl<T> StorageBackend for T where
 pub fn output_id_unspent_access<B: StorageBackend>(storage: &B) {
     let unspent = rand_unspent_output_id();
 
-    assert!(!Exist::<Unspent, ()>::exist_op(storage, &unspent).unwrap());
+    assert!(!storage.exist::<Unspent, ()>(&unspent).unwrap());
 
     Insert::<Unspent, ()>::insert_op(storage, &unspent, &()).unwrap();
 
-    assert!(Exist::<Unspent, ()>::exist_op(storage, &unspent).unwrap());
+    assert!(storage.exist::<Unspent, ()>(&unspent).unwrap());
 
     storage.delete::<Unspent, ()>(&unspent).unwrap();
 
-    assert!(!Exist::<Unspent, ()>::exist_op(storage, &unspent).unwrap());
+    assert!(!storage.exist::<Unspent, ()>(&unspent).unwrap());
 
     let mut batch = B::batch_begin();
 

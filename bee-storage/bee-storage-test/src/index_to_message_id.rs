@@ -40,7 +40,11 @@ impl<T> StorageBackend for T where
 pub fn index_to_message_id_access<B: StorageBackend>(storage: &B) {
     let (index, message_id) = (rand_indexation_payload().padded_index(), rand_message_id());
 
-    assert!(!Exist::<(PaddedIndex, MessageId), ()>::exist_op(storage, &(index, message_id)).unwrap());
+    assert!(
+        !storage
+            .exist::<(PaddedIndex, MessageId), ()>(&(index, message_id))
+            .unwrap()
+    );
     assert!(
         storage
             .fetch::<PaddedIndex, Vec<MessageId>>(&index)
@@ -51,7 +55,11 @@ pub fn index_to_message_id_access<B: StorageBackend>(storage: &B) {
 
     Insert::<(PaddedIndex, MessageId), ()>::insert_op(storage, &(index, message_id), &()).unwrap();
 
-    assert!(Exist::<(PaddedIndex, MessageId), ()>::exist_op(storage, &(index, message_id)).unwrap());
+    assert!(
+        storage
+            .exist::<(PaddedIndex, MessageId), ()>(&(index, message_id))
+            .unwrap()
+    );
     assert_eq!(
         storage.fetch::<PaddedIndex, Vec<MessageId>>(&index).unwrap().unwrap(),
         vec![message_id]
@@ -61,7 +69,11 @@ pub fn index_to_message_id_access<B: StorageBackend>(storage: &B) {
         .delete::<(PaddedIndex, MessageId), ()>(&(index, message_id))
         .unwrap();
 
-    assert!(!Exist::<(PaddedIndex, MessageId), ()>::exist_op(storage, &(index, message_id)).unwrap());
+    assert!(
+        !storage
+            .exist::<(PaddedIndex, MessageId), ()>(&(index, message_id))
+            .unwrap()
+    );
     assert!(
         storage
             .fetch::<PaddedIndex, Vec<MessageId>>(&index)

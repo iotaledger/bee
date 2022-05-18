@@ -40,7 +40,11 @@ impl<T> StorageBackend for T where
 pub fn ed25519_address_to_output_id_access<B: StorageBackend>(storage: &B) {
     let (address, output_id) = (rand_ed25519_address(), rand_output_id());
 
-    assert!(!Exist::<(Ed25519Address, OutputId), ()>::exist_op(storage, &(address, output_id)).unwrap());
+    assert!(
+        !storage
+            .exist::<(Ed25519Address, OutputId), ()>(&(address, output_id))
+            .unwrap()
+    );
     assert!(
         storage
             .fetch::<Ed25519Address, Vec<OutputId>>(&address)
@@ -51,7 +55,11 @@ pub fn ed25519_address_to_output_id_access<B: StorageBackend>(storage: &B) {
 
     Insert::<(Ed25519Address, OutputId), ()>::insert_op(storage, &(address, output_id), &()).unwrap();
 
-    assert!(Exist::<(Ed25519Address, OutputId), ()>::exist_op(storage, &(address, output_id)).unwrap());
+    assert!(
+        storage
+            .exist::<(Ed25519Address, OutputId), ()>(&(address, output_id))
+            .unwrap()
+    );
     assert_eq!(
         storage
             .fetch::<Ed25519Address, Vec<OutputId>>(&address)
@@ -64,7 +72,11 @@ pub fn ed25519_address_to_output_id_access<B: StorageBackend>(storage: &B) {
         .delete::<(Ed25519Address, OutputId), ()>(&(address, output_id))
         .unwrap();
 
-    assert!(!Exist::<(Ed25519Address, OutputId), ()>::exist_op(storage, &(address, output_id)).unwrap());
+    assert!(
+        !storage
+            .exist::<(Ed25519Address, OutputId), ()>(&(address, output_id))
+            .unwrap()
+    );
     assert!(
         storage
             .fetch::<Ed25519Address, Vec<OutputId>>(&address)

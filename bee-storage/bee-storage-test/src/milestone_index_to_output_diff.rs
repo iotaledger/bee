@@ -42,7 +42,7 @@ impl<T> StorageBackend for T where
 pub fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &B) {
     let (index, output_diff) = (rand_milestone_index(), rand_output_diff());
 
-    assert!(!Exist::<MilestoneIndex, OutputDiff>::exist_op(storage, &index).unwrap());
+    assert!(!storage.exist::<MilestoneIndex, OutputDiff>(&index).unwrap());
     assert!(storage.fetch::<MilestoneIndex, OutputDiff>(&index).unwrap().is_none());
     let results = MultiFetch::<MilestoneIndex, OutputDiff>::multi_fetch_op(storage, &[index])
         .unwrap()
@@ -52,7 +52,7 @@ pub fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &B) {
 
     Insert::<MilestoneIndex, OutputDiff>::insert_op(storage, &index, &output_diff).unwrap();
 
-    assert!(Exist::<MilestoneIndex, OutputDiff>::exist_op(storage, &index).unwrap());
+    assert!(storage.exist::<MilestoneIndex, OutputDiff>(&index).unwrap());
     assert_eq!(
         storage
             .fetch::<MilestoneIndex, OutputDiff>(&index)
@@ -69,7 +69,7 @@ pub fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &B) {
 
     storage.delete::<MilestoneIndex, OutputDiff>(&index).unwrap();
 
-    assert!(!Exist::<MilestoneIndex, OutputDiff>::exist_op(storage, &index).unwrap());
+    assert!(!storage.exist::<MilestoneIndex, OutputDiff>(&index).unwrap());
     assert!(storage.fetch::<MilestoneIndex, OutputDiff>(&index).unwrap().is_none());
     let results = MultiFetch::<MilestoneIndex, OutputDiff>::multi_fetch_op(storage, &[index])
         .unwrap()

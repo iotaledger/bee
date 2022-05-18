@@ -41,7 +41,7 @@ impl<T> StorageBackend for T where
 pub fn solid_entry_point_to_milestone_index_access<B: StorageBackend>(storage: &B) {
     let (sep, index) = (rand_solid_entry_point(), rand_milestone_index());
 
-    assert!(!Exist::<SolidEntryPoint, MilestoneIndex>::exist_op(storage, &sep).unwrap());
+    assert!(!storage.exist::<SolidEntryPoint, MilestoneIndex>(&sep).unwrap());
     assert!(
         storage
             .fetch::<SolidEntryPoint, MilestoneIndex>(&sep)
@@ -56,7 +56,7 @@ pub fn solid_entry_point_to_milestone_index_access<B: StorageBackend>(storage: &
 
     Insert::<SolidEntryPoint, MilestoneIndex>::insert_op(storage, &sep, &index).unwrap();
 
-    assert!(Exist::<SolidEntryPoint, MilestoneIndex>::exist_op(storage, &sep).unwrap());
+    assert!(storage.exist::<SolidEntryPoint, MilestoneIndex>(&sep).unwrap());
     assert_eq!(
         storage.fetch::<SolidEntryPoint, MilestoneIndex>(&sep).unwrap().unwrap(),
         index
@@ -69,7 +69,7 @@ pub fn solid_entry_point_to_milestone_index_access<B: StorageBackend>(storage: &
 
     storage.delete::<SolidEntryPoint, MilestoneIndex>(&sep).unwrap();
 
-    assert!(!Exist::<SolidEntryPoint, MilestoneIndex>::exist_op(storage, &sep).unwrap());
+    assert!(!storage.exist::<SolidEntryPoint, MilestoneIndex>(&sep).unwrap());
     assert!(
         storage
             .fetch::<SolidEntryPoint, MilestoneIndex>(&sep)

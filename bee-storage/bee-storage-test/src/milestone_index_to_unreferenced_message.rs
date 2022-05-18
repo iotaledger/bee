@@ -42,7 +42,9 @@ pub fn milestone_index_to_unreferenced_message_access<B: StorageBackend>(storage
     let (index, unreferenced_message) = (rand_milestone_index(), rand_unreferenced_message());
 
     assert!(
-        !Exist::<(MilestoneIndex, UnreferencedMessage), ()>::exist_op(storage, &(index, unreferenced_message)).unwrap()
+        !storage
+            .exist::<(MilestoneIndex, UnreferencedMessage), ()>(&(index, unreferenced_message))
+            .unwrap()
     );
     assert!(
         storage
@@ -56,7 +58,9 @@ pub fn milestone_index_to_unreferenced_message_access<B: StorageBackend>(storage
         .unwrap();
 
     assert!(
-        Exist::<(MilestoneIndex, UnreferencedMessage), ()>::exist_op(storage, &(index, unreferenced_message)).unwrap()
+        storage
+            .exist::<(MilestoneIndex, UnreferencedMessage), ()>(&(index, unreferenced_message))
+            .unwrap()
     );
     assert_eq!(
         storage
@@ -71,7 +75,9 @@ pub fn milestone_index_to_unreferenced_message_access<B: StorageBackend>(storage
         .unwrap();
 
     assert!(
-        !Exist::<(MilestoneIndex, UnreferencedMessage), ()>::exist_op(storage, &(index, unreferenced_message)).unwrap()
+        !storage
+            .exist::<(MilestoneIndex, UnreferencedMessage), ()>(&(index, unreferenced_message))
+            .unwrap()
     );
     assert!(
         storage

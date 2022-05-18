@@ -8,6 +8,7 @@ use bee_message::{
     Message, MessageId,
 };
 use bee_runtime::resource::ResourceHandle;
+use bee_storage::backend::StorageBackendExt;
 use hashbrown::HashMap;
 use log::warn;
 use ref_cast::RefCast;
@@ -131,7 +132,7 @@ impl<B: StorageBackend> Tangle<B> {
     /// Return whether the tangle contains the given milestone index.
     #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn contains_milestone(&self, index: MilestoneIndex) -> bool {
-        self.storage.exist_op(&index).unwrap_or_default()
+        self.storage.exist(&index).unwrap_or_default()
     }
 
     /// Get the index of the latest milestone.
@@ -365,7 +366,7 @@ impl<B: StorageBackend> Tangle<B> {
     /// Returns whether the message is stored in the Tangle.
     #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn contains(&self, message_id: &MessageId) -> bool {
-        self.storage.exist_op(message_id).unwrap_or_default()
+        self.storage.exist(message_id).unwrap_or_default()
     }
 
     /// Get the metadata of a vertex associated with the given `message_id`.

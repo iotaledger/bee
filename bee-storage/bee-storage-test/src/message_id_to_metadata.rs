@@ -43,7 +43,7 @@ impl<T> StorageBackend for T where
 pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
     let (message_id, metadata) = (rand_message_id(), rand_message_metadata());
 
-    assert!(!Exist::<MessageId, MessageMetadata>::exist_op(storage, &message_id).unwrap());
+    assert!(!storage.exist::<MessageId, MessageMetadata>(&message_id).unwrap());
     assert!(
         storage
             .fetch::<MessageId, MessageMetadata>(&message_id)
@@ -57,7 +57,7 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
     assert!(matches!(results.get(0), Some(Ok(None))));
 
     InsertStrict::<MessageId, MessageMetadata>::insert_strict_op(storage, &message_id, &metadata).unwrap();
-    assert!(Exist::<MessageId, MessageMetadata>::exist_op(storage, &message_id).unwrap());
+    assert!(storage.exist::<MessageId, MessageMetadata>(&message_id).unwrap());
 
     // calling `insert_strict` with the same `MessageId` but a different `MessageMetadata` should
     // not overwrite the old value.
@@ -109,7 +109,7 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
 
     storage.delete::<MessageId, MessageMetadata>(&message_id).unwrap();
 
-    assert!(!Exist::<MessageId, MessageMetadata>::exist_op(storage, &message_id).unwrap());
+    assert!(!storage.exist::<MessageId, MessageMetadata>(&message_id).unwrap());
     assert!(
         storage
             .fetch::<MessageId, MessageMetadata>(&message_id)

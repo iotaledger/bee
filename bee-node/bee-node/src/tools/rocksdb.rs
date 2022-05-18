@@ -15,7 +15,7 @@ use bee_message::{
     Message, MessageId,
 };
 use bee_storage::{
-    access::{AsIterator, Exist},
+    access::{AsIterator},
     backend::{StorageBackend, StorageBackendExt},
 };
 use bee_storage_rocksdb::{
@@ -180,7 +180,7 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
         CF_OUTPUT_ID_UNSPENT => match &tool.command {
             RocksdbCommand::Fetch { key } => {
                 let key = Unspent::from(OutputId::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?);
-                let value = Exist::<Unspent, ()>::exist_op(storage, &key)?;
+                let value = storage.exist::<Unspent, ()>(&key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
