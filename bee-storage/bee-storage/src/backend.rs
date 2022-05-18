@@ -95,9 +95,10 @@ pub trait StorageBackendExt: StorageBackend {
         Self: Truncate<K, V>;
 
     /// Fetches the value for the key `K` and updates it using `f`.
-    fn update<K, V>(&self, key: &K, f: impl FnMut(&mut V)) -> Result<(), Self::Error>
+    fn update<K, V, F>(&self, key: &K, f: F) -> Result<(), Self::Error>
     where
-        Self: Update<K, V>;
+        Self: Update<K, V>,
+        F: FnMut(&mut V);
 }
 
 impl<S: StorageBackend> StorageBackendExt for S {
@@ -187,9 +188,10 @@ impl<S: StorageBackend> StorageBackendExt for S {
     }
 
     #[inline(always)]
-    fn update<K, V>(&self, key: &K, f: impl FnMut(&mut V)) -> Result<(), Self::Error>
+    fn update<K, V, F>(&self, key: &K, f: F) -> Result<(), Self::Error>
     where
         Self: Update<K, V>,
+        F: FnMut(&mut V),
     {
         Update::<K, V>::update_op(self, key, f)
     }

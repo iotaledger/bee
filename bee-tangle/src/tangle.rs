@@ -385,7 +385,7 @@ impl<B: StorageBackend> Tangle<B> {
         let mut output = None;
 
         self.storage
-            .update_op(message_id, |metadata| output = Some(update(metadata)))
+            .update(message_id, |metadata| output = Some(update(metadata)))
             .unwrap_or_default();
 
         output

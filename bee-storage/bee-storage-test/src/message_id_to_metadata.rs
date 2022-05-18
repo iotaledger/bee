@@ -99,10 +99,11 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
         MilestoneIndex(index.map_or(0, |i| i.wrapping_add(1)))
     };
 
-    Update::<MessageId, MessageMetadata>::update_op(storage, &message_id, |metadata: &mut MessageMetadata| {
-        metadata.set_milestone_index(milestone_index);
-    })
-    .unwrap();
+    storage
+        .update::<MessageId, MessageMetadata, _>(&message_id, |metadata: &mut MessageMetadata| {
+            metadata.set_milestone_index(milestone_index);
+        })
+        .unwrap();
 
     assert_eq!(
         storage
