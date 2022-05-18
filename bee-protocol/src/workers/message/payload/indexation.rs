@@ -9,7 +9,7 @@ use bee_message::{
     Message, MessageId,
 };
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_storage::access::Insert;
+use bee_storage::backend::StorageBackendExt;
 use futures::{future::FutureExt, stream::StreamExt};
 use log::{debug, error, info};
 use tokio::sync::mpsc;
@@ -57,9 +57,7 @@ fn process<B: StorageBackend>(storage: &B, metrics: &NodeMetrics, message_id: Me
 
     metrics.indexation_payloads_inc(1);
 
-    if let Err(e) =
-        Insert::<(PaddedIndex, MessageId), ()>::insert_op(&*storage, &(indexation.padded_index(), message_id), &())
-    {
+    if let Err(e) = storage.insert::<(PaddedIndex, MessageId), ()>(&(indexation.padded_index(), message_id), &()) {
         error!(
             "Inserting indexation payload for message {} failed: {:?}.",
             message_id, e

@@ -49,7 +49,9 @@ pub fn message_id_to_message_id_access<B: StorageBackend>(storage: &B) {
             .is_empty()
     );
 
-    Insert::<(MessageId, MessageId), ()>::insert_op(storage, &(parent, child), &()).unwrap();
+    storage
+        .insert::<(MessageId, MessageId), ()>(&(parent, child), &())
+        .unwrap();
 
     assert!(storage.exist::<(MessageId, MessageId), ()>(&(parent, child)).unwrap());
     assert_eq!(
@@ -72,7 +74,9 @@ pub fn message_id_to_message_id_access<B: StorageBackend>(storage: &B) {
 
     for _ in 0..10 {
         let (parent, child) = (rand_message_id(), rand_message_id());
-        Insert::<(MessageId, MessageId), ()>::insert_op(storage, &(parent, child), &()).unwrap();
+        storage
+            .insert::<(MessageId, MessageId), ()>(&(parent, child), &())
+            .unwrap();
         storage
             .batch_delete::<(MessageId, MessageId), ()>(&mut batch, &(parent, child))
             .unwrap();

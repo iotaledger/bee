@@ -56,7 +56,9 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(None))));
 
-    InsertStrict::<MessageId, MessageMetadata>::insert_strict_op(storage, &message_id, &metadata).unwrap();
+    storage
+        .insert_strict::<MessageId, MessageMetadata>(&message_id, &metadata)
+        .unwrap();
     assert!(storage.exist::<MessageId, MessageMetadata>(&message_id).unwrap());
 
     // calling `insert_strict` with the same `MessageId` but a different `MessageMetadata` should
@@ -66,7 +68,9 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
         let mut metadata = metadata.clone();
         metadata.set_milestone_index(MilestoneIndex(index));
 
-        InsertStrict::<MessageId, MessageMetadata>::insert_strict_op(storage, &message_id, &metadata).unwrap();
+        storage
+            .insert_strict::<MessageId, MessageMetadata>(&message_id, &metadata)
+            .unwrap();
     }
     assert_eq!(
         storage
@@ -129,7 +133,9 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
 
     for _ in 0..10 {
         let (message_id, metadata) = (rand_message_id(), rand_message_metadata());
-        InsertStrict::<MessageId, MessageMetadata>::insert_strict_op(storage, &message_id, &metadata).unwrap();
+        storage
+            .insert_strict::<MessageId, MessageMetadata>(&message_id, &metadata)
+            .unwrap();
         storage
             .batch_delete::<MessageId, MessageMetadata>(&mut batch, &message_id)
             .unwrap();

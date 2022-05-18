@@ -53,7 +53,9 @@ pub fn ed25519_address_to_output_id_access<B: StorageBackend>(storage: &B) {
             .is_empty()
     );
 
-    Insert::<(Ed25519Address, OutputId), ()>::insert_op(storage, &(address, output_id), &()).unwrap();
+    storage
+        .insert::<(Ed25519Address, OutputId), ()>(&(address, output_id), &())
+        .unwrap();
 
     assert!(
         storage
@@ -89,7 +91,9 @@ pub fn ed25519_address_to_output_id_access<B: StorageBackend>(storage: &B) {
 
     for _ in 0..10 {
         let (address, output_id) = (rand_ed25519_address(), rand_output_id());
-        Insert::<(Ed25519Address, OutputId), ()>::insert_op(storage, &(address, output_id), &()).unwrap();
+        storage
+            .insert::<(Ed25519Address, OutputId), ()>(&(address, output_id), &())
+            .unwrap();
         storage
             .batch_delete::<(Ed25519Address, OutputId), ()>(&mut batch, &(address, output_id))
             .unwrap();

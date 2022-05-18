@@ -365,7 +365,9 @@ pub(crate) fn fetch_balance_or_default<B: StorageBackend>(storage: &B, address: 
 }
 
 pub(crate) fn insert_ledger_index<B: StorageBackend>(storage: &B, index: &LedgerIndex) -> Result<(), Error> {
-    Insert::<(), LedgerIndex>::insert_op(storage, &(), index).map_err(|e| Error::Storage(Box::new(e)))
+    storage
+        .insert::<(), LedgerIndex>(&(), index)
+        .map_err(|e| Error::Storage(Box::new(e)))
 }
 
 pub(crate) fn insert_ledger_index_batch<B: StorageBackend>(
@@ -405,7 +407,9 @@ pub(crate) fn delete_receipt_batch<B: StorageBackend>(
 }
 
 pub(crate) fn insert_snapshot_info<B: StorageBackend>(storage: &B, snapshot_info: &SnapshotInfo) -> Result<(), Error> {
-    Insert::<(), SnapshotInfo>::insert_op(&*storage, &(), snapshot_info).map_err(|e| Error::Storage(Box::new(e)))
+    storage
+        .insert::<(), SnapshotInfo>(&(), snapshot_info)
+        .map_err(|e| Error::Storage(Box::new(e)))
 }
 
 #[cfg_attr(feature = "trace", trace_tools::observe)]
@@ -445,7 +449,8 @@ pub(crate) fn insert_treasury_output<B: StorageBackend>(
     storage: &B,
     treasury_output: &TreasuryOutput,
 ) -> Result<(), Error> {
-    Insert::<(bool, TreasuryOutput), ()>::insert_op(storage, &(false, treasury_output.clone()), &())
+    storage
+        .insert::<(bool, TreasuryOutput), ()>(&(false, treasury_output.clone()), &())
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 

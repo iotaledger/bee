@@ -50,7 +50,7 @@ pub fn address_to_balance_access<B: StorageBackend>(storage: &B) {
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(None))));
 
-    Insert::<Address, Balance>::insert_op(storage, &address, &balance).unwrap();
+    storage.insert::<Address, Balance>(&address, &balance).unwrap();
 
     assert!(storage.exist::<Address, Balance>(&address).unwrap());
     assert_eq!(
@@ -79,7 +79,7 @@ pub fn address_to_balance_access<B: StorageBackend>(storage: &B) {
 
     for _ in 0..10 {
         let (address, balance) = (rand_address(), rand_balance());
-        Insert::<Address, Balance>::insert_op(storage, &address, &balance).unwrap();
+        storage.insert::<Address, Balance>(&address, &balance).unwrap();
         storage.batch_delete::<Address, Balance>(&mut batch, &address).unwrap();
         addresses.push(address);
         balances.push((address, None));

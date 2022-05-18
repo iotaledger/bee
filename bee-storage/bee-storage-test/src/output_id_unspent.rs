@@ -37,7 +37,7 @@ pub fn output_id_unspent_access<B: StorageBackend>(storage: &B) {
 
     assert!(!storage.exist::<Unspent, ()>(&unspent).unwrap());
 
-    Insert::<Unspent, ()>::insert_op(storage, &unspent, &()).unwrap();
+    storage.insert::<Unspent, ()>(&unspent, &()).unwrap();
 
     assert!(storage.exist::<Unspent, ()>(&unspent).unwrap());
 
@@ -49,7 +49,7 @@ pub fn output_id_unspent_access<B: StorageBackend>(storage: &B) {
 
     for _ in 0..10 {
         let unspent = rand_unspent_output_id();
-        Insert::<Unspent, ()>::insert_op(storage, &unspent, &()).unwrap();
+        storage.insert::<Unspent, ()>(&unspent, &()).unwrap();
         storage.batch_delete::<Unspent, ()>(&mut batch, &unspent).unwrap();
     }
 

@@ -50,7 +50,9 @@ pub fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &B) {
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(None))));
 
-    Insert::<MilestoneIndex, OutputDiff>::insert_op(storage, &index, &output_diff).unwrap();
+    storage
+        .insert::<MilestoneIndex, OutputDiff>(&index, &output_diff)
+        .unwrap();
 
     assert!(storage.exist::<MilestoneIndex, OutputDiff>(&index).unwrap());
     assert_eq!(
@@ -83,7 +85,9 @@ pub fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &B) {
 
     for _ in 0..10 {
         let (index, output_diff) = (rand_milestone_index(), rand_output_diff());
-        Insert::<MilestoneIndex, OutputDiff>::insert_op(storage, &index, &output_diff).unwrap();
+        storage
+            .insert::<MilestoneIndex, OutputDiff>(&index, &output_diff)
+            .unwrap();
         storage
             .batch_delete::<MilestoneIndex, OutputDiff>(&mut batch, &index)
             .unwrap();

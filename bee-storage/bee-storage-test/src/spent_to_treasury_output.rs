@@ -53,7 +53,9 @@ pub fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
             .is_empty()
     );
 
-    Insert::<(bool, TreasuryOutput), ()>::insert_op(storage, &(spent, treasury_output.clone()), &()).unwrap();
+    storage
+        .insert::<(bool, TreasuryOutput), ()>(&(spent, treasury_output.clone()), &())
+        .unwrap();
 
     assert!(
         storage
@@ -86,7 +88,9 @@ pub fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
 
     for _ in 0..10 {
         let (spent, treasury_output) = (rand_bool(), rand_ledger_treasury_output());
-        Insert::<(bool, TreasuryOutput), ()>::insert_op(storage, &(spent, treasury_output.clone()), &()).unwrap();
+        storage
+            .insert::<(bool, TreasuryOutput), ()>(&(spent, treasury_output.clone()), &())
+            .unwrap();
         storage
             .batch_delete::<(bool, TreasuryOutput), ()>(&mut batch, &(spent, treasury_output))
             .unwrap();

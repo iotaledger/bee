@@ -48,7 +48,7 @@ pub fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B) {
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(None))));
 
-    Insert::<MilestoneIndex, Milestone>::insert_op(storage, &index, &milestone).unwrap();
+    storage.insert::<MilestoneIndex, Milestone>(&index, &milestone).unwrap();
 
     assert!(storage.exist::<MilestoneIndex, Milestone>(&index).unwrap());
     assert_eq!(
@@ -77,7 +77,7 @@ pub fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B) {
 
     for _ in 0..10 {
         let (index, milestone) = (rand_milestone_index(), rand_milestone());
-        Insert::<MilestoneIndex, Milestone>::insert_op(storage, &index, &milestone).unwrap();
+        storage.insert::<MilestoneIndex, Milestone>(&index, &milestone).unwrap();
         storage
             .batch_delete::<MilestoneIndex, Milestone>(&mut batch, &index)
             .unwrap();

@@ -15,7 +15,7 @@ use bee_message::{
     payload::Payload,
     MessageId,
 };
-use bee_storage::access::{Insert, Truncate};
+use bee_storage::{access::Truncate, backend::StorageBackendExt};
 use bee_tangle::solid_entry_point::SolidEntryPoint;
 use log::info;
 use time_helper as time;
@@ -52,7 +52,8 @@ fn import_solid_entry_points<R: Read, B: StorageBackend>(
 ) -> Result<(), Error> {
     Truncate::<SolidEntryPoint, MilestoneIndex>::truncate_op(storage).map_err(|e| Error::Storage(Box::new(e)))?;
     for _ in 0..sep_count {
-        Insert::<SolidEntryPoint, MilestoneIndex>::insert_op(&*storage, &SolidEntryPoint::unpack(reader)?, &index)
+        storage
+            .insert::<SolidEntryPoint, MilestoneIndex>(&SolidEntryPoint::unpack(reader)?, &index)
             .map_err(|e| Error::Storage(Box::new(e)))?;
     }
 

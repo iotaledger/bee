@@ -15,7 +15,7 @@ use bee_message::{
     Message, MessageId,
 };
 use bee_storage::{
-    access::{AsIterator},
+    access::AsIterator,
     backend::{StorageBackend, StorageBackendExt},
 };
 use bee_storage_rocksdb::{

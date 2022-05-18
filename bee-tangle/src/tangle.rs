@@ -70,7 +70,7 @@ impl<B: StorageBackend> Tangle<B> {
     #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn insert(&self, message: &Message, message_id: &MessageId, metadata: &MessageMetadata) {
         self.storage
-            .insert_op(message_id, message)
+            .insert(message_id, message)
             .ok()
             .and_then(|()| {
                 self.storage.insert_strict_op(message_id, metadata).ok()?;
@@ -78,7 +78,7 @@ impl<B: StorageBackend> Tangle<B> {
                 let message_id = *message_id;
                 for &parent in message.parents().iter() {
                     self.storage
-                        .insert_op(&(parent, message_id), &())
+                        .insert(&(parent, message_id), &())
                         .unwrap_or_else(|e| warn!("Failed to update approvers for message {:?}", e));
                 }
                 Some(())
@@ -104,7 +104,7 @@ impl<B: StorageBackend> Tangle<B> {
             metadata.set_omrsi_and_ymrsi(index, index);
         });
         self.storage
-            .insert_op(&idx, &milestone)
+            .insert(&idx, &milestone)
             .unwrap_or_else(|e| warn!("Failed to insert milestone message {:?}", e));
     }
 
