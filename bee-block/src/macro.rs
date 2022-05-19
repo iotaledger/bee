@@ -42,10 +42,10 @@ macro_rules! impl_id {
         }
 
         impl core::str::FromStr for $name {
-            type Err = crate::Error;
+            type Err = $crate::Error;
 
             fn from_str(s: &str) -> Result<Self, Self::Err> {
-                Ok($name::from(prefix_hex::decode::<[u8; Self::LENGTH]>(s).map_err(crate::Error::HexError)?))
+                Ok($name::from(prefix_hex::decode::<[u8; Self::LENGTH]>(s).map_err($crate::Error::HexError)?))
             }
         }
 
