@@ -115,13 +115,6 @@ impl FoundryOutputBuilder {
         self
     }
 
-    /// Sets the token tag to the provided value.
-    #[inline(always)]
-    pub fn with_token_tag(mut self, token_tag: TokenTag) -> Self {
-        self.token_tag = token_tag;
-        self
-    }
-
     /// Sets the token scheme to the provided value.
     #[inline(always)]
     pub fn with_token_scheme(mut self, token_scheme: TokenScheme) -> Self {
