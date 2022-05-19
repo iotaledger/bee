@@ -58,7 +58,7 @@ where
                 count += 1;
             }
 
-            debug!("Drained {} blocks.", count);
+            debug!("Drained {} events.", count);
 
             info!("Stopped.");
         });
