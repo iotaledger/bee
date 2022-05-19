@@ -9,7 +9,7 @@ pub mod unlock_condition;
 use bee_ledger::types::{ConsumedOutput, CreatedOutput, TreasuryOutput, Unspent};
 use bee_message::output::{
     self, unlock_condition::ImmutableAliasAddressUnlockCondition, InputsCommitment, Output, OutputId,
-    SimpleTokenScheme, TokenScheme, TokenTag, OUTPUT_INDEX_RANGE,
+    SimpleTokenScheme, TokenScheme, OUTPUT_INDEX_RANGE,
 };
 use primitive_types::U256;
 
@@ -94,7 +94,6 @@ pub fn rand_foundry_output() -> output::FoundryOutput {
     output::FoundryOutput::build_with_amount(
         rand_number_range(Output::AMOUNT_RANGE),
         rand_number(),
-        TokenTag::new(rand_bytes_array()),
         rand_token_scheme(),
     )
     .unwrap()

@@ -5,13 +5,19 @@ use packable::{packer::SlicePacker, Packable};
 
 use crate::{
     address::{Address, AliasAddress},
-    output::AliasId,
+    output::{AliasId, TokenId},
 };
 
 impl_id!(pub FoundryId, 38, "Defines the unique identifier of a foundry.");
 
 #[cfg(feature = "serde")]
 string_serde_impl!(FoundryId);
+
+impl From<TokenId> for FoundryId {
+    fn from(token_id: TokenId) -> Self {
+        FoundryId::new(*token_id)
+    }
+}
 
 impl FoundryId {
     /// Builds a new [`FoundryId`] from its components.
