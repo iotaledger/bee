@@ -31,7 +31,7 @@ pub struct ParametersMilestoneOption {
 impl ParametersMilestoneOption {
     /// The milestone option kind of a [`ParametersMilestoneOption`].
     pub const KIND: u8 = 1;
-    /// Valid lengths for a [`MetadataFeatureBlock`].
+    /// Valid lengths for binary parameters.
     pub const BINARY_PARAMETERS_LENGTH_RANGE: RangeInclusive<u16> = 0..=8192;
 
     /// Creates a new [`ParametersMilestoneOption`].
