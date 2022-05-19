@@ -18,8 +18,10 @@ use crate::{
 #[derive(Debug)]
 #[must_use]
 pub struct RegularTransactionEssenceBuilder {
+    #[serde(rename = "networkId")]
     network_id: u64,
     inputs: Vec<Input>,
+    #[serde(rename = "inputsCommitment")]
     inputs_commitment: InputsCommitment,
     outputs: Vec<Output>,
     payload: Option<Payload>,

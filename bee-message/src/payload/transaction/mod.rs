@@ -21,6 +21,7 @@ use crate::{unlock_block::UnlockBlocks, Error};
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TransactionPayload {
     essence: TransactionEssence,
+    #[serde(rename = "unlockBlocks")]
     unlock_blocks: UnlockBlocks,
 }
 

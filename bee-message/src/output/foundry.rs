@@ -278,12 +278,18 @@ pub struct FoundryOutput {
     // Amount of IOTA tokens held by the output.
     amount: OutputAmount,
     // Native tokens held by the output.
+    #[serde(rename = "nativeTokens")]
     native_tokens: NativeTokens,
     // The serial number of the foundry with respect to the controlling alias.
+    #[serde(rename = "serialNumber")]
     serial_number: u32,
+    #[serde(rename = "tokenScheme")]
     token_scheme: TokenScheme,
+    #[serde(rename = "unlockConditions")]
     unlock_conditions: UnlockConditions,
+    #[serde(rename = "featureBlocks")]
     feature_blocks: FeatureBlocks,
+    #[serde(rename = "immutableFeatureBlocks")]
     immutable_feature_blocks: FeatureBlocks,
 }
 
