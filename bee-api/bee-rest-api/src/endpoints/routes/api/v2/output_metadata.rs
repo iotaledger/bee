@@ -15,23 +15,23 @@ use log::error;
 use tokio::sync::mpsc;
 use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
-use super::output_metadata::create_output_metadata;
 use crate::{
     endpoints::{
-        config::ROUTE_OUTPUT,
+        config::ROUTE_OUTPUT_METADATA,
         filters::{with_consensus_worker, with_storage},
         path_params::output_id,
         permission::has_permission,
         rejection::CustomRejection,
         storage::StorageBackend,
     },
-    types::responses::OutputResponse,
+    types::responses::OutputMetadataResponse,
 };
 
 fn path() -> impl Filter<Extract = (OutputId,), Error = Rejection> + Clone {
     super::path()
         .and(warp::path("outputs"))
         .and(output_id())
+        .and(warp::path("metadata"))
         .and(warp::path::end())
 }
 
@@ -43,16 +43,36 @@ pub(crate) fn filter<B: StorageBackend>(
 ) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
-        .and(has_permission(ROUTE_OUTPUT, public_routes, allowed_ips))
+        .and(has_permission(ROUTE_OUTPUT_METADATA, public_routes, allowed_ips))
         .and(with_storage(storage))
         .and(with_consensus_worker(consensus_worker))
-        .and_then(
-            |output_id, storage, consensus_worker| async move { output(output_id, storage, consensus_worker).await },
-        )
+        .and_then(|output_id, storage, consensus_worker| async move {
+            output_metadata(output_id, storage, consensus_worker).await
+        })
         .boxed()
 }
 
-pub(crate) async fn output<B: StorageBackend>(
+pub(crate) fn create_output_metadata(
+    output_id: &OutputId,
+    created_output: &CreatedOutput,
+    consumed_output: Option<&ConsumedOutput>,
+    ledger_index: LedgerIndex,
+) -> OutputMetadataResponse {
+    OutputMetadataResponse {
+        message_id: created_output.message_id().to_string(),
+        transaction_id: output_id.transaction_id().to_string(),
+        output_index: output_id.index(),
+        is_spent: consumed_output.is_some(),
+        milestone_index_spent: consumed_output.map(|o| *o.milestone_index()),
+        milestone_timestamp_spent: consumed_output.map(|o| o.milestone_timestamp()),
+        transaction_id_spent: consumed_output.map(|o| o.target().to_string()),
+        milestone_index_booked: *created_output.milestone_index(),
+        milestone_timestamp_booked: created_output.milestone_timestamp(),
+        ledger_index: *ledger_index,
+    }
+}
+
+pub(crate) async fn output_metadata<B: StorageBackend>(
     output_id: OutputId,
     storage: ResourceHandle<B>,
     consensus_worker: mpsc::UnboundedSender<ConsensusWorkerCommand>,
@@ -78,24 +98,21 @@ pub(crate) async fn output<B: StorageBackend>(
                     ))
                 })?;
 
-                Ok(warp::reply::json(&OutputResponse {
-                    metadata: create_output_metadata(
-                        &output_id,
-                        &created_output,
-                        consumed_output.as_ref(),
-                        ledger_index,
-                    ),
-                    output: created_output.inner().into(),
-                }))
+                Ok(warp::reply::json(&create_output_metadata(
+                    &output_id,
+                    &created_output,
+                    consumed_output.as_ref(),
+                    ledger_index,
+                )))
             }
             None => Err(reject::custom(CustomRejection::NotFound(
-                "output not found".to_string(),
+                "output metadata not found".to_string(),
             ))),
         },
         (Err(e), _) => {
-            error!("unable to fetch the output: {}", e);
+            error!("unable to fetch the output metadata: {}", e);
             Err(reject::custom(CustomRejection::ServiceUnavailable(
-                "unable to fetch the output".to_string(),
+                "unable to fetch the output metadata".to_string(),
             )))
         }
     }
