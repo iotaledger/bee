@@ -158,7 +158,7 @@ impl fmt::Display for Error {
             Error::InvalidAddressKind(k) => write!(f, "invalid address kind: {}", k),
             Error::InvalidAliasIndex(index) => write!(f, "invalid alias index: {}", index),
             Error::InvalidBinaryParametersLength(length) => {
-                write!(f, "invalid binary parameters length {length}")
+                write!(f, "invalid binary parameters length: {length}")
             }
             Error::InvalidControllerKind(k) => write!(f, "invalid controller kind: {}", k),
             Error::InvalidStorageDepositAmount(amount) => {
