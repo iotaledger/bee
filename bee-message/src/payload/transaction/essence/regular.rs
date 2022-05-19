@@ -17,6 +17,7 @@ use crate::{
 /// A builder to build a [`RegularTransactionEssence`].
 #[derive(Debug)]
 #[must_use]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct RegularTransactionEssenceBuilder {
     #[serde(rename = "networkId")]
     network_id: u64,
