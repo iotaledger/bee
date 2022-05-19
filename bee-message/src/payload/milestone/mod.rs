@@ -25,7 +25,7 @@ pub use self::{
     milestone_id::MilestoneId,
     option::{MilestoneOption, MilestoneOptions, PowMilestoneOption, ReceiptMilestoneOption},
 };
-use crate::{signature::Signature, Error};
+use crate::{constant::PROTOCOL_VERSION, signature::Signature, Error};
 
 #[derive(Debug)]
 #[allow(missing_docs)]
@@ -174,6 +174,8 @@ pub mod dto {
         pub kind: u32,
         pub index: u32,
         pub timestamp: u32,
+        #[serde(rename = "protocolVersion")]
+        pub protocol_version: u8,
         #[serde(rename = "previousMilestoneId")]
         pub previous_milestone_id: String,
         #[serde(rename = "parentMessageIds")]
@@ -195,6 +197,7 @@ pub mod dto {
                 kind: MilestonePayload::KIND,
                 index: *value.essence().index(),
                 timestamp: value.essence().timestamp(),
+                protocol_version: value.essence().protocol_version(),
                 previous_milestone_id: value.essence().previous_milestone_id().to_string(),
                 parents: value.essence().parents().iter().map(|p| p.to_string()).collect(),
                 confirmed_merkle_root: prefix_hex::encode(value.essence().confirmed_merkle_root()),
@@ -210,6 +213,14 @@ pub mod dto {
         type Error = DtoError;
 
         fn try_from(value: &MilestonePayloadDto) -> Result<Self, Self::Error> {
+            if value.protocol_version != PROTOCOL_VERSION {
+                return Err(Error::ProtocolVersionMismatch {
+                    expected: PROTOCOL_VERSION,
+                    actual: value.protocol_version,
+                }
+                .into());
+            }
+
             let essence = {
                 let index = value.index;
 
