@@ -6,54 +6,20 @@ use bee_block::{
     output::TreasuryOutput,
     payload::{
         milestone::{
-            MilestoneEssence, MilestoneIndex, MilestoneOption, MilestoneOptions, PowMilestoneOption,
+            MilestoneEssence, MilestoneIndex, MilestoneOption, MilestoneOptions, ParametersMilestoneOption,
             ReceiptMilestoneOption,
         },
         TreasuryTransactionPayload,
     },
 };
-use bee_test::rand::{self, milestone::rand_milestone_id, parents::rand_parents};
+use bee_test::rand::{
+    self,
+    bytes::rand_bytes,
+    milestone::{rand_milestone_id, rand_milestone_index},
+    number::{rand_number, rand_number_range},
+    parents::rand_parents,
+};
 use packable::PackableExt;
-
-// TODO put back when the TIP is finished
-// #[test]
-// fn new_invalid_pow_score_non_zero() {
-//     assert!(matches!(
-//         MilestoneEssence::new(
-//             MilestoneIndex(0),
-//             0,
-//             rand_milestone_id(),
-//             rand_parents(),
-//             [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
-//             [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
-//             0,
-//             4242,
-//             vec![],
-//             MilestoneOptions::new(vec![]).unwrap(),
-//         ),
-//         Err(Error::InvalidPowScoreValues { nps: 0, npsmi: 4242 })
-//     ));
-// }
-
-// TODO put back when the TIP is finished
-// #[test]
-// fn new_invalid_pow_score_lower_than_index() {
-//     assert!(matches!(
-//         MilestoneEssence::new(
-//             MilestoneIndex(4242),
-//             0,
-//             rand_milestone_id(),
-//             rand_parents(),
-//             [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
-//             [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
-//             4000,
-//             4241,
-//             vec![],
-//             MilestoneOptions::new(vec![]).unwrap(),
-//         ),
-//         Err(Error::InvalidPowScoreValues { nps: 4000, npsmi: 4241 })
-//     ));
-// }
 
 #[test]
 fn new_valid() {
@@ -80,8 +46,10 @@ fn getters() {
     let parents = rand_parents();
     let confirmed_merkle_root = [0; MilestoneEssence::MERKLE_ROOT_LENGTH];
     let applied_merkle_root = [0; MilestoneEssence::MERKLE_ROOT_LENGTH];
-    let next_pow_score = 0;
-    let next_pow_score_milestone_index = 0;
+    let target_milestone_index = rand_milestone_index();
+    let protocol_version = rand_number();
+    let binary_parameters =
+        rand_bytes(rand_number_range(ParametersMilestoneOption::BINARY_PARAMETERS_LENGTH_RANGE) as usize);
     let receipt = ReceiptMilestoneOption::new(
         index,
         true,
@@ -95,7 +63,10 @@ fn getters() {
     .unwrap();
     let options = MilestoneOptions::new(vec![
         MilestoneOption::Receipt(receipt.clone()),
-        MilestoneOption::Pow(PowMilestoneOption::new(next_pow_score, next_pow_score_milestone_index).unwrap()),
+        MilestoneOption::Parameters(
+            ParametersMilestoneOption::new(target_milestone_index, protocol_version, binary_parameters.clone())
+                .unwrap(),
+        ),
     ])
     .unwrap();
 
@@ -118,16 +89,20 @@ fn getters() {
     assert_eq!(milestone_payload.confirmed_merkle_root(), confirmed_merkle_root);
     assert_eq!(milestone_payload.applied_merkle_root(), applied_merkle_root);
     assert_eq!(
-        milestone_payload.options().pow().unwrap().next_pow_score(),
-        next_pow_score
-    );
-    assert_eq!(
         milestone_payload
             .options()
-            .pow()
+            .parameters()
             .unwrap()
-            .next_pow_score_milestone_index(),
-        next_pow_score_milestone_index
+            .target_milestone_index(),
+        target_milestone_index
+    );
+    assert_eq!(
+        milestone_payload.options().parameters().unwrap().protocol_version(),
+        protocol_version
+    );
+    assert_eq!(
+        milestone_payload.options().parameters().unwrap().binary_parameters(),
+        binary_parameters
     );
     assert_eq!(*milestone_payload.options().receipt().unwrap(), receipt);
 }
