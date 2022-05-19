@@ -3,11 +3,11 @@
 
 use std::net::IpAddr;
 
+use bee_block::output::OutputId;
 use bee_ledger::{
     types::{ConsumedOutput, CreatedOutput, LedgerIndex},
     workers::{consensus::ConsensusWorkerCommand, error::Error},
 };
-use bee_message::output::OutputId;
 use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;
 use futures::channel::oneshot;
@@ -59,7 +59,7 @@ pub(crate) fn create_output_metadata(
     ledger_index: LedgerIndex,
 ) -> OutputMetadataResponse {
     OutputMetadataResponse {
-        message_id: created_output.message_id().to_string(),
+        block_id: created_output.block_id().to_string(),
         transaction_id: output_id.transaction_id().to_string(),
         output_index: output_id.index(),
         is_spent: consumed_output.is_some(),
