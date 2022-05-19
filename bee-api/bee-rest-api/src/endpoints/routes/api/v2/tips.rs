@@ -3,7 +3,7 @@
 
 use std::net::IpAddr;
 
-use bee_message::MessageId;
+use bee_block::BlockId;
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::Tangle;
 use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
@@ -39,9 +39,9 @@ pub(crate) async fn tips<B: StorageBackend>(tangle: ResourceHandle<Tangle<B>>) -
             "the node is not synchronized".to_string(),
         )));
     }
-    match tangle.get_messages_to_approve().await {
+    match tangle.get_blocks_to_approve().await {
         Some(tips) => Ok(warp::reply::json(&TipsResponse {
-            tip_message_ids: tips.iter().map(MessageId::to_string).collect(),
+            tips: tips.iter().map(BlockId::to_string).collect(),
         })),
         None => Err(reject::custom(CustomRejection::ServiceUnavailable(
             "tip pool is empty".to_string(),

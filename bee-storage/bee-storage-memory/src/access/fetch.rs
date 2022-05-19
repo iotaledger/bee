@@ -3,19 +3,19 @@
 
 //! Fetch access operations.
 
-use bee_ledger::types::{
-    snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
-};
-use bee_message::{
+use bee_block::{
     address::Ed25519Address,
     output::OutputId,
     payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
-    Message, MessageId,
+    Block, BlockId,
+};
+use bee_ledger::types::{
+    snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
 };
 use bee_storage::{access::Fetch, backend::StorageBackend, system::System};
 use bee_tangle::{
-    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
-    unreferenced_message::UnreferencedMessage,
+    block_metadata::BlockMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+    unreferenced_block::UnreferencedBlock,
 };
 
 use crate::storage::Storage;
@@ -31,9 +31,9 @@ macro_rules! impl_fetch {
 }
 
 impl_fetch!(u8, System, system);
-impl_fetch!(MessageId, Message, message_id_to_message);
-impl_fetch!(MessageId, MessageMetadata, message_id_to_metadata);
-impl_fetch!(MessageId, Vec<MessageId>, message_id_to_message_id);
+impl_fetch!(BlockId, Block, block_id_to_block);
+impl_fetch!(BlockId, BlockMetadata, block_id_to_metadata);
+impl_fetch!(BlockId, Vec<BlockId>, block_id_to_block_id);
 impl_fetch!(OutputId, CreatedOutput, output_id_to_created_output);
 impl_fetch!(OutputId, ConsumedOutput, output_id_to_consumed_output);
 impl_fetch!(Ed25519Address, Vec<OutputId>, ed25519_address_to_output_id);
@@ -45,8 +45,8 @@ impl_fetch!(SolidEntryPoint, MilestoneIndex, solid_entry_point_to_milestone_inde
 impl_fetch!(MilestoneIndex, OutputDiff, milestone_index_to_output_diff);
 impl_fetch!(
     MilestoneIndex,
-    Vec<UnreferencedMessage>,
-    milestone_index_to_unreferenced_message
+    Vec<UnreferencedBlock>,
+    milestone_index_to_unreferenced_block
 );
 impl_fetch!(MilestoneIndex, Vec<Receipt>, milestone_index_to_receipt);
 impl_fetch!(bool, Vec<TreasuryOutput>, spent_to_treasury_output);

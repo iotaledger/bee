@@ -6,7 +6,7 @@ use std::convert::Infallible;
 use bee_gossip::NetworkCommandSender;
 use bee_ledger::workers::consensus::ConsensusWorkerCommand;
 use bee_protocol::workers::{
-    config::ProtocolConfig, MessageRequesterWorker, MessageSubmitterWorkerEvent, PeerManager, RequestedMessages,
+    config::ProtocolConfig, BlockRequesterWorker, BlockSubmitterWorkerEvent, PeerManager, RequestedBlocks,
 };
 use bee_runtime::{event::Bus, node::NodeInfo, resource::ResourceHandle};
 use bee_tangle::Tangle;
@@ -51,10 +51,10 @@ pub(crate) fn with_storage<B: StorageBackend>(
     warp::any().map(move || storage.clone())
 }
 
-pub(crate) fn with_message_submitter(
-    message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
-) -> impl Filter<Extract = (mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,), Error = Infallible> + Clone {
-    warp::any().map(move || message_submitter.clone())
+pub(crate) fn with_block_submitter(
+    block_submitter: mpsc::UnboundedSender<BlockSubmitterWorkerEvent>,
+) -> impl Filter<Extract = (mpsc::UnboundedSender<BlockSubmitterWorkerEvent>,), Error = Infallible> + Clone {
+    warp::any().map(move || block_submitter.clone())
 }
 
 pub(crate) fn with_peer_manager(
@@ -81,16 +81,16 @@ pub(crate) fn with_bus(
     warp::any().map(move || bus.clone())
 }
 
-pub(crate) fn with_message_requester(
-    message_requester: MessageRequesterWorker,
-) -> impl Filter<Extract = (MessageRequesterWorker,), Error = Infallible> + Clone {
-    warp::any().map(move || message_requester.clone())
+pub(crate) fn with_block_requester(
+    block_requester: BlockRequesterWorker,
+) -> impl Filter<Extract = (BlockRequesterWorker,), Error = Infallible> + Clone {
+    warp::any().map(move || block_requester.clone())
 }
 
-pub(crate) fn with_requested_messages(
-    requested_messages: ResourceHandle<RequestedMessages>,
-) -> impl Filter<Extract = (ResourceHandle<RequestedMessages>,), Error = Infallible> + Clone {
-    warp::any().map(move || requested_messages.clone())
+pub(crate) fn with_requested_blocks(
+    requested_blocks: ResourceHandle<RequestedBlocks>,
+) -> impl Filter<Extract = (ResourceHandle<RequestedBlocks>,), Error = Infallible> + Clone {
+    warp::any().map(move || requested_blocks.clone())
 }
 
 pub(crate) fn with_consensus_worker(

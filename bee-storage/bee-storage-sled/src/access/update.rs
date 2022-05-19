@@ -3,21 +3,21 @@
 
 //! Insert access operations.
 
-use bee_message::MessageId;
+use bee_block::BlockId;
 use bee_storage::access::Update;
-use bee_tangle::message_metadata::MessageMetadata;
+use bee_tangle::block_metadata::BlockMetadata;
 use packable::PackableExt;
 
 use crate::{storage::Storage, trees::*};
 
-impl Update<MessageId, MessageMetadata> for Storage {
-    fn update(&self, message_id: &MessageId, mut f: impl FnMut(&mut MessageMetadata)) -> Result<(), Self::Error> {
+impl Update<BlockId, BlockMetadata> for Storage {
+    fn update(&self, block_id: &BlockId, mut f: impl FnMut(&mut BlockMetadata)) -> Result<(), Self::Error> {
         self.inner
-            .open_tree(TREE_MESSAGE_ID_TO_METADATA)?
-            .fetch_and_update(message_id, move |opt_bytes| {
+            .open_tree(TREE_BLOCK_ID_TO_METADATA)?
+            .fetch_and_update(block_id, move |opt_bytes| {
                 opt_bytes.map(|mut bytes| {
                     // Unpacking from storage is fine.
-                    let mut metadata = MessageMetadata::unpack_unverified(&mut bytes).unwrap();
+                    let mut metadata = BlockMetadata::unpack_unverified(&mut bytes).unwrap();
                     f(&mut metadata);
                     metadata.pack_to_vec()
                 })

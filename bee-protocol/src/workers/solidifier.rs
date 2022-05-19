@@ -4,11 +4,11 @@
 use std::{any::TypeId, cmp, convert::Infallible};
 
 use async_trait::async_trait;
-use bee_ledger::workers::consensus::{ConsensusWorker, ConsensusWorkerCommand};
-use bee_message::{
+use bee_block::{
     payload::milestone::{MilestoneId, MilestoneIndex},
-    MessageId,
+    BlockId,
 };
+use bee_ledger::workers::consensus::{ConsensusWorker, ConsensusWorkerCommand};
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{
     event::SolidMilestoneChanged, milestone_metadata::MilestoneMetadata, traversal, Tangle, TangleWorker,
@@ -23,10 +23,10 @@ use crate::{
     workers::{
         heartbeater::broadcast_heartbeat,
         peer::PeerManager,
-        requester::{request_message, request_milestone},
+        requester::{request_block, request_milestone},
         storage::StorageBackend,
-        IndexUpdaterWorker, IndexUpdaterWorkerEvent, MessageRequesterWorker, MetricsWorker, MilestoneRequesterWorker,
-        PeerManagerResWorker, RequestedMessages, RequestedMilestones,
+        BlockRequesterWorker, IndexUpdaterWorker, IndexUpdaterWorkerEvent, MetricsWorker, MilestoneRequesterWorker,
+        PeerManagerResWorker, RequestedBlocks, RequestedMilestones,
     },
 };
 
@@ -38,10 +38,10 @@ pub(crate) struct MilestoneSolidifierWorker {
 
 async fn heavy_solidification<B: StorageBackend>(
     tangle: &Tangle<B>,
-    message_requester: &MessageRequesterWorker,
-    requested_messages: &RequestedMessages,
+    block_requester: &BlockRequesterWorker,
+    requested_blocks: &RequestedBlocks,
     target_index: MilestoneIndex,
-    target_id: MessageId,
+    target_id: BlockId,
 ) -> usize {
     // TODO: This wouldn't be necessary if the traversal code wasn't closure-driven
     let mut missing = Vec::new();
@@ -49,7 +49,7 @@ async fn heavy_solidification<B: StorageBackend>(
     traversal::visit_parents_depth_first(
         tangle,
         target_id,
-        |id, _, metadata| !metadata.flags().is_solid() && !requested_messages.contains(id),
+        |id, _, metadata| !metadata.flags().is_solid() && !requested_blocks.contains(id),
         |_, _, _| {},
         |_, _, _| {},
         |missing_id| missing.push(*missing_id),
@@ -58,7 +58,7 @@ async fn heavy_solidification<B: StorageBackend>(
     let missing_len = missing.len();
 
     for missing_id in missing {
-        request_message(tangle, message_requester, requested_messages, missing_id, target_index).await;
+        request_block(tangle, block_requester, requested_blocks, missing_id, target_index).await;
     }
 
     missing_len
@@ -72,7 +72,7 @@ fn solidify<B: StorageBackend>(
     peer_manager: &PeerManager,
     metrics: &NodeMetrics,
     bus: &Bus<'static>,
-    id: MessageId,
+    id: BlockId,
     index: MilestoneIndex,
 ) {
     debug!("New solid milestone {}.", *index);
@@ -80,7 +80,7 @@ fn solidify<B: StorageBackend>(
     tangle.update_solid_milestone_index(index);
 
     if let Err(e) = consensus_worker.send(ConsensusWorkerCommand::ConfirmMilestone(id)) {
-        warn!("Sending message_id to consensus worker failed: {}.", e);
+        warn!("Sending block_id to consensus worker failed: {}.", e);
     }
 
     if let Err(e) = index_updater_worker
@@ -90,7 +90,7 @@ fn solidify<B: StorageBackend>(
             MilestoneMetadata::new(id, MilestoneId::null(), 0),
         ))
     {
-        warn!("Sending message_id to `IndexUpdater` failed: {:?}.", e);
+        warn!("Sending block_id to `IndexUpdater` failed: {:?}.", e);
     }
 
     broadcast_heartbeat(tangle, peer_manager, metrics);
@@ -112,7 +112,7 @@ where
 
     fn dependencies() -> &'static [TypeId] {
         vec![
-            TypeId::of::<MessageRequesterWorker>(),
+            TypeId::of::<BlockRequesterWorker>(),
             TypeId::of::<MilestoneRequesterWorker>(),
             TypeId::of::<TangleWorker>(),
             TypeId::of::<PeerManagerResWorker>(),
@@ -125,12 +125,12 @@ where
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
-        let message_requester = node.worker::<MessageRequesterWorker>().unwrap().clone();
+        let block_requester = node.worker::<BlockRequesterWorker>().unwrap().clone();
         let milestone_requester = node.worker::<MilestoneRequesterWorker>().unwrap().tx.clone();
         let consensus_worker = node.worker::<ConsensusWorker>().unwrap().tx.clone();
         let milestone_cone_updater = node.worker::<IndexUpdaterWorker>().unwrap().tx.clone();
         let tangle = node.resource::<Tangle<N::Backend>>();
-        let requested_messages = node.resource::<RequestedMessages>();
+        let requested_blocks = node.resource::<RequestedBlocks>();
         let requested_milestones = node.resource::<RequestedMilestones>();
         let metrics = node.resource::<NodeMetrics>();
         let peer_manager = node.resource::<PeerManager>();
@@ -155,31 +155,31 @@ where
                 }
 
                 if index < next {
-                    if let Some(message_id) = tangle.get_milestone_message_id(index) {
-                        if let Some(message) = tangle.get(&message_id) {
+                    if let Some(block_id) = tangle.get_milestone_block_id(index) {
+                        if let Some(block) = tangle.get(&block_id) {
                             debug!(
                                 "Light solidification of milestone {} {} in [{};{}].",
                                 index,
-                                message_id,
+                                block_id,
                                 *smi + 1,
                                 *next - 1
                             );
-                            for parent in message.parents().iter() {
-                                request_message(&tangle, &message_requester, &requested_messages, *parent, index).await;
+                            for parent in block.parents().iter() {
+                                request_block(&tangle, &block_requester, &requested_blocks, *parent, index).await;
                             }
                         } else {
-                            error!("Requested milestone {} message not present in the tangle.", index)
+                            error!("Requested milestone {} block not present in the tangle.", index)
                         }
                     } else if *index != 0 {
-                        error!("Requested milestone {} message id not present in the tangle.", index)
+                        error!("Requested milestone {} block id not present in the tangle.", index)
                     }
                 }
 
                 let mut target = smi + MilestoneIndex(1);
 
                 while target <= lmi {
-                    if let Some(id) = tangle.get_milestone_message_id(target) {
-                        if tangle.is_solid_message(&id).await {
+                    if let Some(id) = tangle.get_milestone_block_id(target) {
+                        if tangle.is_solid_block(&id).await {
                             solidify(
                                 &tangle,
                                 &consensus_worker,
@@ -193,10 +193,9 @@ where
                         } else {
                             // TODO Is this actually necessary ?
                             let missing_len =
-                                heavy_solidification(&tangle, &message_requester, &requested_messages, target, id)
-                                    .await;
+                                heavy_solidification(&tangle, &block_requester, &requested_blocks, target, id).await;
                             debug!(
-                                "Heavy solidification of milestone {} {}: {} messages requested in [{};{}].",
+                                "Heavy solidification of milestone {} {}: {} blocks requested in [{};{}].",
                                 target,
                                 id,
                                 missing_len,

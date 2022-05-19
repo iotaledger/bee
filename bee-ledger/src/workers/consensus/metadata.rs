@@ -3,11 +3,11 @@
 
 use std::collections::HashMap;
 
-use bee_message::{
+use bee_block::{
     output::OutputId,
     payload::milestone::{MilestoneId, MilestoneIndex},
     semantic::ConflictReason,
-    MessageId,
+    BlockId,
 };
 
 use crate::types::{ConsumedOutput, CreatedOutput};
@@ -22,14 +22,14 @@ pub struct WhiteFlagMetadata {
     pub(crate) previous_milestone_id: Option<MilestoneId>,
     /// Whether the previous milestone has been found in the past cone of the current milestone.
     pub(crate) found_previous_milestone: bool,
-    /// The messages which were referenced by the confirmed milestone.
-    pub(crate) referenced_messages: Vec<MessageId>,
-    /// The messages which were excluded because they did not include a transaction.
-    pub(crate) excluded_no_transaction_messages: Vec<MessageId>,
-    /// The messages which were excluded because they were conflicting with the ledger state.
-    pub(crate) excluded_conflicting_messages: Vec<(MessageId, ConflictReason)>,
-    // The messages which mutate the ledger in the order in which they were applied.
-    pub(crate) included_messages: Vec<MessageId>,
+    /// The blocks which were referenced by the confirmed milestone.
+    pub(crate) referenced_blocks: Vec<BlockId>,
+    /// The blocks which were excluded because they did not include a transaction.
+    pub(crate) excluded_no_transaction_blocks: Vec<BlockId>,
+    /// The blocks which were excluded because they were conflicting with the ledger state.
+    pub(crate) excluded_conflicting_blocks: Vec<(BlockId, ConflictReason)>,
+    // The blocks which mutate the ledger in the order in which they were applied.
+    pub(crate) included_blocks: Vec<BlockId>,
     /// The outputs created within the confirmed milestone.
     pub(crate) created_outputs: HashMap<OutputId, CreatedOutput>,
     /// The outputs consumed within the confirmed milestone.
@@ -52,10 +52,10 @@ impl WhiteFlagMetadata {
             milestone_timestamp,
             previous_milestone_id,
             found_previous_milestone: false,
-            referenced_messages: Vec::new(),
-            excluded_no_transaction_messages: Vec::new(),
-            excluded_conflicting_messages: Vec::new(),
-            included_messages: Vec::new(),
+            referenced_blocks: Vec::new(),
+            excluded_no_transaction_blocks: Vec::new(),
+            excluded_conflicting_blocks: Vec::new(),
+            included_blocks: Vec::new(),
             created_outputs: HashMap::new(),
             consumed_outputs: HashMap::new(),
             confirmed_merkle_root: Vec::new(),

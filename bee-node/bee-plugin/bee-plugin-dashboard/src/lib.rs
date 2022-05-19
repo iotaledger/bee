@@ -24,7 +24,7 @@ use std::{
 use async_trait::async_trait;
 use bee_ledger::workers::event::MilestoneConfirmed;
 use bee_protocol::workers::{
-    event::{MessageSolidified, MpsMetricsUpdated, TipAdded, TipRemoved, VertexCreated},
+    event::{BlockSolidified, MpsMetricsUpdated, TipAdded, TipRemoved, VertexCreated},
     MetricsWorker, PeerManagerResWorker,
 };
 use bee_rest_api::endpoints::config::RestApiConfig;
@@ -178,7 +178,7 @@ where
             "SolidInfo",
             &users,
             true,
-            <WsEvent as From<MessageSolidified>>::from,
+            <WsEvent as From<BlockSolidified>>::from,
         );
         topic_handler(node, "MilestoneInfo", &users, false, milestone_info::forward);
         topic_handler(node, "Vertex", &users, true, <WsEvent as From<VertexCreated>>::from);

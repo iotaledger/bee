@@ -3,7 +3,7 @@
 
 use std::{convert::Infallible, net::IpAddr};
 
-use bee_message::constant::{PROTOCOL_VERSION, TOKEN_SUPPLY};
+use bee_block::constant::{PROTOCOL_VERSION, TOKEN_SUPPLY};
 use bee_protocol::workers::{config::ProtocolConfig, PeerManager};
 use bee_runtime::{node::NodeInfo, resource::ResourceHandle};
 use bee_tangle::Tangle;
@@ -144,9 +144,9 @@ pub(crate) fn info<B: StorageBackend>(
             use_metric_prefix: false,
         },
         metrics: MetricsResponse {
-            messages_per_second: 0.0,            // TODO
-            referenced_messages_per_second: 0.0, // TODO
-            referenced_rate: 0.0,                // TODO
+            blocks_per_second: 0.0,            // TODO
+            referenced_blocks_per_second: 0.0, // TODO
+            referenced_rate: 0.0,              // TODO
         },
         features: {
             let mut features = Vec::new();

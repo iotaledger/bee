@@ -3,7 +3,7 @@
 
 use std::marker::PhantomData;
 
-use bee_message::MessageId;
+use bee_block::BlockId;
 use crypto::hashes::{Digest, Output};
 
 /// Leaf domain separation prefix.
@@ -34,18 +34,18 @@ impl<D: Default + Digest> MerkleHasher<D> {
     }
 
     /// Returns the digest of a Merkle leaf.
-    fn leaf(&mut self, message_id: MessageId) -> Output<D> {
+    fn leaf(&mut self, block_id: BlockId) -> Output<D> {
         let mut hasher = D::default();
 
         hasher.update([LEAF_HASH_PREFIX]);
-        hasher.update(message_id);
+        hasher.update(block_id);
         hasher.finalize()
     }
 
     /// Returns the digest of a Merkle node.
-    fn node(&mut self, message_ids: &[MessageId]) -> Output<D> {
+    fn node(&mut self, block_ids: &[BlockId]) -> Output<D> {
         let mut hasher = D::default();
-        let (left, right) = message_ids.split_at(largest_power_of_two(message_ids.len() as u32 - 1));
+        let (left, right) = block_ids.split_at(largest_power_of_two(block_ids.len() as u32 - 1));
 
         hasher.update([NODE_HASH_PREFIX]);
         hasher.update(self.digest_inner(left));
@@ -54,17 +54,17 @@ impl<D: Default + Digest> MerkleHasher<D> {
     }
 
     /// Returns the digest of a list of hashes as an `Output<D>`.
-    fn digest_inner(&mut self, message_ids: &[MessageId]) -> Output<D> {
-        match message_ids {
+    fn digest_inner(&mut self, block_ids: &[BlockId]) -> Output<D> {
+        match block_ids {
             [] => self.empty(),
-            [message_id] => self.leaf(*message_id),
-            _ => self.node(message_ids),
+            [block_id] => self.leaf(*block_id),
+            _ => self.node(block_ids),
         }
     }
 
     /// Returns the digest of a list of hashes as a `Vec<u8>`.
-    pub(crate) fn digest(&mut self, message_ids: &[MessageId]) -> Vec<u8> {
-        self.digest_inner(message_ids).to_vec()
+    pub(crate) fn digest(&mut self, block_ids: &[BlockId]) -> Vec<u8> {
+        self.digest_inner(block_ids).to_vec()
     }
 }
 
@@ -89,7 +89,7 @@ mod tests {
             "0x6bf84c7174cb7476364cc3dbd968b0f7172ed85794bb358b0c3b525da1786f9f",
         ]
         .iter()
-        .map(|hash| MessageId::from_str(hash).unwrap())
+        .map(|hash| BlockId::from_str(hash).unwrap())
         .collect::<Vec<_>>();
 
         let hash = MerkleHasher::<Blake2b256>::new().digest(&hashes);

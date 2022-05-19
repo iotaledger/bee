@@ -11,7 +11,7 @@ keywords:
 ---
 # Configuration
 
-Here, you will find the more technical references of Bee. 
+Here, you will find the more technical references of Bee.
 
 Bee uses the Toml standard as a configuration file. If you are unsure about syntax, you can have a look at the [official Toml specifications](https://toml.io).
 
@@ -131,7 +131,7 @@ alias   = "yet another peer"
 
 | Name                 | Description           | Type           |
 | :------------------- | :-------------------- | :------------- |
-| message_worker_cache | TO-DO                 | integer[usize] |
+| block_worker_cache   | TO-DO                 | integer[usize] |
 | status_interval      | status interval in ms | integer[u64]   |
 | ms_sync_count        | milestone sync count  | integer[u32]   |
 
@@ -156,7 +156,7 @@ public_key  = "0758028d34508079ba1f223907ac3bb5ce8f6bdccc6b961c7c85a2f460b30c1d"
 start       = 0
 end         = 0
 [protocol.workers]
-message_worker_cache = 10000
+block_worker_cache = 10000
 status_interval = 10
 ms_sync_count = 200
 ```
@@ -185,11 +185,11 @@ public_routes         = [
     "/api/v1/addresses/ed25519/:address",
     "/health",
     "/api/v1/info",
-    "/api/v1/messages/:messageId",
-    "/api/v1/messages/:messageId/children",
-    "/api/v1/messages/:messageId/metadata",
-    "/api/v1/messages/:messageId/raw",
-    "/api/v1/messages",
+    "/api/v1/blocks/:blockId",
+    "/api/v1/blocks/:blockId/children",
+    "/api/v1/blocks/:blockId/metadata",
+    "/api/v1/blocks/:blockId/raw",
+    "/api/v1/blocks",
     "/api/v1/milestones/:milestoneIndex",
     "/api/v1/milestones/:milestoneIndex/utxo-changes",
     "/api/v1/outputs/:outputId",
@@ -198,13 +198,13 @@ public_routes         = [
     "/api/v1/peers/:peerId",
     "/api/v1/peers",
     "/api/v1/peers/:peerId",
-    "/api/v1/messages",
-    "/api/v1/messages",
+    "/api/v1/blocks",
+    "/api/v1/blocks",
     "/api/v1/tips",
     "/api/v1/receipts",
     "/api/v1/receipts/:milestoneIndex",
     "/api/v1/treasury",
-    "/api/v1/transactions/:transactionId/included-message",
+    "/api/v1/transactions/:transactionId/included-block",
     "/api/plugins/debug/whiteflag",
 ]
 allowed_ips = [

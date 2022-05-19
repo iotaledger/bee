@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{output, payload::milestone::MilestoneId};
+use bee_block::{output, payload::milestone::MilestoneId};
 
 /// Records the creation of a treasury output.
 #[derive(Clone, Debug, Eq, PartialEq, packable::Packable)]

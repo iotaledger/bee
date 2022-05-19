@@ -9,9 +9,9 @@ use std::{
     time::Duration,
 };
 
+use bee_block::{payload::milestone::MilestoneIndex, BlockId};
 use bee_ledger::workers::consensus::{self, WhiteFlagMetadata};
-use bee_message::{payload::milestone::MilestoneIndex, MessageId};
-use bee_protocol::workers::{event::MessageSolidified, request_message, MessageRequesterWorker, RequestedMessages};
+use bee_protocol::workers::{event::BlockSolidified, request_block, BlockRequesterWorker, RequestedBlocks};
 use bee_runtime::{event::Bus, resource::ResourceHandle};
 use bee_tangle::Tangle;
 use futures::channel::oneshot;
@@ -23,7 +23,7 @@ use crate::{
     endpoints::{
         config::{RestApiConfig, ROUTE_WHITE_FLAG},
         filters::{
-            with_bus, with_message_requester, with_requested_messages, with_rest_api_config, with_storage, with_tangle,
+            with_block_requester, with_bus, with_requested_blocks, with_rest_api_config, with_storage, with_tangle,
         },
         permission::has_permission,
         rejection::CustomRejection,
@@ -43,8 +43,8 @@ pub(crate) fn filter<B: StorageBackend>(
     storage: ResourceHandle<B>,
     tangle: ResourceHandle<Tangle<B>>,
     bus: ResourceHandle<Bus<'static>>,
-    message_requester: MessageRequesterWorker,
-    requested_messages: ResourceHandle<RequestedMessages>,
+    block_requester: BlockRequesterWorker,
+    requested_blocks: ResourceHandle<RequestedBlocks>,
     rest_api_config: RestApiConfig,
 ) -> BoxedFilter<(impl Reply,)> {
     self::path()
@@ -54,8 +54,8 @@ pub(crate) fn filter<B: StorageBackend>(
         .and(with_storage(storage))
         .and(with_tangle(tangle))
         .and(with_bus(bus))
-        .and(with_message_requester(message_requester))
-        .and(with_requested_messages(requested_messages))
+        .and(with_block_requester(block_requester))
+        .and(with_requested_blocks(requested_blocks))
         .and(with_rest_api_config(rest_api_config))
         .and_then(white_flag)
         .boxed()
@@ -66,12 +66,12 @@ pub(crate) async fn white_flag<B: StorageBackend>(
     storage: ResourceHandle<B>,
     tangle: ResourceHandle<Tangle<B>>,
     bus: ResourceHandle<Bus<'static>>,
-    message_requester: MessageRequesterWorker,
-    requested_messages: ResourceHandle<RequestedMessages>,
+    block_requester: BlockRequesterWorker,
+    requested_blocks: ResourceHandle<RequestedBlocks>,
     rest_api_config: RestApiConfig,
 ) -> Result<impl Reply, Rejection> {
     let index_json = &body["index"];
-    let parents_json = &body["parentMessageIds"];
+    let parents_json = &body["parents"];
 
     let index = if index_json.is_null() {
         return Err(reject::custom(CustomRejection::BadRequest(
@@ -87,32 +87,32 @@ pub(crate) async fn white_flag<B: StorageBackend>(
 
     let parents = if parents_json.is_null() {
         return Err(reject::custom(CustomRejection::BadRequest(
-            "Invalid parents: expected an array of MessageId".to_string(),
+            "Invalid parents: expected an array of BlockId".to_string(),
         )));
     } else {
         let array = parents_json.as_array().ok_or_else(|| {
             reject::custom(CustomRejection::BadRequest(
-                "Invalid parents: expected an array of MessageId".to_string(),
+                "Invalid parents: expected an array of BlockId".to_string(),
             ))
         })?;
-        let mut message_ids = Vec::new();
+        let mut block_ids = Vec::new();
         for s in array {
-            let message_id = s
+            let block_id = s
                 .as_str()
                 .ok_or_else(|| {
                     reject::custom(CustomRejection::BadRequest(
-                        "Invalid parents: expected an array of MessageId".to_string(),
+                        "Invalid parents: expected an array of BlockId".to_string(),
                     ))
                 })?
-                .parse::<MessageId>()
+                .parse::<BlockId>()
                 .map_err(|_| {
                     reject::custom(CustomRejection::BadRequest(
-                        "Invalid parents: expected an array of MessageId".to_string(),
+                        "Invalid parents: expected an array of BlockId".to_string(),
                     ))
                 })?;
-            message_ids.push(message_id);
+            block_ids.push(block_id);
         }
-        message_ids
+        block_ids
     };
 
     // TODO check parents
@@ -123,7 +123,7 @@ pub(crate) async fn white_flag<B: StorageBackend>(
     // aborting if it took too long. This is done by requesting all missing parents then listening for their
     // solidification event or aborting if the allowed time passed.
 
-    let to_solidify = Arc::new(Mutex::new(parents.iter().copied().collect::<HashSet<MessageId>>()));
+    let to_solidify = Arc::new(Mutex::new(parents.iter().copied().collect::<HashSet<BlockId>>()));
     let (sender, receiver) = oneshot::channel::<()>();
     let sender = Arc::new(Mutex::new(Some(sender)));
 
@@ -131,9 +131,9 @@ pub(crate) async fn white_flag<B: StorageBackend>(
     let task_to_solidify = to_solidify.clone();
     let task_sender = sender.clone();
     struct Static;
-    bus.add_listener::<Static, _, _>(move |event: &MessageSolidified| {
+    bus.add_listener::<Static, _, _>(move |event: &BlockSolidified| {
         if let Ok(mut to_solidify) = task_to_solidify.lock() {
-            if to_solidify.remove(&event.message_id) && to_solidify.is_empty() {
+            if to_solidify.remove(&event.block_id) && to_solidify.is_empty() {
                 if let Ok(mut sender) = task_sender.lock() {
                     sender.take().map(|s| s.send(()));
                 }
@@ -142,12 +142,12 @@ pub(crate) async fn white_flag<B: StorageBackend>(
     });
 
     for parent in parents.iter() {
-        if tangle.is_solid_message(parent).await {
+        if tangle.is_solid_block(parent).await {
             if let Ok(mut to_solidify) = to_solidify.lock() {
                 to_solidify.remove(parent);
             }
         } else {
-            request_message(&*tangle, &message_requester, &*requested_messages, *parent, index).await;
+            request_block(&*tangle, &block_requester, &*requested_blocks, *parent, index).await;
         }
     }
 

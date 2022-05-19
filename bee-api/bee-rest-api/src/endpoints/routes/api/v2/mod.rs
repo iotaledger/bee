@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub mod add_peer;
+pub mod block;
+pub mod block_children;
+pub mod block_metadata;
+pub mod block_raw;
 pub mod info;
-pub mod message;
-pub mod message_children;
-pub mod message_metadata;
-pub mod message_raw;
 pub mod milestone_by_milestone_id;
 pub mod milestone_by_milestone_index;
 pub mod output;
@@ -16,9 +16,9 @@ pub mod peers;
 pub mod receipts;
 pub mod receipts_at;
 pub mod remove_peer;
-pub mod submit_message;
+pub mod submit_block;
 pub mod tips;
-pub mod transaction_included_message;
+pub mod transaction_included_block;
 pub mod treasury;
 pub mod utxo_changes_by_milestone_id;
 pub mod utxo_changes_by_milestone_index;
@@ -27,7 +27,7 @@ use std::net::IpAddr;
 
 use bee_gossip::NetworkCommandSender;
 use bee_ledger::workers::consensus::ConsensusWorkerCommand;
-use bee_protocol::workers::{config::ProtocolConfig, MessageSubmitterWorkerEvent, PeerManager};
+use bee_protocol::workers::{config::ProtocolConfig, BlockSubmitterWorkerEvent, PeerManager};
 use bee_runtime::{node::NodeInfo, resource::ResourceHandle};
 use bee_tangle::Tangle;
 use tokio::sync::mpsc;
@@ -45,7 +45,7 @@ pub(crate) fn filter<B: StorageBackend>(
     allowed_ips: Box<[IpAddr]>,
     tangle: ResourceHandle<Tangle<B>>,
     storage: ResourceHandle<B>,
-    message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
+    block_submitter: mpsc::UnboundedSender<BlockSubmitterWorkerEvent>,
     network_id: NetworkId,
     bech32_hrp: Bech32Hrp,
     rest_api_config: RestApiConfig,
@@ -72,22 +72,22 @@ pub(crate) fn filter<B: StorageBackend>(
         node_info,
         peer_manager.clone(),
     ))
-    .or(message::filter(
+    .or(block::filter(
         public_routes.clone(),
         allowed_ips.clone(),
         tangle.clone(),
     ))
-    .or(message_children::filter(
+    .or(block_children::filter(
         public_routes.clone(),
         allowed_ips.clone(),
         tangle.clone(),
     ))
-    .or(message_metadata::filter(
+    .or(block_metadata::filter(
         public_routes.clone(),
         allowed_ips.clone(),
         tangle.clone(),
     ))
-    .or(message_raw::filter(
+    .or(block_raw::filter(
         public_routes.clone(),
         allowed_ips.clone(),
         tangle.clone(),
@@ -146,11 +146,11 @@ pub(crate) fn filter<B: StorageBackend>(
         allowed_ips.clone(),
         network_command_sender,
     ))
-    .or(submit_message::filter(
+    .or(submit_block::filter(
         public_routes.clone(),
         allowed_ips.clone(),
         tangle.clone(),
-        message_submitter,
+        block_submitter,
         rest_api_config,
         protocol_config,
     ))
@@ -160,7 +160,7 @@ pub(crate) fn filter<B: StorageBackend>(
         allowed_ips.clone(),
         storage.clone(),
     ))
-    .or(transaction_included_message::filter(
+    .or(transaction_included_block::filter(
         public_routes,
         allowed_ips,
         storage,

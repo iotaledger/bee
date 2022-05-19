@@ -3,15 +3,15 @@
 
 use std::{marker::PhantomData, vec::IntoIter};
 
-use bee_ledger::types::{ConsumedOutput, CreatedOutput, OutputDiff};
-use bee_message::{
+use bee_block::{
     output::OutputId,
     payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
-    Message, MessageId,
+    Block, BlockId,
 };
+use bee_ledger::types::{ConsumedOutput, CreatedOutput, OutputDiff};
 use bee_storage::{access::MultiFetch, system::System};
 use bee_tangle::{
-    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+    block_metadata::BlockMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
 };
 use packable::{Packable, PackableExt};
 use parking_lot::RwLockReadGuard;
@@ -62,7 +62,7 @@ macro_rules! impl_multi_fetch {
 }
 
 impl_multi_fetch!(u8, System, CF_SYSTEM);
-impl_multi_fetch!(MessageId, Message, CF_MESSAGE_ID_TO_MESSAGE);
+impl_multi_fetch!(BlockId, Block, CF_BLOCK_ID_TO_BLOCK);
 impl_multi_fetch!(OutputId, CreatedOutput, CF_OUTPUT_ID_TO_CREATED_OUTPUT);
 impl_multi_fetch!(OutputId, ConsumedOutput, CF_OUTPUT_ID_TO_CONSUMED_OUTPUT);
 impl_multi_fetch!(
@@ -74,11 +74,11 @@ impl_multi_fetch!(MilestoneId, MilestonePayload, CF_MILESTONE_ID_TO_MILESTONE_PA
 impl_multi_fetch!(SolidEntryPoint, MilestoneIndex, CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX);
 impl_multi_fetch!(MilestoneIndex, OutputDiff, CF_MILESTONE_INDEX_TO_OUTPUT_DIFF);
 
-impl<'a> MultiFetch<'a, MessageId, MessageMetadata> for Storage {
-    type Iter = MultiIter<'a, MessageMetadata, <Self as StorageBackend>::Error>;
+impl<'a> MultiFetch<'a, BlockId, BlockMetadata> for Storage {
+    type Iter = MultiIter<'a, BlockMetadata, <Self as StorageBackend>::Error>;
 
-    fn multi_fetch(&'a self, keys: &[MessageId]) -> Result<Self::Iter, <Self as StorageBackend>::Error> {
-        let cf = self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?;
+    fn multi_fetch(&'a self, keys: &[BlockId]) -> Result<Self::Iter, <Self as StorageBackend>::Error> {
+        let cf = self.cf_handle(CF_BLOCK_ID_TO_METADATA)?;
 
         Ok(MultiIter {
             iter: self
@@ -86,7 +86,7 @@ impl<'a> MultiFetch<'a, MessageId, MessageMetadata> for Storage {
                 .multi_get_cf(keys.iter().map(|k| (cf, k.pack_to_vec())))
                 .into_iter(),
             marker: PhantomData,
-            _guard: Some(self.locks.message_id_to_metadata.read()),
+            _guard: Some(self.locks.block_id_to_metadata.read()),
         })
     }
 }

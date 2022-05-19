@@ -5,7 +5,7 @@ mod white_flag;
 
 use std::net::IpAddr;
 
-use bee_protocol::workers::{MessageRequesterWorker, RequestedMessages};
+use bee_protocol::workers::{BlockRequesterWorker, RequestedBlocks};
 use bee_runtime::{event::Bus, resource::ResourceHandle};
 use bee_tangle::Tangle;
 use warp::{self, Filter, Rejection, Reply};
@@ -23,8 +23,8 @@ pub(crate) fn filter<B: StorageBackend>(
     storage: ResourceHandle<B>,
     tangle: ResourceHandle<Tangle<B>>,
     bus: ResourceHandle<Bus<'static>>,
-    message_requester: MessageRequesterWorker,
-    requested_messages: ResourceHandle<RequestedMessages>,
+    block_requester: BlockRequesterWorker,
+    requested_blocks: ResourceHandle<RequestedBlocks>,
     rest_api_config: RestApiConfig,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     white_flag::filter(
@@ -33,8 +33,8 @@ pub(crate) fn filter<B: StorageBackend>(
         storage,
         tangle,
         bus,
-        message_requester,
-        requested_messages,
+        block_requester,
+        requested_blocks,
         rest_api_config,
     )
 }

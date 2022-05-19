@@ -3,7 +3,7 @@
 
 use std::collections::HashSet;
 
-use bee_message::{
+use bee_block::{
     input::Input,
     output::{Output, OutputId},
     payload::{
@@ -11,8 +11,8 @@ use bee_message::{
         Payload,
     },
     semantic::{semantic_validation, ConflictReason, ValidationContext},
-    unlock_block::UnlockBlocks,
-    Message, MessageId,
+    unlock::Unlocks,
+    Block, BlockId,
 };
 use bee_tangle::Tangle;
 use crypto::hashes::blake2b::Blake2b256;
@@ -28,10 +28,10 @@ use crate::{
 
 fn apply_regular_essence<B: StorageBackend>(
     storage: &B,
-    message_id: &MessageId,
+    block_id: &BlockId,
     transaction_id: &TransactionId,
     essence: &RegularTransactionEssence,
-    unlock_blocks: &UnlockBlocks,
+    unlocks: &Unlocks,
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<ConflictReason, Error> {
     let mut consumed_outputs = Vec::<(OutputId, CreatedOutput)>::new();
@@ -74,12 +74,12 @@ fn apply_regular_essence<B: StorageBackend>(
         transaction_id,
         essence,
         inputs.iter().map(|(output_id, input)| (output_id, *input)),
-        unlock_blocks,
+        unlocks,
         metadata.milestone_index,
         metadata.milestone_timestamp,
     );
 
-    let conflict = semantic_validation(context, &inputs, unlock_blocks)?;
+    let conflict = semantic_validation(context, &inputs, unlocks)?;
 
     if conflict != ConflictReason::None {
         return Ok(conflict);
@@ -99,7 +99,7 @@ fn apply_regular_essence<B: StorageBackend>(
         metadata.created_outputs.insert(
             OutputId::new(*transaction_id, index as u16)?,
             CreatedOutput::new(
-                *message_id,
+                *block_id,
                 metadata.milestone_index,
                 metadata.milestone_timestamp,
                 output.clone(),
@@ -112,46 +112,44 @@ fn apply_regular_essence<B: StorageBackend>(
 
 fn apply_transaction<B: StorageBackend>(
     storage: &B,
-    message_id: &MessageId,
+    block_id: &BlockId,
     transaction: &TransactionPayload,
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<ConflictReason, Error> {
     match transaction.essence() {
         TransactionEssence::Regular(essence) => apply_regular_essence(
             storage,
-            message_id,
+            block_id,
             &transaction.id(),
             essence,
-            transaction.unlock_blocks(),
+            transaction.unlocks(),
             metadata,
         ),
     }
 }
 
-fn apply_message<B: StorageBackend>(
+fn apply_block<B: StorageBackend>(
     storage: &B,
-    message_id: &MessageId,
-    message: &Message,
+    block_id: &BlockId,
+    block: &Block,
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<(), Error> {
-    metadata.referenced_messages.push(*message_id);
+    metadata.referenced_blocks.push(*block_id);
 
-    match message.payload() {
-        Some(Payload::Transaction(transaction)) => {
-            match apply_transaction(storage, message_id, transaction, metadata)? {
-                ConflictReason::None => metadata.included_messages.push(*message_id),
-                conflict => metadata.excluded_conflicting_messages.push((*message_id, conflict)),
-            }
-        }
+    match block.payload() {
+        Some(Payload::Transaction(transaction)) => match apply_transaction(storage, block_id, transaction, metadata)? {
+            ConflictReason::None => metadata.included_blocks.push(*block_id),
+            conflict => metadata.excluded_conflicting_blocks.push((*block_id, conflict)),
+        },
         Some(Payload::Milestone(milestone)) => {
             if let Some(previous_milestone_id) = metadata.previous_milestone_id {
                 if previous_milestone_id == milestone.id() {
                     metadata.found_previous_milestone = true;
                 }
             }
-            metadata.excluded_no_transaction_messages.push(*message_id);
+            metadata.excluded_no_transaction_blocks.push(*block_id);
         }
-        _ => metadata.excluded_no_transaction_messages.push(*message_id),
+        _ => metadata.excluded_no_transaction_blocks.push(*block_id),
     }
 
     Ok(())
@@ -160,33 +158,33 @@ fn apply_message<B: StorageBackend>(
 async fn traverse_past_cone<B: StorageBackend>(
     tangle: &Tangle<B>,
     storage: &B,
-    mut message_ids: Vec<MessageId>,
+    mut block_ids: Vec<BlockId>,
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<(), Error> {
     let mut visited = HashSet::new();
 
-    while let Some(message_id) = message_ids.last() {
-        if let Some((message, meta)) = tangle.get_message_and_metadata(message_id) {
+    while let Some(block_id) = block_ids.last() {
+        if let Some((block, meta)) = tangle.get_block_and_metadata(block_id) {
             if meta.flags().is_referenced() {
-                visited.insert(*message_id);
-                message_ids.pop();
+                visited.insert(*block_id);
+                block_ids.pop();
                 continue;
             }
 
-            if let Some(unvisited) = message.parents().iter().find(|p| !visited.contains(p)) {
-                message_ids.push(*unvisited);
+            if let Some(unvisited) = block.parents().iter().find(|p| !visited.contains(p)) {
+                block_ids.push(*unvisited);
             } else {
-                if !visited.contains(message_id) {
-                    apply_message(storage, message_id, &message, metadata)?;
-                    visited.insert(*message_id);
+                if !visited.contains(block_id) {
+                    apply_block(storage, block_id, &block, metadata)?;
+                    visited.insert(*block_id);
                 }
-                message_ids.pop();
+                block_ids.pop();
             }
-        } else if !tangle.is_solid_entry_point(message_id).await {
-            return Err(Error::MissingMessage(*message_id));
+        } else if !tangle.is_solid_entry_point(block_id).await {
+            return Err(Error::MissingBlock(*block_id));
         } else {
-            visited.insert(*message_id);
-            message_ids.pop();
+            visited.insert(*block_id);
+            block_ids.pop();
         }
     }
 
@@ -198,29 +196,29 @@ async fn traverse_past_cone<B: StorageBackend>(
 pub async fn white_flag<B: StorageBackend>(
     tangle: &Tangle<B>,
     storage: &B,
-    message_ids: &[MessageId],
+    block_ids: &[BlockId],
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<(), Error> {
-    traverse_past_cone(tangle, storage, message_ids.iter().rev().copied().collect(), metadata).await?;
+    traverse_past_cone(tangle, storage, block_ids.iter().rev().copied().collect(), metadata).await?;
 
-    metadata.confirmed_merkle_root = MerkleHasher::<Blake2b256>::new().digest(&metadata.referenced_messages);
-    metadata.applied_merkle_root = MerkleHasher::<Blake2b256>::new().digest(&metadata.included_messages);
+    metadata.confirmed_merkle_root = MerkleHasher::<Blake2b256>::new().digest(&metadata.referenced_blocks);
+    metadata.applied_merkle_root = MerkleHasher::<Blake2b256>::new().digest(&metadata.included_blocks);
 
     if *metadata.milestone_index != 1 && metadata.previous_milestone_id.is_some() && !metadata.found_previous_milestone
     {
         return Err(Error::PreviousMilestoneNotFound);
     }
 
-    if metadata.referenced_messages.len()
-        != metadata.excluded_no_transaction_messages.len()
-            + metadata.excluded_conflicting_messages.len()
-            + metadata.included_messages.len()
+    if metadata.referenced_blocks.len()
+        != metadata.excluded_no_transaction_blocks.len()
+            + metadata.excluded_conflicting_blocks.len()
+            + metadata.included_blocks.len()
     {
-        return Err(Error::InvalidMessagesCount(
-            metadata.referenced_messages.len(),
-            metadata.excluded_no_transaction_messages.len(),
-            metadata.excluded_conflicting_messages.len(),
-            metadata.included_messages.len(),
+        return Err(Error::InvalidBlocksCount(
+            metadata.referenced_blocks.len(),
+            metadata.excluded_no_transaction_blocks.len(),
+            metadata.excluded_conflicting_blocks.len(),
+            metadata.included_blocks.len(),
         ));
     }
 

@@ -3,7 +3,7 @@
 
 use std::ops::Deref;
 
-use bee_message::output::OutputId;
+use bee_block::output::OutputId;
 
 /// Represents an output id as unspent.
 #[derive(Clone, Eq, PartialEq, Hash, packable::Packable)]

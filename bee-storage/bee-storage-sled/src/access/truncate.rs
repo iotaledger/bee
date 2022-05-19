@@ -3,19 +3,19 @@
 
 //! Truncate access operations.
 
-use bee_ledger::types::{
-    snapshot::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput, Unspent,
-};
-use bee_message::{
+use bee_block::{
     address::Ed25519Address,
     output::OutputId,
     payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
-    Message, MessageId,
+    Block, BlockId,
+};
+use bee_ledger::types::{
+    snapshot::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput, Unspent,
 };
 use bee_storage::{access::Truncate, backend::StorageBackend};
 use bee_tangle::{
-    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
-    unreferenced_message::UnreferencedMessage,
+    block_metadata::BlockMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+    unreferenced_block::UnreferencedBlock,
 };
 
 use crate::{storage::Storage, trees::*};
@@ -32,9 +32,9 @@ macro_rules! impl_truncate {
     };
 }
 
-impl_truncate!(MessageId, Message, TREE_MESSAGE_ID_TO_MESSAGE);
-impl_truncate!(MessageId, MessageMetadata, TREE_MESSAGE_ID_TO_METADATA);
-impl_truncate!((MessageId, MessageId), (), TREE_MESSAGE_ID_TO_MESSAGE_ID);
+impl_truncate!(BlockId, Block, TREE_BLOCK_ID_TO_BLOCK);
+impl_truncate!(BlockId, BlockMetadata, TREE_BLOCK_ID_TO_METADATA);
+impl_truncate!((BlockId, BlockId), (), TREE_BLOCK_ID_TO_BLOCK_ID);
 impl_truncate!(OutputId, CreatedOutput, TREE_OUTPUT_ID_TO_CREATED_OUTPUT);
 impl_truncate!(OutputId, ConsumedOutput, TREE_OUTPUT_ID_TO_CONSUMED_OUTPUT);
 impl_truncate!(Unspent, (), TREE_OUTPUT_ID_UNSPENT);
@@ -54,9 +54,9 @@ impl_truncate!(
 );
 impl_truncate!(MilestoneIndex, OutputDiff, TREE_MILESTONE_INDEX_TO_OUTPUT_DIFF);
 impl_truncate!(
-    (MilestoneIndex, UnreferencedMessage),
+    (MilestoneIndex, UnreferencedBlock),
     (),
-    TREE_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE
+    TREE_MILESTONE_INDEX_TO_UNREFERENCED_BLOCK
 );
 impl_truncate!((MilestoneIndex, Receipt), (), TREE_MILESTONE_INDEX_TO_RECEIPT);
 impl_truncate!((bool, TreasuryOutput), (), TREE_SPENT_TO_TREASURY_OUTPUT);

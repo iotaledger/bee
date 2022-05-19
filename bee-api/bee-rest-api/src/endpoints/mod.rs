@@ -16,8 +16,8 @@ use async_trait::async_trait;
 use bee_gossip::NetworkCommandSender;
 use bee_ledger::workers::consensus::ConsensusWorker;
 use bee_protocol::workers::{
-    config::ProtocolConfig, MessageRequesterWorker, MessageSubmitterWorker, PeerManager, PeerManagerResWorker,
-    RequestedMessages,
+    config::ProtocolConfig, BlockRequesterWorker, BlockSubmitterWorker, PeerManager, PeerManagerResWorker,
+    RequestedBlocks,
 };
 use bee_runtime::{
     node::{Node, NodeBuilder},
@@ -61,7 +61,7 @@ where
     fn dependencies() -> &'static [TypeId] {
         vec![
             TypeId::of::<TangleWorker>(),
-            TypeId::of::<MessageSubmitterWorker>(),
+            TypeId::of::<BlockSubmitterWorker>(),
             TypeId::of::<PeerManagerResWorker>(),
         ]
         .leak()
@@ -76,9 +76,9 @@ where
         let consensus_worker = node.worker::<ConsensusWorker>().unwrap().tx.clone();
         let tangle = node.resource::<Tangle<N::Backend>>();
         let storage = node.storage();
-        let message_submitter = node.worker::<MessageSubmitterWorker>().unwrap().tx.clone();
-        let message_requester = node.worker::<MessageRequesterWorker>().unwrap().clone();
-        let requested_messages = node.resource::<RequestedMessages>();
+        let block_submitter = node.worker::<BlockSubmitterWorker>().unwrap().tx.clone();
+        let block_requester = node.worker::<BlockRequesterWorker>().unwrap().clone();
+        let requested_blocks = node.resource::<RequestedBlocks>();
         let peer_manager = node.resource::<PeerManager>();
         let network_controller = node.resource::<NetworkCommandSender>();
         let node_info = node.info();
@@ -92,7 +92,7 @@ where
                 rest_api_config.allowed_ips.clone(),
                 tangle,
                 storage,
-                message_submitter,
+                block_submitter,
                 network_id,
                 bech32_hrp,
                 rest_api_config.clone(),
@@ -101,8 +101,8 @@ where
                 network_controller,
                 node_info,
                 bus,
-                message_requester,
-                requested_messages,
+                block_requester,
+                requested_blocks,
                 consensus_worker,
             )
             .recover(|err| async { handle_rejection(err) });

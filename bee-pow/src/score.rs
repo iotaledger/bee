@@ -32,13 +32,13 @@ impl PoWScorer {
     pub fn hash(&mut self, bytes: &[u8]) -> TritBuf<T1B1Buf> {
         debug_assert!(bytes.len() >= std::mem::size_of::<u8>());
 
-        // Compute Blake2b-256 hash of the message, excluding the nonce.
+        // Compute Blake2b-256 hash of the block, excluding the nonce.
         let length = bytes.len() - std::mem::size_of::<u64>();
         let (head, tail) = bytes.split_at(length);
         self.blake2b.update(head);
         let pow_digest = self.blake2b.finalize_reset();
 
-        // Encode message as trits
+        // Encode block as trits
         self.pow_input.clear();
         self.pow_input.append(b1t6::encode::<T1B1Buf>(&pow_digest).as_slice());
         self.pow_input.append(b1t6::encode::<T1B1Buf>(tail).as_slice());

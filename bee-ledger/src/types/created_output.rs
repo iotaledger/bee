@@ -3,7 +3,7 @@
 
 use core::ops::Deref;
 
-use bee_message::{output::Output, payload::milestone::MilestoneIndex, MessageId};
+use bee_block::{output::Output, payload::milestone::MilestoneIndex, BlockId};
 
 use crate::types::error::Error;
 
@@ -11,7 +11,7 @@ use crate::types::error::Error;
 #[derive(Clone, Debug, Eq, PartialEq, packable::Packable)]
 #[packable(unpack_error = Error)]
 pub struct CreatedOutput {
-    message_id: MessageId,
+    block_id: BlockId,
     milestone_index: MilestoneIndex,
     milestone_timestamp: u32,
     inner: Output,
@@ -19,23 +19,18 @@ pub struct CreatedOutput {
 
 impl CreatedOutput {
     /// Creates a new [`CreatedOutput`].
-    pub fn new(
-        message_id: MessageId,
-        milestone_index: MilestoneIndex,
-        milestone_timestamp: u32,
-        inner: Output,
-    ) -> Self {
+    pub fn new(block_id: BlockId, milestone_index: MilestoneIndex, milestone_timestamp: u32, inner: Output) -> Self {
         Self {
-            message_id,
+            block_id,
             milestone_index,
             milestone_timestamp,
             inner,
         }
     }
 
-    /// Returns the message id of the [`CreatedOutput`].
-    pub fn message_id(&self) -> &MessageId {
-        &self.message_id
+    /// Returns the block id of the [`CreatedOutput`].
+    pub fn block_id(&self) -> &BlockId {
+        &self.block_id
     }
 
     /// Returns the milestone index of the [`CreatedOutput`].

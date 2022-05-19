@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{
+use bee_block::{
     payload::{
         milestone::{MilestoneEssence, MilestoneOptions, MilestonePayload},
         tagged_data::TaggedDataPayload,
@@ -55,8 +55,8 @@ pub fn rand_milestone_payload() -> MilestonePayload {
     MilestonePayload::new(essence, signatures).unwrap()
 }
 
-/// Generates a random payload for a message.
-pub fn rand_payload_for_message() -> Payload {
+/// Generates a random payload for a block.
+pub fn rand_payload_for_block() -> Payload {
     // TODO complete
     rand_tagged_data_payload().into()
 }

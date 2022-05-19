@@ -3,7 +3,7 @@
 
 use std::collections::HashMap;
 
-use bee_message::{address::Ed25519Address, output::OutputId};
+use bee_block::{address::Ed25519Address, output::OutputId};
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend,

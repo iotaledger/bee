@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_protocol::workers::event::MessageSolidified;
+use bee_protocol::workers::event::BlockSolidified;
 use serde::Serialize;
 
 use crate::websocket::{
@@ -14,12 +14,12 @@ pub(crate) struct SolidInfoResponse {
     id: String,
 }
 
-impl From<MessageSolidified> for WsEvent {
-    fn from(event: MessageSolidified) -> Self {
+impl From<BlockSolidified> for WsEvent {
+    fn from(event: BlockSolidified) -> Self {
         Self::new(
             WsTopic::SolidInfo,
             WsEventInner::SolidInfo(SolidInfoResponse {
-                id: event.message_id.to_string(),
+                id: event.block_id.to_string(),
             }),
         )
     }

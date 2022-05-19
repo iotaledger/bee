@@ -3,15 +3,15 @@
 
 //! Insert access operations.
 
-use bee_ledger::types::{
-    snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
-    Unspent,
-};
-use bee_message::{
+use bee_block::{
     address::Ed25519Address,
     output::OutputId,
     payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
-    Message, MessageId,
+    Block, BlockId,
+};
+use bee_ledger::types::{
+    snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
+    Unspent,
 };
 use bee_storage::{
     access::{Insert, InsertStrict},
@@ -19,8 +19,8 @@ use bee_storage::{
     system::System,
 };
 use bee_tangle::{
-    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
-    unreferenced_message::UnreferencedMessage,
+    block_metadata::BlockMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+    unreferenced_block::UnreferencedBlock,
 };
 use packable::PackableExt;
 
@@ -34,25 +34,25 @@ impl Insert<u8, System> for Storage {
     }
 }
 
-impl Insert<MessageId, Message> for Storage {
-    fn insert(&self, message_id: &MessageId, message: &Message) -> Result<(), <Self as StorageBackend>::Error> {
+impl Insert<BlockId, Block> for Storage {
+    fn insert(&self, block_id: &BlockId, block: &Block) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
-            .open_tree(TREE_MESSAGE_ID_TO_MESSAGE)?
-            .insert(message_id, message.pack_to_vec())?;
+            .open_tree(TREE_BLOCK_ID_TO_BLOCK)?
+            .insert(block_id, block.pack_to_vec())?;
 
         Ok(())
     }
 }
 
-impl InsertStrict<MessageId, MessageMetadata> for Storage {
+impl InsertStrict<BlockId, BlockMetadata> for Storage {
     fn insert_strict(
         &self,
-        message_id: &MessageId,
-        metadata: &MessageMetadata,
+        block_id: &BlockId,
+        metadata: &BlockMetadata,
     ) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
-            .open_tree(TREE_MESSAGE_ID_TO_METADATA)?
-            .update_and_fetch(message_id, |old_metadata| {
+            .open_tree(TREE_BLOCK_ID_TO_METADATA)?
+            .update_and_fetch(block_id, |old_metadata| {
                 old_metadata
                     .map(|b| b.to_vec())
                     .or_else(|| Some(metadata.pack_to_vec()))
@@ -62,12 +62,12 @@ impl InsertStrict<MessageId, MessageMetadata> for Storage {
     }
 }
 
-impl Insert<(MessageId, MessageId), ()> for Storage {
-    fn insert(&self, (parent, child): &(MessageId, MessageId), (): &()) -> Result<(), <Self as StorageBackend>::Error> {
+impl Insert<(BlockId, BlockId), ()> for Storage {
+    fn insert(&self, (parent, child): &(BlockId, BlockId), (): &()) -> Result<(), <Self as StorageBackend>::Error> {
         let mut key = parent.as_ref().to_vec();
         key.extend_from_slice(child.as_ref());
 
-        self.inner.open_tree(TREE_MESSAGE_ID_TO_MESSAGE_ID)?.insert(key, &[])?;
+        self.inner.open_tree(TREE_BLOCK_ID_TO_BLOCK_ID)?.insert(key, &[])?;
 
         Ok(())
     }
@@ -184,17 +184,17 @@ impl Insert<MilestoneIndex, OutputDiff> for Storage {
     }
 }
 
-impl Insert<(MilestoneIndex, UnreferencedMessage), ()> for Storage {
+impl Insert<(MilestoneIndex, UnreferencedBlock), ()> for Storage {
     fn insert(
         &self,
-        (index, unreferenced_message): &(MilestoneIndex, UnreferencedMessage),
+        (index, unreferenced_block): &(MilestoneIndex, UnreferencedBlock),
         (): &(),
     ) -> Result<(), <Self as StorageBackend>::Error> {
         let mut key = index.pack_to_vec();
-        key.extend_from_slice(unreferenced_message.as_ref());
+        key.extend_from_slice(unreferenced_block.as_ref());
 
         self.inner
-            .open_tree(TREE_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE)?
+            .open_tree(TREE_MILESTONE_INDEX_TO_UNREFERENCED_BLOCK)?
             .insert(key, &[])?;
 
         Ok(())
