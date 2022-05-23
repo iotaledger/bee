@@ -48,6 +48,8 @@ fn packed_len() {
         rand_bytes(64).try_into().unwrap(),
     )));
 
+    println!("{:?}", signature);
+
     assert_eq!(signature.packed_len(), 1 + 32 + 64);
     assert_eq!(signature.pack_to_vec().len(), 1 + 32 + 64);
 }

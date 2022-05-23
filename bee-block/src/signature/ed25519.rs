@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::ops::Deref;
+use core::{fmt, ops::Deref};
 
 use crypto::{
     hashes::{blake2b::Blake2b256, Digest},
@@ -11,7 +11,7 @@ use crypto::{
 use crate::{address::Ed25519Address, Error};
 
 /// An Ed25519 signature.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, packable::Packable)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, packable::Packable)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Ed25519Signature {
     public_key: [u8; Self::PUBLIC_KEY_LENGTH],
@@ -58,6 +58,15 @@ impl Ed25519Signature {
         }
 
         Ok(())
+    }
+}
+
+impl fmt::Debug for Ed25519Signature {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Ed25519Signature")
+            .field("public_key", &prefix_hex::encode(self.public_key))
+            .field("signature", &prefix_hex::encode(self.signature))
+            .finish()
     }
 }
 
