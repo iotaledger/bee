@@ -95,6 +95,10 @@ pub(crate) async fn submit_block<B: StorageBackend>(
                 PROTOCOL_VERSION, parsed_protocol_version
             ))));
         }
+    } else {
+        return Err(reject::custom(CustomRejection::BadRequest(
+            "missing protocol version".to_string(),
+        )));
     }
 
     let parents: Vec<BlockId> = if parents_json.is_null() {
