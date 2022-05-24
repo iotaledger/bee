@@ -23,9 +23,17 @@ impl ImmutableAliasAddressUnlockCondition {
         Self(Address::Alias(address))
     }
 
-    /// Returns the address of a [`ImmutableAliasAddressUnlockCondition`].
+    /// Returns the address of an [`ImmutableAliasAddressUnlockCondition`].
     #[inline(always)]
-    pub fn address(&self) -> &AliasAddress {
+    pub fn address(&self) -> &Address {
+        // An ImmutableAliasAddressUnlockCondition must have an AliasAddress.
+        // It has already been validated at construction that the address is an `AliasAddress`.
+        debug_assert!(&self.0.is_alias());
+        &self.0
+    }
+
+    /// Returns the alias address of an [`ImmutableAliasAddressUnlockCondition`].
+    pub fn alias_address(&self) -> &AliasAddress {
         // An ImmutableAliasAddressUnlockCondition must have an AliasAddress.
         if let Address::Alias(alias_address) = &self.0 {
             alias_address

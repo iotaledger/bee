@@ -476,7 +476,7 @@ pub mod dto {
                 UnlockCondition::ImmutableAliasAddress(v) => {
                     Self::ImmutableAliasAddress(ImmutableAliasAddressUnlockConditionDto {
                         kind: ImmutableAliasAddressUnlockCondition::KIND,
-                        address: AddressDto::Alias(v.address().into()),
+                        address: v.address().into(),
                     })
                 }
             }
