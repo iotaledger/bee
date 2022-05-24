@@ -366,7 +366,7 @@ impl FoundryOutput {
         // A FoundryOutput must have an ImmutableAliasAddressUnlockCondition.
         self.unlock_conditions
             .immutable_alias_address()
-            .map(|unlock_condition| unlock_condition.address())
+            .map(|unlock_condition| unlock_condition.alias_address())
             .unwrap()
     }
 
