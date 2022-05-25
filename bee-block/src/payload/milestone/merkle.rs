@@ -34,7 +34,7 @@ impl core::fmt::Display for MerkleRoot {
 
 impl core::fmt::Debug for MerkleRoot {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "Self({})", self)
+        write!(f, "MerkleRoot({})", self)
     }
 }
 
