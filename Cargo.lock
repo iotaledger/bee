@@ -485,7 +485,6 @@ dependencies = [
  "multiaddr",
  "num_cpus",
  "packable",
- "prefix-hex 0.4.0",
  "primitive-types",
  "serde",
  "serde_json",
