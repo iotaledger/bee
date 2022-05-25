@@ -16,7 +16,10 @@ use bee_block::{
     unlock::{ReferenceUnlock, SignatureUnlock, Unlock, Unlocks},
 };
 use bee_test::rand::{
-    bytes::rand_bytes, milestone::rand_milestone_id, output::rand_inputs_commitment, parents::rand_parents,
+    bytes::rand_bytes,
+    milestone::{rand_merkle_root, rand_milestone_id},
+    output::rand_inputs_commitment,
+    parents::rand_parents,
 };
 use packable::PackableExt;
 
@@ -75,8 +78,8 @@ fn milestone() {
             0,
             rand_milestone_id(),
             rand_parents(),
-            [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
-            [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
+            rand_merkle_root(),
+            rand_merkle_root(),
             vec![],
             MilestoneOptions::new(vec![]).unwrap(),
         )

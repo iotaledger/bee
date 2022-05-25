@@ -14,7 +14,7 @@ use packable::{
 use crate::{
     constant::PROTOCOL_VERSION,
     parent::Parents,
-    payload::milestone::{MilestoneId, MilestoneIndex, MilestoneOptions},
+    payload::milestone::{MerkleRoot, MilestoneId, MilestoneIndex, MilestoneOptions},
     Error,
 };
 
@@ -30,16 +30,13 @@ pub struct MilestoneEssence {
     protocol_version: u8,
     previous_milestone_id: MilestoneId,
     parents: Parents,
-    confirmed_merkle_root: [u8; MilestoneEssence::MERKLE_ROOT_LENGTH],
-    applied_merkle_root: [u8; MilestoneEssence::MERKLE_ROOT_LENGTH],
+    confirmed_merkle_root: MerkleRoot,
+    applied_merkle_root: MerkleRoot,
     metadata: BoxedSlicePrefix<u8, MilestoneMetadataLength>,
     options: MilestoneOptions,
 }
 
 impl MilestoneEssence {
-    /// Length of a milestone merkle root.
-    pub const MERKLE_ROOT_LENGTH: usize = 32;
-
     /// Creates a new [`MilestoneEssence`].
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -47,8 +44,8 @@ impl MilestoneEssence {
         timestamp: u32,
         previous_milestone_id: MilestoneId,
         parents: Parents,
-        confirmed_merkle_root: [u8; MilestoneEssence::MERKLE_ROOT_LENGTH],
-        applied_merkle_root: [u8; MilestoneEssence::MERKLE_ROOT_LENGTH],
+        confirmed_merkle_root: MerkleRoot,
+        applied_merkle_root: MerkleRoot,
         metadata: Vec<u8>,
         options: MilestoneOptions,
     ) -> Result<Self, Error> {
@@ -96,12 +93,12 @@ impl MilestoneEssence {
     }
 
     /// Returns the confirmed merkle root of a [`MilestoneEssence`].
-    pub fn confirmed_merkle_root(&self) -> &[u8] {
+    pub fn confirmed_merkle_root(&self) -> &MerkleRoot {
         &self.confirmed_merkle_root
     }
 
     /// Returns the applied merkle root of a [`MilestoneEssence`].
-    pub fn applied_merkle_root(&self) -> &[u8] {
+    pub fn applied_merkle_root(&self) -> &MerkleRoot {
         &self.applied_merkle_root
     }
 
@@ -154,10 +151,8 @@ impl Packable for MilestoneEssence {
 
         let previous_milestone_id = MilestoneId::unpack::<_, VERIFY>(unpacker).coerce()?;
         let parents = Parents::unpack::<_, VERIFY>(unpacker)?;
-        let confirmed_merkle_root =
-            <[u8; MilestoneEssence::MERKLE_ROOT_LENGTH]>::unpack::<_, VERIFY>(unpacker).coerce()?;
-        let applied_merkle_root =
-            <[u8; MilestoneEssence::MERKLE_ROOT_LENGTH]>::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let confirmed_merkle_root = MerkleRoot::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let applied_merkle_root = MerkleRoot::unpack::<_, VERIFY>(unpacker).coerce()?;
 
         let metadata = BoxedSlicePrefix::<u8, MilestoneMetadataLength>::unpack::<_, VERIFY>(unpacker)
             .map_packable_err(|e| Error::InvalidMilestoneMetadataLength(e.into_prefix_err().into()))?;

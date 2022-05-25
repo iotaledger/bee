@@ -5,6 +5,7 @@
 
 mod essence;
 mod index;
+mod merkle;
 mod milestone_id;
 
 ///
@@ -21,6 +22,7 @@ use packable::{bounded::BoundedU8, prefix::VecPrefix, Packable};
 pub use self::{
     essence::MilestoneEssence,
     index::MilestoneIndex,
+    merkle::MerkleRoot,
     milestone_id::MilestoneId,
     option::{MilestoneOption, MilestoneOptions, ParametersMilestoneOption, ReceiptMilestoneOption},
 };
@@ -199,8 +201,8 @@ pub mod dto {
                 protocol_version: value.essence().protocol_version(),
                 previous_milestone_id: value.essence().previous_milestone_id().to_string(),
                 parents: value.essence().parents().iter().map(|p| p.to_string()).collect(),
-                confirmed_merkle_root: prefix_hex::encode(value.essence().confirmed_merkle_root()),
-                applied_merkle_root: prefix_hex::encode(value.essence().applied_merkle_root()),
+                confirmed_merkle_root: value.essence().confirmed_merkle_root().to_string(),
+                applied_merkle_root: value.essence().applied_merkle_root().to_string(),
                 metadata: prefix_hex::encode(value.essence().metadata()),
                 options: value.essence().options().iter().map(Into::into).collect::<_>(),
                 signatures: value.signatures().iter().map(From::from).collect(),
@@ -238,10 +240,10 @@ pub mod dto {
                     );
                 }
 
-                let confirmed_merkle_root = prefix_hex::decode(&value.confirmed_merkle_root)
+                let confirmed_merkle_root = MerkleRoot::from_str(&value.confirmed_merkle_root)
                     .map_err(|_| DtoError::InvalidField("confirmedMerkleRoot"))?;
 
-                let applied_merkle_root = prefix_hex::decode(&value.applied_merkle_root)
+                let applied_merkle_root = MerkleRoot::from_str(&value.applied_merkle_root)
                     .map_err(|_| DtoError::InvalidField("appliedMerkleRoot"))?;
 
                 let options = MilestoneOptions::try_from(

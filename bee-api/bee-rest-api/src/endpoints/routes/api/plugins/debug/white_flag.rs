@@ -176,7 +176,7 @@ pub(crate) async fn white_flag<B: StorageBackend>(
                 .map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?;
 
             Ok(warp::reply::json(&WhiteFlagResponse {
-                merkle_tree_hash: prefix_hex::encode(metadata.applied_merkle_root()),
+                merkle_tree_hash: metadata.applied_merkle_root().to_string(),
             }))
         }
         Err(_) => {

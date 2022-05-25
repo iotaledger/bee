@@ -15,7 +15,7 @@ use bee_block::{
 use bee_test::rand::{
     self,
     bytes::rand_bytes,
-    milestone::{rand_milestone_id, rand_milestone_index},
+    milestone::{rand_merkle_root, rand_milestone_id, rand_milestone_index},
     number::{rand_number, rand_number_range},
     parents::rand_parents,
 };
@@ -29,8 +29,8 @@ fn new_valid() {
             0,
             rand_milestone_id(),
             rand_parents(),
-            [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
-            [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
+            rand_merkle_root(),
+            rand_merkle_root(),
             vec![],
             MilestoneOptions::new(vec![]).unwrap(),
         )
@@ -44,8 +44,8 @@ fn getters() {
     let timestamp = rand::number::rand_number::<u32>();
     let previous_milestone_id = rand_milestone_id();
     let parents = rand_parents();
-    let confirmed_merkle_root = [0; MilestoneEssence::MERKLE_ROOT_LENGTH];
-    let applied_merkle_root = [0; MilestoneEssence::MERKLE_ROOT_LENGTH];
+    let confirmed_merkle_root = rand_merkle_root();
+    let applied_merkle_root = rand_merkle_root();
     let target_milestone_index = rand_milestone_index();
     let protocol_version = rand_number();
     let binary_parameters =
@@ -86,8 +86,8 @@ fn getters() {
     assert_eq!(milestone_payload.timestamp(), timestamp);
     assert_eq!(milestone_payload.previous_milestone_id(), &previous_milestone_id);
     assert_eq!(*milestone_payload.parents(), parents);
-    assert_eq!(milestone_payload.confirmed_merkle_root(), confirmed_merkle_root);
-    assert_eq!(milestone_payload.applied_merkle_root(), applied_merkle_root);
+    assert_eq!(*milestone_payload.confirmed_merkle_root(), confirmed_merkle_root);
+    assert_eq!(*milestone_payload.applied_merkle_root(), applied_merkle_root);
     assert_eq!(
         milestone_payload
             .options()
@@ -114,8 +114,8 @@ fn pack_unpack_valid() {
         0,
         rand_milestone_id(),
         rand_parents(),
-        [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
-        [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
+        rand_merkle_root(),
+        rand_merkle_root(),
         vec![],
         MilestoneOptions::new(vec![]).unwrap(),
     )

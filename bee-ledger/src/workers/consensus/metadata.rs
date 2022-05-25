@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 use bee_block::{
     output::OutputId,
-    payload::milestone::{MilestoneId, MilestoneIndex},
+    payload::milestone::{MerkleRoot, MilestoneId, MilestoneIndex},
     semantic::ConflictReason,
     BlockId,
 };
@@ -35,9 +35,9 @@ pub struct WhiteFlagMetadata {
     /// The outputs consumed within the confirmed milestone.
     pub(crate) consumed_outputs: HashMap<OutputId, (CreatedOutput, ConsumedOutput)>,
     /// The confirmed merkle root of the milestone.
-    pub(crate) confirmed_merkle_root: Vec<u8>,
+    pub(crate) confirmed_merkle_root: MerkleRoot,
     /// The applied merkle root of the milestone.
-    pub(crate) applied_merkle_root: Vec<u8>,
+    pub(crate) applied_merkle_root: MerkleRoot,
 }
 
 impl WhiteFlagMetadata {
@@ -58,18 +58,18 @@ impl WhiteFlagMetadata {
             included_blocks: Vec::new(),
             created_outputs: HashMap::new(),
             consumed_outputs: HashMap::new(),
-            confirmed_merkle_root: Vec::new(),
-            applied_merkle_root: Vec::new(),
+            confirmed_merkle_root: MerkleRoot::null(),
+            applied_merkle_root: MerkleRoot::null(),
         }
     }
 
     /// Returns the confirmed merkle root of a [`WhiteFlagMetadata`].
-    pub fn confirmed_merkle_root(&self) -> &[u8] {
+    pub fn confirmed_merkle_root(&self) -> &MerkleRoot {
         &self.confirmed_merkle_root
     }
 
     /// Returns the applied merkle root of a [`WhiteFlagMetadata`].
-    pub fn applied_merkle_root(&self) -> &[u8] {
+    pub fn applied_merkle_root(&self) -> &MerkleRoot {
         &self.applied_merkle_root
     }
 }

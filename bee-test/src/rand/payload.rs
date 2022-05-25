@@ -14,7 +14,7 @@ use bee_block::{
 use crate::rand::{
     bytes::{rand_bytes, rand_bytes_array},
     input::rand_treasury_input,
-    milestone::{rand_milestone_id, rand_milestone_index},
+    milestone::{rand_merkle_root, rand_milestone_id, rand_milestone_index},
     number::{rand_number, rand_number_range},
     output::rand_treasury_output,
     parents::rand_parents,
@@ -41,8 +41,8 @@ pub fn rand_milestone_payload() -> MilestonePayload {
         rand_number(),
         rand_milestone_id(),
         rand_parents(),
-        rand_bytes_array(),
-        rand_bytes_array(),
+        rand_merkle_root(),
+        rand_merkle_root(),
         rand_bytes(32),
         MilestoneOptions::new(vec![]).unwrap(),
     )
