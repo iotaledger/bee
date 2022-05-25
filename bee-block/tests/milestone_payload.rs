@@ -7,7 +7,12 @@ use bee_block::{
     signature::{Ed25519Signature, Signature},
     Error,
 };
-use bee_test::rand::{self, block::rand_block_ids, milestone::rand_milestone_id, parents::rand_parents};
+use bee_test::rand::{
+    self,
+    block::rand_block_ids,
+    milestone::{rand_merkle_root, rand_milestone_id},
+    parents::rand_parents,
+};
 use packable::{bounded::TryIntoBoundedU8Error, PackableExt};
 
 #[test]
@@ -24,8 +29,8 @@ fn new_valid() {
                 0,
                 rand_milestone_id(),
                 rand_parents(),
-                [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
-                [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
+                rand_merkle_root(),
+                rand_merkle_root(),
                 vec![],
                 MilestoneOptions::new(vec![]).unwrap(),
             )
@@ -45,8 +50,8 @@ fn new_invalid_no_signature() {
                 0,
                 rand_milestone_id(),
                 rand_parents(),
-                [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
-                [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
+                rand_merkle_root(),
+                rand_merkle_root(),
                 vec![],
                 MilestoneOptions::new(vec![]).unwrap(),
             )
@@ -66,8 +71,8 @@ fn new_invalid_too_many_signatures() {
                 0,
                 rand_milestone_id(),
                 rand_parents(),
-                [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
-                [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
+                rand_merkle_root(),
+                rand_merkle_root(),
                 vec![],
                 MilestoneOptions::new(vec![]).unwrap(),
             )
@@ -88,8 +93,8 @@ fn packed_len() {
             0,
             rand_milestone_id(),
             Parents::new(rand_block_ids(4)).unwrap(),
-            [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
-            [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
+            rand_merkle_root(),
+            rand_merkle_root(),
             vec![0x2a, 0x2a, 0x2a, 0x2a, 0x2a],
             MilestoneOptions::new(vec![]).unwrap(),
         )
@@ -113,8 +118,8 @@ fn pack_unpack_valid() {
             0,
             rand_milestone_id(),
             rand_parents(),
-            [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
-            [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
+            rand_merkle_root(),
+            rand_merkle_root(),
             vec![],
             MilestoneOptions::new(vec![]).unwrap(),
         )
@@ -136,8 +141,8 @@ fn getters() {
         rand::number::rand_number::<u32>(),
         rand_milestone_id(),
         rand_parents(),
-        [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
-        [0; MilestoneEssence::MERKLE_ROOT_LENGTH],
+        rand_merkle_root(),
+        rand_merkle_root(),
         vec![],
         MilestoneOptions::new(vec![]).unwrap(),
     )

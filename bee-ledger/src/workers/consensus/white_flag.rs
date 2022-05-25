@@ -7,6 +7,7 @@ use bee_block::{
     input::Input,
     output::{Output, OutputId},
     payload::{
+        milestone::MerkleRoot,
         transaction::{RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayload},
         Payload,
     },
@@ -201,8 +202,16 @@ pub async fn white_flag<B: StorageBackend>(
 ) -> Result<(), Error> {
     traverse_past_cone(tangle, storage, block_ids.iter().rev().copied().collect(), metadata).await?;
 
-    metadata.confirmed_merkle_root = MerkleHasher::<Blake2b256>::new().digest(&metadata.referenced_blocks);
-    metadata.applied_merkle_root = MerkleHasher::<Blake2b256>::new().digest(&metadata.included_blocks);
+    // PANIC: unwrap is fine as Blake2b256 returns a hash of length MerkleRoot::LENGTH.
+    metadata.confirmed_merkle_root = MerkleRoot::from(
+        <[u8; MerkleRoot::LENGTH]>::try_from(MerkleHasher::<Blake2b256>::new().digest(&metadata.referenced_blocks))
+            .unwrap(),
+    );
+    // PANIC: unwrap is fine as Blake2b256 returns a hash of length MerkleRoot::LENGTH.
+    metadata.applied_merkle_root = MerkleRoot::from(
+        <[u8; MerkleRoot::LENGTH]>::try_from(MerkleHasher::<Blake2b256>::new().digest(&metadata.included_blocks))
+            .unwrap(),
+    );
 
     if *metadata.milestone_index != 1 && metadata.previous_milestone_id.is_some() && !metadata.found_previous_milestone
     {

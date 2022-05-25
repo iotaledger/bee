@@ -5,7 +5,10 @@
 
 use std::convert::Infallible;
 
-use bee_block::{payload::milestone::MilestoneIndex, BlockId, Error as BlockError};
+use bee_block::{
+    payload::milestone::{MerkleRoot, MilestoneIndex},
+    BlockId, Error as BlockError,
+};
 use packable::error::UnpackError;
 
 use crate::{
@@ -40,9 +43,9 @@ pub enum Error {
     #[error("non contiguous milestones: tried to confirm {0} on top of {1}")]
     NonContiguousMilestones(u32, u32),
     #[error("confirmed merkle root mismatch on milestone {0}: computed {1} != provided {2}")]
-    ConfirmedMerkleRootMismatch(MilestoneIndex, String, String),
+    ConfirmedMerkleRootMismatch(MilestoneIndex, MerkleRoot, MerkleRoot),
     #[error("applied merkle root mismatch on milestone {0}: computed {1} != provided {2}")]
-    AppliedMerkleRootMismatch(MilestoneIndex, String, String),
+    AppliedMerkleRootMismatch(MilestoneIndex, MerkleRoot, MerkleRoot),
     #[error("invalid blocks count: referenced ({0}) != no transaction ({1}) + conflicting ({2}) + included ({3})")]
     InvalidBlocksCount(usize, usize, usize, usize),
     #[error("invalid ledger unspent state: {0}")]

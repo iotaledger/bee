@@ -102,19 +102,19 @@ where
 
     white_flag(tangle, storage, block.parents(), &mut metadata).await?;
 
-    if metadata.confirmed_merkle_root != milestone.essence().confirmed_merkle_root() {
+    if metadata.confirmed_merkle_root != *milestone.essence().confirmed_merkle_root() {
         return Err(Error::ConfirmedMerkleRootMismatch(
             milestone.essence().index(),
-            prefix_hex::encode(metadata.confirmed_merkle_root),
-            prefix_hex::encode(milestone.essence().confirmed_merkle_root()),
+            metadata.confirmed_merkle_root,
+            *milestone.essence().confirmed_merkle_root(),
         ));
     }
 
-    if metadata.applied_merkle_root != milestone.essence().applied_merkle_root() {
+    if metadata.applied_merkle_root != *milestone.essence().applied_merkle_root() {
         return Err(Error::AppliedMerkleRootMismatch(
             milestone.essence().index(),
-            prefix_hex::encode(metadata.applied_merkle_root),
-            prefix_hex::encode(milestone.essence().applied_merkle_root()),
+            metadata.applied_merkle_root,
+            *milestone.essence().applied_merkle_root(),
         ));
     }
 
