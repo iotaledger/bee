@@ -44,7 +44,7 @@ fn getters() {
     let timestamp = rand::number::rand_number::<u32>();
     let previous_milestone_id = rand_milestone_id();
     let parents = rand_parents();
-    let confirmed_merkle_root = rand_merkle_root();
+    let inclusion_merkle_root = rand_merkle_root();
     let applied_merkle_root = rand_merkle_root();
     let target_milestone_index = rand_milestone_index();
     let protocol_version = rand_number();
@@ -75,7 +75,7 @@ fn getters() {
         timestamp,
         previous_milestone_id,
         parents.clone(),
-        confirmed_merkle_root,
+        inclusion_merkle_root,
         applied_merkle_root,
         vec![],
         options,
@@ -86,7 +86,7 @@ fn getters() {
     assert_eq!(milestone_payload.timestamp(), timestamp);
     assert_eq!(milestone_payload.previous_milestone_id(), &previous_milestone_id);
     assert_eq!(*milestone_payload.parents(), parents);
-    assert_eq!(*milestone_payload.confirmed_merkle_root(), confirmed_merkle_root);
+    assert_eq!(*milestone_payload.inclusion_merkle_root(), inclusion_merkle_root);
     assert_eq!(*milestone_payload.applied_merkle_root(), applied_merkle_root);
     assert_eq!(
         milestone_payload
