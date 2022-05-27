@@ -30,7 +30,7 @@ pub struct MilestoneEssence {
     protocol_version: u8,
     previous_milestone_id: MilestoneId,
     parents: Parents,
-    confirmed_merkle_root: MerkleRoot,
+    inclusion_merkle_root: MerkleRoot,
     applied_merkle_root: MerkleRoot,
     metadata: BoxedSlicePrefix<u8, MilestoneMetadataLength>,
     options: MilestoneOptions,
@@ -44,7 +44,7 @@ impl MilestoneEssence {
         timestamp: u32,
         previous_milestone_id: MilestoneId,
         parents: Parents,
-        confirmed_merkle_root: MerkleRoot,
+        inclusion_merkle_root: MerkleRoot,
         applied_merkle_root: MerkleRoot,
         metadata: Vec<u8>,
         options: MilestoneOptions,
@@ -60,7 +60,7 @@ impl MilestoneEssence {
             protocol_version: PROTOCOL_VERSION,
             previous_milestone_id,
             parents,
-            confirmed_merkle_root,
+            inclusion_merkle_root,
             applied_merkle_root,
             metadata,
             options,
@@ -92,9 +92,9 @@ impl MilestoneEssence {
         &self.parents
     }
 
-    /// Returns the confirmed merkle root of a [`MilestoneEssence`].
-    pub fn confirmed_merkle_root(&self) -> &MerkleRoot {
-        &self.confirmed_merkle_root
+    /// Returns the inclusion merkle root of a [`MilestoneEssence`].
+    pub fn inclusion_merkle_root(&self) -> &MerkleRoot {
+        &self.inclusion_merkle_root
     }
 
     /// Returns the applied merkle root of a [`MilestoneEssence`].
@@ -127,7 +127,7 @@ impl Packable for MilestoneEssence {
         self.protocol_version.pack(packer)?;
         self.previous_milestone_id.pack(packer)?;
         self.parents.pack(packer)?;
-        self.confirmed_merkle_root.pack(packer)?;
+        self.inclusion_merkle_root.pack(packer)?;
         self.applied_merkle_root.pack(packer)?;
         self.metadata.pack(packer)?;
         self.options.pack(packer)?;
@@ -151,7 +151,7 @@ impl Packable for MilestoneEssence {
 
         let previous_milestone_id = MilestoneId::unpack::<_, VERIFY>(unpacker).coerce()?;
         let parents = Parents::unpack::<_, VERIFY>(unpacker)?;
-        let confirmed_merkle_root = MerkleRoot::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let inclusion_merkle_root = MerkleRoot::unpack::<_, VERIFY>(unpacker).coerce()?;
         let applied_merkle_root = MerkleRoot::unpack::<_, VERIFY>(unpacker).coerce()?;
 
         let metadata = BoxedSlicePrefix::<u8, MilestoneMetadataLength>::unpack::<_, VERIFY>(unpacker)
@@ -165,7 +165,7 @@ impl Packable for MilestoneEssence {
             protocol_version,
             previous_milestone_id,
             parents,
-            confirmed_merkle_root,
+            inclusion_merkle_root,
             applied_merkle_root,
             metadata,
             options,

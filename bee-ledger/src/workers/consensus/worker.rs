@@ -102,11 +102,11 @@ where
 
     white_flag(tangle, storage, block.parents(), &mut metadata).await?;
 
-    if metadata.confirmed_merkle_root != *milestone.essence().confirmed_merkle_root() {
-        return Err(Error::ConfirmedMerkleRootMismatch(
+    if metadata.inclusion_merkle_root != *milestone.essence().inclusion_merkle_root() {
+        return Err(Error::InclusionMerkleRootMismatch(
             milestone.essence().index(),
-            metadata.confirmed_merkle_root,
-            *milestone.essence().confirmed_merkle_root(),
+            metadata.inclusion_merkle_root,
+            *milestone.essence().inclusion_merkle_root(),
         ));
     }
 

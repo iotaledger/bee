@@ -42,8 +42,8 @@ pub enum Error {
     NoMilestonePayload,
     #[error("non contiguous milestones: tried to confirm {0} on top of {1}")]
     NonContiguousMilestones(u32, u32),
-    #[error("confirmed merkle root mismatch on milestone {0}: computed {1} != provided {2}")]
-    ConfirmedMerkleRootMismatch(MilestoneIndex, MerkleRoot, MerkleRoot),
+    #[error("inclusion merkle root mismatch on milestone {0}: computed {1} != provided {2}")]
+    InclusionMerkleRootMismatch(MilestoneIndex, MerkleRoot, MerkleRoot),
     #[error("applied merkle root mismatch on milestone {0}: computed {1} != provided {2}")]
     AppliedMerkleRootMismatch(MilestoneIndex, MerkleRoot, MerkleRoot),
     #[error("invalid blocks count: referenced ({0}) != no transaction ({1}) + conflicting ({2}) + included ({3})")]

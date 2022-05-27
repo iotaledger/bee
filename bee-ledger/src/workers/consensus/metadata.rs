@@ -34,8 +34,8 @@ pub struct WhiteFlagMetadata {
     pub(crate) created_outputs: HashMap<OutputId, CreatedOutput>,
     /// The outputs consumed within the confirmed milestone.
     pub(crate) consumed_outputs: HashMap<OutputId, (CreatedOutput, ConsumedOutput)>,
-    /// The confirmed merkle root of the milestone.
-    pub(crate) confirmed_merkle_root: MerkleRoot,
+    /// The inclusion merkle root of the milestone.
+    pub(crate) inclusion_merkle_root: MerkleRoot,
     /// The applied merkle root of the milestone.
     pub(crate) applied_merkle_root: MerkleRoot,
 }
@@ -58,14 +58,14 @@ impl WhiteFlagMetadata {
             included_blocks: Vec::new(),
             created_outputs: HashMap::new(),
             consumed_outputs: HashMap::new(),
-            confirmed_merkle_root: MerkleRoot::null(),
+            inclusion_merkle_root: MerkleRoot::null(),
             applied_merkle_root: MerkleRoot::null(),
         }
     }
 
-    /// Returns the confirmed merkle root of a [`WhiteFlagMetadata`].
-    pub fn confirmed_merkle_root(&self) -> &MerkleRoot {
-        &self.confirmed_merkle_root
+    /// Returns the inclusion merkle root of a [`WhiteFlagMetadata`].
+    pub fn inclusion_merkle_root(&self) -> &MerkleRoot {
+        &self.inclusion_merkle_root
     }
 
     /// Returns the applied merkle root of a [`WhiteFlagMetadata`].

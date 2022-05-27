@@ -181,8 +181,8 @@ pub mod dto {
         #[serde(rename = "previousMilestoneId")]
         pub previous_milestone_id: String,
         pub parents: Vec<String>,
-        #[serde(rename = "confirmedMerkleRoot")]
-        pub confirmed_merkle_root: String,
+        #[serde(rename = "inclusionMerkleRoot")]
+        pub inclusion_merkle_root: String,
         #[serde(rename = "appliedMerkleRoot")]
         pub applied_merkle_root: String,
         #[serde(skip_serializing_if = "Vec::is_empty", default)]
@@ -201,7 +201,7 @@ pub mod dto {
                 protocol_version: value.essence().protocol_version(),
                 previous_milestone_id: value.essence().previous_milestone_id().to_string(),
                 parents: value.essence().parents().iter().map(|p| p.to_string()).collect(),
-                confirmed_merkle_root: value.essence().confirmed_merkle_root().to_string(),
+                inclusion_merkle_root: value.essence().inclusion_merkle_root().to_string(),
                 applied_merkle_root: value.essence().applied_merkle_root().to_string(),
                 metadata: prefix_hex::encode(value.essence().metadata()),
                 options: value.essence().options().iter().map(Into::into).collect::<_>(),
@@ -240,8 +240,8 @@ pub mod dto {
                     );
                 }
 
-                let confirmed_merkle_root = MerkleRoot::from_str(&value.confirmed_merkle_root)
-                    .map_err(|_| DtoError::InvalidField("confirmedMerkleRoot"))?;
+                let inclusion_merkle_root = MerkleRoot::from_str(&value.inclusion_merkle_root)
+                    .map_err(|_| DtoError::InvalidField("inclusionMerkleRoot"))?;
 
                 let applied_merkle_root = MerkleRoot::from_str(&value.applied_merkle_root)
                     .map_err(|_| DtoError::InvalidField("appliedMerkleRoot"))?;
@@ -265,7 +265,7 @@ pub mod dto {
                     timestamp,
                     previous_milestone_id,
                     Parents::new(parent_ids)?,
-                    confirmed_merkle_root,
+                    inclusion_merkle_root,
                     applied_merkle_root,
                     metadata,
                     options,
