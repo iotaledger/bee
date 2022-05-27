@@ -203,7 +203,7 @@ pub async fn white_flag<B: StorageBackend>(
     traverse_past_cone(tangle, storage, block_ids.iter().rev().copied().collect(), metadata).await?;
 
     // PANIC: unwrap is fine as Blake2b256 returns a hash of length MerkleRoot::LENGTH.
-    metadata.confirmed_merkle_root = MerkleRoot::from(
+    metadata.inclusion_merkle_root = MerkleRoot::from(
         <[u8; MerkleRoot::LENGTH]>::try_from(MerkleHasher::<Blake2b256>::new().digest(&metadata.referenced_blocks))
             .unwrap(),
     );
