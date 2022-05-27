@@ -286,7 +286,15 @@ pub mod dto {
 
     use super::*;
     pub use super::{
-        alias::dto::AliasOutputDto, basic::dto::BasicOutputDto, foundry::dto::FoundryOutputDto, nft::dto::NftOutputDto,
+        alias::dto::AliasOutputDto,
+        alias_id::dto::AliasIdDto,
+        basic::dto::BasicOutputDto,
+        foundry::dto::FoundryOutputDto,
+        native_token::dto::NativeTokenDto,
+        nft::dto::NftOutputDto,
+        nft_id::dto::NftIdDto,
+        token_id::dto::TokenIdDto,
+        token_scheme::dto::{SimpleTokenSchemeDto, TokenSchemeDto},
         treasury::dto::TreasuryOutputDto,
     };
     use crate::error::dto::DtoError;

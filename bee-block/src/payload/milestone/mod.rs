@@ -27,7 +27,7 @@ pub use self::{
     option::{MilestoneOption, MilestoneOptions, ParametersMilestoneOption, ReceiptMilestoneOption},
 };
 pub(crate) use self::{essence::MilestoneMetadataLength, option::BinaryParametersLength};
-use crate::{constant::PROTOCOL_VERSION, signature::Signature, Error};
+use crate::{signature::Signature, Error};
 
 #[derive(Debug)]
 #[allow(missing_docs)]
@@ -165,8 +165,8 @@ pub mod dto {
     use self::option::dto::MilestoneOptionDto;
     use super::*;
     use crate::{
-        error::dto::DtoError, parent::Parents, payload::milestone::MilestoneIndex, signature::dto::SignatureDto,
-        BlockId,
+        constant::PROTOCOL_VERSION, error::dto::DtoError, parent::Parents, payload::milestone::MilestoneIndex,
+        signature::dto::SignatureDto, BlockId,
     };
 
     /// The payload type to define a milestone.
