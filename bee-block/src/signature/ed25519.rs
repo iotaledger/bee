@@ -63,9 +63,18 @@ impl Ed25519Signature {
 
 impl fmt::Debug for Ed25519Signature {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        #[repr(transparent)]
+        struct UnquotedStr<'a>(&'a str);
+
+        impl<'a> fmt::Debug for UnquotedStr<'a> {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                write!(f, "{}", self.0)
+            }
+        }
+
         f.debug_struct("Ed25519Signature")
-            .field("public_key", &prefix_hex::encode(self.public_key))
-            .field("signature", &prefix_hex::encode(self.signature))
+            .field("public_key", &UnquotedStr(&prefix_hex::encode(self.public_key)))
+            .field("signature", &UnquotedStr(&prefix_hex::encode(self.signature)))
             .finish()
     }
 }
