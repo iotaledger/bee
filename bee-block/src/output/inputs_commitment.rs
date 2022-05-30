@@ -14,7 +14,7 @@ pub struct InputsCommitment([u8; Self::LENGTH]);
 
 impl InputsCommitment {
     /// The length of an [`InputsCommitment`].
-    const LENGTH: usize = 32;
+    pub const LENGTH: usize = 32;
 
     /// Creates a new [`InputsCommitment`] from a sequence of [`Output`]s.
     pub fn new<'a>(inputs: impl Iterator<Item = &'a Output>) -> Self {
