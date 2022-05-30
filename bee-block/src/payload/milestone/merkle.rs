@@ -12,6 +12,11 @@ impl MerkleRoot {
     /// Length of a merkle root.
     pub const LENGTH: usize = 32;
 
+    /// Creates a new [`MerkleRoot`].
+    pub fn new(bytes: [u8; Self::LENGTH]) -> Self {
+        Self::from(bytes)
+    }
+
     /// Creates a null [`MerkleRoot`].
     pub fn null() -> Self {
         Self::from([0u8; Self::LENGTH])
