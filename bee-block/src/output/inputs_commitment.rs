@@ -10,9 +10,12 @@ use crate::output::Output;
 /// Represents a commitment to transaction inputs.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd, From, Deref, packable::Packable)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct InputsCommitment([u8; 32]);
+pub struct InputsCommitment([u8; Self::LENGTH]);
 
 impl InputsCommitment {
+    /// The length of an [`InputsCommitment`].
+    pub const LENGTH: usize = 32;
+
     /// Creates a new [`InputsCommitment`] from a sequence of [`Output`]s.
     pub fn new<'a>(inputs: impl Iterator<Item = &'a Output>) -> Self {
         let mut hasher = Blake2b256::new();
