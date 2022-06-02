@@ -14,9 +14,10 @@ use std::{net::SocketAddr, ops::Deref};
 use axum::{
     extract::Extension,
     http::{header::HeaderName, HeaderMap, HeaderValue, StatusCode},
-    routing::get,
+    routing::{get, IntoMakeService},
     Router, Server,
 };
+use hyper::server::conn::AddrIncoming;
 use prometheus_client::encoding::text::encode;
 
 pub use self::registry::Registry;
@@ -40,7 +41,7 @@ where
 
 /// Serve the metrics registered in the provided [`Registry`] using the provided `SocketAddr`. This
 /// endpoint can be scraped by Prometheus to collect the metrics.
-pub async fn serve_metrics<T>(addr: SocketAddr, registry: T) -> Result<(), axum::Error>
+pub fn serve_metrics<T>(addr: SocketAddr, registry: T) -> Server<AddrIncoming, IntoMakeService<Router>>
 where
     T: Deref<Target = Registry> + Clone + Send + Sync + 'static,
 {
@@ -48,10 +49,5 @@ where
         .route("/metrics", get(get_metrics::<T>))
         .layer(Extension(registry));
 
-    Server::bind(&addr)
-        .serve(app.into_make_service())
-        .await
-        .map_err(axum::Error::new)?;
-
-    Ok(())
+    Server::bind(&addr).serve(app.into_make_service())
 }

@@ -13,6 +13,7 @@ homepage = "https://www.iota.org"
 [dependencies]
 axum = { version = "0.4.8", default-features = false, features = [ "http2" ] }
 futures = { version = "0.3.21", default-features = false, optional = true }
+hyper = { version = "0.14.19", default-features = false }
 parking_lot = { version = "0.12.0", default-features = false }
 prometheus-client = { version = "0.15.1", default-features = false }
 tokio = { version = "1.17.0", default-features = false, features = [ "process" ] }
