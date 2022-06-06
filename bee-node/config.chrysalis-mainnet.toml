@@ -34,8 +34,8 @@ bind_address                  = "0.0.0.0:14626"
 entry_nodes                   = [
     "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb",
     "/dns/entry-hornet-1.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaJJqMd5CQvv1A61coSQCYW9PNT1QKPs7xh2Qg5K2",
-    "/dns/entry-0.mainnet.tanglebay.com/udp/14626/autopeering/iot4By1FD4pFLrGJ6AAe7YEeSu9RbW9xnPUmxMdQenC",
-    "/dns/entry-1.mainnet.tanglebay.com/udp/14636/autopeering/CATsx21mFVvQQPXeDineGs9DDeKvoBBQdzcmR6ffCkVA",
+    "/dns/entry-0.iota-mainnet.tanglebay.com/udp/14626/autopeering/iot4By1FD4pFLrGJ6AAe7YEeSu9RbW9xnPUmxMdQenC",
+    "/dns/entry-1.iota-mainnet.tanglebay.com/udp/14626/autopeering/CATsx21mFVvQQPXeDineGs9DDeKvoBBQdzcmR6ffCkVA",
 ]
 entry_nodes_prefer_ipv6       = false
 run_as_entry_node             = false
@@ -123,8 +123,8 @@ delta_path  = "./snapshots/mainnet/delta_snapshot.bin"
 full        = "https://chrysalis-dbfiles.iota.org/snapshots/hornet/latest-full_snapshot.bin"
 delta       = "https://chrysalis-dbfiles.iota.org/snapshots/hornet/latest-delta_snapshot.bin"
 [[snapshot.download_urls]]
-full        = "https://cdn.tanglebay.com/snapshots/mainnet/full_snapshot.bin"
-delta       = "https://cdn.tanglebay.com/snapshots/mainnet/delta_snapshot.bin"
+full        = "https://cdn.tanglebay.com/snapshots/iota-mainnet/full_snapshot.bin"
+delta       = "https://cdn.tanglebay.com/snapshots/iota-mainnet/delta_snapshot.bin"
 
 [pruning]
 enabled         = true
