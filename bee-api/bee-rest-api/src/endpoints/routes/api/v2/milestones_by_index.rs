@@ -6,7 +6,7 @@ use axum::{
     routing::get,
     Router,
 };
-use bee_message::payload::milestone::MilestoneIndex;
+use bee_block::payload::milestone::MilestoneIndex;
 
 use crate::{
     endpoints::{error::ApiError, extractors::path::CustomPath, storage::StorageBackend, ApiArgsFullNode},
@@ -14,13 +14,10 @@ use crate::{
 };
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
-    Router::new().route(
-        "/milestones/by-index/:milestone_index",
-        get(milestones_by_milestone_index::<B>),
-    )
+    Router::new().route("/milestones/by-index/:milestone_index", get(milestones_by_index::<B>))
 }
 
-pub(crate) async fn milestones_by_milestone_index<B: StorageBackend>(
+pub(crate) async fn milestones_by_index<B: StorageBackend>(
     CustomPath(milestone_index): CustomPath<MilestoneIndex>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {

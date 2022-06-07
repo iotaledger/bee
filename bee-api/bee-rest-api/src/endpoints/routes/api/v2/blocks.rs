@@ -8,13 +8,13 @@ use axum::{
     routing::get,
     Router,
 };
-use bee_message::{MessageDto, MessageId};
+use bee_block::{BlockDto, BlockId};
 use lazy_static::lazy_static;
 use packable::PackableExt;
 
 use crate::{
     endpoints::{error::ApiError, extractors::path::CustomPath, storage::StorageBackend, ApiArgsFullNode},
-    types::responses::MessageResponse,
+    types::responses::BlockResponse,
 };
 
 lazy_static! {
@@ -23,47 +23,45 @@ lazy_static! {
 }
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
-    Router::new().route("/messages/:message_id", get(messages::<B>))
+    Router::new().route("/blocks/:block_id", get(blocks::<B>))
 }
 
-async fn messages<B: StorageBackend>(
+async fn blocks<B: StorageBackend>(
     headers: HeaderMap,
-    CustomPath(message_id): CustomPath<MessageId>,
+    CustomPath(block_id): CustomPath<BlockId>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<Response, ApiError> {
     if let Some(value) = headers.get(axum::http::header::ACCEPT) {
         if value.eq(&*BYTE_CONTENT_HEADER) {
-            return messages_raw::<B>(message_id, args.clone())
-                .await
-                .map(|r| r.into_response());
+            return blocks_raw::<B>(block_id, args.clone()).await.map(|r| r.into_response());
         } else {
-            messages_json::<B>(message_id, args.clone())
+            blocks_json::<B>(block_id, args.clone())
                 .await
                 .map(|r| r.into_response())
         }
     } else {
-        messages_json::<B>(message_id, args.clone())
+        blocks_json::<B>(block_id, args.clone())
             .await
             .map(|r| r.into_response())
     }
 }
 
-pub(crate) async fn messages_json<B: StorageBackend>(
-    message_id: MessageId,
+pub(crate) async fn blocks_json<B: StorageBackend>(
+    block_id: BlockId,
     args: ApiArgsFullNode<B>,
 ) -> Result<impl IntoResponse, ApiError> {
-    match args.tangle.get(&message_id) {
-        Some(message) => Ok(Json(MessageResponse(MessageDto::from(&message)))),
+    match args.tangle.get(&block_id) {
+        Some(block) => Ok(Json(BlockResponse(BlockDto::from(&block)))),
         None => Err(ApiError::NotFound),
     }
 }
 
-async fn messages_raw<B: StorageBackend>(
-    message_id: MessageId,
+async fn blocks_raw<B: StorageBackend>(
+    block_id: BlockId,
     args: ApiArgsFullNode<B>,
 ) -> Result<impl IntoResponse, ApiError> {
-    match args.tangle.get(&message_id) {
-        Some(message) => Ok(message.pack_to_vec()),
+    match args.tangle.get(&block_id) {
+        Some(block) => Ok(block.pack_to_vec()),
         None => Err(ApiError::NotFound),
     }
 }

@@ -20,9 +20,9 @@ pub enum ApiError {
     InvalidPath(String),
     InvalidJson(String),
     // Errors from dependent crates which should be exposed to the user
-    InvalidMessageSubmitted(bee_protocol::workers::MessageSubmitterError),
-    InvalidMessage(bee_message::Error),
-    InvalidDto(bee_message::DtoError),
+    InvalidBlockSubmitted(bee_protocol::workers::BlockSubmitterError),
+    InvalidBlock(bee_block::Error),
+    InvalidDto(bee_block::DtoError),
     InvalidWhiteflag(bee_ledger::workers::error::Error),
 }
 
@@ -36,8 +36,8 @@ impl IntoResponse for ApiError {
             ApiError::Forbidden => (StatusCode::FORBIDDEN, "access forbidden".to_string()),
             ApiError::InvalidPath(e) => (StatusCode::BAD_REQUEST, e),
             ApiError::InvalidJson(e) => (StatusCode::BAD_REQUEST, e),
-            ApiError::InvalidMessageSubmitted(e) => (StatusCode::BAD_REQUEST, e.to_string()),
-            ApiError::InvalidMessage(e) => (StatusCode::BAD_REQUEST, e.to_string()),
+            ApiError::InvalidBlockSubmitted(e) => (StatusCode::BAD_REQUEST, e.to_string()),
+            ApiError::InvalidBlock(e) => (StatusCode::BAD_REQUEST, e.to_string()),
             ApiError::InvalidDto(e) => (StatusCode::BAD_REQUEST, e.to_string()),
             ApiError::InvalidWhiteflag(e) => (StatusCode::BAD_REQUEST, e.to_string()),
         };

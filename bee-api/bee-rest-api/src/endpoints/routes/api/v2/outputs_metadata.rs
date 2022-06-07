@@ -16,17 +16,16 @@ use bee_storage::access::Fetch;
 use futures::channel::oneshot;
 use log::error;
 
-use super::outputs_metadata::create_output_metadata;
 use crate::{
     endpoints::{error::ApiError, extractors::path::CustomPath, storage::StorageBackend, ApiArgsFullNode},
-    types::responses::OutputResponse,
+    types::responses::OutputMetadataResponse,
 };
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
-    Router::new().route("/outputs/:output_id", get(outputs::<B>))
+    Router::new().route("/outputs/:output_id/metadata", get(outputs_metadata::<B>))
 }
 
-async fn outputs<B: StorageBackend>(
+async fn outputs_metadata<B: StorageBackend>(
     CustomPath(output_id): CustomPath<OutputId>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
@@ -54,15 +53,12 @@ async fn outputs<B: StorageBackend>(
                         ApiError::InternalError
                     })?;
 
-                Ok(Json(OutputResponse {
-                    metadata: create_output_metadata(
-                        &output_id,
-                        &created_output,
-                        consumed_output.as_ref(),
-                        ledger_index,
-                    ),
-                    output: created_output.inner().into(),
-                }))
+                Ok(Json(create_output_metadata(
+                    &output_id,
+                    &created_output,
+                    consumed_output.as_ref(),
+                    ledger_index,
+                )))
             }
 
             None => Err(ApiError::NotFound),
@@ -71,5 +67,25 @@ async fn outputs<B: StorageBackend>(
             error!("response from consensus worker failed: {}", e);
             Err(ApiError::InternalError)
         }
+    }
+}
+
+pub(crate) fn create_output_metadata(
+    output_id: &OutputId,
+    created_output: &CreatedOutput,
+    consumed_output: Option<&ConsumedOutput>,
+    ledger_index: LedgerIndex,
+) -> OutputMetadataResponse {
+    OutputMetadataResponse {
+        block_id: created_output.block_id().to_string(),
+        transaction_id: output_id.transaction_id().to_string(),
+        output_index: output_id.index(),
+        is_spent: consumed_output.is_some(),
+        milestone_index_spent: consumed_output.map(|o| *o.milestone_index()),
+        milestone_timestamp_spent: consumed_output.map(|o| o.milestone_timestamp()),
+        transaction_id_spent: consumed_output.map(|o| o.target().to_string()),
+        milestone_index_booked: *created_output.milestone_index(),
+        milestone_timestamp_booked: created_output.milestone_timestamp(),
+        ledger_index: *ledger_index,
     }
 }

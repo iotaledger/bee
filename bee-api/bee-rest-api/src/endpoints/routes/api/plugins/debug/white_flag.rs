@@ -1,6 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use core::ops::Deref;
 use std::{
     any::TypeId,
     collections::HashSet,
@@ -13,8 +14,8 @@ use axum::{
     routing::post,
     Router,
 };
-use bee_ledger::workers::consensus::{self, WhiteFlagMetadata};
 use bee_block::{payload::milestone::MilestoneIndex, BlockId};
+use bee_ledger::workers::consensus::{self, WhiteFlagMetadata};
 use bee_protocol::workers::{event::BlockSolidified, request_block};
 use futures::channel::oneshot;
 use serde_json::Value;
@@ -47,20 +48,16 @@ pub(crate) async fn white_flag<B: StorageBackend>(
     };
 
     let parents = if parents_json.is_null() {
-        return Err(ApiError::BadRequest(
-            "invalid parents: expected an array of `BlockId`",
-        ));
+        return Err(ApiError::BadRequest("invalid parents: expected an array of `BlockId`"));
     } else {
-        let array = parents_json.as_array().ok_or(ApiError::BadRequest(
-            "invalid parents: expected an array of `BlockId`",
-        ))?;
-        let mut message_ids = Vec::new();
+        let array = parents_json
+            .as_array()
+            .ok_or(ApiError::BadRequest("invalid parents: expected an array of `BlockId`"))?;
+        let mut block_ids = Vec::new();
         for s in array {
             let block_id = s
                 .as_str()
-                .ok_or(ApiError::BadRequest(
-                    "invalid parents: expected an array of `BlockId`",
-                ))?
+                .ok_or(ApiError::BadRequest("invalid parents: expected an array of `BlockId`"))?
                 .parse::<BlockId>()
                 .map_err(|_| ApiError::BadRequest("invalid parents: expected an array of `BlockId`"))?;
             block_ids.push(block_id);
@@ -131,7 +128,7 @@ pub(crate) async fn white_flag<B: StorageBackend>(
                 .map_err(ApiError::InvalidWhiteflag)?;
 
             Ok(Json(WhiteFlagResponse {
-                merkle_tree_hash: prefix_hex::encode(metadata.applied_merkle_root()),
+                merkle_tree_hash: prefix_hex::encode(metadata.applied_merkle_root().deref()),
             }))
         }
         Err(_) => {

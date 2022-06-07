@@ -90,7 +90,7 @@ async fn info<B: StorageBackend>(Extension(args): Extension<ApiArgsFullNode<B>>)
         metrics: MetricsResponse {
             blocks_per_second: 0f64,            // TODO: use actual metrics values
             referenced_blocks_per_second: 0f64, // TODO: use actual metrics values
-            referenced_rate: 0f64,                // TODO: use actual metrics values
+            referenced_rate: 0f64,              // TODO: use actual metrics values
         },
         features: {
             let mut features = Vec::new();

@@ -19,8 +19,8 @@ use axum::{
 use bee_gossip::{Keypair, NetworkCommandSender, PeerId};
 use bee_ledger::workers::consensus::{ConsensusWorker, ConsensusWorkerCommand};
 use bee_protocol::workers::{
-    config::ProtocolConfig, BlockRequesterWorker, BlockSubmitterWorker, BlockSubmitterWorkerEvent, PeerManager, PeerManagerResWorker,
-    RequestedBlocks,
+    config::ProtocolConfig, BlockRequesterWorker, BlockSubmitterWorker, BlockSubmitterWorkerEvent, PeerManager,
+    PeerManagerResWorker, RequestedBlocks,
 };
 use bee_runtime::{
     event::Bus,
@@ -95,10 +95,10 @@ pub struct ApiArgsFullNodeInner<B: StorageBackend> {
     pub(crate) node_info: ResourceHandle<NodeInfo>,
     pub(crate) tangle: ResourceHandle<Tangle<B>>,
     pub(crate) peer_manager: ResourceHandle<PeerManager>,
-    pub(crate) requested_messages: ResourceHandle<RequestedMessages>,
+    pub(crate) requested_blocks: ResourceHandle<RequestedBlocks>,
     pub(crate) network_command_sender: ResourceHandle<NetworkCommandSender>,
-    pub(crate) message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
-    pub(crate) message_requester: MessageRequesterWorker,
+    pub(crate) block_submitter: mpsc::UnboundedSender<BlockSubmitterWorkerEvent>,
+    pub(crate) block_requester: BlockRequesterWorker,
     pub(crate) consensus_worker: mpsc::UnboundedSender<ConsensusWorkerCommand>,
     #[cfg(feature = "dashboard")]
     pub(crate) dashboard_username: String,

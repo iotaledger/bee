@@ -7,7 +7,7 @@ use axum::{
     routing::get,
     Router,
 };
-use bee_message::BlockId;
+use bee_block::BlockId;
 
 use crate::{
     endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode, CONFIRMED_THRESHOLD},

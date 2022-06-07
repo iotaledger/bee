@@ -7,32 +7,32 @@ use axum::{
     routing::get,
     Router,
 };
-use bee_message::{payload::Payload, semantic::ConflictReason, MessageId};
+use bee_block::{payload::Payload, semantic::ConflictReason, BlockId};
 
 use crate::{
     endpoints::{
         error::ApiError, extractors::path::CustomPath, storage::StorageBackend, ApiArgsFullNode, CONFIRMED_THRESHOLD,
     },
-    types::{dtos::LedgerInclusionStateDto, responses::MessageMetadataResponse},
+    types::{dtos::LedgerInclusionStateDto, responses::BlockMetadataResponse},
 };
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
-    Router::new().route("/messages/:message_id/metadata", get(messages_metadata::<B>))
+    Router::new().route("/blocks/:block_id/metadata", get(block_metadata::<B>))
 }
 
-async fn messages_metadata<B: StorageBackend>(
-    CustomPath(message_id): CustomPath<MessageId>,
+async fn block_metadata<B: StorageBackend>(
+    CustomPath(block_id): CustomPath<BlockId>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
     if !args.tangle.is_confirmed_threshold(CONFIRMED_THRESHOLD) {
         return Err(ApiError::ServiceUnavailable("the node is not synchronized"));
     }
 
-    match args.tangle.get_message_and_metadata(&message_id) {
-        Some((message, metadata)) => {
+    match args.tangle.get_block_and_metadata(&block_id) {
+        Some((block, metadata)) => {
             // TODO: access constants from URTS
-            let ymrsi_delta = 8;
-            let omrsi_delta = 13;
+            let ybrsi_delta = 8;
+            let obrsi_delta = 13;
             let below_max_depth = 15;
 
             let (
@@ -53,7 +53,7 @@ async fn messages_metadata<B: StorageBackend>(
                 let should_reattach;
 
                 if let Some(milestone) = metadata.milestone_index() {
-                    // message is referenced by a milestone
+                    // block is referenced by a milestone
                     is_solid = true;
                     referenced_by_milestone_index = Some(*milestone);
 
@@ -63,7 +63,7 @@ async fn messages_metadata<B: StorageBackend>(
                         milestone_index = None;
                     }
 
-                    ledger_inclusion_state = Some(if let Some(Payload::Transaction(_)) = message.payload() {
+                    ledger_inclusion_state = Some(if let Some(Payload::Transaction(_)) = block.payload() {
                         if metadata.conflict() != ConflictReason::None {
                             conflict_reason = Some(metadata.conflict());
                             LedgerInclusionStateDto::Conflicting
@@ -82,7 +82,7 @@ async fn messages_metadata<B: StorageBackend>(
                     should_reattach = None;
                     should_promote = None;
                 } else if metadata.flags().is_solid() {
-                    // message is not referenced by a milestone but solid
+                    // block is not referenced by a milestone but solid
                     is_solid = true;
                     referenced_by_milestone_index = None;
                     milestone_index = None;
@@ -90,16 +90,16 @@ async fn messages_metadata<B: StorageBackend>(
                     conflict_reason = None;
 
                     let cmi = *args.tangle.get_confirmed_milestone_index();
-                    // unwrap() of OMRSI/YMRSI is safe since message is solid
-                    let (omrsi, ymrsi) = metadata
+                    // unwrap() of OBRSI/YBRSI is safe since block is solid
+                    let (obrsi, ybrsi) = metadata
                         .omrsi_and_ymrsi()
                         .map(|(o, y)| (*o.index(), *y.index()))
                         .unwrap();
 
-                    if (cmi - omrsi) > below_max_depth {
+                    if (cmi - obrsi) > below_max_depth {
                         should_promote = Some(false);
                         should_reattach = Some(true);
-                    } else if (cmi - ymrsi) > ymrsi_delta || (cmi - omrsi) > omrsi_delta {
+                    } else if (cmi - ybrsi) > ybrsi_delta || (cmi - obrsi) > obrsi_delta {
                         should_promote = Some(true);
                         should_reattach = Some(false);
                     } else {
@@ -107,7 +107,7 @@ async fn messages_metadata<B: StorageBackend>(
                         should_reattach = Some(false);
                     };
                 } else {
-                    // the message is not referenced by a milestone and not solid
+                    // the block is not referenced by a milestone and not solid
                     is_solid = false;
                     referenced_by_milestone_index = None;
                     milestone_index = None;
@@ -128,9 +128,9 @@ async fn messages_metadata<B: StorageBackend>(
                 )
             };
 
-            Ok(Json(MessageMetadataResponse {
-                message_id: message_id.to_string(),
-                parent_message_ids: message.parents().iter().map(MessageId::to_string).collect(),
+            Ok(Json(BlockMetadataResponse {
+                block_id: block_id.to_string(),
+                parents: block.parents().iter().map(BlockId::to_string).collect(),
                 is_solid,
                 referenced_by_milestone_index,
                 milestone_index,
