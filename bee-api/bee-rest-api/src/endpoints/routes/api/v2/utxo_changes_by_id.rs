@@ -5,18 +5,15 @@ use axum::{extract::Extension, response::IntoResponse, routing::get, Router};
 use bee_block::payload::milestone::MilestoneId;
 
 use crate::endpoints::{
-    error::ApiError, extractors::path::CustomPath, routes::api::v2::utxo_changes_by_milestone_index,
-    storage::StorageBackend, ApiArgsFullNode,
+    error::ApiError, extractors::path::CustomPath, routes::api::v2::utxo_changes_by_index, storage::StorageBackend,
+    ApiArgsFullNode,
 };
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
-    Router::new().route(
-        "/milestones/:milestone_id/utxo-changes",
-        get(utxo_changes_by_milestone_id::<B>),
-    )
+    Router::new().route("/milestones/:milestone_id/utxo-changes", get(utxo_changes_by_id::<B>))
 }
 
-async fn utxo_changes_by_milestone_id<B: StorageBackend>(
+async fn utxo_changes_by_id<B: StorageBackend>(
     CustomPath(milestone_id): CustomPath<MilestoneId>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
@@ -25,5 +22,5 @@ async fn utxo_changes_by_milestone_id<B: StorageBackend>(
         None => return Err(ApiError::NotFound),
     };
 
-    utxo_changes_by_milestone_index::utxo_changes_by_milestone_index(CustomPath(milestone_index), Extension(args)).await
+    utxo_changes_by_index::utxo_changes_by_index(CustomPath(milestone_index), Extension(args)).await
 }

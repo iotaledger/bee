@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use axum::{extract::Extension, response::IntoResponse, routing::get, Router};
+use axum::{extract::Extension, http::header::HeaderMap, response::IntoResponse, routing::get, Router};
 use bee_block::payload::milestone::MilestoneId;
 
 use crate::endpoints::{
@@ -14,6 +14,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
 }
 
 async fn milestones_by_id<B: StorageBackend>(
+    headers: HeaderMap,
     CustomPath(milestone_id): CustomPath<MilestoneId>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
@@ -22,5 +23,5 @@ async fn milestones_by_id<B: StorageBackend>(
         None => return Err(ApiError::NotFound),
     };
 
-    milestones_by_index::milestones_by_index(CustomPath(milestone_index), Extension(args)).await
+    milestones_by_index::milestones_by_index(headers, CustomPath(milestone_index), Extension(args)).await
 }

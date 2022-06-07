@@ -19,8 +19,8 @@ pub mod receipts_at;
 pub mod tips;
 pub mod transactions_included_block;
 pub mod treasury;
-pub mod utxo_changes_by_milestone_id;
-pub mod utxo_changes_by_milestone_index;
+pub mod utxo_changes_by_id;
+pub mod utxo_changes_by_index;
 
 use axum::Router;
 
@@ -49,7 +49,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
             .merge(tips::filter::<B>())
             .merge(transactions_included_block::filter::<B>())
             .merge(treasury::filter::<B>())
-            .merge(utxo_changes_by_milestone_id::filter::<B>())
-            .merge(utxo_changes_by_milestone_index::filter::<B>()),
+            .merge(utxo_changes_by_id::filter::<B>())
+            .merge(utxo_changes_by_index::filter::<B>()),
     )
 }

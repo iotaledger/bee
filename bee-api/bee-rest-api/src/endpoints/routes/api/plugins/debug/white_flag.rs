@@ -1,7 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::ops::Deref;
 use std::{
     any::TypeId,
     collections::HashSet,
@@ -128,7 +127,7 @@ pub(crate) async fn white_flag<B: StorageBackend>(
                 .map_err(ApiError::InvalidWhiteflag)?;
 
             Ok(Json(WhiteFlagResponse {
-                merkle_tree_hash: prefix_hex::encode(metadata.applied_merkle_root().deref()),
+                merkle_tree_hash: metadata.applied_merkle_root().to_string(),
             }))
         }
         Err(_) => {

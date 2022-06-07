@@ -39,7 +39,6 @@ log = { version = "0.4.17", default-features = false, optional = true }
 multiaddr = { version = "0.14.0", default-features = false, optional = true }
 num_cpus = { version = "1.13.1", default-features = false, optional = true }
 packable = { version = "0.3.3", default-features = false, optional = true }
-prefix-hex = { version = "0.4.0", default-features = false, optional = true }
 regex = { version = "1.5.4", default-features = false, optional = true }
 serde = { version = "1.0.137", default-features = false, features = [ "derive" ] }
 serde_json = { version = "1.0.81", default-features = false, features = [ "alloc" ], optional = true }
@@ -69,7 +68,6 @@ endpoints = [
   "multiaddr",
   "num_cpus",
   "packable",
-  "prefix-hex",
   "regex",
   "serde_json",
   "tokio",

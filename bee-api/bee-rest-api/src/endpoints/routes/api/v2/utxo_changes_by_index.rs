@@ -20,11 +20,11 @@ use crate::{
 pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route(
         "/milestones/by-index/:milestone_index/utxo-changes",
-        get(utxo_changes_by_milestone_index::<B>),
+        get(utxo_changes_by_index::<B>),
     )
 }
 
-pub(crate) async fn utxo_changes_by_milestone_index<B: StorageBackend>(
+pub(crate) async fn utxo_changes_by_index<B: StorageBackend>(
     CustomPath(milestone_index): CustomPath<MilestoneIndex>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {

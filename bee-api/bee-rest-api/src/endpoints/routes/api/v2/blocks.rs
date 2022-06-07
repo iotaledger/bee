@@ -56,7 +56,7 @@ pub(crate) async fn blocks_json<B: StorageBackend>(
     }
 }
 
-async fn blocks_raw<B: StorageBackend>(
+pub(crate) async fn blocks_raw<B: StorageBackend>(
     block_id: BlockId,
     args: ApiArgsFullNode<B>,
 ) -> Result<impl IntoResponse, ApiError> {
