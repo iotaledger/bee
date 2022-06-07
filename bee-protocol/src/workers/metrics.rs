@@ -27,10 +27,10 @@ impl<N: Node> Worker<N> for MetricsWorker {
 
         let metrics = node.resource::<NodeMetrics>();
         node.bus().add_listener::<Self, MilestoneConfirmed, _>(move |event| {
-            metrics.referenced_messages_inc(event.referenced_messages as u64);
-            metrics.excluded_no_transaction_messages_inc(event.excluded_no_transaction_messages.len() as u64);
-            metrics.excluded_conflicting_messages_inc(event.excluded_conflicting_messages.len() as u64);
-            metrics.included_messages_inc(event.included_messages.len() as u64);
+            metrics.referenced_blocks_inc(event.referenced_blocks as u64);
+            metrics.excluded_no_transaction_blocks_inc(event.excluded_no_transaction_blocks.len() as u64);
+            metrics.excluded_conflicting_blocks_inc(event.excluded_conflicting_blocks.len() as u64);
+            metrics.included_blocks_inc(event.included_blocks.len() as u64);
             metrics.created_outputs_inc(event.created_outputs as u64);
             metrics.consumed_outputs_inc(event.consumed_outputs as u64);
             metrics.receipts_inc(event.receipt as u64);

@@ -3,20 +3,20 @@
 
 //! Delete access operations.
 
+use bee_block::{
+    address::Ed25519Address,
+    output::OutputId,
+    payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
+    Block, BlockId,
+};
 use bee_ledger::types::{
     snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
     Unspent,
 };
-use bee_message::{
-    address::Ed25519Address,
-    output::OutputId,
-    payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
-    Message, MessageId,
-};
 use bee_storage::{access::Delete, backend::StorageBackend};
 use bee_tangle::{
-    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
-    unreferenced_message::UnreferencedMessage,
+    block_metadata::BlockMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+    unreferenced_block::UnreferencedBlock,
 };
 
 use crate::storage::Storage;
@@ -33,9 +33,9 @@ macro_rules! impl_delete {
     };
 }
 
-impl_delete!(MessageId, Message, message_id_to_message);
-impl_delete!(MessageId, MessageMetadata, message_id_to_metadata);
-impl_delete!((MessageId, MessageId), (), message_id_to_message_id);
+impl_delete!(BlockId, Block, block_id_to_block);
+impl_delete!(BlockId, BlockMetadata, block_id_to_metadata);
+impl_delete!((BlockId, BlockId), (), block_id_to_block_id);
 impl_delete!(OutputId, CreatedOutput, output_id_to_created_output);
 impl_delete!(OutputId, ConsumedOutput, output_id_to_consumed_output);
 impl_delete!(Unspent, (), output_id_unspent);
@@ -47,9 +47,9 @@ impl_delete!((), SnapshotInfo, snapshot_info);
 impl_delete!(SolidEntryPoint, MilestoneIndex, solid_entry_point_to_milestone_index);
 impl_delete!(MilestoneIndex, OutputDiff, milestone_index_to_output_diff);
 impl_delete!(
-    (MilestoneIndex, UnreferencedMessage),
+    (MilestoneIndex, UnreferencedBlock),
     (),
-    milestone_index_to_unreferenced_message
+    milestone_index_to_unreferenced_block
 );
 impl_delete!((MilestoneIndex, Receipt), (), milestone_index_to_receipt);
 impl_delete!((bool, TreasuryOutput), (), spent_to_treasury_output);

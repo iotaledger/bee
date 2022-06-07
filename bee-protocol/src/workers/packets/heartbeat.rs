@@ -23,7 +23,7 @@ const CONSTANT_SIZE: usize = SOLID_MILESTONE_INDEX_SIZE
 /// - just got paired to another node;
 /// - did a snapshot and pruned away a part of the tangle;
 /// - solidified a new milestone;
-/// It also helps other nodes to know if they can ask it a specific message.
+/// It also helps other nodes to know if they can ask it a specific block.
 #[derive(Clone)]
 pub(crate) struct HeartbeatPacket {
     /// Index of the latest solid milestone.

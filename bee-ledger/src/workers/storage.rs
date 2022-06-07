@@ -5,14 +5,14 @@
 
 use std::collections::HashMap;
 
-use bee_message::{output::OutputId, payload::milestone::MilestoneIndex, Message, MessageId};
+use bee_block::{output::OutputId, payload::milestone::MilestoneIndex, Block, BlockId};
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Exist, Fetch, Insert, Truncate},
     backend,
 };
 use bee_tangle::{
-    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
-    unreferenced_message::UnreferencedMessage,
+    block_metadata::BlockMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+    unreferenced_block::UnreferencedBlock,
 };
 
 use crate::{
@@ -35,10 +35,10 @@ pub trait StorageBackend:
     + Batch<(MilestoneIndex, Receipt), ()>
     + Batch<(bool, TreasuryOutput), ()>
     + Batch<SolidEntryPoint, MilestoneIndex>
-    + Batch<(MilestoneIndex, UnreferencedMessage), ()>
-    + Batch<(MessageId, MessageId), ()>
-    + Batch<MessageId, Message>
-    + Batch<MessageId, MessageMetadata>
+    + Batch<(MilestoneIndex, UnreferencedBlock), ()>
+    + Batch<(BlockId, BlockId), ()>
+    + Batch<BlockId, Block>
+    + Batch<BlockId, BlockMetadata>
     + Batch<MilestoneIndex, MilestoneMetadata>
     + Exist<Unspent, ()>
     + Fetch<(), SnapshotInfo>
@@ -47,7 +47,7 @@ pub trait StorageBackend:
     + Fetch<bool, Vec<TreasuryOutput>>
     + Fetch<MilestoneIndex, MilestoneMetadata>
     + Fetch<MilestoneIndex, Vec<Receipt>>
-    + Fetch<MilestoneIndex, Vec<UnreferencedMessage>>
+    + Fetch<MilestoneIndex, Vec<UnreferencedBlock>>
     + Fetch<MilestoneIndex, OutputDiff>
     + Insert<(), SnapshotInfo>
     + Insert<(), LedgerIndex>
@@ -70,10 +70,10 @@ impl<T> StorageBackend for T where
         + Batch<(MilestoneIndex, Receipt), ()>
         + Batch<(bool, TreasuryOutput), ()>
         + Batch<SolidEntryPoint, MilestoneIndex>
-        + Batch<(MilestoneIndex, UnreferencedMessage), ()>
-        + Batch<(MessageId, MessageId), ()>
-        + Batch<MessageId, Message>
-        + Batch<MessageId, MessageMetadata>
+        + Batch<(MilestoneIndex, UnreferencedBlock), ()>
+        + Batch<(BlockId, BlockId), ()>
+        + Batch<BlockId, Block>
+        + Batch<BlockId, BlockMetadata>
         + Batch<MilestoneIndex, MilestoneMetadata>
         + Exist<Unspent, ()>
         + Fetch<(), SnapshotInfo>
@@ -82,7 +82,7 @@ impl<T> StorageBackend for T where
         + Fetch<bool, Vec<TreasuryOutput>>
         + Fetch<MilestoneIndex, MilestoneMetadata>
         + Fetch<MilestoneIndex, Vec<Receipt>>
-        + Fetch<MilestoneIndex, Vec<UnreferencedMessage>>
+        + Fetch<MilestoneIndex, Vec<UnreferencedBlock>>
         + Fetch<MilestoneIndex, OutputDiff>
         + Insert<(), SnapshotInfo>
         + Insert<(), LedgerIndex>

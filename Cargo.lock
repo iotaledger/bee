@@ -285,6 +285,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "bee-block"
+version = "0.1.0"
+dependencies = [
+ "bech32",
+ "bee-pow",
+ "bee-ternary 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bee-test",
+ "bitflags",
+ "bytemuck",
+ "derive_more",
+ "hashbrown 0.12.1",
+ "hex",
+ "iota-crypto",
+ "iterator-sorted",
+ "num_cpus",
+ "packable",
+ "prefix-hex 0.2.0",
+ "primitive-types",
+ "serde",
+ "serde-big-array",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
 name = "bee-gossip"
 version = "0.6.0"
 dependencies = [
@@ -311,7 +336,7 @@ name = "bee-ledger"
 version = "0.7.0"
 dependencies = [
  "async-trait",
- "bee-message",
+ "bee-block",
  "bee-runtime",
  "bee-storage",
  "bee-tangle",
@@ -333,41 +358,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "bee-message"
-version = "0.2.0"
-dependencies = [
- "bech32",
- "bee-pow",
- "bee-ternary 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "bee-test",
- "bitflags",
- "bytemuck",
- "derive_more",
- "hashbrown 0.12.1",
- "hex",
- "iota-crypto",
- "iterator-sorted",
- "num_cpus",
- "packable",
- "prefix-hex 0.2.0",
- "primitive-types",
- "serde",
- "serde-big-array",
- "serde_json",
- "thiserror",
-]
-
-[[package]]
 name = "bee-node"
-version = "1.0.0-alpha.4"
+version = "1.0.0-alpha.5"
 dependencies = [
  "anymap",
  "async-trait",
  "auth-helper",
  "bee-autopeering",
+ "bee-block",
  "bee-gossip",
  "bee-ledger",
- "bee-message",
  "bee-plugin",
  "bee-plugin-dashboard",
  "bee-plugin-mps",
@@ -418,9 +418,9 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "auth-helper",
+ "bee-block",
  "bee-gossip",
  "bee-ledger",
- "bee-message",
  "bee-protocol",
  "bee-rest-api",
  "bee-runtime",
@@ -487,9 +487,9 @@ dependencies = [
  "async-priority-queue",
  "async-trait",
  "bee-autopeering",
+ "bee-block",
  "bee-gossip",
  "bee-ledger",
- "bee-message",
  "bee-pow",
  "bee-runtime",
  "bee-storage",
@@ -520,9 +520,9 @@ dependencies = [
  "axum",
  "base64 0.13.0",
  "bech32",
+ "bee-block",
  "bee-gossip",
  "bee-ledger",
- "bee-message",
  "bee-pow",
  "bee-protocol",
  "bee-runtime",
@@ -569,8 +569,8 @@ dependencies = [
 name = "bee-storage-memory"
 version = "0.4.0"
 dependencies = [
+ "bee-block",
  "bee-ledger",
- "bee-message",
  "bee-storage",
  "bee-storage-test",
  "bee-tangle",
@@ -590,8 +590,8 @@ dependencies = [
 name = "bee-storage-rocksdb"
 version = "0.8.0"
 dependencies = [
+ "bee-block",
  "bee-ledger",
- "bee-message",
  "bee-storage",
  "bee-storage-test",
  "bee-tangle",
@@ -608,8 +608,8 @@ dependencies = [
 name = "bee-storage-sled"
 version = "0.7.0"
 dependencies = [
+ "bee-block",
  "bee-ledger",
- "bee-message",
  "bee-storage",
  "bee-storage-test",
  "bee-tangle",
@@ -625,8 +625,8 @@ dependencies = [
 name = "bee-storage-test"
 version = "0.6.0"
 dependencies = [
+ "bee-block",
  "bee-ledger",
- "bee-message",
  "bee-storage",
  "bee-tangle",
  "bee-test",
@@ -638,7 +638,7 @@ name = "bee-tangle"
 version = "0.3.0"
 dependencies = [
  "async-trait",
- "bee-message",
+ "bee-block",
  "bee-runtime",
  "bee-storage",
  "bee-storage-null",
@@ -681,8 +681,8 @@ dependencies = [
 name = "bee-test"
 version = "0.1.0"
 dependencies = [
+ "bee-block",
  "bee-ledger",
- "bee-message",
  "bee-tangle",
  "bee-ternary 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "bytemuck",
@@ -2679,9 +2679,9 @@ dependencies = [
 
 [[package]]
 name = "packable"
-version = "0.3.2"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a47762ff3c7cbf55a5b822ce505b97bbcf1617be780f71c3ee43c272dd4a1867"
+checksum = "3ba68b40fa9b816f4bba41799ace47d683ee7c1c8a93b0bf7c449c1acd35ecbe"
 dependencies = [
  "autocfg",
  "packable-derive",
@@ -2691,9 +2691,9 @@ dependencies = [
 
 [[package]]
 name = "packable-derive"
-version = "0.3.2"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2ec4d652900dcba58871e8f421111f1459bee2d40fe0bb43df07008b17598b0"
+checksum = "49ac147a716456f01535d90ead1fa84341886a5ee764c86690937e59335c928d"
 dependencies = [
  "proc-macro-crate",
  "proc-macro-error",

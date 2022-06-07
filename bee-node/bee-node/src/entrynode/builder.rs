@@ -227,7 +227,7 @@ async fn initialize_autopeering(
     let peerstore_cfg =
         RocksDbPeerStoreConfig::new(builder.config().autopeering.peer_storage_path(), peerstore_options);
 
-    // A local entity that can sign outgoing messages, and announce services.
+    // A local entity that can sign outgoing blocks, and announce services.
     let keypair = builder.config().local().keypair().clone();
     let local = create_local_autopeering_entity(keypair, builder.config());
 

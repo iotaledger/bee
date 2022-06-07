@@ -3,19 +3,19 @@
 
 use std::marker::PhantomData;
 
-use bee_ledger::types::{
-    snapshot::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput, Unspent,
-};
-use bee_message::{
+use bee_block::{
     address::Ed25519Address,
     output::OutputId,
     payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
-    Message, MessageId,
+    Block, BlockId,
+};
+use bee_ledger::types::{
+    snapshot::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput, Unspent,
 };
 use bee_storage::{access::AsIterator, system::System};
 use bee_tangle::{
-    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
-    unreferenced_message::UnreferencedMessage,
+    block_metadata::BlockMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+    unreferenced_block::UnreferencedBlock,
 };
 use packable::PackableExt;
 use parking_lot::RwLockReadGuard;
@@ -87,38 +87,38 @@ impl<'a> StorageIterator<'a, u8, System> {
     }
 }
 
-impl<'a> StorageIterator<'a, MessageId, Message> {
-    fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (MessageId, Message) {
+impl<'a> StorageIterator<'a, BlockId, Block> {
+    fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (BlockId, Block) {
         (
             // Unpacking from storage is fine.
-            MessageId::unpack_unverified(&mut key).unwrap(),
+            BlockId::unpack_unverified(&mut key).unwrap(),
             // Unpacking from storage is fine.
-            Message::unpack_unverified(&mut value).unwrap(),
+            Block::unpack_unverified(&mut value).unwrap(),
         )
     }
 }
 
-impl<'a> StorageIterator<'a, MessageId, MessageMetadata> {
-    fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (MessageId, MessageMetadata) {
+impl<'a> StorageIterator<'a, BlockId, BlockMetadata> {
+    fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (BlockId, BlockMetadata) {
         (
             // Unpacking from storage is fine.
-            MessageId::unpack_unverified(&mut key).unwrap(),
+            BlockId::unpack_unverified(&mut key).unwrap(),
             // Unpacking from storage is fine.
-            MessageMetadata::unpack_unverified(&mut value).unwrap(),
+            BlockMetadata::unpack_unverified(&mut value).unwrap(),
         )
     }
 }
 
-impl<'a> StorageIterator<'a, (MessageId, MessageId), ()> {
-    fn unpack_key_value(key: &[u8], _: &[u8]) -> ((MessageId, MessageId), ()) {
-        let (mut parent, mut child) = key.split_at(MessageId::LENGTH);
+impl<'a> StorageIterator<'a, (BlockId, BlockId), ()> {
+    fn unpack_key_value(key: &[u8], _: &[u8]) -> ((BlockId, BlockId), ()) {
+        let (mut parent, mut child) = key.split_at(BlockId::LENGTH);
 
         (
             (
                 // Unpacking from storage is fine.
-                MessageId::unpack_unverified(&mut parent).unwrap(),
+                BlockId::unpack_unverified(&mut parent).unwrap(),
                 // Unpacking from storage is fine.
-                MessageId::unpack_unverified(&mut child).unwrap(),
+                BlockId::unpack_unverified(&mut child).unwrap(),
             ),
             (),
         )
@@ -159,7 +159,7 @@ impl<'a> StorageIterator<'a, Unspent, ()> {
 
 impl<'a> StorageIterator<'a, (Ed25519Address, OutputId), ()> {
     fn unpack_key_value(key: &[u8], _: &[u8]) -> ((Ed25519Address, OutputId), ()) {
-        let (mut address, mut output_id) = key.split_at(MessageId::LENGTH);
+        let (mut address, mut output_id) = key.split_at(BlockId::LENGTH);
 
         (
             (
@@ -237,16 +237,16 @@ impl<'a> StorageIterator<'a, MilestoneIndex, OutputDiff> {
     }
 }
 
-impl<'a> StorageIterator<'a, (MilestoneIndex, UnreferencedMessage), ()> {
-    fn unpack_key_value(key: &[u8], _: &[u8]) -> ((MilestoneIndex, UnreferencedMessage), ()) {
-        let (mut index, mut unreferenced_message) = key.split_at(std::mem::size_of::<MilestoneIndex>());
+impl<'a> StorageIterator<'a, (MilestoneIndex, UnreferencedBlock), ()> {
+    fn unpack_key_value(key: &[u8], _: &[u8]) -> ((MilestoneIndex, UnreferencedBlock), ()) {
+        let (mut index, mut unreferenced_block) = key.split_at(std::mem::size_of::<MilestoneIndex>());
 
         (
             (
                 // Unpacking from storage is fine.
                 MilestoneIndex::unpack_unverified(&mut index).unwrap(),
                 // Unpacking from storage is fine.
-                UnreferencedMessage::unpack_unverified(&mut unreferenced_message).unwrap(),
+                UnreferencedBlock::unpack_unverified(&mut unreferenced_block).unwrap(),
             ),
             (),
         )
@@ -286,8 +286,8 @@ impl<'a> StorageIterator<'a, (bool, TreasuryOutput), ()> {
 }
 
 impl_iter!(u8, System, CF_SYSTEM);
-impl_iter!(MessageId, Message, CF_MESSAGE_ID_TO_MESSAGE);
-impl_iter!((MessageId, MessageId), (), CF_MESSAGE_ID_TO_MESSAGE_ID);
+impl_iter!(BlockId, Block, CF_BLOCK_ID_TO_BLOCK);
+impl_iter!((BlockId, BlockId), (), CF_BLOCK_ID_TO_BLOCK_ID);
 impl_iter!(OutputId, CreatedOutput, CF_OUTPUT_ID_TO_CREATED_OUTPUT);
 impl_iter!(OutputId, ConsumedOutput, CF_OUTPUT_ID_TO_CONSUMED_OUTPUT);
 impl_iter!(Unspent, (), CF_OUTPUT_ID_UNSPENT);
@@ -303,28 +303,28 @@ impl_iter!((), SnapshotInfo, CF_SNAPSHOT_INFO);
 impl_iter!(SolidEntryPoint, MilestoneIndex, CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX);
 impl_iter!(MilestoneIndex, OutputDiff, CF_MILESTONE_INDEX_TO_OUTPUT_DIFF);
 impl_iter!(
-    (MilestoneIndex, UnreferencedMessage),
+    (MilestoneIndex, UnreferencedBlock),
     (),
-    CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE
+    CF_MILESTONE_INDEX_TO_UNREFERENCED_BLOCK
 );
 impl_iter!((MilestoneIndex, Receipt), (), CF_MILESTONE_INDEX_TO_RECEIPT);
 impl_iter!((bool, TreasuryOutput), (), CF_SPENT_TO_TREASURY_OUTPUT);
 
-impl<'a> AsIterator<'a, MessageId, MessageMetadata> for Storage {
-    type AsIter = StorageIterator<'a, MessageId, MessageMetadata>;
+impl<'a> AsIterator<'a, BlockId, BlockMetadata> for Storage {
+    type AsIter = StorageIterator<'a, BlockId, BlockMetadata>;
 
     fn iter(&'a self) -> Result<Self::AsIter, <Self as StorageBackend>::Error> {
         Ok(StorageIterator::new(
             self.inner
-                .iterator_cf(self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?, IteratorMode::Start),
-            Some(self.locks.message_id_to_metadata.read()),
+                .iterator_cf(self.cf_handle(CF_BLOCK_ID_TO_METADATA)?, IteratorMode::Start),
+            Some(self.locks.block_id_to_metadata.read()),
         ))
     }
 }
 
 /// An iterator over all key-value pairs of a column family.
-impl<'a> Iterator for StorageIterator<'a, MessageId, MessageMetadata> {
-    type Item = Result<(MessageId, MessageMetadata), <Storage as StorageBackend>::Error>;
+impl<'a> Iterator for StorageIterator<'a, BlockId, BlockMetadata> {
+    type Item = Result<(BlockId, BlockMetadata), <Storage as StorageBackend>::Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.inner

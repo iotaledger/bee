@@ -8,7 +8,7 @@ use std::{
     path::Path,
 };
 
-use bee_message::{
+use bee_block::{
     output::{self, OutputId},
     payload::milestone::MilestoneIndex,
 };

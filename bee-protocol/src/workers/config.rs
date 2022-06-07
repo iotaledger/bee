@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{
+use bee_block::{
     output::{ByteCostConfig, ByteCostConfigBuilder},
     payload::milestone::MilestoneIndex,
 };
@@ -12,7 +12,7 @@ use crate::types::milestone_key_range::MilestoneKeyRange;
 const DEFAULT_MINIMUM_POW_SCORE: f64 = 4000.0;
 const DEFAULT_COO_PUBLIC_KEY_COUNT: usize = 2;
 const DEFAULT_COO_PUBLIC_KEY_RANGES: [(&str, MilestoneIndex, MilestoneIndex); 0] = [];
-const DEFAULT_MESSAGE_WORKER_CACHE: usize = 10000;
+const DEFAULT_BLOCK_WORKER_CACHE: usize = 10000;
 const DEFAULT_STATUS_INTERVAL: u64 = 10;
 const DEFAULT_MILESTONE_SYNC_COUNT: u32 = 200;
 
@@ -28,8 +28,8 @@ struct ProtocolCoordinatorConfigBuilder {
 #[derive(Default, Deserialize, PartialEq)]
 #[must_use]
 struct ProtocolWorkersConfigBuilder {
-    #[serde(alias = "messageWorkerCache")]
-    message_worker_cache: Option<usize>,
+    #[serde(alias = "blockWorkerCache")]
+    block_worker_cache: Option<usize>,
     #[serde(alias = "statusInterval")]
     status_interval: Option<u64>,
     #[serde(alias = "milestoneSyncCount")]
@@ -72,9 +72,9 @@ impl ProtocolConfigBuilder {
         self
     }
 
-    /// Sets the message worker cache of the `ProtocolConfigBuilder`.
-    pub fn message_worker_cache(mut self, message_worker_cache: usize) -> Self {
-        self.workers.message_worker_cache.replace(message_worker_cache);
+    /// Sets the block worker cache of the `ProtocolConfigBuilder`.
+    pub fn block_worker_cache(mut self, block_worker_cache: usize) -> Self {
+        self.workers.block_worker_cache.replace(block_worker_cache);
         self
     }
 
@@ -108,10 +108,7 @@ impl ProtocolConfigBuilder {
                 }),
             },
             workers: ProtocolWorkersConfig {
-                message_worker_cache: self
-                    .workers
-                    .message_worker_cache
-                    .unwrap_or(DEFAULT_MESSAGE_WORKER_CACHE),
+                block_worker_cache: self.workers.block_worker_cache.unwrap_or(DEFAULT_BLOCK_WORKER_CACHE),
                 status_interval: self.workers.status_interval.unwrap_or(DEFAULT_STATUS_INTERVAL),
                 milestone_sync_count: self
                     .workers
@@ -133,7 +130,7 @@ pub struct ProtocolCoordinatorConfig {
 /// Configuration for the protocol workers.
 #[derive(Clone)]
 pub struct ProtocolWorkersConfig {
-    pub(crate) message_worker_cache: usize,
+    pub(crate) block_worker_cache: usize,
     pub(crate) status_interval: u64,
     pub(crate) milestone_sync_count: u32,
 }

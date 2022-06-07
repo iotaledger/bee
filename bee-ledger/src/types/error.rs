@@ -3,7 +3,7 @@
 
 use core::{convert::Infallible, num::TryFromIntError};
 
-use bee_message::{payload::milestone::MilestoneId, Error as MessageError};
+use bee_block::{payload::milestone::MilestoneId, Error as BlockError};
 
 /// Errors related to ledger types.
 #[derive(Debug, thiserror::Error)]
@@ -11,9 +11,9 @@ pub enum Error {
     /// I/O error.
     #[error("i/o error: {0}")]
     Io(#[from] std::io::Error),
-    /// Message error.
-    #[error("message error: {0}")]
-    Message(#[from] MessageError),
+    /// Block error.
+    #[error("block error: {0}")]
+    Block(#[from] BlockError),
     /// Invalid output count error.
     #[error("Invalid output count: {0}")]
     InvalidOutputCount(TryFromIntError),

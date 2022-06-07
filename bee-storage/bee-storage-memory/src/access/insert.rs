@@ -3,15 +3,15 @@
 
 //! Insert access operations.
 
-use bee_ledger::types::{
-    snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
-    Unspent,
-};
-use bee_message::{
+use bee_block::{
     address::Ed25519Address,
     output::OutputId,
     payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
-    Message, MessageId,
+    Block, BlockId,
+};
+use bee_ledger::types::{
+    snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
+    Unspent,
 };
 use bee_storage::{
     access::{Insert, InsertStrict},
@@ -19,8 +19,8 @@ use bee_storage::{
     system::System,
 };
 use bee_tangle::{
-    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
-    unreferenced_message::UnreferencedMessage,
+    block_metadata::BlockMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+    unreferenced_block::UnreferencedBlock,
 };
 
 use crate::storage::Storage;
@@ -38,8 +38,8 @@ macro_rules! impl_insert {
 }
 
 impl_insert!(u8, System, system);
-impl_insert!(MessageId, Message, message_id_to_message);
-impl_insert!((MessageId, MessageId), (), message_id_to_message_id);
+impl_insert!(BlockId, Block, block_id_to_block);
+impl_insert!((BlockId, BlockId), (), block_id_to_block_id);
 impl_insert!(OutputId, CreatedOutput, output_id_to_created_output);
 impl_insert!(OutputId, ConsumedOutput, output_id_to_consumed_output);
 impl_insert!(Unspent, (), output_id_unspent);
@@ -51,19 +51,19 @@ impl_insert!((), SnapshotInfo, snapshot_info);
 impl_insert!(SolidEntryPoint, MilestoneIndex, solid_entry_point_to_milestone_index);
 impl_insert!(MilestoneIndex, OutputDiff, milestone_index_to_output_diff);
 impl_insert!(
-    (MilestoneIndex, UnreferencedMessage),
+    (MilestoneIndex, UnreferencedBlock),
     (),
-    milestone_index_to_unreferenced_message
+    milestone_index_to_unreferenced_block
 );
 impl_insert!((MilestoneIndex, Receipt), (), milestone_index_to_receipt);
 impl_insert!((bool, TreasuryOutput), (), spent_to_treasury_output);
 
-impl InsertStrict<MessageId, MessageMetadata> for Storage {
-    fn insert_strict(&self, k: &MessageId, v: &MessageMetadata) -> Result<(), <Self as StorageBackend>::Error> {
+impl InsertStrict<BlockId, BlockMetadata> for Storage {
+    fn insert_strict(&self, k: &BlockId, v: &BlockMetadata) -> Result<(), <Self as StorageBackend>::Error> {
         let mut guard = self.inner.write()?;
 
-        if !guard.message_id_to_metadata.exist(k) {
-            guard.message_id_to_metadata.insert(k, v);
+        if !guard.block_id_to_metadata.exist(k) {
+            guard.block_id_to_metadata.insert(k, v);
         }
 
         drop(guard);

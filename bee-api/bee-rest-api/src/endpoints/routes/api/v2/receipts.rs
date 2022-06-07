@@ -8,7 +8,7 @@ use axum::{
     Router,
 };
 use bee_ledger::types::Receipt;
-use bee_message::payload::milestone::MilestoneIndex;
+use bee_block::payload::milestone::MilestoneIndex;
 use bee_storage::access::AsIterator;
 use log::error;
 

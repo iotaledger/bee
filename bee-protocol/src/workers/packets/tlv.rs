@@ -88,9 +88,7 @@ mod tests {
     use rand::Rng;
 
     use super::*;
-    use crate::workers::packets::{
-        HeartbeatPacket, MessagePacket, MessageRequestPacket, MilestoneRequestPacket, Packet,
-    };
+    use crate::workers::packets::{BlockPacket, BlockRequestPacket, HeartbeatPacket, MilestoneRequestPacket, Packet};
 
     fn invalid_advertised_type<P: Packet>() {
         match tlv_from_bytes::<P>(
@@ -214,19 +212,19 @@ mod tests {
     );
 
     implement_tlv_tests!(
-        MessagePacket,
-        invalid_advertised_type_message,
-        invalid_advertised_length_message,
-        length_out_of_range_message,
-        fuzz_message
+        BlockPacket,
+        invalid_advertised_type_block,
+        invalid_advertised_length_block,
+        length_out_of_range_block,
+        fuzz_block
     );
 
     implement_tlv_tests!(
-        MessageRequestPacket,
-        invalid_advertised_type_message_request,
-        invalid_advertised_length_message_request,
-        length_out_of_range_message_request,
-        fuzz_message_request
+        BlockRequestPacket,
+        invalid_advertised_type_block_request,
+        invalid_advertised_length_block_request,
+        length_out_of_range_block_request,
+        fuzz_block_request
     );
 
     implement_tlv_tests!(

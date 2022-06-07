@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::payload::{milestone::MilestoneIndex, transaction::TransactionId};
+use bee_block::payload::{milestone::MilestoneIndex, transaction::TransactionId};
 
 /// Represents a newly consumed output.
 #[derive(Clone, Debug, Eq, PartialEq, packable::Packable)]
@@ -32,7 +32,7 @@ impl ConsumedOutput {
     }
 
     /// Returns the milestone timestamp of the [`ConsumedOutput`].
-    pub fn milestone_timestamp(&self) -> MilestoneIndex {
-        self.milestone_index
+    pub fn milestone_timestamp(&self) -> u32 {
+        self.milestone_timestamp
     }
 }

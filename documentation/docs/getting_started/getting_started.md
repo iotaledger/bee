@@ -22,7 +22,7 @@ Because of the node's importance, you need to make sure that your device meets t
 
 ## Recommended Requirements
 
-To handle a potentially high rate of messages per second, nodes need enough computational power to run reliably, so they
+To handle a potentially high rate of blocks per second, nodes need enough computational power to run reliably, so they
 should have the following minimum specifications:
 
 - 4 cores or 4 vCPU.

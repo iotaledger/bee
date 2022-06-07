@@ -12,7 +12,7 @@ use log::info;
 use tokio::time::interval;
 use tokio_stream::wrappers::IntervalStream;
 
-use crate::workers::{storage::StorageBackend, MessageRequesterWorker, RequestedMessages};
+use crate::workers::{storage::StorageBackend, BlockRequesterWorker, RequestedBlocks};
 
 #[derive(Default)]
 pub(crate) struct StatusWorker;
@@ -28,7 +28,7 @@ where
     fn dependencies() -> &'static [TypeId] {
         vec![
             TypeId::of::<TangleWorker>(),
-            TypeId::of::<MessageRequesterWorker>(),
+            TypeId::of::<BlockRequesterWorker>(),
             TypeId::of::<ConsensusWorker>(),
         ]
         .leak()
@@ -36,7 +36,7 @@ where
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let tangle = node.resource::<Tangle<N::Backend>>();
-        let requested_messages = node.resource::<RequestedMessages>();
+        let requested_blocks = node.resource::<RequestedBlocks>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
@@ -68,7 +68,7 @@ where
                         confirmed_progress,
                         solid_milestone_index,
                         solid_progress,
-                        requested_messages.len(),
+                        requested_blocks.len(),
                     )
                 };
 

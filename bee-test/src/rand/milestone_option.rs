@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::payload::milestone::ReceiptMilestoneOption;
+use bee_block::payload::milestone::ReceiptMilestoneOption;
 
 use crate::rand::{
     bool::rand_bool, milestone::rand_milestone_index, payload::rand_treasury_transaction_payload,

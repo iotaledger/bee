@@ -1,8 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_block::payload::milestone::option::{MigratedFundsEntry, TailTransactionHash};
 use bee_ledger::types::Receipt;
-use bee_message::payload::milestone::option::{MigratedFundsEntry, TailTransactionHash};
 use bee_ternary::{T5B1Buf, Tryte, TryteBuf};
 use bytemuck::cast_slice;
 

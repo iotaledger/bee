@@ -3,20 +3,20 @@
 
 // TODO document
 
+mod block;
+mod block_request;
 mod header;
 mod heartbeat;
-mod message;
-mod message_request;
 mod milestone_request;
 mod tlv;
 
 use std::ops::Range;
 
 pub(crate) use self::{
+    block::BlockPacket,
+    block_request::BlockRequestPacket,
     header::{HeaderPacket, HEADER_SIZE},
     heartbeat::HeartbeatPacket,
-    message::MessagePacket,
-    message_request::MessageRequestPacket,
     milestone_request::MilestoneRequestPacket,
     tlv::{tlv_from_bytes, tlv_to_bytes, Error as TlvError},
 };

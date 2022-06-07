@@ -9,7 +9,7 @@ use log::warn;
 use crate::{
     types::metrics::NodeMetrics,
     workers::{
-        packets::{tlv_to_bytes, HeartbeatPacket, MessagePacket, MessageRequestPacket, MilestoneRequestPacket, Packet},
+        packets::{tlv_to_bytes, BlockPacket, BlockRequestPacket, HeartbeatPacket, MilestoneRequestPacket, Packet},
         peer::PeerManager,
     },
 };
@@ -43,18 +43,18 @@ impl Sender<MilestoneRequestPacket> {
     }
 }
 
-impl Sender<MessagePacket> {
-    pub(crate) fn send(packet: &MessagePacket, id: &PeerId, peer_manager: &PeerManager, metrics: &NodeMetrics) {
+impl Sender<BlockPacket> {
+    pub(crate) fn send(packet: &BlockPacket, id: &PeerId, peer_manager: &PeerManager, metrics: &NodeMetrics) {
         peer_manager
             .get_map(id, |peer| {
                 if let Some(ref sender) = peer.1 {
                     match sender.0.send(tlv_to_bytes(packet)) {
                         Ok(_) => {
-                            peer.0.metrics().messages_sent_inc();
-                            metrics.messages_sent_inc();
+                            peer.0.metrics().blocks_sent_inc();
+                            metrics.blocks_sent_inc();
                         }
                         Err(e) => {
-                            warn!("Sending MessagePacket to {} failed: {:?}.", id, e);
+                            warn!("Sending BlockPacket to {} failed: {:?}.", id, e);
                         }
                     }
                 }
@@ -63,18 +63,18 @@ impl Sender<MessagePacket> {
     }
 }
 
-impl Sender<MessageRequestPacket> {
-    pub(crate) fn send(packet: &MessageRequestPacket, id: &PeerId, peer_manager: &PeerManager, metrics: &NodeMetrics) {
+impl Sender<BlockRequestPacket> {
+    pub(crate) fn send(packet: &BlockRequestPacket, id: &PeerId, peer_manager: &PeerManager, metrics: &NodeMetrics) {
         peer_manager
             .get_map(id, |peer| {
                 if let Some(ref sender) = peer.1 {
                     match sender.0.send(tlv_to_bytes(packet)) {
                         Ok(_) => {
-                            peer.0.metrics().message_requests_sent_inc();
-                            metrics.message_requests_sent_inc();
+                            peer.0.metrics().block_requests_sent_inc();
+                            metrics.block_requests_sent_inc();
                         }
                         Err(e) => {
-                            warn!("Sending MessageRequestPacket to {} failed: {:?}.", id, e);
+                            warn!("Sending BlockRequestPacket to {} failed: {:?}.", id, e);
                         }
                     }
                 }

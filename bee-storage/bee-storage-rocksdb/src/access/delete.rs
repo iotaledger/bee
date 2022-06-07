@@ -1,20 +1,20 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_block::{
+    address::Ed25519Address,
+    output::OutputId,
+    payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
+    Block, BlockId,
+};
 use bee_ledger::types::{
     snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
     Unspent,
 };
-use bee_message::{
-    address::Ed25519Address,
-    output::OutputId,
-    payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
-    Message, MessageId,
-};
 use bee_storage::access::Delete;
 use bee_tangle::{
-    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
-    unreferenced_message::UnreferencedMessage,
+    block_metadata::BlockMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+    unreferenced_block::UnreferencedBlock,
 };
 use packable::PackableExt;
 
@@ -23,21 +23,20 @@ use crate::{
     storage::{Storage, StorageBackend},
 };
 
-impl Delete<MessageId, Message> for Storage {
-    fn delete(&self, message_id: &MessageId) -> Result<(), <Self as StorageBackend>::Error> {
-        self.inner
-            .delete_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?, message_id)?;
+impl Delete<BlockId, Block> for Storage {
+    fn delete(&self, block_id: &BlockId) -> Result<(), <Self as StorageBackend>::Error> {
+        self.inner.delete_cf(self.cf_handle(CF_BLOCK_ID_TO_BLOCK)?, block_id)?;
 
         Ok(())
     }
 }
 
-impl Delete<MessageId, MessageMetadata> for Storage {
-    fn delete(&self, message_id: &MessageId) -> Result<(), <Self as StorageBackend>::Error> {
-        let guard = self.locks.message_id_to_metadata.read();
+impl Delete<BlockId, BlockMetadata> for Storage {
+    fn delete(&self, block_id: &BlockId) -> Result<(), <Self as StorageBackend>::Error> {
+        let guard = self.locks.block_id_to_metadata.read();
 
         self.inner
-            .delete_cf(self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?, message_id)?;
+            .delete_cf(self.cf_handle(CF_BLOCK_ID_TO_METADATA)?, block_id)?;
 
         drop(guard);
 
@@ -45,13 +44,12 @@ impl Delete<MessageId, MessageMetadata> for Storage {
     }
 }
 
-impl Delete<(MessageId, MessageId), ()> for Storage {
-    fn delete(&self, (parent, child): &(MessageId, MessageId)) -> Result<(), <Self as StorageBackend>::Error> {
+impl Delete<(BlockId, BlockId), ()> for Storage {
+    fn delete(&self, (parent, child): &(BlockId, BlockId)) -> Result<(), <Self as StorageBackend>::Error> {
         let mut key = parent.as_ref().to_vec();
         key.extend_from_slice(child.as_ref());
 
-        self.inner
-            .delete_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE_ID)?, key)?;
+        self.inner.delete_cf(self.cf_handle(CF_BLOCK_ID_TO_BLOCK_ID)?, key)?;
 
         Ok(())
     }
@@ -152,16 +150,16 @@ impl Delete<MilestoneIndex, OutputDiff> for Storage {
     }
 }
 
-impl Delete<(MilestoneIndex, UnreferencedMessage), ()> for Storage {
+impl Delete<(MilestoneIndex, UnreferencedBlock), ()> for Storage {
     fn delete(
         &self,
-        (index, unreferenced_message): &(MilestoneIndex, UnreferencedMessage),
+        (index, unreferenced_block): &(MilestoneIndex, UnreferencedBlock),
     ) -> Result<(), <Self as StorageBackend>::Error> {
         let mut key = index.pack_to_vec();
-        key.extend_from_slice(unreferenced_message.as_ref());
+        key.extend_from_slice(unreferenced_block.as_ref());
 
         self.inner
-            .delete_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE)?, key)?;
+            .delete_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_UNREFERENCED_BLOCK)?, key)?;
 
         Ok(())
     }

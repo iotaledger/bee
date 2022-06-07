@@ -5,11 +5,11 @@
 
 use std::collections::HashMap;
 
-use bee_message::{
+use bee_block::{
     output::{Output, OutputId},
     payload::milestone::MilestoneIndex,
     semantic::ConflictReason,
-    MessageId,
+    BlockId,
 };
 
 use crate::types::{ConsumedOutput, CreatedOutput, Receipt};
@@ -17,20 +17,20 @@ use crate::types::{ConsumedOutput, CreatedOutput, Receipt};
 /// An event that indicates that a milestone was confirmed.
 #[derive(Clone)]
 pub struct MilestoneConfirmed {
-    /// The message identifier of the milestone.
-    pub message_id: MessageId,
+    /// The block identifier of the milestone.
+    pub block_id: BlockId,
     /// The index of the milestone.
     pub index: MilestoneIndex,
     /// The timestamp of the milestone.
     pub timestamp: u32,
-    /// The number of messages referenced by the milestone.
-    pub referenced_messages: usize,
-    /// The messages that were excluded because not containing a transaction.
-    pub excluded_no_transaction_messages: Vec<MessageId>,
-    /// The messages that were excluded because conflicting with the ledger state.
-    pub excluded_conflicting_messages: Vec<(MessageId, ConflictReason)>,
-    /// The messages that were included.
-    pub included_messages: Vec<MessageId>,
+    /// The number of blocks referenced by the milestone.
+    pub referenced_blocks: usize,
+    /// The blocks that were excluded because not containing a transaction.
+    pub excluded_no_transaction_blocks: Vec<BlockId>,
+    /// The blocks that were excluded because conflicting with the ledger state.
+    pub excluded_conflicting_blocks: Vec<(BlockId, ConflictReason)>,
+    /// The blocks that were included.
+    pub included_blocks: Vec<BlockId>,
     /// The number of outputs consumed within the milestone.
     pub consumed_outputs: usize,
     /// The number of outputs created within the milestone.
@@ -39,18 +39,18 @@ pub struct MilestoneConfirmed {
     pub receipt: bool,
 }
 
-/// An event that indicates that a message was referenced.
+/// An event that indicates that a block was referenced.
 #[derive(Clone)]
-pub struct MessageReferenced {
-    /// The message identifier of the message.
-    pub message_id: MessageId,
+pub struct BlockReferenced {
+    /// The block identifier of the block.
+    pub block_id: BlockId,
 }
 
 /// An event that indicates that an output was consumed.
 #[derive(Clone)]
 pub struct OutputConsumed {
-    /// The identifier of the message that contains the transaction that consumes the output.
-    pub message_id: MessageId,
+    /// The identifier of the block that contains the transaction that consumes the output.
+    pub block_id: BlockId,
     /// The identifier of the consumed output.
     pub output_id: OutputId,
     /// The consumed output.

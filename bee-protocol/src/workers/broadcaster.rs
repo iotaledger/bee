@@ -13,12 +13,12 @@ use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use crate::{
     types::metrics::NodeMetrics,
-    workers::{packets::MessagePacket, peer::PeerManager, sender::Sender, MetricsWorker, PeerManagerResWorker},
+    workers::{packets::BlockPacket, peer::PeerManager, sender::Sender, MetricsWorker, PeerManagerResWorker},
 };
 
 pub(crate) struct BroadcasterWorkerEvent {
     pub(crate) source: Option<PeerId>,
-    pub(crate) message: MessagePacket,
+    pub(crate) block: BlockPacket,
 }
 
 pub(crate) struct BroadcasterWorker {
@@ -45,10 +45,10 @@ impl<N: Node> Worker<N> for BroadcasterWorker {
 
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
-            while let Some(BroadcasterWorkerEvent { source, message }) = receiver.next().await {
+            while let Some(BroadcasterWorkerEvent { source, block }) = receiver.next().await {
                 peer_manager.for_each(|peer_id, _| {
                     if source.map_or(true, |ref source| peer_id != source) {
-                        Sender::<MessagePacket>::send(&message, peer_id, &peer_manager, &metrics);
+                        Sender::<BlockPacket>::send(&block, peer_id, &peer_manager, &metrics);
                     }
                 });
             }

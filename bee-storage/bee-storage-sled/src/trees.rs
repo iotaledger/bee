@@ -6,12 +6,12 @@
 //! Sled allows creating new, isolated keyspaces by adding new trees to the database.
 //! Each tree can be accessed using the `sled::Db::open_tree` method with one of the identifiers found here.
 
-/// Identifier for the `MessageId` to `Message` tree.
-pub const TREE_MESSAGE_ID_TO_MESSAGE: &str = "message_id_to_message";
-/// Identifier for the `MessageId` to `MessageMetadata` tree.
-pub const TREE_MESSAGE_ID_TO_METADATA: &str = "message_id_to_metadata";
-/// Identifier for the `MessageId` to `Vec<MessageId>` tree.
-pub const TREE_MESSAGE_ID_TO_MESSAGE_ID: &str = "message_id_to_message_id";
+/// Identifier for the `BlockId` to `Block` tree.
+pub const TREE_BLOCK_ID_TO_BLOCK: &str = "block_id_to_block";
+/// Identifier for the `BlockId` to `BlockMetadata` tree.
+pub const TREE_BLOCK_ID_TO_METADATA: &str = "block_id_to_metadata";
+/// Identifier for the `BlockId` to `Vec<BlockId>` tree.
+pub const TREE_BLOCK_ID_TO_BLOCK_ID: &str = "block_id_to_block_id";
 /// Identifier for the `OutputId` to `CreatedOutput` tree.
 pub const TREE_OUTPUT_ID_TO_CREATED_OUTPUT: &str = "output_id_to_created_output";
 /// Identifier for the `OutputId` to `ConsumedOutput` tree.
@@ -32,8 +32,8 @@ pub const TREE_SNAPSHOT_INFO: &str = "snapshot_info";
 pub const TREE_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX: &str = "solid_entry_point_to_milestone_index";
 /// Identifier for the `MilestoneIndex` to `OutputDiff` tree.
 pub const TREE_MILESTONE_INDEX_TO_OUTPUT_DIFF: &str = "milestone_index_to_output_diff";
-/// Identifier for the `MilestoneIndex` to `Vec<UnreferencedMessage>` tree.
-pub const TREE_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE: &str = "milestone_index_to_unreferenced_message";
+/// Identifier for the `MilestoneIndex` to `Vec<UnreferencedBlock>` tree.
+pub const TREE_MILESTONE_INDEX_TO_UNREFERENCED_BLOCK: &str = "milestone_index_to_unreferenced_block";
 /// Identifier for the `MilestoneIndex` to `Vec<Receipt>` tree.
 pub const TREE_MILESTONE_INDEX_TO_RECEIPT: &str = "milestone_index_to_receipt";
 /// Identifier for the `bool` to `Vec<TreasuryOutput>` tree.

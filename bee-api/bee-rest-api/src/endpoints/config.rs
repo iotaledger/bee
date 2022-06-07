@@ -15,16 +15,15 @@ pub(crate) const DEFAULT_BIND_ADDRESS: &str = "/ip4/0.0.0.0/tcp/14265";
 /// Default JWT salt for REST API.
 pub(crate) const DEFAULT_JWT_SALT: &str = "Bee";
 /// Default routes that are available for public use and don't need JWT authentication.
-pub(crate) const DEFAULT_PUBLIC_ROUTES: [&str; 11] = [
+pub(crate) const DEFAULT_PUBLIC_ROUTES: [&str; 10] = [
     "/health",
     "/mqtt",
     "/api/v2/info",
     "/api/v2/tips",
-    "/api/v2/messages*",
+    "/api/v2/blocks*",
     "/api/v2/transactions*",
     "/api/v2/milestones*",
     "/api/v2/outputs*",
-    "/api/v2/addresses*",
     "/api/v2/treasury",
     "/api/v2/receipts*",
 ];

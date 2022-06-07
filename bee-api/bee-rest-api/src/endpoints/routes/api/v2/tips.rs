@@ -7,7 +7,7 @@ use axum::{
     routing::get,
     Router,
 };
-use bee_message::MessageId;
+use bee_message::BlockId;
 
 use crate::{
     endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode, CONFIRMED_THRESHOLD},
@@ -24,9 +24,9 @@ async fn tips<B: StorageBackend>(
     if !args.tangle.is_confirmed_threshold(CONFIRMED_THRESHOLD) {
         return Err(ApiError::ServiceUnavailable("the node is not synchronized"));
     }
-    match args.tangle.get_messages_to_approve().await {
+    match args.tangle.get_blocks_to_approve().await {
         Some(tips) => Ok(Json(TipsResponse {
-            tip_message_ids: tips.iter().map(MessageId::to_string).collect(),
+            tips: tips.iter().map(BlockId::to_string).collect(),
         })),
         None => Err(ApiError::ServiceUnavailable("no tips available")),
     }

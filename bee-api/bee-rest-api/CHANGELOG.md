@@ -48,19 +48,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `NftOutputDto`;
 - `AliasAddressDto`;
 - `NftAddressDto`;
-- `AliasUnlockBlockDto`;
-- `NftUnlockBlockDto`;
+- `AliasUnlockDto`;
+- `NftUnlockDto`;
 - `NativeTokenDto`;
 - `TokenIdDto`;
 - `U256Dto`;
-- `FeatureBlockDto`;
-- `SenderFeatureBlockDto`;
-- `IssuerFeatureBlockDto`;
-- `StorageDepositReturnFeatureBlockDto`;
-- `TimelockFeatureBlockDto`;
-- `ExpirationFeatureBlockDto`;
-- `IndexationFeatureBlockDto`;
-- `MetadataFeatureBlockDto`;
+- `FeatureDto`;
+- `SenderFeatureDto`;
+- `IssuerFeatureDto`;
+- `StorageDepositReturnFeatureDto`;
+- `TimelockFeatureDto`;
+- `ExpirationFeatureDto`;
+- `IndexationFeatureDto`;
+- `MetadataFeatureDto`;
 - `AliasIdDto`;
 - `TokenSchemeDto`;
 - `NftIdDto`;
@@ -98,7 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `Deserialize` to `SubmitMessageResponse`;
+- `Deserialize` to `SubmitBlockResponse`;
 
 ## 0.1.4 - 2021-12-03
 
@@ -140,7 +140,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `SuccessBody` type;
   - `ErrorBody` type;
   - `DefaultErrorResponse` type;
-  - `MessageDto` type;
+  - `BlockDto` type;
   - `PayloadDto` type;
   - `TransactionPayloadDto` type;
   - `EssenceDto` type;
@@ -154,7 +154,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `AddressDto` type;
   - `Ed25519AddressDto` type;
   - `TreasuryOutputDto` type;
-  - `UnlockBlockDto` type;
+  - `UnlockDto` type;
   - `SignatureUnlockDto` type;
   - `SignatureDto` type;
   - `Ed25519SignatureDto` type;
@@ -174,11 +174,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `Error` type;
   - `InfoResponse` type;
   - `TipsResponse` type;
-  - `SubmitMessageResponse` type;
-  - `MessagesFindResponse` type;
-  - `MessageResponse` type;
-  - `MessageMetadataResponse` type;
-  - `MessageChildrenResponse` type;
+  - `SubmitBlockResponse` type;
+  - `BlocksFindResponse` type;
+  - `BlockResponse` type;
+  - `BlockMetadataResponse` type;
+  - `BlockChildrenResponse` type;
   - `OutputResponse` type;
   - `BalanceAddressResponse` type;
   - `OutputsAddressResponse` type;

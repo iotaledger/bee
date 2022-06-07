@@ -1,6 +1,6 @@
 [package]
 name = "bee-node"
-version = "1.0.0-alpha.4"
+version = "1.0.0-alpha.5"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "Default node implementations."
@@ -12,9 +12,9 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 bee-autopeering = { version = "0.5.0", path = "../../bee-network/bee-autopeering", default-features = false, features = [ "rocksdb" ] }
+bee-block = { version = "0.1.0", path = "../../bee-block", default-features = false }
 bee-gossip = { version = "0.6.0", path = "../../bee-network/bee-gossip", default-features = false, features = [ "full" ] }
 bee-ledger = { version = "0.7.0", path = "../../bee-ledger", default-features = false, features = [ "workers" ] }
-bee-message = { version = "0.2.0", path = "../../bee-message", default-features = false }
 bee-plugin = { version = "0.1.0", path = "../bee-plugin/bee-plugin", default-features = false }
 bee-plugin-dashboard = { version = "0.1.0", path = "../bee-plugin/bee-plugin-dashboard", default-features = false, optional = true }
 bee-plugin-mps = { version = "0.1.0", path = "../bee-plugin/bee-plugin-mps", default-features = false }
@@ -40,7 +40,7 @@ hex = { version = "0.4.3", default-features = false }
 iota-crypto = { version = "0.10.0", default-features = false, features = [ "ed25519", "random", "blake2b" ] }
 log = { version = "0.4.17", default-features = false }
 multiaddr = { version = "0.14.0", default-features = false }
-packable = { version = "0.3.2", default-features = false, features = [ "io" ] }
+packable = { version = "0.3.3", default-features = false, features = [ "io" ] }
 pkcs8 = { version = "0.8.0", default-features = false, features = [ "alloc", "pem", "std" ] }
 rand = { version = "0.8.5", default-features = false }
 rpassword = { version = "6.0.1", default-features = false }

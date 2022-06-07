@@ -19,8 +19,8 @@ use axum::{
 use bee_gossip::{Keypair, NetworkCommandSender, PeerId};
 use bee_ledger::workers::consensus::{ConsensusWorker, ConsensusWorkerCommand};
 use bee_protocol::workers::{
-    config::ProtocolConfig, MessageRequesterWorker, MessageSubmitterWorker, MessageSubmitterWorkerEvent, PeerManager,
-    PeerManagerResWorker, RequestedMessages,
+    config::ProtocolConfig, BlockRequesterWorker, BlockSubmitterWorker, BlockSubmitterWorkerEvent, PeerManager, PeerManagerResWorker,
+    RequestedBlocks,
 };
 use bee_runtime::{
     event::Bus,
@@ -117,7 +117,7 @@ where
     fn dependencies() -> &'static [TypeId] {
         vec![
             TypeId::of::<TangleWorker>(),
-            TypeId::of::<MessageSubmitterWorker>(),
+            TypeId::of::<BlockSubmitterWorker>(),
             TypeId::of::<PeerManagerResWorker>(),
         ]
         .leak()
@@ -136,10 +136,10 @@ where
             node_info: node.info(),
             tangle: node.resource::<Tangle<N::Backend>>(),
             peer_manager: node.resource::<PeerManager>(),
-            requested_messages: node.resource::<RequestedMessages>(),
+            requested_blocks: node.resource::<RequestedBlocks>(),
             network_command_sender: node.resource::<NetworkCommandSender>(),
-            message_submitter: node.worker::<MessageSubmitterWorker>().unwrap().tx.clone(),
-            message_requester: node.worker::<MessageRequesterWorker>().unwrap().clone(),
+            block_submitter: node.worker::<BlockSubmitterWorker>().unwrap().tx.clone(),
+            block_requester: node.worker::<BlockRequesterWorker>().unwrap().clone(),
             consensus_worker: node.worker::<ConsensusWorker>().unwrap().tx.clone(),
             #[cfg(feature = "dashboard")]
             dashboard_username: config.dashboard_username,

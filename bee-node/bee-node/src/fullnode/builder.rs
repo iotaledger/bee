@@ -320,7 +320,7 @@ async fn initialize_autopeering<S: NodeStorageBackend>(
         peerstore_options.create_missing_column_families(true);
         let peerstore_cfg = RocksDbPeerStoreConfig::new(autopeering_cfg.peer_storage_path(), peerstore_options);
 
-        // A local entity that can sign outgoing messages, and announce services.
+        // A local entity that can sign outgoing blocks, and announce services.
         let keypair = config.local().keypair().clone();
         let local = create_local_autopeering_entity(keypair, config);
 

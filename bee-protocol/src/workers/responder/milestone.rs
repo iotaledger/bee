@@ -16,7 +16,7 @@ use tokio_stream::wrappers::UnboundedReceiverStream;
 use crate::{
     types::metrics::NodeMetrics,
     workers::{
-        packets::{MessagePacket, MilestoneRequestPacket},
+        packets::{BlockPacket, MilestoneRequestPacket},
         peer::PeerManager,
         sender::Sender,
         storage::StorageBackend,
@@ -69,9 +69,9 @@ where
                     request.index.into()
                 };
 
-                if let Some(message) = tangle.get_milestone_message(index) {
-                    Sender::<MessagePacket>::send(
-                        &MessagePacket::new(message.pack_to_vec()),
+                if let Some(block) = tangle.get_milestone_block(index) {
+                    Sender::<BlockPacket>::send(
+                        &BlockPacket::new(block.pack_to_vec()),
                         &peer_id,
                         &peer_manager,
                         &metrics,

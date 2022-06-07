@@ -14,8 +14,8 @@ use axum::{
     Router,
 };
 use bee_ledger::workers::consensus::{self, WhiteFlagMetadata};
-use bee_message::{payload::milestone::MilestoneIndex, MessageId};
-use bee_protocol::workers::{event::MessageSolidified, request_message};
+use bee_block::{payload::milestone::MilestoneIndex, BlockId};
+use bee_protocol::workers::{event::BlockSolidified, request_block};
 use futures::channel::oneshot;
 use serde_json::Value;
 use tokio::time::timeout;
@@ -34,7 +34,7 @@ pub(crate) async fn white_flag<B: StorageBackend>(
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
     let index_json = &body["index"];
-    let parents_json = &body["parentMessageIds"];
+    let parents_json = &body["parents"];
 
     let index = if index_json.is_null() {
         return Err(ApiError::BadRequest("invalid index: expected a `MilestoneIndex`"));
@@ -48,24 +48,24 @@ pub(crate) async fn white_flag<B: StorageBackend>(
 
     let parents = if parents_json.is_null() {
         return Err(ApiError::BadRequest(
-            "invalid parents: expected an array of `MessageId`",
+            "invalid parents: expected an array of `BlockId`",
         ));
     } else {
         let array = parents_json.as_array().ok_or(ApiError::BadRequest(
-            "invalid parents: expected an array of `MessageId`",
+            "invalid parents: expected an array of `BlockId`",
         ))?;
         let mut message_ids = Vec::new();
         for s in array {
-            let message_id = s
+            let block_id = s
                 .as_str()
                 .ok_or(ApiError::BadRequest(
-                    "invalid parents: expected an array of `MessageId`",
+                    "invalid parents: expected an array of `BlockId`",
                 ))?
-                .parse::<MessageId>()
-                .map_err(|_| ApiError::BadRequest("invalid parents: expected an array of `MessageId`"))?;
-            message_ids.push(message_id);
+                .parse::<BlockId>()
+                .map_err(|_| ApiError::BadRequest("invalid parents: expected an array of `BlockId`"))?;
+            block_ids.push(block_id);
         }
-        message_ids
+        block_ids
     };
 
     // TODO check parents
@@ -76,7 +76,7 @@ pub(crate) async fn white_flag<B: StorageBackend>(
     // aborting if it took too long. This is done by requesting all missing parents then listening for their
     // solidification event or aborting if the allowed time passed.
 
-    let to_solidify = Arc::new(Mutex::new(parents.iter().copied().collect::<HashSet<MessageId>>()));
+    let to_solidify = Arc::new(Mutex::new(parents.iter().copied().collect::<HashSet<BlockId>>()));
     let (sender, receiver) = oneshot::channel::<()>();
     let sender = Arc::new(Mutex::new(Some(sender)));
 
@@ -84,9 +84,9 @@ pub(crate) async fn white_flag<B: StorageBackend>(
     let task_to_solidify = to_solidify.clone();
     let task_sender = sender.clone();
     struct Static;
-    args.bus.add_listener::<Static, _, _>(move |event: &MessageSolidified| {
+    args.bus.add_listener::<Static, _, _>(move |event: &BlockSolidified| {
         if let Ok(mut to_solidify) = task_to_solidify.lock() {
-            if to_solidify.remove(&event.message_id) && to_solidify.is_empty() {
+            if to_solidify.remove(&event.block_id) && to_solidify.is_empty() {
                 if let Ok(mut sender) = task_sender.lock() {
                     sender.take().map(|s| s.send(()));
                 }
@@ -95,15 +95,15 @@ pub(crate) async fn white_flag<B: StorageBackend>(
     });
 
     for parent in parents.iter() {
-        if args.tangle.is_solid_message(parent).await {
+        if args.tangle.is_solid_block(parent).await {
             if let Ok(mut to_solidify) = to_solidify.lock() {
                 to_solidify.remove(parent);
             }
         } else {
-            request_message(
+            request_block(
                 &*args.tangle,
-                &args.message_requester,
-                &*args.requested_messages,
+                &args.block_requester,
+                &*args.requested_blocks,
                 *parent,
                 index,
             )

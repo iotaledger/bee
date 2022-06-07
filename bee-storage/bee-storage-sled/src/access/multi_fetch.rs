@@ -5,15 +5,15 @@
 
 use std::{marker::PhantomData, slice::Iter};
 
-use bee_ledger::types::{ConsumedOutput, CreatedOutput, OutputDiff};
-use bee_message::{
+use bee_block::{
     output::OutputId,
     payload::milestone::{MilestoneId, MilestoneIndex, MilestonePayload},
-    Message, MessageId,
+    Block, BlockId,
 };
+use bee_ledger::types::{ConsumedOutput, CreatedOutput, OutputDiff};
 use bee_storage::{access::MultiFetch, backend::StorageBackend, system::System};
 use bee_tangle::{
-    message_metadata::MessageMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
+    block_metadata::BlockMetadata, milestone_metadata::MilestoneMetadata, solid_entry_point::SolidEntryPoint,
 };
 use packable::{Packable, PackableExt};
 
@@ -91,8 +91,8 @@ macro_rules! impl_multi_fetch {
     };
 }
 
-impl_multi_fetch!(MessageId, Message, TREE_MESSAGE_ID_TO_MESSAGE);
-impl_multi_fetch!(MessageId, MessageMetadata, TREE_MESSAGE_ID_TO_METADATA);
+impl_multi_fetch!(BlockId, Block, TREE_BLOCK_ID_TO_BLOCK);
+impl_multi_fetch!(BlockId, BlockMetadata, TREE_BLOCK_ID_TO_METADATA);
 impl_multi_fetch!(OutputId, CreatedOutput, TREE_OUTPUT_ID_TO_CREATED_OUTPUT);
 impl_multi_fetch!(OutputId, ConsumedOutput, TREE_OUTPUT_ID_TO_CONSUMED_OUTPUT);
 impl_multi_fetch!(

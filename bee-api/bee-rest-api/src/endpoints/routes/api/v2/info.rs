@@ -7,7 +7,7 @@ use axum::{
     routing::get,
     Router,
 };
-use bee_message::constant::{PROTOCOL_VERSION, TOKEN_SUPPLY};
+use bee_block::constant::{PROTOCOL_VERSION, TOKEN_SUPPLY};
 
 use crate::{
     endpoints::{routes::health, storage::StorageBackend, ApiArgsFullNode},
@@ -88,8 +88,8 @@ async fn info<B: StorageBackend>(Extension(args): Extension<ApiArgsFullNode<B>>)
             use_metric_prefix: false,
         },
         metrics: MetricsResponse {
-            messages_per_second: 0f64,            // TODO: use actual metrics values
-            referenced_messages_per_second: 0f64, // TODO: use actual metrics values
+            blocks_per_second: 0f64,            // TODO: use actual metrics values
+            referenced_blocks_per_second: 0f64, // TODO: use actual metrics values
             referenced_rate: 0f64,                // TODO: use actual metrics values
         },
         features: {

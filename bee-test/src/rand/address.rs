@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{
+use bee_block::{
     address::{Address, AliasAddress, Ed25519Address, NftAddress},
     output::{AliasId, NftId},
 };

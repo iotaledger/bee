@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use axum::{extract::Extension, response::IntoResponse, routing::get, Router};
-use bee_message::payload::milestone::MilestoneId;
+use bee_block::payload::milestone::MilestoneId;
 
 use crate::endpoints::{
     error::ApiError, extractors::path::CustomPath, routes::api::v2::utxo_changes_by_milestone_index,

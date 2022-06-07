@@ -1,8 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_block::{address::Ed25519Address, output::OutputId, payload::milestone::MilestoneIndex};
 use bee_ledger::types::{ConsumedOutput, OutputDiff, Receipt};
-use bee_message::{address::Ed25519Address, output::OutputId, payload::milestone::MilestoneIndex};
 use bee_storage::{
     access::{AsIterator, Fetch},
     backend,
