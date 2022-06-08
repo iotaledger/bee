@@ -21,7 +21,7 @@ use serde_json::Value;
 use tokio::time::timeout;
 
 use crate::{
-    endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode},
+    endpoints::{error::ApiError, extractors::json::CustomJson, storage::StorageBackend, ApiArgsFullNode},
     types::responses::WhiteFlagResponse,
 };
 
@@ -30,7 +30,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
 }
 
 pub(crate) async fn white_flag<B: StorageBackend>(
-    Json(body): Json<Value>,
+    CustomJson(body): CustomJson<Value>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
     let index_json = &body["index"];
