@@ -3,9 +3,8 @@
 
 use axum::{
     async_trait,
-    extract::{rejection::PathRejection, FromRequest, RequestParts},
+    extract::{FromRequest, RequestParts},
 };
-use log::error;
 use serde::de::DeserializeOwned;
 
 use crate::endpoints::error::ApiError;
@@ -26,20 +25,7 @@ where
     async fn from_request(req: &mut RequestParts<B>) -> Result<Self, Self::Rejection> {
         match axum::extract::Path::<T>::from_request(req).await {
             Ok(value) => Ok(Self(value.0)),
-            Err(rejection) => {
-                let err = match rejection {
-                    PathRejection::FailedToDeserializePathParams(inner) => {
-                        ApiError::InvalidPath(inner.into_kind().to_string())
-                    }
-                    PathRejection::MissingPathParams(error) => ApiError::InvalidPath(error.to_string()),
-                    _ => {
-                        error!("unhandled path rejection: {}", rejection);
-                        ApiError::InternalError
-                    }
-                };
-
-                Err(err)
-            }
+            Err(rejection) => Err(ApiError::InvalidPath(rejection)),
         }
     }
 }

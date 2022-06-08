@@ -43,14 +43,14 @@ async fn blocks_submit<B: StorageBackend>(
             submit_block_raw::<B>(bytes.to_vec(), args.clone()).await
         } else {
             submit_block_json::<B>(
-                serde_json::from_slice(&bytes.to_vec()).map_err(|e| ApiError::InvalidJson(e.to_string()))?,
+                serde_json::from_slice(&bytes.to_vec()).map_err(ApiError::SerdeJsonError)?,
                 args.clone(),
             )
             .await
         }
     } else {
         submit_block_json::<B>(
-            serde_json::from_slice(&bytes.to_vec()).map_err(|e| ApiError::InvalidJson(e.to_string()))?,
+            serde_json::from_slice(&bytes.to_vec()).map_err(ApiError::SerdeJsonError)?,
             args.clone(),
         )
         .await
@@ -109,8 +109,8 @@ pub(crate) async fn submit_block_json<B: StorageBackend>(
     let payload = if payload_json.is_null() {
         None
     } else {
-        let payload_dto = serde_json::from_value::<PayloadDto>(payload_json.clone())
-            .map_err(|e| ApiError::InvalidJson(e.to_string()))?;
+        let payload_dto =
+            serde_json::from_value::<PayloadDto>(payload_json.clone()).map_err(ApiError::SerdeJsonError)?;
         Some(Payload::try_from(&payload_dto).map_err(ApiError::InvalidDto)?)
     };
 
@@ -196,12 +196,12 @@ pub(crate) async fn forward_to_block_submitter<B: StorageBackend>(
         })
         .map_err(|e| {
             error!("cannot submit block: {}", e);
-            ApiError::InternalError
+            ApiError::InternalServerError
         })?;
 
     let result = waiter.await.map_err(|e| {
         error!("cannot submit block: {}", e);
-        ApiError::InternalError
+        ApiError::InternalServerError
     })?;
 
     result.map_err(ApiError::InvalidBlockSubmitted)

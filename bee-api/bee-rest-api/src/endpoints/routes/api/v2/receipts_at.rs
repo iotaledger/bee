@@ -30,7 +30,7 @@ async fn receipts_at<B: StorageBackend>(
     if let Some(receipts) =
         Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(&*args.storage, &milestone_index).map_err(|e| {
             error!("cannot fetch from storage: {}", e);
-            ApiError::InternalError
+            ApiError::InternalServerError
         })?
     {
         for receipt in receipts {

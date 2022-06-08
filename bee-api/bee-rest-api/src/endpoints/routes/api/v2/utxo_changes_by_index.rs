@@ -31,7 +31,7 @@ pub(crate) async fn utxo_changes_by_index<B: StorageBackend>(
     let fetched = Fetch::<MilestoneIndex, OutputDiff>::fetch(&*args.storage, &milestone_index)
         .map_err(|e| {
             error!("cannot fetch from storage: {}", e);
-            ApiError::InternalError
+            ApiError::InternalServerError
         })?
         .ok_or(ApiError::NotFound)?;
 

@@ -21,7 +21,7 @@ async fn peers_remove<B: StorageBackend>(
 
     if let Err(e) = args.network_command_sender.send(RemovePeer { peer_id }) {
         error!("cannot remove peer: {}", e);
-        return Err(ApiError::InternalError);
+        return Err(ApiError::InternalServerError);
     }
 
     Ok(StatusCode::NO_CONTENT)

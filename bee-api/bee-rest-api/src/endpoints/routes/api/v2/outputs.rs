@@ -37,12 +37,12 @@ async fn outputs<B: StorageBackend>(
         .send(ConsensusWorkerCommand::FetchOutput(output_id, cmd_tx))
     {
         error!("request to consensus worker failed: {}", e);
-        return Err(ApiError::InternalError);
+        return Err(ApiError::InternalServerError);
     }
 
     let consensus_worker_response = cmd_rx.await.map_err(|e| {
         error!("response from consensus worker failed: {}", e);
-        ApiError::InternalError
+        ApiError::InternalServerError
     })?;
 
     match consensus_worker_response {
@@ -51,7 +51,7 @@ async fn outputs<B: StorageBackend>(
                 let consumed_output =
                     Fetch::<OutputId, ConsumedOutput>::fetch(&*args.storage, &output_id).map_err(|e| {
                         error!("cannot fetch from storage: {}", e);
-                        ApiError::InternalError
+                        ApiError::InternalServerError
                     })?;
 
                 Ok(Json(OutputResponse {
@@ -69,7 +69,7 @@ async fn outputs<B: StorageBackend>(
         },
         (Err(e), _) => {
             error!("response from consensus worker failed: {}", e);
-            Err(ApiError::InternalError)
+            Err(ApiError::InternalServerError)
         }
     }
 }

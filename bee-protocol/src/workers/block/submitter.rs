@@ -52,6 +52,8 @@ impl fmt::Display for BlockSubmitterError {
     }
 }
 
+impl std::error::Error for BlockSubmitterError {}
+
 pub struct BlockSubmitterWorkerEvent {
     pub block: Vec<u8>,
     pub notifier: Sender<Result<BlockId, BlockSubmitterError>>,

@@ -3,10 +3,9 @@
 
 use axum::{
     async_trait,
-    extract::{rejection::JsonRejection, FromRequest, RequestParts},
+    extract::{FromRequest, RequestParts},
     BoxError,
 };
-use log::error;
 use serde::de::DeserializeOwned;
 
 use crate::endpoints::error::ApiError;
@@ -28,19 +27,7 @@ where
     async fn from_request(req: &mut RequestParts<B>) -> Result<Self, Self::Rejection> {
         match axum::Json::<T>::from_request(req).await {
             Ok(value) => Ok(Self(value.0)),
-            Err(rejection) => {
-                // convert the error from `axum::Json` into whatever we want
-                let err = match rejection {
-                    JsonRejection::JsonDataError(err) => ApiError::InvalidJson(err.to_string()),
-                    JsonRejection::MissingJsonContentType(err) => ApiError::InvalidJson(err.to_string()),
-                    err => {
-                        error!("unhandled JSON extractor error: {}", err);
-                        ApiError::InternalError
-                    }
-                };
-
-                Err(err)
-            }
+            Err(rejection) => Err(ApiError::AxumJsonError(rejection)),
         }
     }
 }

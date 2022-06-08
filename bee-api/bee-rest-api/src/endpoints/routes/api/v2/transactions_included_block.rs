@@ -52,7 +52,7 @@ async fn get_block_id_from_transaction_id<B: StorageBackend>(
 
     let fetched = Fetch::<OutputId, CreatedOutput>::fetch(&*args.storage, &output_id).map_err(|e| {
         error!("cannot fetch from storage: {}", e);
-        ApiError::InternalError
+        ApiError::InternalServerError
     })?;
 
     match fetched {

@@ -24,7 +24,7 @@ async fn treasury<B: StorageBackend>(
 ) -> Result<impl IntoResponse, ApiError> {
     let treasury = storage::fetch_unspent_treasury_output(&*args.storage).map_err(|e| {
         error!("cannot fetch from storage: {}", e);
-        ApiError::InternalError
+        ApiError::InternalServerError
     })?;
 
     Ok(Json(TreasuryResponse {

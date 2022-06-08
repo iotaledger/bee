@@ -68,7 +68,7 @@ async fn peers_add<B: StorageBackend>(
                 relation: PeerRelation::Known,
             }) {
                 error!("cannot add peer: {}", e);
-                return Err(ApiError::InternalError);
+                return Err(ApiError::InternalServerError);
             }
 
             Ok(Json(AddPeerResponse(PeerDto {

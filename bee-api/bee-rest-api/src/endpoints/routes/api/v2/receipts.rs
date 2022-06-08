@@ -27,13 +27,13 @@ async fn receipts<B: StorageBackend>(
     let mut receipts_dto = Vec::new();
     let iterator = AsIterator::<(MilestoneIndex, Receipt), ()>::iter(&*args.storage).map_err(|e| {
         error!("cannot fetch from storage: {}", e);
-        ApiError::InternalError
+        ApiError::InternalServerError
     })?;
 
     for result in iterator {
         let ((_, receipt), _) = result.map_err(|e| {
             error!("cannot iterate fetched receipts : {}", e);
-            ApiError::InternalError
+            ApiError::InternalServerError
         })?;
         receipts_dto.push(ReceiptDto::from(receipt));
     }
