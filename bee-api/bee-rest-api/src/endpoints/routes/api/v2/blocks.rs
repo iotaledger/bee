@@ -34,16 +34,12 @@ async fn blocks<B: StorageBackend>(
     if let Some(value) = headers.get(axum::http::header::ACCEPT) {
         if value.eq(&*BYTE_CONTENT_HEADER) {
             return blocks_raw::<B>(block_id, args.clone()).await.map(|r| r.into_response());
-        } else {
-            blocks_json::<B>(block_id, args.clone())
-                .await
-                .map(|r| r.into_response())
         }
-    } else {
-        blocks_json::<B>(block_id, args.clone())
-            .await
-            .map(|r| r.into_response())
     }
+
+    blocks_json::<B>(block_id, args.clone())
+        .await
+        .map(|r| r.into_response())
 }
 
 pub(crate) async fn blocks_json<B: StorageBackend>(

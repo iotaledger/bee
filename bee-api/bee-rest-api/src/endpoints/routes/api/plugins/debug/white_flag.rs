@@ -21,7 +21,12 @@ use serde_json::Value;
 use tokio::time::timeout;
 
 use crate::{
-    endpoints::{error::ApiError, extractors::json::CustomJson, storage::StorageBackend, ApiArgsFullNode},
+    endpoints::{
+        error::{ApiError, DependencyError},
+        extractors::json::CustomJson,
+        storage::StorageBackend,
+        ApiArgsFullNode,
+    },
     types::responses::WhiteFlagResponse,
 };
 
@@ -124,7 +129,7 @@ pub(crate) async fn white_flag<B: StorageBackend>(
             // Did not timeout, parents are solid and white flag can happen.
             consensus::white_flag::<B>(&args.tangle, &args.storage, &parents, &mut metadata)
                 .await
-                .map_err(ApiError::InvalidWhiteflag)?;
+                .map_err(|e| ApiError::DependencyError(DependencyError::InvalidWhiteflag(e)))?;
 
             Ok(Json(WhiteFlagResponse {
                 merkle_tree_hash: metadata.applied_merkle_root().to_string(),

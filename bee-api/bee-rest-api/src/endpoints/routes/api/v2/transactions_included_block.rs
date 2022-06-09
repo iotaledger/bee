@@ -31,16 +31,11 @@ async fn transactions_included_block<B: StorageBackend>(
     if let Some(value) = headers.get(axum::http::header::ACCEPT) {
         if value.eq(&*BYTE_CONTENT_HEADER) {
             return blocks_raw::<B>(block_id, args.clone()).await.map(|r| r.into_response());
-        } else {
-            blocks_json::<B>(block_id, args.clone())
-                .await
-                .map(|r| r.into_response())
         }
-    } else {
-        blocks_json::<B>(block_id, args.clone())
-            .await
-            .map(|r| r.into_response())
     }
+    blocks_json::<B>(block_id, args.clone())
+        .await
+        .map(|r| r.into_response())
 }
 
 async fn get_block_id_from_transaction_id<B: StorageBackend>(

@@ -30,13 +30,10 @@ pub(crate) async fn milestones_by_index<B: StorageBackend>(
     let milestone_payload = get_milestone_payload(args, milestone_index).await?;
     if let Some(value) = headers.get(axum::http::header::ACCEPT) {
         if value.eq(&*BYTE_CONTENT_HEADER) {
-            Ok(milestone_payload.pack_to_vec().into_response())
-        } else {
-            Ok(Json(MilestoneResponse((&milestone_payload).into())).into_response())
+            return Ok(milestone_payload.pack_to_vec().into_response());
         }
-    } else {
-        Ok(Json(MilestoneResponse((&milestone_payload).into())).into_response())
     }
+    Ok(Json(MilestoneResponse((&milestone_payload).into())).into_response())
 }
 
 async fn get_milestone_payload<B: StorageBackend>(

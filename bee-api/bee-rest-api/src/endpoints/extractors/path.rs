@@ -7,7 +7,7 @@ use axum::{
 };
 use serde::de::DeserializeOwned;
 
-use crate::endpoints::error::ApiError;
+use crate::endpoints::error::{ApiError, DependencyError};
 
 // We define our own `Path` extractor that customizes the error from `axum::extract::Path`
 pub struct CustomPath<T>(pub T);
@@ -25,7 +25,7 @@ where
     async fn from_request(req: &mut RequestParts<B>) -> Result<Self, Self::Rejection> {
         match axum::extract::Path::<T>::from_request(req).await {
             Ok(value) => Ok(Self(value.0)),
-            Err(rejection) => Err(ApiError::InvalidPath(rejection)),
+            Err(e) => Err(ApiError::DependencyError(DependencyError::InvalidPath(e))),
         }
     }
 }

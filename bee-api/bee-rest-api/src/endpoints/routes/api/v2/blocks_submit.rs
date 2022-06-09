@@ -24,7 +24,10 @@ use serde_json::Value;
 
 use crate::{
     endpoints::{
-        error::ApiError, routes::api::v2::blocks::BYTE_CONTENT_HEADER, storage::StorageBackend, ApiArgsFullNode,
+        error::{ApiError, DependencyError},
+        routes::api::v2::blocks::BYTE_CONTENT_HEADER,
+        storage::StorageBackend,
+        ApiArgsFullNode,
     },
     types::responses::SubmitBlockResponse,
 };
@@ -40,21 +43,15 @@ async fn blocks_submit<B: StorageBackend>(
 ) -> Result<Response, ApiError> {
     if let Some(value) = headers.get(axum::http::header::CONTENT_TYPE) {
         if value.eq(&*BYTE_CONTENT_HEADER) {
-            submit_block_raw::<B>(bytes.to_vec(), args.clone()).await
-        } else {
-            submit_block_json::<B>(
-                serde_json::from_slice(&bytes.to_vec()).map_err(ApiError::SerdeJsonError)?,
-                args.clone(),
-            )
-            .await
+            return submit_block_raw::<B>(bytes.to_vec(), args.clone()).await;
         }
-    } else {
-        submit_block_json::<B>(
-            serde_json::from_slice(&bytes.to_vec()).map_err(ApiError::SerdeJsonError)?,
-            args.clone(),
-        )
-        .await
     }
+    submit_block_json::<B>(
+        serde_json::from_slice(&bytes.to_vec())
+            .map_err(|e| ApiError::DependencyError(DependencyError::SerdeJsonError(e)))?,
+        args.clone(),
+    )
+    .await
 }
 
 pub(crate) async fn submit_block_json<B: StorageBackend>(
@@ -109,9 +106,9 @@ pub(crate) async fn submit_block_json<B: StorageBackend>(
     let payload = if payload_json.is_null() {
         None
     } else {
-        let payload_dto =
-            serde_json::from_value::<PayloadDto>(payload_json.clone()).map_err(ApiError::SerdeJsonError)?;
-        Some(Payload::try_from(&payload_dto).map_err(ApiError::InvalidDto)?)
+        let payload_dto = serde_json::from_value::<PayloadDto>(payload_json.clone())
+            .map_err(|e| ApiError::DependencyError(DependencyError::SerdeJsonError(e)))?;
+        Some(Payload::try_from(&payload_dto).map_err(|e| ApiError::DependencyError(DependencyError::InvalidDto(e)))?)
     };
 
     let nonce = if nonce_json.is_null() {
@@ -144,27 +141,35 @@ pub(crate) fn build_block<B: StorageBackend>(
     args: ApiArgsFullNode<B>,
 ) -> Result<Block, ApiError> {
     let block = if let Some(nonce) = nonce {
-        let mut builder =
-            BlockBuilder::new(Parents::new(parents).map_err(ApiError::InvalidBlock)?).with_nonce_provider(nonce, 0f64);
+        let mut builder = BlockBuilder::new(
+            Parents::new(parents).map_err(|e| ApiError::DependencyError(DependencyError::InvalidBlock(e)))?,
+        )
+        .with_nonce_provider(nonce, 0f64);
         if let Some(payload) = payload {
             builder = builder.with_payload(payload)
         }
-        builder.finish().map_err(ApiError::InvalidBlock)?
+        builder
+            .finish()
+            .map_err(|e| ApiError::DependencyError(DependencyError::InvalidBlock(e)))?
     } else {
         if !args.rest_api_config.feature_proof_of_work() {
             return Err(ApiError::BadRequest(
                 "can not auto-fill nonce: feature `PoW` not enabled",
             ));
         }
-        let mut builder = BlockBuilder::new(Parents::new(parents).map_err(ApiError::InvalidBlock)?)
-            .with_nonce_provider(
-                MinerBuilder::new().with_num_workers(num_cpus::get()).finish(),
-                args.protocol_config.minimum_pow_score(),
-            );
+        let mut builder = BlockBuilder::new(
+            Parents::new(parents).map_err(|e| ApiError::DependencyError(DependencyError::InvalidBlock(e)))?,
+        )
+        .with_nonce_provider(
+            MinerBuilder::new().with_num_workers(num_cpus::get()).finish(),
+            args.protocol_config.minimum_pow_score(),
+        );
         if let Some(payload) = payload {
             builder = builder.with_payload(payload)
         }
-        builder.finish().map_err(ApiError::InvalidBlock)?
+        builder
+            .finish()
+            .map_err(|e| ApiError::DependencyError(DependencyError::InvalidBlock(e)))?
     };
     Ok(block)
 }
@@ -204,5 +209,5 @@ pub(crate) async fn forward_to_block_submitter<B: StorageBackend>(
         ApiError::InternalServerError
     })?;
 
-    result.map_err(ApiError::InvalidBlockSubmitted)
+    result.map_err(|e| ApiError::DependencyError(DependencyError::InvalidBlockSubmitted(e)))
 }

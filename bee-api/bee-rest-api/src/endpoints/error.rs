@@ -10,11 +10,13 @@ use thiserror::Error;
 
 use crate::types::body::{DefaultErrorResponse, ErrorBody};
 
+// Errors that are returned to the user.
 #[derive(Error, Debug)]
 pub enum ApiError {
-    // Errors defined by the API.
     #[error("bad request: {0}")]
     BadRequest(&'static str),
+    #[error("bad request: {0}")]
+    DependencyError(DependencyError),
     #[error("not found")]
     NotFound,
     #[error("service unavailable: {0}")]
@@ -23,20 +25,24 @@ pub enum ApiError {
     InternalServerError,
     #[error("forbidden")]
     Forbidden,
-    // Errors from dependencies that can be displayed to the user.
-    #[error("bad request: {0}")]
+}
+
+// Errors from dependencies that get exposed to the user.
+#[derive(Error, Debug)]
+pub enum DependencyError {
+    #[error("{0}")]
     InvalidPath(#[from] axum::extract::rejection::PathRejection),
-    #[error("bad request: {0}")]
+    #[error("{0}")]
     AxumJsonError(#[from] axum::extract::rejection::JsonRejection),
-    #[error("bad request: {0}")]
+    #[error("{0}")]
     SerdeJsonError(#[from] serde_json::error::Error),
-    #[error("bad request: {0}")]
+    #[error("{0}")]
     InvalidBlockSubmitted(#[from] bee_protocol::workers::BlockSubmitterError),
-    #[error("bad request: {0}")]
+    #[error("{0}")]
     InvalidBlock(#[from] bee_block::Error),
-    #[error("bad request: {0}")]
+    #[error("{0}")]
     InvalidDto(#[from] bee_block::DtoError),
-    #[error("bad request: {0}")]
+    #[error("{0}")]
     InvalidWhiteflag(#[from] bee_ledger::workers::error::Error),
 }
 
@@ -48,13 +54,7 @@ impl IntoResponse for ApiError {
             ApiError::ServiceUnavailable(_) => StatusCode::SERVICE_UNAVAILABLE,
             ApiError::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::Forbidden => StatusCode::FORBIDDEN,
-            ApiError::InvalidPath(_) => StatusCode::BAD_REQUEST,
-            ApiError::AxumJsonError(_) => StatusCode::BAD_REQUEST,
-            ApiError::SerdeJsonError(_) => StatusCode::BAD_REQUEST,
-            ApiError::InvalidBlockSubmitted(_) => StatusCode::BAD_REQUEST,
-            ApiError::InvalidBlock(_) => StatusCode::BAD_REQUEST,
-            ApiError::InvalidDto(_) => StatusCode::BAD_REQUEST,
-            ApiError::InvalidWhiteflag(_) => StatusCode::BAD_REQUEST,
+            ApiError::DependencyError(_) => StatusCode::BAD_REQUEST,
         };
 
         let body = Json(ErrorBody::new(DefaultErrorResponse {
