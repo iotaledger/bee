@@ -119,7 +119,8 @@ pub(crate) async fn submit_block_json<B: StorageBackend>(
             .ok_or(ApiError::BadRequest("invalid nonce: expected an u64-string"))?
             .parse::<u64>()
             .map_err(|_| ApiError::BadRequest("invalid nonce: expected an u64-string"))?;
-        if parsed_nonce == 0 { None } else { Some(parsed_nonce) }
+
+        Some(parsed_nonce)
     };
 
     let block = build_block(parents, payload, nonce, args.clone())?;
