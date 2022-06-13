@@ -6,6 +6,7 @@ keywords:
 - Discord
 - Node
 - IOTA
+- explanation
 ---
 
 # Welcome

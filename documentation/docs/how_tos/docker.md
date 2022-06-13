@@ -8,6 +8,7 @@ keywords:
 - macOS
 - Windows
 - Linux
+- how to
 description: Install and run a Bee node using Docker.
 image: /img/logo/bee_logo.png
 ---
