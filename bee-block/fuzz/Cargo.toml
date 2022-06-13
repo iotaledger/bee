@@ -11,8 +11,8 @@ cargo-fuzz = true
 [dependencies]
 bee-block = { path = "..", default-features = false }
 
-libfuzzer-sys = { version = "0.4.2", default-features = false }
-packable = { version = "0.3.3", default-features = false }
+libfuzzer-sys = { version = "0.4.3", default-features = false }
+packable = { version = "0.4.0", default-features = false }
 
 # Prevent this from interfering with workspaces
 [workspace]
