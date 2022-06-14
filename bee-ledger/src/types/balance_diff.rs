@@ -25,11 +25,11 @@ pub struct BalanceDiff {
 impl BalanceDiff {
     /// Creates a new `BalanceDiff`.
     pub fn new(amount: i64, dust_allowance: i64, dust_outputs: i64) -> Result<Self, Error> {
-        if amount.abs() as u64 > IOTA_SUPPLY {
+        if amount.unsigned_abs() > IOTA_SUPPLY {
             Err(Error::InvalidBalanceDiff(amount))
-        } else if dust_allowance.abs() as u64 > IOTA_SUPPLY {
+        } else if dust_allowance.unsigned_abs() > IOTA_SUPPLY {
             Err(Error::InvalidBalanceDiff(dust_allowance))
-        } else if dust_outputs.abs() as u64 > IOTA_SUPPLY {
+        } else if dust_outputs.unsigned_abs() > IOTA_SUPPLY {
             Err(Error::InvalidBalanceDiff(dust_outputs))
         } else {
             Ok(Self {
