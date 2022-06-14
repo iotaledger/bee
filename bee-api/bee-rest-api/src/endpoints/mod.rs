@@ -38,21 +38,21 @@ use crate::endpoints::{auth::Auth, error::ApiError, routes::filter_all};
 
 pub(crate) const CONFIRMED_THRESHOLD: u32 = 5;
 
-pub fn init_full_node<N: Node>(init_config: InitConfigFullNode, node_builder: N::Builder) -> N::Builder
+pub fn init_full_node<N: Node>(init_config: InitFullNodeConfig, node_builder: N::Builder) -> N::Builder
 where
     N::Backend: StorageBackend,
 {
     node_builder.with_worker_cfg::<ApiWorkerFullNode>(init_config)
 }
 
-pub fn init_entry_node<N: Node>(init_config: InitConfigEntryNode, node_builder: N::Builder) -> N::Builder
+pub fn init_entry_node<N: Node>(init_config: InitEntryNodeConfig, node_builder: N::Builder) -> N::Builder
 where
     N::Backend: StorageBackend,
 {
     node_builder.with_worker_cfg::<ApiWorkerEntryNode>(init_config)
 }
 
-pub struct InitConfigFullNode {
+pub struct InitFullNodeConfig {
     pub node_id: PeerId,
     pub node_keypair: Keypair,
     pub rest_api_config: RestApiConfig,
@@ -63,7 +63,7 @@ pub struct InitConfigFullNode {
     pub dashboard_username: String,
 }
 
-pub struct InitConfigEntryNode {
+pub struct InitEntryNodeConfig {
     pub rest_api_config: RestApiConfig,
 }
 
@@ -111,7 +111,7 @@ impl<N: Node> Worker<N> for ApiWorkerFullNode
 where
     N::Backend: StorageBackend,
 {
-    type Config = InitConfigFullNode;
+    type Config = InitFullNodeConfig;
     type Error = WorkerError;
 
     fn dependencies() -> &'static [TypeId] {
@@ -176,7 +176,7 @@ impl<N: Node> Worker<N> for ApiWorkerEntryNode
 where
     N::Backend: StorageBackend,
 {
-    type Config = InitConfigEntryNode;
+    type Config = InitEntryNodeConfig;
     type Error = WorkerError;
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {

@@ -5,7 +5,10 @@ use axum::{extract::Extension, http::header::HeaderMap, response::IntoResponse, 
 use bee_block::payload::milestone::MilestoneId;
 
 use crate::endpoints::{
-    error::ApiError, extractors::path::CustomPath, routes::api::v2::milestones_by_index, storage::StorageBackend,
+    error::ApiError,
+    extractors::path::CustomPath,
+    routes::api::v2::{blocks::BYTE_CONTENT_HEADER, milestones_by_index},
+    storage::StorageBackend,
     ApiArgsFullNode,
 };
 
@@ -18,7 +21,10 @@ async fn milestones_by_id<B: StorageBackend>(
     CustomPath(milestone_id): CustomPath<MilestoneId>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
-    let milestone_payload = args.tangle.get_milestone(milestone_id).unwrap_or(ApiError::NotFound)?;
+    let milestone_payload = match args.tangle.get_milestone(milestone_id) {
+        Some(milestone_payload) => Ok(milestone_payload),
+        None => Err(ApiError::NotFound),
+    };
 
     if let Some(value) = headers.get(axum::http::header::ACCEPT) {
         if value.eq(&*BYTE_CONTENT_HEADER) {

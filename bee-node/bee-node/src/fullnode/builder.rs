@@ -13,7 +13,7 @@ use bee_autopeering::{
 };
 use bee_gossip::{Keypair, NetworkEventReceiver, Protocol};
 use bee_plugin_version_checker::VersionCheckerPlugin;
-use bee_rest_api::endpoints::InitConfigFullNode;
+use bee_rest_api::endpoints::InitFullNodeConfig;
 use bee_runtime::{
     event::Bus,
     node::{Node, NodeBuilder},
@@ -384,7 +384,7 @@ fn initialize_api<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> FullNod
         hrp: bech32_hrp,
     } = config.network_spec().clone();
 
-    let init_config = InitConfigFullNode {
+    let init_config = InitFullNodeConfig {
         node_id: config.local.peer_id(),
         node_keypair: config.local.keypair().clone(),
         rest_api_config: config.rest_api.clone(),
