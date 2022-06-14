@@ -18,10 +18,13 @@ async fn milestones_by_id<B: StorageBackend>(
     CustomPath(milestone_id): CustomPath<MilestoneId>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
-    let milestone_index = match args.tangle.get_milestone(milestone_id) {
-        Some(milestone_payload) => milestone_payload.essence().index(),
-        None => return Err(ApiError::NotFound),
-    };
+    let milestone_payload = args.tangle.get_milestone(milestone_id).unwrap_or(ApiError::NotFound)?;
 
-    milestones_by_index::milestones_by_index(headers, CustomPath(milestone_index), Extension(args)).await
+    if let Some(value) = headers.get(axum::http::header::ACCEPT) {
+        if value.eq(&*BYTE_CONTENT_HEADER) {
+            return Ok(milestone_payload.pack_to_vec().into_response());
+        }
+    }
+
+    Ok(Json(MilestoneResponse((&milestone_payload).into())).into_response())
 }

@@ -22,7 +22,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/milestones/by-index/:milestone_index", get(milestones_by_index::<B>))
 }
 
-pub(crate) async fn milestones_by_index<B: StorageBackend>(
+async fn milestones_by_index<B: StorageBackend>(
     headers: HeaderMap,
     CustomPath(milestone_index): CustomPath<MilestoneIndex>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
