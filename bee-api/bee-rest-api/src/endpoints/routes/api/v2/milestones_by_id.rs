@@ -3,13 +3,17 @@
 
 use axum::{extract::Extension, http::header::HeaderMap, response::IntoResponse, routing::get, Router};
 use bee_block::payload::milestone::MilestoneId;
+use packable::PackableExt;
 
-use crate::endpoints::{
-    error::ApiError,
-    extractors::path::CustomPath,
-    routes::api::v2::{blocks::BYTE_CONTENT_HEADER, milestones_by_index},
-    storage::StorageBackend,
-    ApiArgsFullNode,
+use crate::{
+    endpoints::{
+        error::ApiError,
+        extractors::path::CustomPath,
+        routes::api::v2::{blocks::BYTE_CONTENT_HEADER, milestones_by_index},
+        storage::StorageBackend,
+        ApiArgsFullNode,
+    },
+    types::responses::MilestoneResponse,
 };
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
