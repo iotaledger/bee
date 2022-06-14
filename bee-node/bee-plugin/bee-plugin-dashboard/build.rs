@@ -6,8 +6,7 @@ use std::{fmt, io, path::Path};
 use sha2::{Digest, Sha256};
 use zip::ZipArchive;
 
-const RELEASE_URL: &str =
-    "https://github.com/iotaledger/node-dashboard/releases/download/v2.0.0-alpha14/node-dashboard-bee-2.0.0-alpha14.zip";
+const RELEASE_URL: &str = "https://github.com/iotaledger/node-dashboard/releases/download/v2.0.0-alpha14/node-dashboard-bee-2.0.0-alpha14.zip";
 const RELEASE_CHECKSUM: &str = "2002e51d7ae2b62e5170667e122032ca6ae1ab328ca64308e12e6e0822165247";
 
 #[derive(Debug)]
