@@ -26,10 +26,10 @@ lazy_static! {
     static ref DASHBOARD_ROUTES: RegexSet = {
         let routes = vec![
             "/api/v2/info",
-            "/api/v2/messages/*",
-            "/api/v2/outputs/*",
-            "/api/v2/addresses/*",
-            "/api/v2/milestones/*",
+            "/api/v2/blocks*",
+            "/api/v2/transactions*",
+            "/api/v2/milestones*",
+            "/api/v2/outputs*",
             "/api/v2/peers*",
         ];
         // Panic: unwrapping is fine because all strings in `routes` can be turned into valid regular expressions.
