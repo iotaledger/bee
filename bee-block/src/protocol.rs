@@ -11,7 +11,9 @@ use crate::Error;
 #[packable(unpack_error = Error)]
 pub struct ProtocolParemeters {
     version: u8,
+    #[packable(unpack_error_with = |err| Error::InvalidNetworkName(err.into_item_err()))]
     network_name: StringPrefix<u8>,
+    #[packable(unpack_error_with = |err| Error::InvalidBech32Hrp(err.into_item_err()))]
     bech32_hrp: StringPrefix<u8>,
     min_pow_score: u32,
     below_max_depth: u8,
