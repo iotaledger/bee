@@ -30,7 +30,7 @@ async-trait = { version = "0.1.56", default-features = false, optional = true }
 bech32 = { version = "0.9.0", default-features = false, optional = true }
 digest = { version = "0.10.3", default-features = false, optional = true }
 futures = { version = "0.3.21", default-features = false, optional = true }
-iota-crypto = { version = "0.10.0", default-features = false, features = [ "blake2b" ], optional = true }
+iota-crypto = { version = "0.12.1", default-features = false, features = [ "blake2b" ], optional = true }
 log = { version = "0.4.17", default-features = false, optional = true }
 multiaddr = { version = "0.14.0", default-features = false }
 num_cpus = { version = "1.13.1", default-features = false, optional = true }

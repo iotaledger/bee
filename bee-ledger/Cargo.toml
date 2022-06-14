@@ -26,7 +26,7 @@ async-trait = { version = "0.1.56", default-features = false, optional = true }
 bytes = { version = "1.1.0", default-features = false, optional = true }
 futures = { version = "0.3.21", default-features = false, optional = true }
 hashbrown = { version = "0.12.1", default-features = false, optional = true }
-iota-crypto = { version = "0.10.0", default-features = false, features = [ "blake2b" ], optional = true }
+iota-crypto = { version = "0.12.1", default-features = false, features = [ "blake2b" ], optional = true }
 log = { version = "0.4.17", default-features = false, optional = true }
 packable = { version = "0.4.0", default-features = false, features = [ "serde", "io" ] }
 prefix-hex = { version = "0.4.0", default-features = false, optional = true }
