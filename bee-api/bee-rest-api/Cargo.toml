@@ -31,7 +31,6 @@ auth-helper = { version = "0.2.0", default-features = false, optional = true }
 axum = { version = "0.5.4", default-features = false, features = [ "json", "headers", "original-uri" ], optional = true }
 bech32 = { version = "0.9.0", default-features = false, optional = true }
 base64 = { version = "0.13.0", default-features = false, optional = true }
-bech32 = { version = "0.8.1", default-features = false, optional = true }
 digest = { version = "0.10.3", default-features = false, optional = true }
 futures = { version = "0.3.21", default-features = false, optional = true }
 iota-crypto = { version = "0.12.1", default-features = false, features = [ "blake2b" ], optional = true }
