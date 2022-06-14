@@ -1,12 +1,14 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::hash::Hasher;
+
 pub(crate) use crypto::hashes::sha::SHA256_LEN;
 use crypto::hashes::{
     sha::{Sha256, SHA256},
     Digest,
 };
-use hash32::{FnvHasher, Hasher as _};
+use hash32::FnvHasher;
 
 use crate::packet::MessageType;
 
@@ -32,7 +34,7 @@ pub(crate) fn message_hash(msg_type: MessageType, msg_data: &[u8]) -> [u8; SHA25
 pub(crate) fn network_hash(network_name: impl AsRef<str>) -> u32 {
     let mut hasher = FnvHasher::default();
     hasher.write(network_name.as_ref().as_bytes());
-    hasher.finish()
+    hasher.finish() as u32
 }
 
 #[cfg(test)]

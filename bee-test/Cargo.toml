@@ -17,7 +17,7 @@ bee-tangle = { version = "0.3.0", path = "../bee-tangle", default-features = fal
 bee-ternary = { version = "0.6.0", default-features = false, features = [ "serde" ] }
 
 bytemuck = { version = "1.9.1", default-features = false }
-primitive-types = { version = "0.10.1", default-features = false, features = [ "serde" ] }
+primitive-types = { version = "0.11.1", default-features = false, features = [ "serde" ] }
 rand = { version = "0.8.5", default-features = false, features = [ "min_const_gen" ] }
 
 [dev-dependencies]
