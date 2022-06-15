@@ -64,7 +64,7 @@ impl ExpirationUnlockCondition {
 
     /// Returns the address that can unlock the output. Can be None if only one of milestone_index or timestamp is
     /// reached. Provided address needs to be the one from the
-    /// [`AddressUnlockCondition`](crate::unlock_condition::AddressUnlockCondition)
+    /// [`AddressUnlockCondition`](crate::unlock_condition::AddressUnlockCondition).
     pub fn return_address_expired<'a>(
         &'a self,
         address: &'a Address,
