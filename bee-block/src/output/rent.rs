@@ -11,11 +11,11 @@ const DEFAULT_BYTE_COST_FACTOR_DATA: u64 = 1;
 
 type ConfirmationUnixTimestamp = u32;
 
-/// Builder for a [`ByteCostConfig`].
+/// Builder for a [`RentStructure`].
 #[derive(Default, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize))]
 #[must_use]
-pub struct ByteCostConfigBuilder {
+pub struct RentStructureBuilder {
     #[cfg_attr(feature = "serde", serde(alias = "vByteCost"))]
     v_byte_cost: Option<u64>,
     #[cfg_attr(feature = "serde", serde(alias = "vByteFactorKey"))]
@@ -24,8 +24,8 @@ pub struct ByteCostConfigBuilder {
     v_byte_factor_data: Option<u64>,
 }
 
-impl ByteCostConfigBuilder {
-    /// Returns a new [`ByteCostConfigBuilder`].
+impl RentStructureBuilder {
+    /// Returns a new [`RentStructureBuilder`].
     pub fn new() -> Self {
         Default::default()
     }
@@ -48,8 +48,8 @@ impl ByteCostConfigBuilder {
         self
     }
 
-    /// Returns the built [`ByteCostConfig`].
-    pub fn finish(self) -> ByteCostConfig {
+    /// Returns the built [`RentStructure`].
+    pub fn finish(self) -> RentStructure {
         let v_byte_factor_key = self.v_byte_factor_key.unwrap_or(DEFAULT_BYTE_COST_FACTOR_KEY);
         let v_byte_factor_data = self.v_byte_factor_data.unwrap_or(DEFAULT_BYTE_COST_FACTOR_DATA);
 
@@ -58,7 +58,7 @@ impl ByteCostConfigBuilder {
             + size_of::<MilestoneIndex>() as u64 * v_byte_factor_data
             + size_of::<ConfirmationUnixTimestamp>() as u64 * v_byte_factor_data;
 
-        ByteCostConfig {
+        RentStructure {
             v_byte_cost: self.v_byte_cost.unwrap_or(DEFAULT_BYTE_COST),
             v_byte_factor_key,
             v_byte_factor_data,
@@ -69,7 +69,7 @@ impl ByteCostConfigBuilder {
 
 /// Specifies the current parameters for the byte cost computation.
 #[derive(Clone)]
-pub struct ByteCostConfig {
+pub struct RentStructure {
     /// Cost in tokens per virtual byte.
     pub v_byte_cost: u64,
     /// The weight factor used for key fields in the ouputs.
@@ -80,26 +80,26 @@ pub struct ByteCostConfig {
     v_byte_offset: u64,
 }
 
-impl ByteCostConfig {
+impl RentStructure {
     /// Returns a builder for this config.
-    pub fn build() -> ByteCostConfigBuilder {
-        ByteCostConfigBuilder::new()
+    pub fn build() -> RentStructureBuilder {
+        RentStructureBuilder::new()
     }
 }
 
 /// A trait to facilitate the computation of the byte cost of block outputs, which is central to dust protection.
-pub trait ByteCost {
+pub trait Rent {
     /// Different fields in a type lead to different storage requirements for the ledger state.
-    fn weighted_bytes(&self, config: &ByteCostConfig) -> u64;
+    fn weighted_bytes(&self, config: &RentStructure) -> u64;
 
-    /// Computes the byte cost given a [`ByteCostConfig`].
-    fn byte_cost(&self, config: &ByteCostConfig) -> u64 {
+    /// Computes the rent cost given a [`RentStructure`].
+    fn rent_cost(&self, config: &RentStructure) -> u64 {
         config.v_byte_cost * (self.weighted_bytes(config) + config.v_byte_offset)
     }
 }
 
-impl<T: ByteCost, const N: usize> ByteCost for [T; N] {
-    fn weighted_bytes(&self, config: &ByteCostConfig) -> u64 {
+impl<T: Rent, const N: usize> Rent for [T; N] {
+    fn weighted_bytes(&self, config: &RentStructure) -> u64 {
         self.iter().map(|elem| elem.weighted_bytes(config)).sum()
     }
 }

@@ -6,7 +6,7 @@ use std::{any::TypeId, convert::Infallible, time::Instant};
 use async_trait::async_trait;
 use bee_block::{
     constant::PROTOCOL_VERSION,
-    output::ByteCostConfig,
+    output::RentStructure,
     payload::{transaction::TransactionEssence, Payload},
     Block, BlockId,
 };
@@ -48,7 +48,7 @@ pub(crate) struct ProcessorWorker {
 pub(crate) struct ProcessorWorkerConfig {
     pub(crate) network_id: u64,
     pub(crate) minimum_pow_score: f64,
-    pub(crate) byte_cost: ByteCostConfig,
+    pub(crate) rent: RentStructure,
 }
 
 #[async_trait]
@@ -177,7 +177,7 @@ where
                             }
 
                             for (i, output) in essence.outputs().iter().enumerate() {
-                                if let Err(error) = output.verify_storage_deposit(&config.byte_cost) {
+                                if let Err(error) = output.verify_storage_deposit(&config.rent) {
                                     notify_invalid_block(
                                         format!("Invalid output i={i}: {}", error),
                                         &metrics,
