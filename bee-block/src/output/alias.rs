@@ -452,7 +452,6 @@ impl AliasOutput {
                 // The next state can only be an alias output since it is identified by an alias chain identifier.
                 Some(_) => unreachable!(),
             },
-            context.milestone_index,
             context.milestone_timestamp,
         );
 

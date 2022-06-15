@@ -2,29 +2,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use derive_more::From;
-use packable::{
-    error::{UnpackError, UnpackErrorExt},
-    packer::Packer,
-    unpacker::Unpacker,
-    Packable,
-};
 
-use crate::{address::Address, payload::milestone::MilestoneIndex, Error};
+use crate::{address::Address, Error};
 
-/// Defines a milestone index and/or unix time until which only Address, defined in Address Unlock Condition, is allowed
-/// to unlock the output. After the milestone index and/or unix time, only Return Address can unlock it.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From)]
+/// Defines a unix time until which only Address, defined in Address Unlock Condition, is allowed to unlock the output.
+/// After the milestone index and/or unix time, only Return Address can unlock it.
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From, packable::Packable)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ExpirationUnlockCondition {
     // The address that can unlock the expired output.
     return_address: Address,
-    // Before this milestone index, [`AddressUnlockCondition`](crate::unlock_condition::AddressUnlockCondition) is
-    // allowed to unlock the output.
-    // After that, only the return [`Address`](crate::address::Address) can.
-    milestone_index: MilestoneIndex,
     // Before this unix time, seconds since unix epoch,
     // [`AddressUnlockCondition`](crate::unlock_condition::AddressUnlockCondition) is allowed to unlock the output.
     // After that, only the return [`Address`](crate::address::Address) can.
+    #[packable(verify_with = verify_timestamp)]
     timestamp: u32,
 }
 
@@ -34,12 +25,11 @@ impl ExpirationUnlockCondition {
 
     /// Creates a new [`ExpirationUnlockCondition`].
     #[inline(always)]
-    pub fn new(return_address: Address, milestone_index: MilestoneIndex, timestamp: u32) -> Result<Self, Error> {
-        verify_milestone_index_timestamp(milestone_index, timestamp)?;
+    pub fn new(return_address: Address, timestamp: u32) -> Result<Self, Error> {
+        verify_timestamp::<true>(&timestamp)?;
 
         Ok(Self {
             return_address,
-            milestone_index,
             timestamp,
         })
     }
@@ -50,12 +40,6 @@ impl ExpirationUnlockCondition {
         &self.return_address
     }
 
-    /// Returns the milestone index of a [`ExpirationUnlockCondition`].
-    #[inline(always)]
-    pub fn milestone_index(&self) -> MilestoneIndex {
-        self.milestone_index
-    }
-
     /// Returns the timestamp of a [`ExpirationUnlockCondition`].
     #[inline(always)]
     pub fn timestamp(&self) -> u32 {
@@ -63,16 +47,8 @@ impl ExpirationUnlockCondition {
     }
 
     /// Returns the return address if the condition has expired.
-    pub fn return_address_expired(&self, milestone_index: MilestoneIndex, timestamp: u32) -> Option<&Address> {
-        if *self.milestone_index() != 0 && self.timestamp() != 0 {
-            if milestone_index >= self.milestone_index() && timestamp >= self.timestamp() {
-                Some(&self.return_address)
-            } else {
-                None
-            }
-        } else if *self.milestone_index() != 0 && milestone_index >= self.milestone_index()
-            || self.timestamp() != 0 && timestamp >= self.timestamp()
-        {
+    pub fn return_address_expired(&self, timestamp: u32) -> Option<&Address> {
+        if timestamp >= self.timestamp() {
             Some(&self.return_address)
         } else {
             None
@@ -80,39 +56,9 @@ impl ExpirationUnlockCondition {
     }
 }
 
-impl Packable for ExpirationUnlockCondition {
-    type UnpackError = Error;
-
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
-        self.return_address.pack(packer)?;
-        self.milestone_index.pack(packer)?;
-        self.timestamp.pack(packer)?;
-
-        Ok(())
-    }
-
-    fn unpack<U: Unpacker, const VERIFY: bool>(
-        unpacker: &mut U,
-    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let return_address = Address::unpack::<_, VERIFY>(unpacker)?;
-        let milestone_index = MilestoneIndex::unpack::<_, VERIFY>(unpacker).coerce()?;
-        let timestamp = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
-
-        if VERIFY {
-            verify_milestone_index_timestamp(milestone_index, timestamp).map_err(UnpackError::Packable)?;
-        }
-
-        Ok(Self {
-            return_address,
-            milestone_index,
-            timestamp,
-        })
-    }
-}
-
 #[inline]
-fn verify_milestone_index_timestamp(milestone_index: MilestoneIndex, timestamp: u32) -> Result<(), Error> {
-    if *milestone_index == 0 && timestamp == 0 {
+fn verify_timestamp<const VERIFY: bool>(timestamp: &u32) -> Result<(), Error> {
+    if VERIFY && *timestamp == 0 {
         Err(Error::ExpirationUnlockConditionZero)
     } else {
         Ok(())
@@ -124,11 +70,7 @@ fn verify_milestone_index_timestamp(milestone_index: MilestoneIndex, timestamp: 
 pub mod dto {
     use serde::{Deserialize, Serialize};
 
-    use crate::{
-        address::dto::AddressDto,
-        dto::{is_zero, is_zero_milestone},
-        payload::milestone::MilestoneIndex,
-    };
+    use crate::address::dto::AddressDto;
 
     #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
     pub struct ExpirationUnlockConditionDto {
@@ -136,11 +78,7 @@ pub mod dto {
         pub kind: u8,
         #[serde(rename = "returnAddress")]
         pub return_address: AddressDto,
-        #[serde(rename = "milestoneIndex")]
-        #[serde(skip_serializing_if = "is_zero_milestone", default)]
-        pub milestone_index: MilestoneIndex,
         #[serde(rename = "unixTime")]
-        #[serde(skip_serializing_if = "is_zero", default)]
         pub timestamp: u32,
     }
 }

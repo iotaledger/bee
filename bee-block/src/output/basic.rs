@@ -272,11 +272,9 @@ impl BasicOutput {
         inputs: &[(OutputId, &Output)],
         context: &mut ValidationContext,
     ) -> Result<(), ConflictReason> {
-        let locked_address = self.unlock_conditions().locked_address(
-            self.address(),
-            context.milestone_index,
-            context.milestone_timestamp,
-        );
+        let locked_address = self
+            .unlock_conditions()
+            .locked_address(self.address(), context.milestone_timestamp);
 
         locked_address.unlock(unlock, inputs, context)
     }

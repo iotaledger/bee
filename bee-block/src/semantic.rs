@@ -235,12 +235,8 @@ pub fn semantic_validation(
             return Ok(conflict);
         }
 
-        if let Some(timelock) = unlock_conditions.timelock() {
-            if (*timelock.milestone_index() != 0 && context.milestone_index < timelock.milestone_index())
-                || (timelock.timestamp() != 0 && context.milestone_timestamp < timelock.timestamp())
-            {
-                return Ok(ConflictReason::TimelockNotExpired);
-            }
+        if unlock_conditions.is_time_locked(context.milestone_timestamp) {
+            return Ok(ConflictReason::TimelockNotExpired);
         }
 
         if let Some(storage_deposit_return) = unlock_conditions.storage_deposit_return() {

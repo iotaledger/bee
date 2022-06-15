@@ -23,7 +23,7 @@ pub use self::{
     state_controller_address::StateControllerAddressUnlockCondition,
     storage_deposit_return::StorageDepositReturnUnlockCondition, timelock::TimelockUnlockCondition,
 };
-use crate::{address::Address, create_bitflags, payload::milestone::MilestoneIndex, Error};
+use crate::{address::Address, create_bitflags, Error};
 
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From, Packable)]
@@ -235,15 +235,19 @@ impl UnlockConditions {
 
     /// Returns the address to be unlocked.
     #[inline(always)]
-    pub fn locked_address<'a>(
-        &'a self,
-        address: &'a Address,
-        milestone_index: MilestoneIndex,
-        milestone_timestamp: u32,
-    ) -> &'a Address {
+    pub fn locked_address<'a>(&'a self, address: &'a Address, milestone_timestamp: u32) -> &'a Address {
         self.expiration()
-            .and_then(|e| e.return_address_expired(milestone_index, milestone_timestamp))
+            .and_then(|e| e.return_address_expired(milestone_timestamp))
             .unwrap_or(address)
+    }
+
+    /// Returns whether a time lock exists and is still relevant.
+    #[inline(always)]
+    pub fn is_time_locked(&self, milestone_timestamp: u32) -> bool {
+        match self.timelock() {
+            Some(timelock) => milestone_timestamp < timelock.timestamp(),
+            None => false,
+        }
     }
 }
 
@@ -454,13 +458,11 @@ pub mod dto {
                 }
                 UnlockCondition::Timelock(v) => Self::Timelock(TimelockUnlockConditionDto {
                     kind: TimelockUnlockCondition::KIND,
-                    milestone_index: v.milestone_index(),
                     timestamp: v.timestamp(),
                 }),
                 UnlockCondition::Expiration(v) => Self::Expiration(ExpirationUnlockConditionDto {
                     kind: ExpirationUnlockCondition::KIND,
                     return_address: v.return_address().into(),
-                    milestone_index: v.milestone_index(),
                     timestamp: v.timestamp(),
                 }),
                 UnlockCondition::StateControllerAddress(v) => {
@@ -500,7 +502,7 @@ pub mod dto {
                     )?)
                 }
                 UnlockConditionDto::Timelock(v) => Self::Timelock(
-                    TimelockUnlockCondition::new(v.milestone_index, v.timestamp)
+                    TimelockUnlockCondition::new(v.timestamp)
                         .map_err(|_| DtoError::InvalidField("TimelockUnlockCondition"))?,
                 ),
                 UnlockConditionDto::Expiration(v) => Self::Expiration(
@@ -508,7 +510,6 @@ pub mod dto {
                         (&v.return_address)
                             .try_into()
                             .map_err(|_e| DtoError::InvalidField("ExpirationUnlockCondition"))?,
-                        v.milestone_index,
                         v.timestamp,
                     )
                     .map_err(|_| DtoError::InvalidField("ExpirationUnlockCondition"))?,
