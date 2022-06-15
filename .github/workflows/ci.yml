@@ -121,6 +121,18 @@ jobs:
         with:
           command: fmt
           args: --all -- --check
+      
+      - name: Install cargo-license-template
+        uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: --force cargo-license-template
+
+      - name: Run cargo-license-template
+        uses: actions-rs/cargo@v1
+        with:
+          command: license-template
+          args: --template .license_template
 
   clippy:
     needs: format
