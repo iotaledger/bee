@@ -3,7 +3,14 @@
 
 use core::mem::size_of;
 
-use crate::{output::OutputId, payload::milestone::MilestoneIndex, BlockId};
+use packable::{
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    unpacker::Unpacker,
+    Packable,
+};
+
+use crate::{output::OutputId, payload::milestone::MilestoneIndex, BlockId, Error};
 
 const DEFAULT_BYTE_COST: u32 = 500;
 const DEFAULT_BYTE_COST_FACTOR_KEY: u8 = 10;
@@ -52,11 +59,7 @@ impl RentStructureBuilder {
     pub fn finish(self) -> RentStructure {
         let v_byte_factor_key = self.v_byte_factor_key.unwrap_or(DEFAULT_BYTE_COST_FACTOR_KEY);
         let v_byte_factor_data = self.v_byte_factor_data.unwrap_or(DEFAULT_BYTE_COST_FACTOR_DATA);
-
-        let v_byte_offset = size_of::<OutputId>() as u32 * v_byte_factor_key as u32
-            + size_of::<BlockId>() as u32 * v_byte_factor_data as u32
-            + size_of::<MilestoneIndex>() as u32 * v_byte_factor_data as u32
-            + size_of::<ConfirmationUnixTimestamp>() as u32 * v_byte_factor_data as u32;
+        let v_byte_offset = v_byte_offset(v_byte_factor_key, v_byte_factor_data);
 
         RentStructure {
             v_byte_cost: self.v_byte_cost.unwrap_or(DEFAULT_BYTE_COST),
@@ -87,6 +90,34 @@ impl RentStructure {
     }
 }
 
+impl Packable for RentStructure {
+    type UnpackError = Error;
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        self.v_byte_cost.pack(packer)?;
+        self.v_byte_factor_key.pack(packer)?;
+        self.v_byte_factor_data.pack(packer)?;
+
+        Ok(())
+    }
+
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let v_byte_cost = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let v_byte_factor_key = u8::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let v_byte_factor_data = u8::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let v_byte_offset = v_byte_offset(v_byte_factor_key, v_byte_factor_data);
+
+        Ok(Self {
+            v_byte_cost,
+            v_byte_factor_key,
+            v_byte_factor_data,
+            v_byte_offset,
+        })
+    }
+}
+
 /// A trait to facilitate the computation of the byte cost of block outputs, which is central to dust protection.
 pub trait Rent {
     /// Different fields in a type lead to different storage requirements for the ledger state.
@@ -102,4 +133,11 @@ impl<T: Rent, const N: usize> Rent for [T; N] {
     fn weighted_bytes(&self, config: &RentStructure) -> u64 {
         self.iter().map(|elem| elem.weighted_bytes(config)).sum()
     }
+}
+
+fn v_byte_offset(v_byte_factor_key: u8, v_byte_factor_data: u8) -> u32 {
+    size_of::<OutputId>() as u32 * v_byte_factor_key as u32
+        + size_of::<BlockId>() as u32 * v_byte_factor_data as u32
+        + size_of::<MilestoneIndex>() as u32 * v_byte_factor_data as u32
+        + size_of::<ConfirmationUnixTimestamp>() as u32 * v_byte_factor_data as u32
 }
