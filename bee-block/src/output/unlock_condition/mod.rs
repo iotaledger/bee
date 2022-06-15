@@ -242,7 +242,7 @@ impl UnlockConditions {
         milestone_timestamp: u32,
     ) -> Option<&'a Address> {
         match self.expiration() {
-            Some(expiration) => expiration.return_address_expired(milestone_index, milestone_timestamp),
+            Some(expiration) => expiration.return_address_expired(address, milestone_index, milestone_timestamp),
             None => Some(address),
         }
     }

@@ -62,8 +62,15 @@ impl ExpirationUnlockCondition {
         self.timestamp
     }
 
-    /// Returns the return address if the condition has expired.
-    pub fn return_address_expired(&self, milestone_index: MilestoneIndex, timestamp: u32) -> Option<&Address> {
+    /// Returns the address that can unlock the output. Can be None if only one of milestone_index or timestamp is
+    /// reached. Provided address needs to be the one from the
+    /// [`AddressUnlockCondition`](crate::unlock_condition::AddressUnlockCondition)
+    pub fn return_address_expired<'a>(
+        &'a self,
+        address: &'a Address,
+        milestone_index: MilestoneIndex,
+        timestamp: u32,
+    ) -> Option<&'a Address> {
         if *self.milestone_index() != 0 && self.timestamp() != 0 {
             if milestone_index >= self.milestone_index() && timestamp >= self.timestamp() {
                 Some(&self.return_address)
@@ -73,9 +80,9 @@ impl ExpirationUnlockCondition {
         } else if *self.milestone_index() != 0 && milestone_index >= self.milestone_index()
             || self.timestamp() != 0 && timestamp >= self.timestamp()
         {
-            Some(&self.return_address)
-        } else {
             None
+        } else {
+            Some(address)
         }
     }
 }
