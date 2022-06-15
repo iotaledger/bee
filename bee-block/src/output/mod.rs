@@ -222,7 +222,7 @@ impl Output {
     /// If there is a [`StorageDepositReturnUnlockCondition`](unlock_condition::StorageDepositReturnUnlockCondition),
     /// its amount is also checked.
     pub fn verify_storage_deposit(&self, rent_structure: &RentStructure) -> Result<(), Error> {
-        let required_output_amount = self.rent_cost(rent_structure);
+        let required_output_amount = self.rent_cost(rent_structure) as u64;
 
         if self.amount() < required_output_amount {
             return Err(Error::InsufficientStorageDepositAmount {
@@ -261,7 +261,7 @@ impl Output {
 
 impl Rent for Output {
     fn weighted_bytes(&self, rent_structure: &RentStructure) -> u64 {
-        self.packed_len() as u64 * rent_structure.v_byte_factor_data
+        self.packed_len() as u64 * rent_structure.v_byte_factor_data as u64
     }
 }
 

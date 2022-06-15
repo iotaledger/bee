@@ -5,9 +5,9 @@ use core::mem::size_of;
 
 use crate::{output::OutputId, payload::milestone::MilestoneIndex, BlockId};
 
-const DEFAULT_BYTE_COST: u64 = 500;
-const DEFAULT_BYTE_COST_FACTOR_KEY: u64 = 10;
-const DEFAULT_BYTE_COST_FACTOR_DATA: u64 = 1;
+const DEFAULT_BYTE_COST: u32 = 500;
+const DEFAULT_BYTE_COST_FACTOR_KEY: u8 = 10;
+const DEFAULT_BYTE_COST_FACTOR_DATA: u8 = 1;
 
 type ConfirmationUnixTimestamp = u32;
 
@@ -17,11 +17,11 @@ type ConfirmationUnixTimestamp = u32;
 #[must_use]
 pub struct RentStructureBuilder {
     #[cfg_attr(feature = "serde", serde(alias = "vByteCost"))]
-    v_byte_cost: Option<u64>,
+    v_byte_cost: Option<u32>,
     #[cfg_attr(feature = "serde", serde(alias = "vByteFactorKey"))]
-    v_byte_factor_key: Option<u64>,
+    v_byte_factor_key: Option<u8>,
     #[cfg_attr(feature = "serde", serde(alias = "vByteFactorData"))]
-    v_byte_factor_data: Option<u64>,
+    v_byte_factor_data: Option<u8>,
 }
 
 impl RentStructureBuilder {
@@ -31,19 +31,19 @@ impl RentStructureBuilder {
     }
 
     /// Sets the byte cost for the storage deposit.
-    pub fn byte_cost(mut self, byte_cost: u64) -> Self {
+    pub fn byte_cost(mut self, byte_cost: u32) -> Self {
         self.v_byte_cost.replace(byte_cost);
         self
     }
 
     /// Sets the virtual byte weight for the key fields.
-    pub fn key_factor(mut self, weight: u64) -> Self {
+    pub fn key_factor(mut self, weight: u8) -> Self {
         self.v_byte_factor_key.replace(weight);
         self
     }
 
     /// Sets the virtual byte weight for the data fields.
-    pub fn data_factor(mut self, weight: u64) -> Self {
+    pub fn data_factor(mut self, weight: u8) -> Self {
         self.v_byte_factor_data.replace(weight);
         self
     }
@@ -53,10 +53,10 @@ impl RentStructureBuilder {
         let v_byte_factor_key = self.v_byte_factor_key.unwrap_or(DEFAULT_BYTE_COST_FACTOR_KEY);
         let v_byte_factor_data = self.v_byte_factor_data.unwrap_or(DEFAULT_BYTE_COST_FACTOR_DATA);
 
-        let v_byte_offset = size_of::<OutputId>() as u64 * v_byte_factor_key
-            + size_of::<BlockId>() as u64 * v_byte_factor_data
-            + size_of::<MilestoneIndex>() as u64 * v_byte_factor_data
-            + size_of::<ConfirmationUnixTimestamp>() as u64 * v_byte_factor_data;
+        let v_byte_offset = size_of::<OutputId>() as u32 * v_byte_factor_key as u32
+            + size_of::<BlockId>() as u32 * v_byte_factor_data as u32
+            + size_of::<MilestoneIndex>() as u32 * v_byte_factor_data as u32
+            + size_of::<ConfirmationUnixTimestamp>() as u32 * v_byte_factor_data as u32;
 
         RentStructure {
             v_byte_cost: self.v_byte_cost.unwrap_or(DEFAULT_BYTE_COST),
@@ -71,13 +71,13 @@ impl RentStructureBuilder {
 #[derive(Clone)]
 pub struct RentStructure {
     /// Cost in tokens per virtual byte.
-    pub v_byte_cost: u64,
+    pub v_byte_cost: u32,
     /// The weight factor used for key fields in the ouputs.
-    pub v_byte_factor_key: u64,
+    pub v_byte_factor_key: u8,
     /// The weight factor used for data fields in the ouputs.
-    pub v_byte_factor_data: u64,
+    pub v_byte_factor_data: u8,
     /// The offset in addition to the other fields.
-    v_byte_offset: u64,
+    v_byte_offset: u32,
 }
 
 impl RentStructure {
@@ -94,7 +94,7 @@ pub trait Rent {
 
     /// Computes the rent cost given a [`RentStructure`].
     fn rent_cost(&self, config: &RentStructure) -> u64 {
-        config.v_byte_cost * (self.weighted_bytes(config) + config.v_byte_offset)
+        config.v_byte_cost as u64 * (self.weighted_bytes(config) + config.v_byte_offset as u64)
     }
 }
 

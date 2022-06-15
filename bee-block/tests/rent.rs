@@ -4,9 +4,9 @@
 use bee_block::output::{Output, Rent, RentStructure, RentStructureBuilder};
 use bee_test::rand::output::{rand_alias_output, rand_basic_output, rand_foundry_output, rand_nft_output};
 
-const BYTE_COST: u64 = 1;
-const FACTOR_KEY: u64 = 10;
-const FACTOR_DATA: u64 = 1;
+const BYTE_COST: u32 = 1;
+const FACTOR_KEY: u8 = 10;
+const FACTOR_DATA: u8 = 1;
 
 fn config() -> RentStructure {
     RentStructureBuilder::new()
