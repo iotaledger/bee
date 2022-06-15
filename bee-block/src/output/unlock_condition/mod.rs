@@ -240,10 +240,23 @@ impl UnlockConditions {
         address: &'a Address,
         milestone_index: MilestoneIndex,
         milestone_timestamp: u32,
-    ) -> &'a Address {
-        self.expiration()
-            .and_then(|e| e.return_address_expired(milestone_index, milestone_timestamp))
-            .unwrap_or(address)
+    ) -> Option<&'a Address> {
+        match self.expiration() {
+            Some(expiration) => expiration.return_address_expired(milestone_index, milestone_timestamp),
+            None => Some(address),
+        }
+    }
+
+    /// Returns if the output is time locked.
+    #[inline(always)]
+    pub fn is_time_locked(&self, milestone_index: MilestoneIndex, milestone_timestamp: u32) -> bool {
+        match self.timelock() {
+            Some(timelock) => {
+                (*timelock.milestone_index() != 0 && milestone_index < timelock.milestone_index())
+                    || (timelock.timestamp() != 0 && milestone_timestamp < timelock.timestamp())
+            }
+            None => false,
+        }
     }
 }
 

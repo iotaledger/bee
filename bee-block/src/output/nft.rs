@@ -358,7 +358,12 @@ impl NftOutput {
             *self.nft_id()
         };
 
-        locked_address.unlock(unlock, inputs, context)?;
+        match locked_address {
+            Some(locked_address) => locked_address.unlock(unlock, inputs, context)?,
+            // TODO: set correct ConflictReason, the expiration unlock condition doesn't let the output be unlocked by
+            // any address at this ms index/ time
+            None => return Err(ConflictReason::TimelockNotExpired),
+        }
 
         context
             .unlocked_addresses
