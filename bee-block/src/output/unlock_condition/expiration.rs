@@ -72,15 +72,23 @@ impl ExpirationUnlockCondition {
         timestamp: u32,
     ) -> Option<&'a Address> {
         if *self.milestone_index() != 0 && self.timestamp() != 0 {
+            // Both not 0 and both expired -> return_address
             if milestone_index >= self.milestone_index() && timestamp >= self.timestamp() {
                 Some(&self.return_address)
+            // Both not 0 and both not expired -> address from AddressUnlockCondition
+            } else if milestone_index < self.milestone_index() && timestamp < self.timestamp() {
+                Some(address)
+                // Both not 0 and only one expired -> No address can unlock the output
             } else {
                 None
             }
+        // Only one is not 0, but expired -> return_address
         } else if *self.milestone_index() != 0 && milestone_index >= self.milestone_index()
             || self.timestamp() != 0 && timestamp >= self.timestamp()
         {
-            None
+            Some(&self.return_address)
+            // Only one is not 0, but not expired -> address from AddressUnlockCondition
+            // Both 0 can't exist, because it's invalid
         } else {
             Some(address)
         }
