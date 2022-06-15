@@ -71,7 +71,8 @@ impl RentStructureBuilder {
 }
 
 /// Specifies the current parameters for the byte cost computation.
-#[derive(Clone)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct RentStructure {
     /// Cost in tokens per virtual byte.
     pub v_byte_cost: u32,

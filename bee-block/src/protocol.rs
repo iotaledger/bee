@@ -3,7 +3,7 @@
 
 use packable::{prefix::StringPrefix, Packable};
 
-use crate::Error;
+use crate::{output::RentStructure, Error};
 
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Packable)]
@@ -22,6 +22,8 @@ pub struct ProtocolParemeters {
     min_pow_score: u32,
     /// The below max depth parameter.
     below_max_depth: u8,
+    /// The rent structure used by given node/network.
+    rent_structure: RentStructure,
     /// The token supply.
     token_supply: u64,
 }
