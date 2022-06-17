@@ -6,7 +6,7 @@ use derive_more::From;
 use crate::{address::Address, Error};
 
 /// Defines a unix time until which only Address, defined in Address Unlock Condition, is allowed to unlock the output.
-/// After the milestone index and/or unix time, only Return Address can unlock it.
+/// After or at the unix time, only Return Address can unlock it.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From, packable::Packable)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ExpirationUnlockCondition {
