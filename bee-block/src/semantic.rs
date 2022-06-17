@@ -10,10 +10,7 @@ use crate::{
     address::Address,
     error::Error,
     output::{ChainId, FoundryId, InputsCommitment, NativeTokens, Output, OutputId, TokenId, UnlockCondition},
-    payload::{
-        milestone::MilestoneIndex,
-        transaction::{RegularTransactionEssence, TransactionEssence, TransactionId},
-    },
+    payload::transaction::{RegularTransactionEssence, TransactionEssence, TransactionId},
     unlock::Unlocks,
 };
 
@@ -119,8 +116,6 @@ pub struct ValidationContext<'a> {
     ///
     pub unlocks: &'a Unlocks,
     ///
-    pub milestone_index: MilestoneIndex,
-    ///
     pub milestone_timestamp: u32,
     ///
     pub input_amount: u64,
@@ -149,7 +144,6 @@ impl<'a> ValidationContext<'a> {
         essence: &'a RegularTransactionEssence,
         inputs: impl Iterator<Item = (&'a OutputId, &'a Output)> + Clone,
         unlocks: &'a Unlocks,
-        milestone_index: MilestoneIndex,
         milestone_timestamp: u32,
     ) -> Self {
         Self {
@@ -157,7 +151,6 @@ impl<'a> ValidationContext<'a> {
             unlocks,
             essence_hash: TransactionEssence::from(essence.clone()).hash(),
             inputs_commitment: InputsCommitment::new(inputs.clone().map(|(_, output)| output)),
-            milestone_index,
             milestone_timestamp,
             input_amount: 0,
             input_native_tokens: HashMap::<TokenId, U256>::new(),

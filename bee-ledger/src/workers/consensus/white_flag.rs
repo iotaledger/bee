@@ -76,7 +76,6 @@ fn apply_regular_essence<B: StorageBackend>(
         essence,
         inputs.iter().map(|(output_id, input)| (output_id, *input)),
         unlocks,
-        metadata.milestone_index,
         metadata.milestone_timestamp,
     );
 
