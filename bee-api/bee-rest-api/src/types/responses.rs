@@ -32,7 +32,7 @@ pub struct InfoResponse {
 
 impl IntoResponse for InfoResponse {
     fn into_response(self) -> Response<BoxBody> {
-        (StatusCode::OK, Json(self)).into_response()
+        Json(self).into_response()
     }
 }
 
@@ -141,7 +141,7 @@ pub struct TipsResponse {
 
 impl IntoResponse for TipsResponse {
     fn into_response(self) -> Response<BoxBody> {
-        (StatusCode::OK, Json(self)).into_response()
+        Json(self).into_response()
     }
 }
 
