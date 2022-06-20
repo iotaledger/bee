@@ -22,6 +22,7 @@ const API_JWT_HINT: &str = "\"aud\":\"api\"";
 #[cfg(feature = "dashboard")]
 const DASHBOARD_JWT_HINT: &str = "\"aud\":\"dashboard\"";
 
+#[cfg(feature = "dashboard")]
 lazy_static! {
     static ref DASHBOARD_ROUTES: RegexSet = {
         let routes = vec![

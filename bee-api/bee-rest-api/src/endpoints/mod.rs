@@ -29,11 +29,10 @@ use bee_runtime::{
     worker::{Error as WorkerError, Worker},
 };
 use bee_tangle::{Tangle, TangleWorker};
-use config::RestApiConfig;
 use log::info;
-use storage::StorageBackend;
 use tokio::sync::mpsc;
 
+use self::{config::RestApiConfig, storage::StorageBackend};
 use crate::endpoints::{auth::Auth, error::ApiError, routes::filter_all};
 
 pub(crate) const CONFIRMED_THRESHOLD: u32 = 5;
