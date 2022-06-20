@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use axum::{extract::Extension, http::StatusCode, response::IntoResponse, routing::delete, Router};
+use axum::{extract::Extension, http::StatusCode, routing::delete, Router};
 use bee_gossip::{Command::RemovePeer, PeerId};
 use log::error;
 
@@ -14,7 +14,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
 async fn peers_remove<B: StorageBackend>(
     CustomPath(peer_id): CustomPath<String>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
-) -> Result<impl IntoResponse, ApiError> {
+) -> Result<StatusCode, ApiError> {
     let peer_id = peer_id
         .parse::<PeerId>()
         .map_err(|_| ApiError::BadRequest("invalid peer id"))?;

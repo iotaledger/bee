@@ -3,7 +3,7 @@
 
 use serde::Serialize;
 
-/// A marker trait to represent the data that can be included into `SuccessBody` and `ErrorBody`.
+/// A marker trait to represent the data that can be included into `ErrorBody`.
 pub trait BodyInner {}
 
 /// Describes the response body of a unsuccessful HTTP request.

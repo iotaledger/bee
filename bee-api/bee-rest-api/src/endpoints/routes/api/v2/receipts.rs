@@ -1,12 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use axum::{
-    extract::{Extension, Json},
-    response::IntoResponse,
-    routing::get,
-    Router,
-};
+use axum::{extract::Extension, routing::get, Router};
 use bee_block::payload::milestone::MilestoneIndex;
 use bee_ledger::types::Receipt;
 use bee_storage::access::AsIterator;
@@ -23,7 +18,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
 
 async fn receipts<B: StorageBackend>(
     Extension(args): Extension<ApiArgsFullNode<B>>,
-) -> Result<impl IntoResponse, ApiError> {
+) -> Result<ReceiptsResponse, ApiError> {
     let mut receipts_dto = Vec::new();
     let iterator = AsIterator::<(MilestoneIndex, Receipt), ()>::iter(&*args.storage).map_err(|e| {
         error!("cannot fetch from storage: {}", e);
@@ -38,5 +33,5 @@ async fn receipts<B: StorageBackend>(
         receipts_dto.push(ReceiptDto::from(receipt));
     }
 
-    Ok(Json(ReceiptsResponse { receipts: receipts_dto }))
+    Ok(ReceiptsResponse { receipts: receipts_dto })
 }

@@ -1,12 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use axum::{
-    extract::{Extension, Json},
-    response::IntoResponse,
-    routing::get,
-    Router,
-};
+use axum::{extract::Extension, routing::get, Router};
 use bee_ledger::workers::storage;
 use log::error;
 
@@ -21,14 +16,14 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
 
 async fn treasury<B: StorageBackend>(
     Extension(args): Extension<ApiArgsFullNode<B>>,
-) -> Result<impl IntoResponse, ApiError> {
+) -> Result<TreasuryResponse, ApiError> {
     let treasury = storage::fetch_unspent_treasury_output(&*args.storage).map_err(|e| {
         error!("cannot fetch from storage: {}", e);
         ApiError::InternalServerError
     })?;
 
-    Ok(Json(TreasuryResponse {
+    Ok(TreasuryResponse {
         milestone_id: treasury.milestone_id().to_string(),
         amount: treasury.inner().amount().to_string(),
-    }))
+    })
 }

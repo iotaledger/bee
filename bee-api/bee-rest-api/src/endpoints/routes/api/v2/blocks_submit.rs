@@ -1,14 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use axum::{
-    body::Bytes,
-    extract::{Extension, Json},
-    http::{header::HeaderMap, StatusCode},
-    response::{IntoResponse, Response},
-    routing::post,
-    Router,
-};
+use axum::{body::Bytes, extract::Extension, http::header::HeaderMap, routing::post, Router};
 use bee_block::{
     constant::PROTOCOL_VERSION,
     parent::Parents,
@@ -40,7 +33,7 @@ async fn blocks_submit<B: StorageBackend>(
     bytes: Bytes,
     headers: HeaderMap,
     Extension(args): Extension<ApiArgsFullNode<B>>,
-) -> Result<Response, ApiError> {
+) -> Result<SubmitBlockResponse, ApiError> {
     if let Some(value) = headers.get(axum::http::header::CONTENT_TYPE) {
         if value.eq(&*BYTE_CONTENT_HEADER) {
             return submit_block_raw::<B>(bytes.to_vec(), args.clone()).await;
@@ -57,7 +50,7 @@ async fn blocks_submit<B: StorageBackend>(
 pub(crate) async fn submit_block_json<B: StorageBackend>(
     value: Value,
     args: ApiArgsFullNode<B>,
-) -> Result<Response, ApiError> {
+) -> Result<SubmitBlockResponse, ApiError> {
     let protocol_version_json = &value["protocolVersion"];
     let parents_json = &value["parents"];
     let payload_json = &value["payload"];
@@ -126,13 +119,9 @@ pub(crate) async fn submit_block_json<B: StorageBackend>(
     let block = build_block(parents, payload, nonce, args.clone())?;
     let block_id = forward_to_block_submitter(block.pack_to_vec(), args).await?;
 
-    Ok((
-        StatusCode::CREATED,
-        Json(SubmitBlockResponse {
-            block_id: block_id.to_string(),
-        }),
-    )
-        .into_response())
+    Ok(SubmitBlockResponse {
+        block_id: block_id.to_string(),
+    })
 }
 
 pub(crate) fn build_block<B: StorageBackend>(
@@ -178,15 +167,11 @@ pub(crate) fn build_block<B: StorageBackend>(
 pub(crate) async fn submit_block_raw<B: StorageBackend>(
     block_bytes: Vec<u8>,
     args: ApiArgsFullNode<B>,
-) -> Result<Response, ApiError> {
+) -> Result<SubmitBlockResponse, ApiError> {
     let block_id = forward_to_block_submitter(block_bytes, args).await?;
-    Ok((
-        StatusCode::CREATED,
-        Json(SubmitBlockResponse {
-            block_id: block_id.to_string(),
-        }),
-    )
-        .into_response())
+    Ok(SubmitBlockResponse {
+        block_id: block_id.to_string(),
+    })
 }
 
 pub(crate) async fn forward_to_block_submitter<B: StorageBackend>(

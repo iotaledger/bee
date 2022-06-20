@@ -1,12 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use axum::{
-    extract::{Extension, Json},
-    response::IntoResponse,
-    routing::get,
-    Router,
-};
+use axum::{extract::Extension, routing::get, Router};
 use bee_block::constant::{PROTOCOL_VERSION, TOKEN_SUPPLY};
 
 use crate::{
@@ -21,7 +16,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/info", get(info::<B>))
 }
 
-async fn info<B: StorageBackend>(Extension(args): Extension<ApiArgsFullNode<B>>) -> impl IntoResponse {
+async fn info<B: StorageBackend>(Extension(args): Extension<ApiArgsFullNode<B>>) -> InfoResponse {
     let (latest_milestone_index, latest_milestone_metadata) = {
         let latest_milestone_index = args.tangle.get_latest_milestone_index();
         (
@@ -38,7 +33,7 @@ async fn info<B: StorageBackend>(Extension(args): Extension<ApiArgsFullNode<B>>)
         )
     };
 
-    Json(InfoResponse {
+    InfoResponse {
         name: args.node_info.name.clone(),
         version: args.node_info.version.clone(),
         status: StatusResponse {
@@ -100,5 +95,5 @@ async fn info<B: StorageBackend>(Extension(args): Extension<ApiArgsFullNode<B>>)
             features
         },
         plugins: Vec::new(), // TODO: add actual plugins that the node supports
-    })
+    }
 }

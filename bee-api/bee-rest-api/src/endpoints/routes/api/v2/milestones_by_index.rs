@@ -1,13 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use axum::{
-    extract::{Extension, Json},
-    http::header::HeaderMap,
-    response::IntoResponse,
-    routing::get,
-    Router,
-};
+use axum::{extract::Extension, http::header::HeaderMap, routing::get, Router};
 use bee_block::payload::{milestone::MilestoneIndex, MilestonePayload};
 use packable::PackableExt;
 
@@ -27,14 +21,14 @@ async fn milestones_by_index<B: StorageBackend>(
     headers: HeaderMap,
     CustomPath(milestone_index): CustomPath<MilestoneIndex>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
-) -> Result<impl IntoResponse, ApiError> {
+) -> Result<MilestoneResponse, ApiError> {
     let milestone_payload = get_milestone_payload(args, milestone_index).await?;
     if let Some(value) = headers.get(axum::http::header::ACCEPT) {
         if value.eq(&*BYTE_CONTENT_HEADER) {
-            return Ok(milestone_payload.pack_to_vec().into_response());
+            return Ok(MilestoneResponse::Raw(milestone_payload.pack_to_vec()));
         }
     }
-    Ok(Json(MilestoneResponse((&milestone_payload).into())).into_response())
+    Ok(MilestoneResponse::Json((&milestone_payload).into()))
 }
 
 async fn get_milestone_payload<B: StorageBackend>(

@@ -7,12 +7,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use axum::{
-    extract::{Extension, Json},
-    response::IntoResponse,
-    routing::post,
-    Router,
-};
+use axum::{extract::Extension, routing::post, Router};
 use bee_block::{payload::milestone::MilestoneIndex, BlockId};
 use bee_ledger::workers::consensus::{self, WhiteFlagMetadata};
 use bee_protocol::workers::{event::BlockSolidified, request_block};
@@ -37,7 +32,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
 pub(crate) async fn white_flag<B: StorageBackend>(
     CustomJson(body): CustomJson<Value>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
-) -> Result<impl IntoResponse, ApiError> {
+) -> Result<WhiteFlagResponse, ApiError> {
     let index_json = &body["index"];
     let parents_json = &body["parents"];
 
@@ -131,9 +126,9 @@ pub(crate) async fn white_flag<B: StorageBackend>(
                 .await
                 .map_err(|e| ApiError::DependencyError(DependencyError::InvalidWhiteflag(e)))?;
 
-            Ok(Json(WhiteFlagResponse {
+            Ok(WhiteFlagResponse {
                 merkle_tree_hash: metadata.applied_merkle_root().to_string(),
-            }))
+            })
         }
         Err(_) => {
             // Did timeout, parents are not solid and white flag can not happen.

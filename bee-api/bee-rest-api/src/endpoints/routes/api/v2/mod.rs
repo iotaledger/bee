@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub mod blocks;
-pub mod blocks_children;
 pub mod blocks_metadata;
 pub mod blocks_submit;
 pub mod info;
@@ -26,14 +25,11 @@ use axum::Router;
 
 use crate::endpoints::storage::StorageBackend;
 
-pub(crate) const MAX_RESPONSE_RESULTS: usize = 1000;
-
 pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().nest(
         "/v2",
         info::filter::<B>()
             .merge(blocks::filter::<B>())
-            .merge(blocks_children::filter::<B>())
             .merge(blocks_metadata::filter::<B>())
             .merge(blocks_submit::filter::<B>())
             .merge(milestones_by_id::filter::<B>())

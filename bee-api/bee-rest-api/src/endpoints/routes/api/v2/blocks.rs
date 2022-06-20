@@ -2,9 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use axum::{
-    extract::{Extension, Json},
+    extract::Extension,
     http::header::{HeaderMap, HeaderValue},
-    response::{IntoResponse, Response},
     routing::get,
     Router,
 };
@@ -30,24 +29,22 @@ async fn blocks<B: StorageBackend>(
     headers: HeaderMap,
     CustomPath(block_id): CustomPath<BlockId>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
-) -> Result<Response, ApiError> {
+) -> Result<BlockResponse, ApiError> {
     if let Some(value) = headers.get(axum::http::header::ACCEPT) {
         if value.eq(&*BYTE_CONTENT_HEADER) {
-            return blocks_raw::<B>(block_id, args.clone()).await.map(|r| r.into_response());
+            return blocks_raw::<B>(block_id, args.clone()).await;
         }
     }
 
-    blocks_json::<B>(block_id, args.clone())
-        .await
-        .map(|r| r.into_response())
+    blocks_json::<B>(block_id, args.clone()).await
 }
 
 pub(crate) async fn blocks_json<B: StorageBackend>(
     block_id: BlockId,
     args: ApiArgsFullNode<B>,
-) -> Result<impl IntoResponse, ApiError> {
+) -> Result<BlockResponse, ApiError> {
     match args.tangle.get(&block_id) {
-        Some(block) => Ok(Json(BlockResponse(BlockDto::from(&block)))),
+        Some(block) => Ok(BlockResponse::Json(BlockDto::from(&block))),
         None => Err(ApiError::NotFound),
     }
 }
@@ -55,9 +52,9 @@ pub(crate) async fn blocks_json<B: StorageBackend>(
 pub(crate) async fn blocks_raw<B: StorageBackend>(
     block_id: BlockId,
     args: ApiArgsFullNode<B>,
-) -> Result<impl IntoResponse, ApiError> {
+) -> Result<BlockResponse, ApiError> {
     match args.tangle.get(&block_id) {
-        Some(block) => Ok(block.pack_to_vec()),
+        Some(block) => Ok(BlockResponse::Raw(block.pack_to_vec())),
         None => Err(ApiError::NotFound),
     }
 }

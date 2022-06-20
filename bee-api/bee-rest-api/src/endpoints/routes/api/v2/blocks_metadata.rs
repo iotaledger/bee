@@ -1,12 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use axum::{
-    extract::{Extension, Json},
-    response::IntoResponse,
-    routing::get,
-    Router,
-};
+use axum::{extract::Extension, routing::get, Router};
 use bee_block::{payload::Payload, semantic::ConflictReason, BlockId};
 
 use crate::{
@@ -23,7 +18,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
 async fn block_metadata<B: StorageBackend>(
     CustomPath(block_id): CustomPath<BlockId>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
-) -> Result<impl IntoResponse, ApiError> {
+) -> Result<BlockMetadataResponse, ApiError> {
     if !args.tangle.is_confirmed_threshold(CONFIRMED_THRESHOLD) {
         return Err(ApiError::ServiceUnavailable("the node is not synchronized"));
     }
@@ -128,7 +123,7 @@ async fn block_metadata<B: StorageBackend>(
                 )
             };
 
-            Ok(Json(BlockMetadataResponse {
+            Ok(BlockMetadataResponse {
                 block_id: block_id.to_string(),
                 parents: block.parents().iter().map(BlockId::to_string).collect(),
                 is_solid,
@@ -138,7 +133,7 @@ async fn block_metadata<B: StorageBackend>(
                 conflict_reason: conflict_reason.map(|c| c as u8),
                 should_promote,
                 should_reattach,
-            }))
+            })
         }
         None => Err(ApiError::NotFound),
     }

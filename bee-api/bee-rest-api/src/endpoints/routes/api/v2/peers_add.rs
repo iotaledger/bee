@@ -1,12 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use axum::{
-    extract::{Extension, Json},
-    response::IntoResponse,
-    routing::post,
-    Router,
-};
+use axum::{extract::Extension, routing::post, Router};
 use bee_gossip::{Command::AddPeer, Multiaddr, PeerId, PeerRelation, Protocol};
 use log::error;
 use serde_json::Value;
@@ -26,7 +21,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
 async fn peers_add<B: StorageBackend>(
     CustomJson(value): CustomJson<Value>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
-) -> Result<impl IntoResponse, ApiError> {
+) -> Result<AddPeerResponse, ApiError> {
     let multiaddress_json = &value["multiAddress"];
     let alias_json = &value["alias"];
 
@@ -47,7 +42,7 @@ async fn peers_add<B: StorageBackend>(
     args.peer_manager
         .get_map(&peer_id, |peer_entry| {
             let peer_dto = PeerDto::from(peer_entry.0.as_ref());
-            Ok(Json(AddPeerResponse(peer_dto)))
+            Ok(AddPeerResponse(peer_dto))
         })
         .unwrap_or_else(|| {
             let alias = if alias_json.is_null() {
@@ -71,13 +66,13 @@ async fn peers_add<B: StorageBackend>(
                 return Err(ApiError::InternalServerError);
             }
 
-            Ok(Json(AddPeerResponse(PeerDto {
+            Ok(AddPeerResponse(PeerDto {
                 id: peer_id.to_string(),
                 alias,
                 multi_addresses: vec![multiaddress.to_string()],
                 relation: RelationDto::Known,
                 connected: false,
                 gossip: None,
-            })))
+            }))
         })
 }

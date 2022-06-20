@@ -1,12 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use axum::{
-    extract::{Extension, Json},
-    response::IntoResponse,
-    routing::get,
-    Router,
-};
+use axum::{extract::Extension, routing::get, Router};
 use bee_block::output::OutputId;
 use bee_ledger::{
     types::{ConsumedOutput, CreatedOutput, LedgerIndex},
@@ -28,7 +23,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
 async fn outputs_metadata<B: StorageBackend>(
     CustomPath(output_id): CustomPath<OutputId>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
-) -> Result<impl IntoResponse, ApiError> {
+) -> Result<OutputMetadataResponse, ApiError> {
     let (cmd_tx, cmd_rx) = oneshot::channel::<(Result<Option<CreatedOutput>, Error>, LedgerIndex)>();
 
     if let Err(e) = args
@@ -53,12 +48,12 @@ async fn outputs_metadata<B: StorageBackend>(
                         ApiError::InternalServerError
                     })?;
 
-                Ok(Json(create_output_metadata(
+                Ok(create_output_metadata(
                     &output_id,
                     &created_output,
                     consumed_output.as_ref(),
                     ledger_index,
-                )))
+                ))
             }
 
             None => Err(ApiError::NotFound),
