@@ -22,10 +22,7 @@ async fn milestones_by_id<B: StorageBackend>(
     CustomPath(milestone_id): CustomPath<MilestoneId>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
-    let milestone_payload = args
-        .tangle
-        .get_milestone(milestone_id)
-        .ok_or_else(|| ApiError::NotFound)?;
+    let milestone_payload = args.tangle.get_milestone(milestone_id).ok_or(ApiError::NotFound)?;
 
     if let Some(value) = headers.get(axum::http::header::ACCEPT) {
         if value.eq(&*BYTE_CONTENT_HEADER) {
