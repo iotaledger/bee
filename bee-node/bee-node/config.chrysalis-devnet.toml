@@ -76,19 +76,28 @@ feature_proof_of_work = true
 white_flag_solidification_timeout = 2
 
 [snapshot]
-depth             = 50
-interval_synced   = 50
-interval_unsynced = 1000
 full_path         = "./snapshots/devnet/full_snapshot.bin"
 delta_path        = "./snapshots/devnet/delta_snapshot.bin"
 [[snapshot.download_urls]]
 full        = "http://dbfiles.chrysalis-devnet.iota.cafe/snapshots/hornet/latest-full_snapshot.bin"
 delta       = "http://dbfiles.chrysalis-devnet.iota.cafe/snapshots/hornet/latest-delta_snapshot.bin"
+[snapshot.create]
+enabled           = false
+depth             = 50
+interval_synced   = 50
+interval_unsynced = 1000
 
 [pruning]
-enabled         = true
-delay           = 60480
-prune_receipts  = false
+[pruning.milestones]
+enabled                = true
+max_milestones_to_keep = 60480
+[pruning.size]
+enabled                = true
+target_size            = "30GB"
+threshold_percentage   = 10.0
+cooldown_time          = "5m"
+[pruning.receipts]
+enabled                = false
 
 [storage]
 path = "./storage/devnet/tangle"

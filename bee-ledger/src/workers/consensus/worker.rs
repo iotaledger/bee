@@ -24,7 +24,11 @@ use crate::{
         consensus::{metadata::WhiteFlagMetadata, state::validate_ledger_state, white_flag},
         error::Error,
         event::{MessageReferenced, MilestoneConfirmed, OutputConsumed, OutputCreated},
-        pruning::{condition::should_prune, config::PruningConfig, prune},
+        pruning::{
+            condition::{should_prune, PruningTask},
+            config::PruningConfig,
+            prune,
+        },
         snapshot::{condition::should_snapshot, config::SnapshotConfig, worker::SnapshotWorker},
         storage::{self, StorageBackend},
     },
@@ -279,28 +283,28 @@ where
         let bmd = tangle.config().below_max_depth();
 
         let snapshot_depth_min = bmd + EXTRA_SNAPSHOT_DEPTH;
-        let snapshot_depth = if snapshot_config.depth() < snapshot_depth_min {
+        let snapshot_depth = if snapshot_config.snapshotting().depth() < snapshot_depth_min {
             warn!(
                 "Configuration value for \"snapshot.depth\" is too low ({}), value changed to {}.",
-                snapshot_config.depth(),
+                snapshot_config.snapshotting().depth(),
                 snapshot_depth_min
             );
             snapshot_depth_min
         } else {
-            snapshot_config.depth()
+            snapshot_config.snapshotting().depth()
         };
 
         let snapshot_pruning_delta = bmd + EXTRA_PRUNING_DEPTH;
-        let pruning_delay_min = snapshot_depth + snapshot_pruning_delta;
-        let pruning_delay = if pruning_config.delay() < pruning_delay_min {
+        let milestones_to_keep_min = snapshot_depth + snapshot_pruning_delta;
+        let milestones_to_keep = if pruning_config.milestones().max_milestones_to_keep() < milestones_to_keep_min {
             warn!(
-                "Configuration value for \"pruning.delay\" is too low ({}), value changed to {}.",
-                pruning_config.delay(),
-                pruning_delay_min
+                "Configuration value for \"max_milestones_to_keep\" is too low ({}), value changed to {}.",
+                pruning_config.milestones().max_milestones_to_keep(),
+                milestones_to_keep_min
             );
-            pruning_delay_min
+            milestones_to_keep_min
         } else {
-            pruning_config.delay()
+            pruning_config.milestones().max_milestones_to_keep()
         };
 
         // Unwrap is fine because ledger index was already in storage or just added by the snapshot worker.
@@ -341,24 +345,46 @@ where
                                 // }
                             }
                             Err(reason) => {
-                                debug!("Snapshotting skipped: {:?}", reason);
+                                debug!("Snapshotting skipped: {reason}");
                             }
                         }
 
-                        match should_prune(&tangle, ledger_index, pruning_delay, &pruning_config) {
-                            Ok((start_index, target_index)) => {
-                                if let Err(e) =
-                                    prune::prune(&tangle, &storage, &bus, start_index, target_index, &pruning_config)
-                                        .await
-                                {
-                                    error!("Pruning failed: {:?}.", e);
-                                    // TODO: consider initiating an emergency (but graceful) shutdown instead of just
-                                    // panicking.
-                                    panic!("Aborting due to an unexpected pruning error.");
+                        match should_prune(&tangle, &storage, ledger_index, milestones_to_keep, &pruning_config) {
+                            Ok(pruning_task) => match pruning_task {
+                                PruningTask::ByIndexRange {
+                                    start_index,
+                                    target_index,
+                                } => {
+                                    if let Err(e) = prune::prune_by_range(
+                                        &tangle,
+                                        &storage,
+                                        &bus,
+                                        start_index,
+                                        target_index,
+                                        &pruning_config,
+                                    )
+                                    .await
+                                    {
+                                        error!("Pruning milestone range failed: {e}.");
+                                    }
                                 }
-                            }
+                                PruningTask::ByDbSize { num_bytes_to_prune } => {
+                                    if let Err(e) = prune::prune_by_size(
+                                        &tangle,
+                                        &storage,
+                                        &bus,
+                                        ledger_index,
+                                        num_bytes_to_prune,
+                                        &pruning_config,
+                                    )
+                                    .await
+                                    {
+                                        error!("Pruning by storage size failed: {e}.");
+                                    }
+                                }
+                            },
                             Err(reason) => {
-                                debug!("Pruning skipped: {:?}", reason);
+                                debug!("Pruning skipped: {reason}");
                             }
                         }
                     }

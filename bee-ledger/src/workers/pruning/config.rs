@@ -3,20 +3,28 @@
 
 //! Module containing pruning configuration.
 
+use std::time::Duration;
+
+use humanize_rs::{bytes, duration};
 use serde::Deserialize;
 
-const DEFAULT_ENABLED: bool = true;
-const DEFAULT_DELAY: u32 = 60480;
-const DEFAULT_PRUNE_RECEIPTS: bool = false;
+const PRUNING_MILESTONES_ENABLED_DEFAULT: bool = true;
+const PRUNING_SIZE_ENABLED_DEFAULT: bool = true;
+const PRUNING_RECEIPTS_ENABLED_DEFAULT: bool = false;
+const MAX_MILESTONES_TO_KEEP_DEFAULT: u32 = 60480;
+pub(crate) const MILESTONES_TO_KEEP_MIN: u32 = 50;
+const THRESHOLD_PERCENTAGE_DEFAULT: f32 = 10.0;
+const COOLDOWN_TIME_DEFAULT: &str = "5m";
+const TARGET_SIZE_DEFAULT: &str = "30Gb";
 
 /// Builder for a [`PruningConfig`].
-#[derive(Default, Deserialize, PartialEq)]
+#[derive(Default, Debug, Deserialize, PartialEq)]
 #[must_use]
 pub struct PruningConfigBuilder {
-    enabled: Option<bool>,
-    delay: Option<u32>,
-    #[serde(alias = "pruneReceipts")]
-    prune_receipts: Option<bool>,
+    milestones: Option<PruningMilestonesConfigBuilder>,
+    #[serde(rename = "size")]
+    db_size: Option<PruningDbSizeConfigBuilder>,
+    receipts: Option<PruningReceiptsConfigBuilder>,
 }
 
 impl PruningConfigBuilder {
@@ -25,21 +33,21 @@ impl PruningConfigBuilder {
         Self::default()
     }
 
-    /// Enables pruning.
-    pub fn enabled(mut self, enabled: bool) -> Self {
-        self.enabled.replace(enabled);
+    /// Sets the [`PruningMilestonesConfigBuilder`].
+    pub fn milestones(mut self, builder: PruningMilestonesConfigBuilder) -> Self {
+        self.milestones.replace(builder);
         self
     }
 
-    /// Sets the pruning delay.
-    pub fn delay(mut self, delay: u32) -> Self {
-        self.delay.replace(delay);
+    /// Sets the [`PruningDbSizeConfigBuilder`].
+    pub fn db_size(mut self, builder: PruningDbSizeConfigBuilder) -> Self {
+        self.db_size.replace(builder);
         self
     }
 
-    /// Sets whether receipts should be pruned as well.
-    pub fn prune_receipts(mut self, prune_receipts: bool) -> Self {
-        self.prune_receipts.replace(prune_receipts);
+    /// Sets the [`PruningReceiptsConfigBuilder`].
+    pub fn receipts(mut self, builder: PruningReceiptsConfigBuilder) -> Self {
+        self.receipts.replace(builder);
         self
     }
 
@@ -47,19 +55,135 @@ impl PruningConfigBuilder {
     #[must_use]
     pub fn finish(self) -> PruningConfig {
         PruningConfig {
-            enabled: self.enabled.unwrap_or(DEFAULT_ENABLED),
-            delay: self.delay.unwrap_or(DEFAULT_DELAY),
-            prune_receipts: self.prune_receipts.unwrap_or(DEFAULT_PRUNE_RECEIPTS),
+            milestones: self.milestones.unwrap_or_default().finish(),
+            db_size: self.db_size.unwrap_or_default().finish(),
+            receipts: self.receipts.unwrap_or_default().finish(),
+        }
+    }
+}
+
+/// Builder for a [`PruningMilestonesConfig`].
+#[derive(Default, Debug, Deserialize, PartialEq)]
+#[must_use]
+pub struct PruningMilestonesConfigBuilder {
+    enabled: Option<bool>,
+    #[serde(alias = "maxMilestonesToKeep")]
+    max_milestones_to_keep: Option<u32>,
+}
+
+impl PruningMilestonesConfigBuilder {
+    /// Sets whether pruning based on milestone indexes is enabled.
+    pub fn enabled(mut self, enabled: bool) -> Self {
+        self.enabled.replace(enabled);
+        self
+    }
+
+    /// Sets how many milestones to hold available in the storage.
+    pub fn max_milestones_to_keep(mut self, max_milestones_to_keep: u32) -> Self {
+        let max_milestones_to_keep = max_milestones_to_keep.max(MILESTONES_TO_KEEP_MIN);
+        self.max_milestones_to_keep.replace(max_milestones_to_keep);
+        self
+    }
+
+    /// Finishes this builder into a [`PruningMilestonesConfig`].
+    #[must_use]
+    pub fn finish(self) -> PruningMilestonesConfig {
+        PruningMilestonesConfig {
+            enabled: self.enabled.unwrap_or(PRUNING_MILESTONES_ENABLED_DEFAULT),
+            max_milestones_to_keep: self.max_milestones_to_keep.unwrap_or(MAX_MILESTONES_TO_KEEP_DEFAULT),
+        }
+    }
+}
+
+/// Builder for a [`PruningDbSizeConfig`].
+#[derive(Default, Debug, Deserialize, PartialEq)]
+#[must_use]
+pub struct PruningDbSizeConfigBuilder {
+    enabled: Option<bool>,
+    #[serde(alias = "targetSize")]
+    target_size: Option<String>,
+    #[serde(alias = "thresholdPercentage")]
+    threshold_percentage: Option<f32>,
+    #[serde(alias = "cooldownTime")]
+    cooldown_time: Option<String>,
+}
+
+impl PruningDbSizeConfigBuilder {
+    /// Sets whether pruning based on storage size is enabled.
+    pub fn enabled(mut self, enabled: bool) -> Self {
+        self.enabled.replace(enabled);
+        self
+    }
+
+    /// Sets the target size (i.e. the maximum size) of the database.
+    pub fn target_size(mut self, target_size: String) -> Self {
+        self.target_size.replace(target_size);
+        self
+    }
+
+    /// Sets the percentage of the target size that is pruned from the database.
+    pub fn threshold_percentage(mut self, threshold_percentage: f32) -> Self {
+        self.threshold_percentage.replace(threshold_percentage);
+        self
+    }
+
+    /// Sets the cooldown time (i.e. the sleep interval) between two subsequent pruning-by-size events.
+    pub fn cooldown_time(mut self, cooldown_time: String) -> Self {
+        self.cooldown_time.replace(cooldown_time);
+        self
+    }
+
+    /// Finishes this builder into a [`PruningDbSizeConfig`].
+    #[must_use]
+    pub fn finish(self) -> PruningDbSizeConfig {
+        let target_size = self.target_size.unwrap_or_else(|| TARGET_SIZE_DEFAULT.to_string());
+        let target_size = target_size
+            .parse::<bytes::Bytes>()
+            .expect("parse human-readable pruning target size")
+            .size();
+
+        let cooldown_time = self.cooldown_time.unwrap_or_else(|| COOLDOWN_TIME_DEFAULT.to_string());
+        let cooldown_time =
+            duration::parse(cooldown_time.as_ref()).expect("parse human-readable pruning cooldown time");
+
+        PruningDbSizeConfig {
+            enabled: self.enabled.unwrap_or(PRUNING_SIZE_ENABLED_DEFAULT),
+            target_size,
+            threshold_percentage: self.threshold_percentage.unwrap_or(THRESHOLD_PERCENTAGE_DEFAULT),
+            cooldown_time,
+        }
+    }
+}
+
+/// Builder for a [`PruningReceiptsConfig`].
+#[derive(Default, Debug, Deserialize, PartialEq)]
+#[must_use]
+pub struct PruningReceiptsConfigBuilder {
+    enabled: Option<bool>,
+}
+
+impl PruningReceiptsConfigBuilder {
+    /// Sets whether receipts will be pruned.
+    pub fn enabled(mut self, enabled: bool) -> Self {
+        self.enabled.replace(enabled);
+        self
+    }
+
+    /// Finishes this builder into a [`PruningReceiptsConfig`].
+    #[must_use]
+    pub fn finish(self) -> PruningReceiptsConfig {
+        PruningReceiptsConfig {
+            enabled: self.enabled.unwrap_or(PRUNING_RECEIPTS_ENABLED_DEFAULT),
         }
     }
 }
 
 /// The pruning configuration.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct PruningConfig {
-    enabled: bool,
-    delay: u32,
-    prune_receipts: bool,
+    milestones: PruningMilestonesConfig,
+    db_size: PruningDbSizeConfig,
+    receipts: PruningReceiptsConfig,
 }
 
 impl PruningConfig {
@@ -68,23 +192,182 @@ impl PruningConfig {
         PruningConfigBuilder::new()
     }
 
-    /// Returns whether pruning is enabled.
+    /// Returns the `[PruningMilestonesConfig`].
+    #[inline(always)]
+    pub fn milestones(&self) -> &PruningMilestonesConfig {
+        &self.milestones
+    }
+
+    /// Returns the `[PruningSizeConfig`].
+    #[inline(always)]
+    pub fn db_size(&self) -> &PruningDbSizeConfig {
+        &self.db_size
+    }
+
+    /// Returns the `[PruningReceiptsConfig`].
+    #[inline(always)]
+    pub fn receipts(&self) -> &PruningReceiptsConfig {
+        &self.receipts
+    }
+}
+
+/// The config associated with milestone index based pruning.
+#[derive(Clone, Debug)]
+pub struct PruningMilestonesConfig {
+    enabled: bool,
+    max_milestones_to_keep: u32,
+}
+
+impl PruningMilestonesConfig {
+    /// Returns whether pruning based on milestone indexes is enabled.
     pub fn enabled(&self) -> bool {
         self.enabled
     }
 
-    /// Returns whether pruning is disabled.
-    pub fn disabled(&self) -> bool {
-        !self.enabled
+    /// Returns the maximum number of milestones to hold available in the storage.
+    pub fn max_milestones_to_keep(&self) -> u32 {
+        self.max_milestones_to_keep
+    }
+}
+
+/// The config associated with storage size based pruning.
+#[derive(Clone, Debug)]
+pub struct PruningDbSizeConfig {
+    enabled: bool,
+    target_size: usize,
+    threshold_percentage: f32,
+    cooldown_time: Duration,
+}
+
+impl PruningDbSizeConfig {
+    /// Returns whether pruning based on a target storage size is enabled.
+    pub fn enabled(&self) -> bool {
+        self.enabled
     }
 
-    /// Returns the pruning delay.
-    pub fn delay(&self) -> u32 {
-        self.delay
+    /// Returns the target size of the database.
+    pub fn target_size(&self) -> usize {
+        self.target_size
     }
 
-    /// Returns whether [`Receipt`](crate::types::Receipt)s are pruned.
-    pub fn prune_receipts(&self) -> bool {
-        self.prune_receipts
+    /// Returns the percentage the database gets reduced if the target size is reached.
+    pub fn threshold_percentage(&self) -> f32 {
+        self.threshold_percentage
+    }
+
+    /// Returns the cooldown time between two pruning-by-database size events.
+    pub fn cooldown_time(&self) -> Duration {
+        self.cooldown_time
+    }
+}
+
+/// The config associated with pruning receipts.
+#[cfg_attr(test, derive(Eq, PartialEq))]
+#[derive(Clone, Debug)]
+pub struct PruningReceiptsConfig {
+    enabled: bool,
+}
+
+impl PruningReceiptsConfig {
+    /// Returns whether pruning receipts is enabled.
+    pub fn enabled(&self) -> bool {
+        self.enabled
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[derive(Debug)]
+    struct NodeConfig {
+        pruning: PruningConfig,
+    }
+
+    #[derive(Default, Debug, Deserialize)]
+    #[must_use]
+    struct NodeConfigBuilder {
+        pruning: Option<PruningConfigBuilder>,
+    }
+
+    impl NodeConfigBuilder {
+        fn finish(self) -> NodeConfig {
+            NodeConfig {
+                pruning: self.pruning.unwrap().finish(),
+            }
+        }
+    }
+
+    fn create_config_from_json_str() -> PruningConfig {
+        let config_json_str = r#"
+        {
+            "pruning": {
+                "milestones": {
+                    "enabled": false,
+                    "maxMilestonesToKeep": 200
+                },
+                "size": {
+                    "enabled": false,
+                    "targetSize": "500MB",
+                    "thresholdPercentage": 20.0,
+                    "cooldownTime": "1m"
+                },
+                "receipts": {
+                    "enabled": true
+                }
+            }
+        }"#;
+
+        let node_config = serde_json::from_str::<NodeConfigBuilder>(config_json_str)
+            .expect("error deserializing json config str")
+            .finish();
+
+        node_config.pruning
+    }
+
+    fn create_config_from_toml_str() -> PruningConfig {
+        let config_toml_str = r#"
+        [pruning]
+        [pruning.milestones]
+        enabled                = false
+        max_milestones_to_keep = 200
+        [pruning.size]
+        enabled                = false
+        target_size            = "500MB"
+        threshold_percentage   = 20.0
+        cooldown_time          = "1m"
+        [pruning.receipts]
+        enabled                = true
+        "#;
+
+        let node_config_builder =
+            toml::from_str::<NodeConfigBuilder>(config_toml_str).expect("error deserializing toml config str");
+
+        println!("{:?}", node_config_builder);
+        let node_config = node_config_builder.finish();
+
+        node_config.pruning
+    }
+
+    #[test]
+    fn deserialize_json_and_toml_repr_into_same_config() {
+        let json_config = create_config_from_json_str();
+        let toml_config = create_config_from_toml_str();
+
+        assert!(!json_config.milestones().enabled());
+        assert_eq!(json_config.milestones().max_milestones_to_keep(), 200);
+        assert_eq!(json_config.db_size().target_size(), 500000000);
+        assert_eq!(json_config.db_size().threshold_percentage(), 20.0);
+        assert_eq!(json_config.db_size().cooldown_time(), Duration::from_secs(60));
+        assert!(!json_config.db_size().enabled());
+        assert!(json_config.receipts().enabled());
+
+        assert!(!toml_config.milestones().enabled());
+        assert_eq!(toml_config.milestones().max_milestones_to_keep(), 200);
+        assert_eq!(toml_config.db_size().target_size(), 500000000);
+        assert_eq!(toml_config.db_size().threshold_percentage(), 20.0);
+        assert_eq!(toml_config.db_size().cooldown_time(), Duration::from_secs(60));
+        assert!(!toml_config.db_size().enabled());
+        assert!(toml_config.receipts().enabled());
     }
 }

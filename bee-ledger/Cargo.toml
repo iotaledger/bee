@@ -23,6 +23,7 @@ digest = { version = "0.9.0", default-features = false, optional = true }
 futures = { version = "0.3.17", default-features = false, optional = true }
 hashbrown = { version = "0.11.2", default-features = false, optional = true }
 hex = { version = "0.4.3", default-features = false, optional = true }
+humanize-rs = { version = "0.1.5", default-features = false, optional = true }
 iota-crypto = { version = "0.10.0", default-features = false, features = [ "blake2b" ], optional = true }
 log = { version = "0.4.14", default-features = false, optional = true }
 ref-cast = { version = "1.0.6", default-features = false, optional = true }
@@ -36,6 +37,10 @@ trace-tools = { version = "0.3.0", default-features = false, optional = true }
 tracing = { version = "0.1.29", default-features = false, optional = true }
 url = { version = "2.2.2", default-features = false, optional = true }
 
+[dev-dependencies]
+serde_json = { version = "1.0.68", default-features = false, features = [ "std" ] }
+toml = { version = "0.5.8", default-features = false }
+
 [features]
 workers = [
   "bee-runtime",
@@ -47,6 +52,7 @@ workers = [
   "futures",
   "hashbrown",
   "hex",
+  "humanize-rs",
   "iota-crypto",
   "log",
   "ref-cast",

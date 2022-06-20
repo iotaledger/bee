@@ -4,7 +4,7 @@
 use bee_message::{milestone::MilestoneIndex, MessageId};
 
 #[derive(Debug, thiserror::Error)]
-pub enum Error {
+pub enum PruningError {
     #[error("pruning target index {selected} below minimum {minimum}")]
     InvalidTargetIndex {
         selected: MilestoneIndex,
@@ -22,4 +22,10 @@ pub enum Error {
     MissingApprovers(MessageId),
     #[error("storage operation failed due to: {0:?}")]
     Storage(Box<dyn std::error::Error + Send>),
+}
+
+impl PruningError {
+    pub(crate) fn storage(e: impl std::error::Error + Send + 'static) -> Self {
+        Self::Storage(Box::new(e))
+    }
 }

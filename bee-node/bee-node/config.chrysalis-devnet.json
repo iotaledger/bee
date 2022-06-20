@@ -24,8 +24,7 @@
     "reconnectIntervalSecs": 30,
     "maxUnknownPeers": 4,
     "maxDiscoveredPeers": 8,
-    "peering": {
-    }
+    "peering": {}
   },
   "autopeering": {
     "enabled": false,
@@ -81,9 +80,6 @@
     "whiteFlagSolidificationTimeout": 2
   },
   "snapshot": {
-    "depth": 50,
-    "intervalSynced": 50,
-    "intervalUnsynced": 1000,
     "fullPath": "./snapshots/devnet/full_snapshot.bin",
     "deltaPath": "./snapshots/devnet/delta_snapshot.bin",
     "downloadUrls": [
@@ -91,12 +87,28 @@
         "full": "http://dbfiles.chrysalis-devnet.iota.cafe/snapshots/hornet/latest-full_snapshot.bin",
         "delta": "http://dbfiles.chrysalis-devnet.iota.cafe/snapshots/hornet/latest-delta_snapshot.bin"
       }
-    ]
+    ],
+    "create": {
+      "enabled": false,
+      "depth": 50,
+      "intervalSynced": 50,
+      "intervalUnsynced": 1000
+    }
   },
   "pruning": {
-    "enabled": true,
-    "delay": 60480,
-    "pruneReceipts": false
+    "milestones": {
+      "enabled": true,
+      "maxMilestonesToKeep": 60480
+    },
+    "size": {
+      "enabled": true,
+      "targetSize": "30GB",
+      "thresholdPercentage": 10.0,
+      "cooldownTime": "5m"
+    },
+    "receipts": {
+      "enabled": false
+    }
   },
   "storage": {
     "path": "./storage/devnet/tangle"
