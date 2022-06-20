@@ -10,11 +10,15 @@ use axum::{
     headers::{authorization::Bearer, Authorization},
     http::Uri,
 };
+#[cfg(feature = "dashboard")]
 use lazy_static::lazy_static;
+#[cfg(feature = "dashboard")]
 use regex::RegexSet;
 use serde::{Deserialize, Serialize};
 
-use crate::endpoints::{config::route_to_regex, error::ApiError, storage::StorageBackend, ApiArgsFullNode};
+#[cfg(feature = "dashboard")]
+use crate::endpoints::config::route_to_regex;
+use crate::endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode};
 
 pub const API_AUDIENCE_CLAIM: &str = "api";
 pub const DASHBOARD_AUDIENCE_CLAIM: &str = "dashboard";
