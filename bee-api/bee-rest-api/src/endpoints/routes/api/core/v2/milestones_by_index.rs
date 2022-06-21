@@ -7,7 +7,7 @@ use packable::PackableExt;
 
 use crate::{
     endpoints::{
-        error::ApiError, extractors::path::CustomPath, routes::api::v2::blocks::BYTE_CONTENT_HEADER,
+        error::ApiError, extractors::path::CustomPath, routes::api::core::v2::blocks::BYTE_CONTENT_HEADER,
         storage::StorageBackend, ApiArgsFullNode,
     },
     types::responses::MilestoneResponse,

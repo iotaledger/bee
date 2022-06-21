@@ -6,8 +6,8 @@ use bee_block::payload::milestone::MilestoneId;
 
 use crate::{
     endpoints::{
-        error::ApiError, extractors::path::CustomPath, routes::api::v2::utxo_changes_by_index, storage::StorageBackend,
-        ApiArgsFullNode,
+        error::ApiError, extractors::path::CustomPath, routes::api::core::v2::utxo_changes_by_index,
+        storage::StorageBackend, ApiArgsFullNode,
     },
     types::responses::UtxoChangesResponse,
 };
