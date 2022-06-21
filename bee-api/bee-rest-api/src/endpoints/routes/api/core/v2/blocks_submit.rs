@@ -18,7 +18,7 @@ use serde_json::Value;
 use crate::{
     endpoints::{
         error::{ApiError, DependencyError},
-        routes::api::v2::blocks::BYTE_CONTENT_HEADER,
+        routes::api::core::v2::blocks::BYTE_CONTENT_HEADER,
         storage::StorageBackend,
         ApiArgsFullNode,
     },

@@ -11,7 +11,7 @@ use crate::{
     endpoints::{
         error::ApiError,
         extractors::path::CustomPath,
-        routes::api::v2::blocks::{blocks_json, blocks_raw, BYTE_CONTENT_HEADER},
+        routes::api::core::v2::blocks::{blocks_json, blocks_raw, BYTE_CONTENT_HEADER},
         storage::StorageBackend,
         ApiArgsFullNode,
     },
