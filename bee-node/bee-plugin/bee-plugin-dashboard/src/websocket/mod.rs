@@ -14,22 +14,25 @@ use std::{
 };
 
 use auth_helper::jwt::JsonWebToken;
+use bee_gossip::{Keypair, PeerId};
+use bee_rest_api::endpoints::auth::DASHBOARD_AUDIENCE_CLAIM;
 use bee_runtime::{resource::ResourceHandle, shutdown_stream::ShutdownStream};
 use bee_tangle::Tangle;
+use commands::WsCommand;
 use futures::{channel::oneshot, FutureExt, StreamExt};
 use log::{debug, error};
 use tokio::sync::{mpsc, RwLock};
 use tokio_stream::wrappers::UnboundedReceiverStream;
+use topics::WsTopic;
 use warp::ws::{Message, WebSocket};
 
-use self::{
-    commands::WsCommand,
-    responses::{
+use crate::{
+    config::DashboardAuthConfig,
+    storage::StorageBackend,
+    websocket::responses::{
         database_size_metrics::DatabaseSizeMetricsResponse, sync_status::SyncStatusResponse, WsEvent, WsEventInner,
     },
-    topics::WsTopic,
 };
-use crate::{auth::AUDIENCE_CLAIM, config::DashboardAuthConfig, storage::StorageBackend};
 
 /// Our global unique user id counter.
 static NEXT_USER_ID: AtomicUsize = AtomicUsize::new(1);
@@ -62,7 +65,8 @@ pub(crate) async fn user_connected<S: StorageBackend>(
     storage: ResourceHandle<S>,
     tangle: ResourceHandle<Tangle<S>>,
     users: WsUsers,
-    node_id: String,
+    node_id: PeerId,
+    node_keypair: Keypair,
     auth_config: DashboardAuthConfig,
 ) {
     // Use a counter to assign a new unique ID for this user.
@@ -106,7 +110,17 @@ pub(crate) async fn user_connected<S: StorageBackend>(
                 break;
             }
         };
-        user_message(user_id, msg, &users, &tangle, &storage, &node_id, &auth_config).await;
+        user_message(
+            user_id,
+            msg,
+            &users,
+            &tangle,
+            &storage,
+            &node_id,
+            &node_keypair,
+            &auth_config,
+        )
+        .await;
     }
 
     // ws_rx stream will keep processing as long as the user stays
@@ -117,13 +131,15 @@ pub(crate) async fn user_connected<S: StorageBackend>(
     let _ = shutdown_ready_tx.send(());
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn user_message<S: StorageBackend>(
     user_id: usize,
     msg: Message,
     users: &WsUsers,
     tangle: &Tangle<S>,
     storage: &S,
-    node_id: &str,
+    node_id: &PeerId,
+    node_keypair: &Keypair,
     auth_config: &DashboardAuthConfig,
 ) {
     if !msg.is_binary() {
@@ -161,19 +177,21 @@ async fn user_message<S: StorageBackend>(
                     let jwt = JsonWebToken::from(match String::from_utf8(bytes[2..].to_vec()) {
                         Ok(jwt) => jwt,
                         Err(e) => {
-                            error!("Invalid provided JWT: {}", e);
+                            error!("Invalid JWT provided: {}", e);
                             return;
                         }
                     });
                     if jwt
                         .validate(
-                            node_id.to_owned(),
+                            node_id.to_string(),
                             auth_config.user().to_owned(),
-                            AUDIENCE_CLAIM.to_owned(),
-                            b"secret",
+                            DASHBOARD_AUDIENCE_CLAIM.to_owned(),
+                            true,
+                            node_keypair.secret().as_ref(),
                         )
                         .is_err()
                     {
+                        error!("Invalid JWT provided.");
                         return;
                     }
                 }

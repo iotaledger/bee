@@ -1,9 +1,9 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use serde::Serialize;
 
-/// A marker trait to represent the data that can be included into `SuccessBody` and `ErrorBody`.
+/// A marker trait to represent the data that can be included into `ErrorBody`.
 pub trait BodyInner {}
 
 /// Describes the response body of a unsuccessful HTTP request.

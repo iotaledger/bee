@@ -1,169 +1,51 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-pub mod add_peer;
-pub mod block;
-pub mod block_children;
-pub mod block_metadata;
-pub mod block_raw;
+pub mod blocks;
+pub mod blocks_metadata;
+pub mod blocks_submit;
 pub mod info;
-pub mod milestone_by_milestone_id;
-pub mod milestone_by_milestone_index;
-pub mod output;
-pub mod output_metadata;
-pub mod peer;
+pub mod milestones_by_id;
+pub mod milestones_by_index;
+pub mod outputs;
+pub mod outputs_metadata;
 pub mod peers;
+pub mod peers_add;
+pub mod peers_all;
+pub mod peers_remove;
 pub mod receipts;
 pub mod receipts_at;
-pub mod remove_peer;
-pub mod submit_block;
 pub mod tips;
-pub mod transaction_included_block;
+pub mod transactions_included_block;
 pub mod treasury;
-pub mod utxo_changes_by_milestone_id;
-pub mod utxo_changes_by_milestone_index;
+pub mod utxo_changes_by_id;
+pub mod utxo_changes_by_index;
 
-use std::net::IpAddr;
+use axum::Router;
 
-use bee_gossip::NetworkCommandSender;
-use bee_ledger::workers::consensus::ConsensusWorkerCommand;
-use bee_protocol::workers::{config::ProtocolConfig, BlockSubmitterWorkerEvent, PeerManager};
-use bee_runtime::{node::NodeInfo, resource::ResourceHandle};
-use bee_tangle::Tangle;
-use tokio::sync::mpsc;
-use warp::{self, Filter, Rejection, Reply};
+use crate::endpoints::storage::StorageBackend;
 
-use crate::endpoints::{config::RestApiConfig, storage::StorageBackend, Bech32Hrp, NetworkId};
-
-pub(crate) fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
-    super::path().and(warp::path("v2"))
-}
-
-#[allow(clippy::too_many_arguments)]
-pub(crate) fn filter<B: StorageBackend>(
-    public_routes: Box<[String]>,
-    allowed_ips: Box<[IpAddr]>,
-    tangle: ResourceHandle<Tangle<B>>,
-    storage: ResourceHandle<B>,
-    block_submitter: mpsc::UnboundedSender<BlockSubmitterWorkerEvent>,
-    network_id: NetworkId,
-    bech32_hrp: Bech32Hrp,
-    rest_api_config: RestApiConfig,
-    protocol_config: ProtocolConfig,
-    peer_manager: ResourceHandle<PeerManager>,
-    network_command_sender: ResourceHandle<NetworkCommandSender>,
-    node_info: ResourceHandle<NodeInfo>,
-    consensus_worker: mpsc::UnboundedSender<ConsensusWorkerCommand>,
-) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    add_peer::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        peer_manager.clone(),
-        network_command_sender.clone(),
+pub(crate) fn filter<B: StorageBackend>() -> Router {
+    Router::new().nest(
+        "/v2",
+        info::filter::<B>()
+            .merge(blocks::filter::<B>())
+            .merge(blocks_metadata::filter::<B>())
+            .merge(blocks_submit::filter::<B>())
+            .merge(milestones_by_id::filter::<B>())
+            .merge(milestones_by_index::filter::<B>())
+            .merge(outputs::filter::<B>())
+            .merge(outputs_metadata::filter::<B>())
+            .merge(peers::filter::<B>())
+            .merge(peers_add::filter::<B>())
+            .merge(peers_all::filter::<B>())
+            .merge(peers_remove::filter::<B>())
+            .merge(receipts::filter::<B>())
+            .merge(receipts_at::filter::<B>())
+            .merge(tips::filter::<B>())
+            .merge(transactions_included_block::filter::<B>())
+            .merge(treasury::filter::<B>())
+            .merge(utxo_changes_by_id::filter::<B>())
+            .merge(utxo_changes_by_index::filter::<B>()),
     )
-    .or(info::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        tangle.clone(),
-        network_id,
-        bech32_hrp,
-        rest_api_config.clone(),
-        protocol_config.clone(),
-        node_info,
-        peer_manager.clone(),
-    ))
-    .or(block::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        tangle.clone(),
-    ))
-    .or(block_children::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        tangle.clone(),
-    ))
-    .or(block_metadata::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        tangle.clone(),
-    ))
-    .or(block_raw::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        tangle.clone(),
-    ))
-    .or(milestone_by_milestone_id::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        tangle.clone(),
-    ))
-    .or(milestone_by_milestone_index::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        tangle.clone(),
-    ))
-    .or(utxo_changes_by_milestone_id::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        tangle.clone(),
-        storage.clone(),
-    ))
-    .or(utxo_changes_by_milestone_index::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        storage.clone(),
-    ))
-    .or(output::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        storage.clone(),
-        consensus_worker.clone(),
-    ))
-    .or(output_metadata::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        storage.clone(),
-        consensus_worker,
-    ))
-    .or(peer::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        peer_manager.clone(),
-    ))
-    .or(peers::filter(public_routes.clone(), allowed_ips.clone(), peer_manager))
-    .or(receipts::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        storage.clone(),
-    ))
-    .or(receipts_at::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        storage.clone(),
-    ))
-    .or(remove_peer::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        network_command_sender,
-    ))
-    .or(submit_block::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        tangle.clone(),
-        block_submitter,
-        rest_api_config,
-        protocol_config,
-    ))
-    .or(tips::filter(public_routes.clone(), allowed_ips.clone(), tangle.clone()))
-    .or(treasury::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        storage.clone(),
-    ))
-    .or(transaction_included_block::filter(
-        public_routes,
-        allowed_ips,
-        storage,
-        tangle,
-    ))
 }

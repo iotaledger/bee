@@ -76,34 +76,23 @@ v_byte_factor_data = 1
 
 [rest_api]
 bind_address          = "/ip4/0.0.0.0/tcp/14265"
-feature_proof_of_work = true
+jwt_salt              = "Bee"
 public_routes         = [
-    "/health",
-    "/api/v2/info",
-    "/api/v2/tips",
-    "/api/v2/blocks",
-    "/api/v2/blocks/:blockId",
-    "/api/v2/blocks/:blockId/metadata",
-    "/api/v2/blocks/:blockId/raw",
-    "/api/v2/blocks/:blockId/children",
-    "/api/v2/outputs/:outputId",
-    "/api/v2/addresses/:address",
-    "/api/v2/addresses/ed25519/:address",
-    "/api/v2/addresses/:address/outputs",
-    "/api/v2/addresses/ed25519/:address/outputs",
-    "/api/v2/receipts",
-    "/api/v2/receipts/:milestoneIndex",
-    "/api/v2/treasury",
-    "/api/v2/transactions/:transactionId/included-block",
-    "/api/v2/milestones/:milestoneId",
-    "/api/v2/milestones/by-index/:milestoneIndex",
-    "/api/v2/milestones/:milestoneId/utxo-changes",
-    "/api/v2/milestones/by-index/:milestoneIndex/utxo-changes"
+      "/health",
+      "/api/v2/info",
+      "/api/v2/tips",
+      "/api/v2/blocks*",
+      "/api/v2/transactions*",
+      "/api/v2/milestones*",
+      "/api/v2/outputs*",
+      "/api/v2/treasury",
+      "/api/v2/receipts*",
 ]
-allowed_ips = [
-    "127.0.0.1",
-    "::1"
+protected_routes       = [
+      "/api/v2/*",
+      "/api/plugins/*"
 ]
+feature_proof_of_work = true
 white_flag_solidification_timeout = 2
 
 [snapshot]

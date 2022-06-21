@@ -1,91 +1,59 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, ToSocketAddrs};
+use std::{
+    net::{IpAddr, SocketAddr, ToSocketAddrs},
+    time::Duration,
+};
 
 use multiaddr::{Multiaddr, Protocol};
+use regex::RegexSet;
 use serde::Deserialize;
 
+/// Default REST API binding address.
 pub(crate) const DEFAULT_BIND_ADDRESS: &str = "/ip4/0.0.0.0/tcp/14265";
-
-// all available routes
-pub(crate) const ROUTE_ADD_PEER: &str = "/api/v2/peers";
-pub(crate) const ROUTE_BALANCE_BECH32: &str = "/api/v2/addresses/:address";
-pub(crate) const ROUTE_BALANCE_ED25519: &str = "/api/v2/addresses/ed25519/:address";
-pub(crate) const ROUTE_HEALTH: &str = "/health";
-pub(crate) const ROUTE_INFO: &str = "/api/v2/info";
-pub(crate) const ROUTE_BLOCK: &str = "/api/v2/blocks/:blockId";
-pub(crate) const ROUTE_BLOCK_CHILDREN: &str = "/api/v2/blocks/:blockId/children";
-pub(crate) const ROUTE_BLOCK_METADATA: &str = "/api/v2/blocks/:blockId/metadata";
-pub(crate) const ROUTE_BLOCK_RAW: &str = "/api/v2/blocks/:blockId/raw";
-pub(crate) const ROUTE_BLOCKS_FIND: &str = "/api/v2/blocks";
-pub(crate) const ROUTE_MILESTONE_BY_MILESTONE_ID: &str = "/api/v2/milestones/:milestoneId";
-pub(crate) const ROUTE_MILESTONE_BY_MILESTONE_INDEX: &str = "/api/v2/milestones/by-index/:milestoneIndex";
-pub(crate) const ROUTE_UTXO_CHANGES_BY_MILESTONE_ID: &str = "/api/v2/milestones/:milestoneId/utxo-changes";
-pub(crate) const ROUTE_UTXO_CHANGES_BY_MILESTONE_INDEX: &str =
-    "/api/v2/milestones/by-index/:milestoneIndex/utxo-changes";
-pub(crate) const ROUTE_OUTPUT: &str = "/api/v2/outputs/:outputId";
-pub(crate) const ROUTE_OUTPUT_METADATA: &str = "/api/v2/outputs/:outputId/metadata";
-pub(crate) const ROUTE_OUTPUTS_BECH32: &str = "/api/v2/addresses/:address/outputs";
-pub(crate) const ROUTE_OUTPUTS_ED25519: &str = "/api/v2/addresses/ed25519/:address/outputs";
-pub(crate) const ROUTE_PEER: &str = "/api/v2/peers/:peerId";
-pub(crate) const ROUTE_PEERS: &str = "/api/v2/peers";
-pub(crate) const ROUTE_REMOVE_PEER: &str = "/api/v2/peers/:peerId";
-pub(crate) const ROUTE_SUBMIT_BLOCK: &str = "/api/v2/blocks";
-pub(crate) const ROUTE_SUBMIT_BLOCK_RAW: &str = "/api/v2/blocks";
-pub(crate) const ROUTE_TIPS: &str = "/api/v2/tips";
-pub(crate) const ROUTE_RECEIPTS: &str = "/api/v2/receipts";
-pub(crate) const ROUTE_RECEIPTS_AT: &str = "/api/v2/receipts/:milestoneIndex";
-pub(crate) const ROUTE_TREASURY: &str = "/api/v2/treasury";
-pub(crate) const ROUTE_TRANSACTION_INCLUDED_BLOCK: &str = "/api/v2/transactions/:transactionId/included-block";
-pub(crate) const ROUTE_WHITE_FLAG: &str = "/api/plugins/debug/whiteflag";
-
-/// the routes that are available for public use
-pub(crate) const DEFAULT_PUBLIC_ROUTES: [&str; 24] = [
-    ROUTE_BALANCE_BECH32,
-    ROUTE_BALANCE_ED25519,
-    ROUTE_HEALTH,
-    ROUTE_INFO,
-    ROUTE_BLOCK,
-    ROUTE_BLOCK_CHILDREN,
-    ROUTE_BLOCK_METADATA,
-    ROUTE_BLOCK_RAW,
-    ROUTE_BLOCKS_FIND,
-    ROUTE_MILESTONE_BY_MILESTONE_ID,
-    ROUTE_MILESTONE_BY_MILESTONE_INDEX,
-    ROUTE_UTXO_CHANGES_BY_MILESTONE_ID,
-    ROUTE_UTXO_CHANGES_BY_MILESTONE_INDEX,
-    ROUTE_OUTPUT,
-    ROUTE_OUTPUT_METADATA,
-    ROUTE_OUTPUTS_BECH32,
-    ROUTE_OUTPUTS_ED25519,
-    ROUTE_SUBMIT_BLOCK,
-    ROUTE_SUBMIT_BLOCK_RAW,
-    ROUTE_TIPS,
-    ROUTE_RECEIPTS,
-    ROUTE_RECEIPTS_AT,
-    ROUTE_TREASURY,
-    ROUTE_TRANSACTION_INCLUDED_BLOCK,
+/// Default JWT salt for REST API.
+pub(crate) const DEFAULT_JWT_SALT: &str = "Bee";
+/// Default routes that are available for public use and don't need JWT authentication.
+pub(crate) const DEFAULT_PUBLIC_ROUTES: [&str; 10] = [
+    "/health",
+    "/mqtt",
+    "/api/v2/info",
+    "/api/v2/tips",
+    "/api/v2/blocks*",
+    "/api/v2/transactions*",
+    "/api/v2/milestones*",
+    "/api/v2/outputs*",
+    "/api/v2/treasury",
+    "/api/v2/receipts*",
 ];
-pub(crate) const DEFAULT_ALLOWED_IPS: [IpAddr; 2] = [
-    IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
-    IpAddr::V6(Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1)),
-];
+/// Default routes that are protected and need JWT authentication.
+pub(crate) const DEFAULT_PROTECTED_ROUTES: [&str; 2] = ["/api/v2/*", "/api/plugins/*"];
+/// Enables the proof-of-work feature on the node per default.
 pub(crate) const DEFAULT_FEATURE_PROOF_OF_WORK: bool = true;
-pub(crate) const DEFAULT_WHITE_FLAG_SOLIDIFICATION_TIMEOUT: u64 = 2;
+/// Default value for the white flag solidification timeout.
+pub(crate) const DEFAULT_WHITE_FLAG_SOLIDIFICATION_TIMEOUT: Duration = Duration::from_secs(2);
 
 /// REST API configuration builder.
 #[derive(Default, Deserialize, PartialEq)]
 #[must_use]
 pub struct RestApiConfigBuilder {
+    /// REST API binding address.
     #[serde(alias = "bindAddress")]
     bind_address: Option<Multiaddr>,
+    /// JWT salt for REST API.
+    #[serde(alias = "jwtSalt")]
+    jwt_salt: Option<String>,
+    /// Routes that are available for public use and don't need JWT authentication.
     #[serde(alias = "publicRoutes")]
     public_routes: Option<Vec<String>>,
-    #[serde(alias = "allowedIps")]
-    allowed_ips: Option<Vec<IpAddr>>,
+    /// Routes that are protected and need JWT authentication.
+    #[serde(alias = "protectedRoutes")]
+    protected_routes: Option<Vec<String>>,
+    /// Enables/disables the proof-of-work feature on the node.
     #[serde(alias = "featureProofOfWork")]
     feature_proof_of_work: Option<bool>,
+    /// Describes the white flag solidification timeout.
     #[serde(alias = "whiteFlagSolidificationTimeout")]
     white_flag_solidification_timeout: Option<u64>,
 }
@@ -97,36 +65,38 @@ impl RestApiConfigBuilder {
     }
 
     /// Sets the binding address for the REST API.
-    pub fn bind_address(mut self, addr: &str) -> Self {
-        match addr.parse() {
-            Ok(addr) => {
-                self.bind_address.replace(addr);
-            }
-            Err(e) => panic!("Error parsing IP address: {:?}", e),
-        }
+    pub fn with_bind_address(mut self, addr: &str) -> Self {
+        self.bind_address
+            .replace(addr.parse().expect("error parsing IP address"));
+        self
+    }
+
+    /// Sets the JWT salt.
+    pub fn with_jwt_salt(mut self, jwt_salt: String) -> Self {
+        self.jwt_salt.replace(jwt_salt);
         self
     }
 
     /// Sets all the routes that are available for public use.
-    pub fn public_routes(mut self, routes: Vec<String>) -> Self {
+    pub fn with_public_routes(mut self, routes: Vec<String>) -> Self {
         self.public_routes.replace(routes);
         self
     }
 
-    /// Sets the IP addresses that are allowed to access all the routes.
-    pub fn allowed_ips(mut self, allowed_ips: Vec<IpAddr>) -> Self {
-        self.allowed_ips.replace(allowed_ips);
+    /// Sets all the routes that need JWT authentication.
+    pub fn with_protected_routes(mut self, routes: Vec<String>) -> Self {
+        self.protected_routes.replace(routes);
         self
     }
 
     /// Set if the feature proof-of-work should be enabled or not.
-    pub fn feature_proof_of_work(mut self, value: bool) -> Self {
+    pub fn with_feature_proof_of_work(mut self, value: bool) -> Self {
         self.feature_proof_of_work.replace(value);
         self
     }
 
-    /// Sets the while flag solidification timeout.
-    pub fn white_flag_solidification_timeout(mut self, timeout: u64) -> Self {
+    /// Sets the while flag solidification timeout in seconds.
+    pub fn with_white_flag_solidification_timeout(mut self, timeout: u64) -> Self {
         self.white_flag_solidification_timeout.replace(timeout);
         self
     }
@@ -159,24 +129,37 @@ impl RestApiConfigBuilder {
         let port = multi_addr
             .iter()
             .find_map(|x| if let Protocol::Tcp(port) = x { Some(port) } else { None })
-            .unwrap_or_else(|| panic!("Unsupported protocol"));
-        let public_routes: Box<[String]> = self
-            .public_routes
-            .unwrap_or_else(|| DEFAULT_PUBLIC_ROUTES.iter().map(|s| s.to_string()).collect())
-            .into_boxed_slice();
-        let allowed_ips: Box<[IpAddr]> = self
-            .allowed_ips
-            .unwrap_or_else(|| DEFAULT_ALLOWED_IPS.to_vec())
-            .into_boxed_slice();
+            .expect("unsupported protocol");
+
+        let jwt_salt = self.jwt_salt.unwrap_or_else(|| DEFAULT_JWT_SALT.to_string());
+
+        let public_routes = {
+            let routes = self
+                .public_routes
+                .unwrap_or_else(|| DEFAULT_PUBLIC_ROUTES.iter().map(ToString::to_string).collect());
+            RegexSet::new(routes.iter().map(|r| route_to_regex(r)).collect::<Vec<_>>())
+                .expect("invalid public route provided")
+        };
+
+        let protected_routes = {
+            let routes = self
+                .protected_routes
+                .unwrap_or_else(|| DEFAULT_PROTECTED_ROUTES.iter().map(ToString::to_string).collect());
+            RegexSet::new(routes.iter().map(|r| route_to_regex(r)).collect::<Vec<_>>())
+                .expect("invalid protected route provided")
+        };
+
         let feature_proof_of_work = self.feature_proof_of_work.unwrap_or(DEFAULT_FEATURE_PROOF_OF_WORK);
+
         let white_flag_solidification_timeout = self
             .white_flag_solidification_timeout
-            .unwrap_or(DEFAULT_WHITE_FLAG_SOLIDIFICATION_TIMEOUT);
+            .map_or(DEFAULT_WHITE_FLAG_SOLIDIFICATION_TIMEOUT, Duration::from_secs);
 
         RestApiConfig {
-            binding_socket_addr: SocketAddr::new(address, port),
+            bind_socket_addr: SocketAddr::new(address, port),
+            jwt_salt,
             public_routes,
-            allowed_ips,
+            protected_routes,
             feature_proof_of_work,
             white_flag_solidification_timeout,
         }
@@ -186,11 +169,18 @@ impl RestApiConfigBuilder {
 /// REST API configuration.
 #[derive(Clone)]
 pub struct RestApiConfig {
-    pub(crate) binding_socket_addr: SocketAddr,
-    pub(crate) public_routes: Box<[String]>,
-    pub(crate) allowed_ips: Box<[IpAddr]>,
-    pub(crate) feature_proof_of_work: bool,
-    pub(crate) white_flag_solidification_timeout: u64,
+    /// REST API binding address.
+    bind_socket_addr: SocketAddr,
+    /// JWT salt for REST API.
+    jwt_salt: String,
+    /// Routes that are available for public use and don't need JWT authentication.
+    public_routes: RegexSet,
+    /// Routes that are protected and need JWT authentication.
+    protected_routes: RegexSet,
+    /// Enables/disables the proof-of-work feature on the node.
+    feature_proof_of_work: bool,
+    /// Describes the white flag solidification timeout.
+    white_flag_solidification_timeout: Duration,
 }
 
 impl RestApiConfig {
@@ -201,17 +191,22 @@ impl RestApiConfig {
 
     /// Returns the binding address.
     pub fn bind_socket_addr(&self) -> SocketAddr {
-        self.binding_socket_addr
+        self.bind_socket_addr
+    }
+
+    /// Returns the JWT salt.
+    pub fn jwt_salt(&self) -> &str {
+        &self.jwt_salt
     }
 
     /// Returns all the routes that are available for public use.
-    pub fn public_routes(&self) -> &[String] {
+    pub fn public_routes(&self) -> &RegexSet {
         &self.public_routes
     }
 
-    /// Returns the IP addresses that are allowed to access all the routes.
-    pub fn allowed_ips(&self) -> &[IpAddr] {
-        &self.allowed_ips
+    /// Returns all the routes that need JWT authentication.
+    pub fn protected_routes(&self) -> &RegexSet {
+        &self.protected_routes
     }
 
     /// Returns if feature "Proof-of-Work" is enabled or not.
@@ -220,7 +215,18 @@ impl RestApiConfig {
     }
 
     /// Returns the white flag solidification timeout.
-    pub fn white_flag_solidification_timeout(&self) -> u64 {
+    pub fn white_flag_solidification_timeout(&self) -> Duration {
         self.white_flag_solidification_timeout
     }
+}
+
+pub(crate) fn route_to_regex(route: &str) -> String {
+    // Escape the string to make sure a regex can be built from it.
+    // Existing wildcards `*` get escaped to `\\*`.
+    let mut escaped: String = regex::escape(route);
+    // Convert the escaped wildcard to a valid regex.
+    escaped = escaped.replace("\\*", ".*");
+    // End the regex.
+    escaped.push('$');
+    escaped
 }

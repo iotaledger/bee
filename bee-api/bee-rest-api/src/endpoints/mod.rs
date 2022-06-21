@@ -1,51 +1,106 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod filters;
-
 pub mod config;
-pub mod path_params;
-pub mod permission;
-pub mod rejection;
+pub mod error;
+pub mod extractors;
 pub mod routes;
 pub mod storage;
 
-use std::{any::TypeId, convert::Infallible};
+pub mod auth;
+
+use std::{any::TypeId, ops::Deref, sync::Arc};
 
 use async_trait::async_trait;
-use bee_gossip::NetworkCommandSender;
-use bee_ledger::workers::consensus::ConsensusWorker;
+use axum::{
+    extract::Extension, handler::Handler, http::StatusCode, middleware::from_extractor, response::IntoResponse,
+    routing::get, Router,
+};
+use bee_gossip::{Keypair, NetworkCommandSender, PeerId};
+use bee_ledger::workers::consensus::{ConsensusWorker, ConsensusWorkerCommand};
 use bee_protocol::workers::{
-    config::ProtocolConfig, BlockRequesterWorker, BlockSubmitterWorker, PeerManager, PeerManagerResWorker,
-    RequestedBlocks,
+    config::ProtocolConfig, BlockRequesterWorker, BlockSubmitterWorker, BlockSubmitterWorkerEvent, PeerManager,
+    PeerManagerResWorker, RequestedBlocks,
 };
 use bee_runtime::{
-    node::{Node, NodeBuilder},
+    event::Bus,
+    node::{Node, NodeBuilder, NodeInfo},
+    resource::ResourceHandle,
     worker::{Error as WorkerError, Worker},
 };
 use bee_tangle::{Tangle, TangleWorker};
-use log::{error, info};
-use warp::{http::StatusCode, Filter, Rejection, Reply};
+use log::info;
+use tokio::sync::mpsc;
 
-use self::{config::RestApiConfig, rejection::CustomRejection, storage::StorageBackend};
-use crate::types::body::{DefaultErrorResponse, ErrorBody};
-
-pub(crate) type NetworkId = (String, u64);
-pub(crate) type Bech32Hrp = String;
+use self::{config::RestApiConfig, storage::StorageBackend};
+use crate::endpoints::{auth::Auth, error::ApiError, routes::filter_all};
 
 pub(crate) const CONFIRMED_THRESHOLD: u32 = 5;
 
-pub fn init_full_node<N: Node>(
-    rest_api_config: RestApiConfig,
-    protocol_config: ProtocolConfig,
-    network_id: NetworkId,
-    bech32_hrp: Bech32Hrp,
-    node_builder: N::Builder,
-) -> N::Builder
+pub fn init_full_node<N: Node>(init_config: InitFullNodeConfig, node_builder: N::Builder) -> N::Builder
 where
     N::Backend: StorageBackend,
 {
-    node_builder.with_worker_cfg::<ApiWorkerFullNode>((rest_api_config, protocol_config, network_id, bech32_hrp))
+    node_builder.with_worker_cfg::<ApiWorkerFullNode>(init_config)
+}
+
+pub fn init_entry_node<N: Node>(init_config: InitEntryNodeConfig, node_builder: N::Builder) -> N::Builder
+where
+    N::Backend: StorageBackend,
+{
+    node_builder.with_worker_cfg::<ApiWorkerEntryNode>(init_config)
+}
+
+pub struct InitFullNodeConfig {
+    pub node_id: PeerId,
+    pub node_keypair: Keypair,
+    pub rest_api_config: RestApiConfig,
+    pub protocol_config: ProtocolConfig,
+    pub network_name: String,
+    pub bech32_hrp: String,
+    #[cfg(feature = "dashboard")]
+    pub dashboard_username: String,
+}
+
+pub struct InitEntryNodeConfig {
+    pub rest_api_config: RestApiConfig,
+}
+
+pub(crate) struct ApiArgsFullNode<B: StorageBackend>(Arc<ApiArgsFullNodeInner<B>>);
+
+impl<B: StorageBackend> Deref for ApiArgsFullNode<B> {
+    type Target = Arc<ApiArgsFullNodeInner<B>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<B: StorageBackend> Clone for ApiArgsFullNode<B> {
+    fn clone(&self) -> Self {
+        Self(self.0.clone())
+    }
+}
+
+pub struct ApiArgsFullNodeInner<B: StorageBackend> {
+    pub(crate) node_id: PeerId,
+    pub(crate) node_keypair: Keypair,
+    pub(crate) rest_api_config: RestApiConfig,
+    pub(crate) protocol_config: ProtocolConfig,
+    pub(crate) network_name: String,
+    pub(crate) bech32_hrp: String,
+    pub(crate) storage: ResourceHandle<B>,
+    pub(crate) bus: ResourceHandle<Bus<'static>>,
+    pub(crate) node_info: ResourceHandle<NodeInfo>,
+    pub(crate) tangle: ResourceHandle<Tangle<B>>,
+    pub(crate) peer_manager: ResourceHandle<PeerManager>,
+    pub(crate) requested_blocks: ResourceHandle<RequestedBlocks>,
+    pub(crate) network_command_sender: ResourceHandle<NetworkCommandSender>,
+    pub(crate) block_submitter: mpsc::UnboundedSender<BlockSubmitterWorkerEvent>,
+    pub(crate) block_requester: BlockRequesterWorker,
+    pub(crate) consensus_worker: mpsc::UnboundedSender<ConsensusWorkerCommand>,
+    #[cfg(feature = "dashboard")]
+    pub(crate) dashboard_username: String,
 }
 
 pub struct ApiWorkerFullNode;
@@ -55,7 +110,7 @@ impl<N: Node> Worker<N> for ApiWorkerFullNode
 where
     N::Backend: StorageBackend,
 {
-    type Config = (RestApiConfig, ProtocolConfig, NetworkId, Bech32Hrp);
+    type Config = InitFullNodeConfig;
     type Error = WorkerError;
 
     fn dependencies() -> &'static [TypeId] {
@@ -68,92 +123,49 @@ where
     }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-        let rest_api_config = config.0;
-        let protocol_config = config.1;
-        let network_id = config.2;
-        let bech32_hrp = config.3;
-
-        let consensus_worker = node.worker::<ConsensusWorker>().unwrap().tx.clone();
-        let tangle = node.resource::<Tangle<N::Backend>>();
-        let storage = node.storage();
-        let block_submitter = node.worker::<BlockSubmitterWorker>().unwrap().tx.clone();
-        let block_requester = node.worker::<BlockRequesterWorker>().unwrap().clone();
-        let requested_blocks = node.resource::<RequestedBlocks>();
-        let peer_manager = node.resource::<PeerManager>();
-        let network_controller = node.resource::<NetworkCommandSender>();
-        let node_info = node.info();
-        let bus = node.bus();
+        let args = ApiArgsFullNode(Arc::new(ApiArgsFullNodeInner {
+            node_id: config.node_id,
+            node_keypair: config.node_keypair,
+            rest_api_config: config.rest_api_config,
+            protocol_config: config.protocol_config,
+            network_name: config.network_name,
+            bech32_hrp: config.bech32_hrp,
+            storage: node.storage(),
+            bus: node.bus(),
+            node_info: node.info(),
+            tangle: node.resource::<Tangle<N::Backend>>(),
+            peer_manager: node.resource::<PeerManager>(),
+            requested_blocks: node.resource::<RequestedBlocks>(),
+            network_command_sender: node.resource::<NetworkCommandSender>(),
+            block_submitter: node.worker::<BlockSubmitterWorker>().unwrap().tx.clone(),
+            block_requester: node.worker::<BlockRequesterWorker>().unwrap().clone(),
+            consensus_worker: node.worker::<ConsensusWorker>().unwrap().tx.clone(),
+            #[cfg(feature = "dashboard")]
+            dashboard_username: config.dashboard_username,
+        }));
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let routes = routes::filter_all(
-                rest_api_config.public_routes.clone(),
-                rest_api_config.allowed_ips.clone(),
-                tangle,
-                storage,
-                block_submitter,
-                network_id,
-                bech32_hrp,
-                rest_api_config.clone(),
-                protocol_config,
-                peer_manager,
-                network_controller,
-                node_info,
-                bus,
-                block_requester,
-                requested_blocks,
-                consensus_worker,
-            )
-            .recover(|err| async { handle_rejection(err) });
+            let app = Router::new()
+                .merge(filter_all::<N::Backend>())
+                .route_layer(from_extractor::<Auth<N::Backend>>())
+                .layer(Extension(args.clone()))
+                .fallback(fallback.into_service());
 
-            let (_, server) =
-                warp::serve(routes).bind_with_graceful_shutdown(rest_api_config.bind_socket_addr(), async {
+            axum::Server::bind(&args.rest_api_config.bind_socket_addr())
+                .serve(app.into_make_service())
+                .with_graceful_shutdown(async {
                     shutdown.await.ok();
-                });
-
-            server.await;
+                })
+                .await
+                .unwrap(); // TODO: handle unwrap
 
             info!("Stopped.");
         });
 
         Ok(Self)
     }
-}
-
-fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
-    let (http_code, err_code, reason) = match err.find() {
-        // handle custom rejections
-        Some(CustomRejection::Forbidden) => (StatusCode::FORBIDDEN, "403", "access forbidden"),
-        Some(CustomRejection::NotFound(reason)) => (StatusCode::NOT_FOUND, "404", reason.as_str()),
-        Some(CustomRejection::BadRequest(reason)) => (StatusCode::BAD_REQUEST, "400", reason.as_str()),
-        Some(CustomRejection::ServiceUnavailable(reason)) => (StatusCode::SERVICE_UNAVAILABLE, "503", reason.as_str()),
-        // handle default rejections
-        _ => {
-            if err.is_not_found() {
-                (StatusCode::NOT_FOUND, "404", "data not found")
-            } else if err.find::<warp::reject::MethodNotAllowed>().is_some() {
-                (StatusCode::FORBIDDEN, "403", "access forbidden")
-            } else {
-                error!("unhandled rejection: {:?}", err);
-                (StatusCode::INTERNAL_SERVER_ERROR, "500", "internal server error")
-            }
-        }
-    };
-    Ok(warp::reply::with_status(
-        warp::reply::json(&ErrorBody::new(DefaultErrorResponse {
-            code: err_code.to_string(),
-            message: reason.to_string(),
-        })),
-        http_code,
-    ))
-}
-
-pub fn init_entry_node<N: Node>(rest_api_config: RestApiConfig, node_builder: N::Builder) -> N::Builder
-where
-    N::Backend: StorageBackend,
-{
-    node_builder.with_worker_cfg::<ApiWorkerEntryNode>(rest_api_config)
 }
 
 pub struct ApiWorkerEntryNode;
@@ -163,26 +175,36 @@ impl<N: Node> Worker<N> for ApiWorkerEntryNode
 where
     N::Backend: StorageBackend,
 {
-    type Config = RestApiConfig;
+    type Config = InitEntryNodeConfig;
     type Error = WorkerError;
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let health = warp::path("health")
-                .map(|| StatusCode::OK)
-                .recover(|err| async { handle_rejection(err) });
+            async fn health_handler() -> StatusCode {
+                StatusCode::OK
+            }
 
-            let (_, server) = warp::serve(health).bind_with_graceful_shutdown(config.bind_socket_addr(), async {
-                shutdown.await.ok();
-            });
+            let app = Router::new()
+                .route("/health", get(health_handler))
+                .fallback(fallback.into_service());
 
-            server.await;
+            axum::Server::bind(&config.rest_api_config.bind_socket_addr())
+                .serve(app.into_make_service())
+                .with_graceful_shutdown(async {
+                    shutdown.await.ok();
+                })
+                .await
+                .unwrap(); // TODO: handle unwrap
 
             info!("Stopped.");
         });
 
         Ok(Self)
     }
+}
+
+async fn fallback() -> impl IntoResponse {
+    ApiError::Forbidden
 }

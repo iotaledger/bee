@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod ed25519;
+mod jwt_api;
 mod password;
 #[cfg(feature = "rocksdb")]
 mod rocksdb;
@@ -11,6 +12,8 @@ mod snapshot_info;
 
 use structopt::StructOpt;
 use thiserror::Error;
+
+use crate::{Local, NodeConfig, NodeStorageBackend};
 
 #[non_exhaustive]
 #[derive(Clone, Debug, StructOpt)]
@@ -27,6 +30,8 @@ pub enum Tool {
     SnapshotInfo(snapshot_info::SnapshotInfoTool),
     /// Generates password salt and hash.
     Password(password::PasswordTool),
+    /// Generates a JWT for the Node API.
+    JwtApi(jwt_api::JwtApiTool),
 }
 
 #[derive(Debug, Error)]
@@ -43,9 +48,11 @@ pub enum ToolError {
     SnapshotInfo(#[from] snapshot_info::SnapshotInfoError),
     #[error("{0}")]
     Password(#[from] password::PasswordError),
+    #[error("{0}")]
+    JwtApi(#[from] jwt_api::JwtApiError),
 }
 
-pub fn exec(tool: &Tool) -> Result<(), ToolError> {
+pub fn exec<B: NodeStorageBackend>(tool: &Tool, local: &Local, node_config: &NodeConfig<B>) -> Result<(), ToolError> {
     match tool {
         Tool::Ed25519(tool) => ed25519::exec(tool)?,
         #[cfg(feature = "rocksdb")]
@@ -54,6 +61,7 @@ pub fn exec(tool: &Tool) -> Result<(), ToolError> {
         Tool::Sled(tool) => sled::exec(tool)?,
         Tool::SnapshotInfo(tool) => snapshot_info::exec(tool)?,
         Tool::Password(tool) => password::exec(tool)?,
+        Tool::JwtApi(tool) => jwt_api::exec(tool, local, node_config)?,
     }
 
     Ok(())

@@ -1,6 +1,12 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use axum::{
+    body::BoxBody,
+    http::StatusCode,
+    response::{IntoResponse, Response},
+    Json,
+};
 use bee_block::{output::dto::OutputDto, payload::dto::MilestonePayloadDto, BlockDto};
 use serde::{Deserialize, Serialize};
 
@@ -22,6 +28,12 @@ pub struct InfoResponse {
     pub metrics: MetricsResponse,
     pub features: Vec<String>,
     pub plugins: Vec<String>,
+}
+
+impl IntoResponse for InfoResponse {
+    fn into_response(self) -> Response<BoxBody> {
+        Json(self).into_response()
+    }
 }
 
 impl BodyInner for InfoResponse {}
@@ -127,7 +139,11 @@ pub struct TipsResponse {
     pub tips: Vec<String>,
 }
 
-impl BodyInner for TipsResponse {}
+impl IntoResponse for TipsResponse {
+    fn into_response(self) -> Response<BoxBody> {
+        Json(self).into_response()
+    }
+}
 
 /// Response of POST /api/v2/blocks.
 /// Returns the block identifier of the submitted block.
@@ -137,14 +153,28 @@ pub struct SubmitBlockResponse {
     pub block_id: String,
 }
 
-impl BodyInner for SubmitBlockResponse {}
+impl IntoResponse for SubmitBlockResponse {
+    fn into_response(self) -> Response<BoxBody> {
+        (StatusCode::CREATED, Json(self)).into_response()
+    }
+}
 
 /// Response of GET /api/v2/blocks/{block_id}.
 /// Returns a specific block.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-pub struct BlockResponse(pub BlockDto);
+pub enum BlockResponse {
+    Json(BlockDto),
+    Raw(Vec<u8>),
+}
 
-impl BodyInner for BlockResponse {}
+impl IntoResponse for BlockResponse {
+    fn into_response(self) -> Response<BoxBody> {
+        match self {
+            BlockResponse::Json(dto) => Json(dto).into_response(),
+            BlockResponse::Raw(bytes) => bytes.into_response(),
+        }
+    }
+}
 
 /// Response of GET /api/v2/blocks/{block_id}/metadata.
 /// Returns the metadata of a block.
@@ -169,21 +199,11 @@ pub struct BlockMetadataResponse {
     pub should_reattach: Option<bool>,
 }
 
-impl BodyInner for BlockMetadataResponse {}
-
-/// Response of GET /api/v2/blocks/{block_id}/children.
-/// Returns all children of a specific block.
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-pub struct BlockChildrenResponse {
-    #[serde(rename = "blockId")]
-    pub block_id: String,
-    #[serde(rename = "maxResults")]
-    pub max_results: usize,
-    pub count: usize,
-    pub children: Vec<String>,
+impl IntoResponse for BlockMetadataResponse {
+    fn into_response(self) -> Response<BoxBody> {
+        Json(self).into_response()
+    }
 }
-
-impl BodyInner for BlockChildrenResponse {}
 
 /// Response of GET /api/v2/outputs/{output_id}.
 /// Returns an output and its metadata.
@@ -191,6 +211,12 @@ impl BodyInner for BlockChildrenResponse {}
 pub struct OutputResponse {
     pub metadata: OutputMetadataResponse,
     pub output: OutputDto,
+}
+
+impl IntoResponse for OutputResponse {
+    fn into_response(self) -> Response<BoxBody> {
+        Json(self).into_response()
+    }
 }
 
 /// Response of GET /api/v2/outputs/{output_id}/metadata.
@@ -219,7 +245,11 @@ pub struct OutputMetadataResponse {
     pub ledger_index: u32,
 }
 
-impl BodyInner for OutputResponse {}
+impl IntoResponse for OutputMetadataResponse {
+    fn into_response(self) -> Response<BoxBody> {
+        Json(self).into_response()
+    }
+}
 
 /// Response of:
 /// * GET /api/v2/receipts/{milestone_index}, returns all stored receipts for the given milestone index.
@@ -229,7 +259,11 @@ pub struct ReceiptsResponse {
     pub receipts: Vec<ReceiptDto>,
 }
 
-impl BodyInner for ReceiptsResponse {}
+impl IntoResponse for ReceiptsResponse {
+    fn into_response(self) -> Response<BoxBody> {
+        Json(self).into_response()
+    }
+}
 
 /// Response of GET /api/v2/treasury.
 /// Returns all information about the treasury.
@@ -240,14 +274,28 @@ pub struct TreasuryResponse {
     pub amount: String,
 }
 
-impl BodyInner for TreasuryResponse {}
+impl IntoResponse for TreasuryResponse {
+    fn into_response(self) -> Response<BoxBody> {
+        Json(self).into_response()
+    }
+}
 
 /// Response of GET /api/v2/milestone/{milestone_index}.
 /// Returns information about a milestone.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-pub struct MilestoneResponse(pub MilestonePayloadDto);
+pub enum MilestoneResponse {
+    Json(MilestonePayloadDto),
+    Raw(Vec<u8>),
+}
 
-impl BodyInner for MilestoneResponse {}
+impl IntoResponse for MilestoneResponse {
+    fn into_response(self) -> Response<BoxBody> {
+        match self {
+            MilestoneResponse::Json(dto) => Json(dto).into_response(),
+            MilestoneResponse::Raw(bytes) => bytes.into_response(),
+        }
+    }
+}
 
 /// Response of GET /api/v2/milestone/{milestone_index}/utxo-changes.
 /// Returns all UTXO changes that happened at a specific milestone.
@@ -260,28 +308,44 @@ pub struct UtxoChangesResponse {
     pub consumed_outputs: Vec<String>,
 }
 
-impl BodyInner for UtxoChangesResponse {}
+impl IntoResponse for UtxoChangesResponse {
+    fn into_response(self) -> Response<BoxBody> {
+        Json(self).into_response()
+    }
+}
 
 /// Response of GET /api/v2/peers.
 /// Returns information about all peers of the node.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct PeersResponse(pub Vec<PeerDto>);
 
-impl BodyInner for PeersResponse {}
+impl IntoResponse for PeersResponse {
+    fn into_response(self) -> Response<BoxBody> {
+        Json(self).into_response()
+    }
+}
 
 /// Response of POST /api/v2/peers.
 /// Returns information about the added peer.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct AddPeerResponse(pub PeerDto);
 
-impl BodyInner for AddPeerResponse {}
+impl IntoResponse for AddPeerResponse {
+    fn into_response(self) -> Response<BoxBody> {
+        Json(self).into_response()
+    }
+}
 
 /// Response of GET /api/v2/peer/{peer_id}.
 /// Returns information about a specific peer of the node.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct PeerResponse(pub PeerDto);
 
-impl BodyInner for PeerResponse {}
+impl IntoResponse for PeerResponse {
+    fn into_response(self) -> Response<BoxBody> {
+        Json(self).into_response()
+    }
+}
 
 /// Response of GET /api/plugins/debug/whiteflag.
 /// Returns the computed merkle tree hash for the given white flag traversal.
@@ -291,4 +355,8 @@ pub struct WhiteFlagResponse {
     pub merkle_tree_hash: String,
 }
 
-impl BodyInner for WhiteFlagResponse {}
+impl IntoResponse for WhiteFlagResponse {
+    fn into_response(self) -> Response<BoxBody> {
+        Json(self).into_response()
+    }
+}

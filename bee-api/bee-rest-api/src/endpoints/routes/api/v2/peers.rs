@@ -1,38 +1,29 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::{convert::Infallible, net::IpAddr};
-
-use bee_protocol::workers::PeerManager;
-use bee_runtime::resource::ResourceHandle;
-use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
+use axum::{extract::Extension, routing::get, Router};
+use bee_gossip::PeerId;
 
 use crate::{
-    endpoints::{config::ROUTE_PEERS, filters::with_peer_manager, permission::has_permission},
-    types::{dtos::PeerDto, responses::PeersResponse},
+    endpoints::{error::ApiError, extractors::path::CustomPath, storage::StorageBackend, ApiArgsFullNode},
+    types::{dtos::PeerDto, responses::PeerResponse},
 };
 
-fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
-    super::path().and(warp::path("peers")).and(warp::path::end())
+pub(crate) fn filter<B: StorageBackend>() -> Router {
+    Router::new().route("/peers/:peer_id", get(peers::<B>))
 }
 
-pub(crate) fn filter(
-    public_routes: Box<[String]>,
-    allowed_ips: Box<[IpAddr]>,
-    peer_manager: ResourceHandle<PeerManager>,
-) -> BoxedFilter<(impl Reply,)> {
-    self::path()
-        .and(warp::get())
-        .and(has_permission(ROUTE_PEERS, public_routes, allowed_ips))
-        .and(with_peer_manager(peer_manager))
-        .and_then(|peer_manager| async move { peers(peer_manager) })
-        .boxed()
-}
+async fn peers<B: StorageBackend>(
+    CustomPath(peer_id): CustomPath<String>,
+    Extension(args): Extension<ApiArgsFullNode<B>>,
+) -> Result<PeerResponse, ApiError> {
+    let peer_id = peer_id
+        .parse::<PeerId>()
+        .map_err(|_| ApiError::BadRequest("invalid peer id"))?;
 
-pub(crate) fn peers(peer_manager: ResourceHandle<PeerManager>) -> Result<impl Reply, Infallible> {
-    let mut peers_dtos = Vec::new();
-    for peer in peer_manager.get_all() {
-        peers_dtos.push(PeerDto::from(peer.as_ref()));
-    }
-    Ok(warp::reply::json(&PeersResponse(peers_dtos)))
+    args.peer_manager
+        .get_map(&peer_id, |peer_entry| {
+            Ok(PeerResponse(PeerDto::from(peer_entry.0.as_ref())))
+        })
+        .unwrap_or(Err(ApiError::NotFound))
 }

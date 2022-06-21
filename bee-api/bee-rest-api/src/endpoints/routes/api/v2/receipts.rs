@@ -1,48 +1,37 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::net::IpAddr;
-
+use axum::{extract::Extension, routing::get, Router};
 use bee_block::payload::milestone::MilestoneIndex;
 use bee_ledger::types::Receipt;
-use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::AsIterator;
-use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
+use log::error;
 
 use crate::{
-    endpoints::{
-        config::ROUTE_RECEIPTS, filters::with_storage, permission::has_permission, rejection::CustomRejection,
-        storage::StorageBackend,
-    },
+    endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode},
     types::{dtos::ReceiptDto, responses::ReceiptsResponse},
 };
 
-fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
-    super::path().and(warp::path("receipts")).and(warp::path::end())
+pub(crate) fn filter<B: StorageBackend>() -> Router {
+    Router::new().route("/receipts", get(receipts::<B>))
 }
 
-pub(crate) fn filter<B: StorageBackend>(
-    public_routes: Box<[String]>,
-    allowed_ips: Box<[IpAddr]>,
-    storage: ResourceHandle<B>,
-) -> BoxedFilter<(impl Reply,)> {
-    self::path()
-        .and(warp::get())
-        .and(has_permission(ROUTE_RECEIPTS, public_routes, allowed_ips))
-        .and(with_storage(storage))
-        .and_then(|storage| async move { receipts(storage) })
-        .boxed()
-}
-
-pub(crate) fn receipts<B: StorageBackend>(storage: ResourceHandle<B>) -> Result<impl Reply, Rejection> {
+async fn receipts<B: StorageBackend>(
+    Extension(args): Extension<ApiArgsFullNode<B>>,
+) -> Result<ReceiptsResponse, ApiError> {
     let mut receipts_dto = Vec::new();
-    let iterator =
-        AsIterator::<(MilestoneIndex, Receipt), ()>::iter(&*storage).map_err(|_| CustomRejection::InternalError)?;
+    let iterator = AsIterator::<(MilestoneIndex, Receipt), ()>::iter(&*args.storage).map_err(|e| {
+        error!("cannot fetch from storage: {}", e);
+        ApiError::InternalServerError
+    })?;
 
     for result in iterator {
-        let ((_, receipt), _) = result.map_err(|_| CustomRejection::InternalError)?;
-        receipts_dto.push(ReceiptDto::try_from(receipt).map_err(|_| CustomRejection::InternalError)?);
+        let ((_, receipt), _) = result.map_err(|e| {
+            error!("cannot iterate fetched receipts : {}", e);
+            ApiError::InternalServerError
+        })?;
+        receipts_dto.push(ReceiptDto::from(receipt));
     }
 
-    Ok(warp::reply::json(&ReceiptsResponse { receipts: receipts_dto }))
+    Ok(ReceiptsResponse { receipts: receipts_dto })
 }

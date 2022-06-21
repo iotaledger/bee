@@ -3,11 +3,11 @@
 
 #[derive(Debug, Clone)]
 pub(crate) enum CustomRejection {
+    NoUserProvided,
+    NoPasswordProvided,
     InvalidCredentials,
     InvalidJwt,
-    InternalError,
-    Forbidden,
-    BadRequest(&'static str),
+    InternalError(String),
 }
 
 impl warp::reject::Reject for CustomRejection {}
