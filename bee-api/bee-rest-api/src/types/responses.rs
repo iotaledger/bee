@@ -27,7 +27,6 @@ pub struct InfoResponse {
     pub base_token: BaseTokenResponse,
     pub metrics: MetricsResponse,
     pub features: Vec<String>,
-    pub plugins: Vec<String>,
 }
 
 impl IntoResponse for InfoResponse {

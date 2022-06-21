@@ -4026,7 +4026,7 @@ checksum = "9a89fd63ad6adf737582df5db40d286574513c69a11dac5214dc3b5603d6713e"
 dependencies = [
  "futures-core",
  "futures-util",
- "pin-project 1.0.10",
+ "pin-project",
  "pin-project-lite",
  "tokio",
  "tokio-util 0.7.1",
