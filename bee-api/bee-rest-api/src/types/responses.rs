@@ -15,7 +15,7 @@ use crate::types::{
     dtos::{LedgerInclusionStateDto, PeerDto, ReceiptDto},
 };
 
-/// Response of GET /api/v2/info.
+/// Response of GET /api/core/v2/info.
 /// Returns general information about the node.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct InfoResponse {
@@ -131,7 +131,7 @@ pub struct MetricsResponse {
     pub referenced_rate: f64,
 }
 
-/// Response of GET /api/v2/tips.
+/// Response of GET /api/core/v2/tips.
 /// Returns non-lazy tips.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct TipsResponse {
@@ -144,7 +144,7 @@ impl IntoResponse for TipsResponse {
     }
 }
 
-/// Response of POST /api/v2/blocks.
+/// Response of POST /api/core/v2/blocks.
 /// Returns the block identifier of the submitted block.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct SubmitBlockResponse {
@@ -158,7 +158,7 @@ impl IntoResponse for SubmitBlockResponse {
     }
 }
 
-/// Response of GET /api/v2/blocks/{block_id}.
+/// Response of GET /api/core/v2/blocks/{block_id}.
 /// Returns a specific block.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub enum BlockResponse {
@@ -175,7 +175,7 @@ impl IntoResponse for BlockResponse {
     }
 }
 
-/// Response of GET /api/v2/blocks/{block_id}/metadata.
+/// Response of GET /api/core/v2/blocks/{block_id}/metadata.
 /// Returns the metadata of a block.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct BlockMetadataResponse {
@@ -204,7 +204,7 @@ impl IntoResponse for BlockMetadataResponse {
     }
 }
 
-/// Response of GET /api/v2/outputs/{output_id}.
+/// Response of GET /api/core/v2/outputs/{output_id}.
 /// Returns an output and its metadata.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct OutputResponse {
@@ -218,7 +218,7 @@ impl IntoResponse for OutputResponse {
     }
 }
 
-/// Response of GET /api/v2/outputs/{output_id}/metadata.
+/// Response of GET /api/core/v2/outputs/{output_id}/metadata.
 /// Returns an output metadata.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct OutputMetadataResponse {
@@ -251,8 +251,8 @@ impl IntoResponse for OutputMetadataResponse {
 }
 
 /// Response of:
-/// * GET /api/v2/receipts/{milestone_index}, returns all stored receipts for the given milestone index.
-/// * GET /api/v2/receipts, returns all stored receipts, independent of a milestone index.
+/// * GET /api/core/v2/receipts/{milestone_index}, returns all stored receipts for the given milestone index.
+/// * GET /api/core/v2/receipts, returns all stored receipts, independent of a milestone index.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct ReceiptsResponse {
     pub receipts: Vec<ReceiptDto>,
@@ -264,7 +264,7 @@ impl IntoResponse for ReceiptsResponse {
     }
 }
 
-/// Response of GET /api/v2/treasury.
+/// Response of GET /api/core/v2/treasury.
 /// Returns all information about the treasury.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct TreasuryResponse {
@@ -279,7 +279,7 @@ impl IntoResponse for TreasuryResponse {
     }
 }
 
-/// Response of GET /api/v2/milestone/{milestone_index}.
+/// Response of GET /api/core/v2/milestone/{milestone_index}.
 /// Returns information about a milestone.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub enum MilestoneResponse {
@@ -296,7 +296,7 @@ impl IntoResponse for MilestoneResponse {
     }
 }
 
-/// Response of GET /api/v2/milestone/{milestone_index}/utxo-changes.
+/// Response of GET /api/core/v2/milestone/{milestone_index}/utxo-changes.
 /// Returns all UTXO changes that happened at a specific milestone.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct UtxoChangesResponse {
@@ -313,7 +313,7 @@ impl IntoResponse for UtxoChangesResponse {
     }
 }
 
-/// Response of GET /api/v2/peers.
+/// Response of GET /api/core/v2/peers.
 /// Returns information about all peers of the node.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct PeersResponse(pub Vec<PeerDto>);
@@ -324,7 +324,7 @@ impl IntoResponse for PeersResponse {
     }
 }
 
-/// Response of POST /api/v2/peers.
+/// Response of POST /api/core/v2/peers.
 /// Returns information about the added peer.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct AddPeerResponse(pub PeerDto);
@@ -335,7 +335,7 @@ impl IntoResponse for AddPeerResponse {
     }
 }
 
-/// Response of GET /api/v2/peer/{peer_id}.
+/// Response of GET /api/core/v2/peer/{peer_id}.
 /// Returns information about a specific peer of the node.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct PeerResponse(pub PeerDto);

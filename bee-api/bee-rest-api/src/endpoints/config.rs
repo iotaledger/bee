@@ -18,17 +18,17 @@ pub(crate) const DEFAULT_JWT_SALT: &str = "Bee";
 pub(crate) const DEFAULT_PUBLIC_ROUTES: [&str; 10] = [
     "/health",
     "/mqtt",
-    "/api/v2/info",
-    "/api/v2/tips",
-    "/api/v2/blocks*",
-    "/api/v2/transactions*",
-    "/api/v2/milestones*",
-    "/api/v2/outputs*",
-    "/api/v2/treasury",
-    "/api/v2/receipts*",
+    "/api/core/v2/info",
+    "/api/core/v2/tips",
+    "/api/core/v2/blocks*",
+    "/api/core/v2/transactions*",
+    "/api/core/v2/milestones*",
+    "/api/core/v2/outputs*",
+    "/api/core/v2/treasury",
+    "/api/core/v2/receipts*",
 ];
 /// Default routes that are protected and need JWT authentication.
-pub(crate) const DEFAULT_PROTECTED_ROUTES: [&str; 2] = ["/api/v2/*", "/api/plugins/*"];
+pub(crate) const DEFAULT_PROTECTED_ROUTES: [&str; 1] = ["/api/*"];
 /// Enables the proof-of-work feature on the node per default.
 pub(crate) const DEFAULT_FEATURE_PROOF_OF_WORK: bool = true;
 /// Default value for the white flag solidification timeout.
