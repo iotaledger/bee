@@ -178,6 +178,7 @@ impl IntoResponse for SubmitBlockResponse {
 /// Response of GET /api/core/v2/blocks/{block_id}.
 /// Returns a specific block.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(untagged)]
 pub enum BlockResponse {
     Json(BlockDto),
     Raw(Vec<u8>),
