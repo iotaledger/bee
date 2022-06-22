@@ -20,6 +20,7 @@ pub mod transactions_included_block;
 pub mod treasury;
 pub mod utxo_changes_by_id;
 pub mod utxo_changes_by_index;
+pub mod white_flag;
 
 use axum::Router;
 
@@ -46,6 +47,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
             .merge(transactions_included_block::filter::<B>())
             .merge(treasury::filter::<B>())
             .merge(utxo_changes_by_id::filter::<B>())
-            .merge(utxo_changes_by_index::filter::<B>()),
+            .merge(utxo_changes_by_index::filter::<B>())
+            .merge(white_flag::filter::<B>()),
     )
 }
