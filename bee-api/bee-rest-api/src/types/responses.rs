@@ -22,7 +22,11 @@ pub struct InfoResponse {
     pub name: String,
     pub version: String,
     pub status: StatusResponse,
+    #[serde(rename = "supportedProtocolVersions")]
+    pub supported_protocol_versions: Vec<u8>,
     pub protocol: ProtocolResponse,
+    #[serde(rename = "pendingProtocolParameters")]
+    pub pending_protocol_parameters: Vec<PendingProtocolParameter>,
     #[serde(rename = "baseToken")]
     pub base_token: BaseTokenResponse,
     pub metrics: MetricsResponse,
@@ -90,6 +94,19 @@ pub struct ProtocolResponse {
     pub rent_structure: RentStructureResponse,
     #[serde(rename = "tokenSupply")]
     pub token_supply: String,
+}
+
+/// Returned in [`InfoResponse`].
+/// Protocol information about the node.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct PendingProtocolParameter {
+    #[serde(rename = "type")]
+    pub kind: u8,
+    #[serde(rename = "targetMilestoneIndex")]
+    pub target_milestone_index: u32,
+    #[serde(rename = "protocolVersion")]
+    pub protocol_version: u8,
+    pub params: String,
 }
 
 /// Returned in [`InfoResponse`].
