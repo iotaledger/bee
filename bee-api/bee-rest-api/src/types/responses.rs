@@ -300,6 +300,7 @@ impl IntoResponse for TreasuryResponse {
 /// Response of GET /api/core/v2/milestone/{milestone_index}.
 /// Returns information about a milestone.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(untagged)]
 pub enum MilestoneResponse {
     Json(MilestonePayloadDto),
     Raw(Vec<u8>),
