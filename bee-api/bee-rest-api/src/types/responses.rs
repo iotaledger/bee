@@ -97,7 +97,7 @@ pub struct ProtocolResponse {
 }
 
 /// Returned in [`InfoResponse`].
-/// Protocol information about the node.
+/// Pending protocol parameters.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct PendingProtocolParameter {
     #[serde(rename = "type")]
