@@ -43,8 +43,8 @@ impl From<&Peer> for PeerDto {
                     solid_milestone_index: *peer.solid_milestone_index(),
                     pruned_milestone_index: *peer.pruned_index(),
                     latest_milestone_index: *peer.latest_milestone_index(),
-                    connected_neighbors: peer.connected_peers(),
-                    synced_neighbors: peer.synced_peers(),
+                    connected_peers: peer.connected_peers(),
+                    synced_peers: peer.synced_peers(),
                 },
                 metrics: MetricsDto {
                     new_blocks: peer.metrics().new_blocks(),
@@ -91,10 +91,10 @@ pub struct HeartbeatDto {
     pub pruned_milestone_index: u32,
     #[serde(rename = "latestMilestoneIndex")]
     pub latest_milestone_index: u32,
-    #[serde(rename = "connectedNeighbors")]
-    pub connected_neighbors: u8,
-    #[serde(rename = "syncedNeighbors")]
-    pub synced_neighbors: u8,
+    #[serde(rename = "connectedPeers")]
+    pub connected_peers: u8,
+    #[serde(rename = "syncedPeers")]
+    pub synced_peers: u8,
 }
 
 /// Describes metrics of a gossip stream.
