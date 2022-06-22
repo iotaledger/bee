@@ -62,6 +62,7 @@ async fn info<B: StorageBackend>(Extension(args): Extension<ApiArgsFullNode<B>>)
             },
             pruning_index: *args.tangle.get_pruning_index(),
         },
+        supported_protocol_versions: vec![PROTOCOL_VERSION],
         protocol: ProtocolResponse {
             version: PROTOCOL_VERSION,
             network_name: args.network_name.clone(),
@@ -74,6 +75,7 @@ async fn info<B: StorageBackend>(Extension(args): Extension<ApiArgsFullNode<B>>)
             },
             token_supply: TOKEN_SUPPLY.to_string(),
         },
+        pending_protocol_parameters: Vec::new(),
         base_token: BaseTokenResponse {
             name: "Shimmer".to_string(), // TODO: don't hardcode
             ticker_symbol: "SMR".to_string(),
