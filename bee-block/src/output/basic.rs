@@ -18,6 +18,7 @@ use crate::{
 };
 
 ///
+#[derive(Clone)]
 #[must_use]
 pub struct BasicOutputBuilder {
     amount: OutputBuilderAmount,

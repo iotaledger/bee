@@ -70,6 +70,7 @@ pub const OUTPUT_INDEX_RANGE: RangeInclusive<u16> = 0..=OUTPUT_INDEX_MAX; // [0.
 /// Type representing an output amount.
 pub type OutputAmount = BoundedU64<{ *Output::AMOUNT_RANGE.start() }, { *Output::AMOUNT_RANGE.end() }>;
 
+#[derive(Clone)]
 pub(crate) enum OutputBuilderAmount {
     Amount(OutputAmount),
     MinimumStorageDeposit(ByteCostConfig),

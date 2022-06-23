@@ -15,7 +15,7 @@ use crate::{
 };
 
 /// A builder to build a [`RegularTransactionEssence`].
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[must_use]
 pub struct RegularTransactionEssenceBuilder {
     network_id: u64,
