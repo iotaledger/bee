@@ -20,6 +20,7 @@ use crate::{
 };
 
 /// A builder to build a [`Block`].
+#[derive(Clone)]
 #[must_use]
 pub struct BlockBuilder<P: NonceProvider = Miner> {
     parents: Parents,

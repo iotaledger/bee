@@ -26,6 +26,7 @@ use crate::{
 };
 
 ///
+#[derive(Clone)]
 #[must_use]
 pub struct AliasOutputBuilder {
     amount: OutputBuilderAmount,
