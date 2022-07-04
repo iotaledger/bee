@@ -192,10 +192,11 @@ where
         bus.dispatch(BlockReferenced { block_id: *block_id });
     }
 
-    for block_id in metadata.included_blocks.iter() {
+    for (index, block_id) in metadata.included_blocks.iter().enumerate() {
         tangle.update_metadata(block_id, |block_metadata| {
             block_metadata.set_conflict(ConflictReason::None);
             block_metadata.reference(milestone.essence().timestamp());
+            block_metadata.set_white_flag_index(index as u32);
         });
         bus.dispatch(BlockReferenced { block_id: *block_id });
     }
