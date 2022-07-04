@@ -149,6 +149,11 @@ impl BlockMetadata {
         self.conflict = conflict;
     }
 
+    /// Get the white flag index of this block.
+    pub fn white_flag_index(&self) -> Option<u32> {
+        self.white_flag_index
+    }
+
     /// Set the white flag index of this block.
     pub fn set_white_flag_index(&mut self, white_flag_index: u32) {
         self.white_flag_index.replace(white_flag_index);
