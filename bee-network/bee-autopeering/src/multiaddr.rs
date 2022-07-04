@@ -42,7 +42,7 @@ pub enum AddressKind {
 /// Example:
 ///
 /// "/dns/chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb"
-#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Hash)]
+#[derive(Eq, PartialEq, PartialOrd, Ord, Clone, Hash)]
 pub struct AutopeeringMultiaddr {
     address: Multiaddr,
     public_key: PublicKey,

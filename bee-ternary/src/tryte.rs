@@ -13,7 +13,7 @@ use core::{
 use crate::{Btrit, Error, Trits, T3B1};
 
 /// A ternary tryte. Equivalent to 3 trits.
-#[derive(Copy, Clone, Hash, PartialEq, Eq)]
+#[derive(Copy, Clone, Eq, Hash, PartialEq)]
 #[repr(i8)]
 #[allow(missing_docs)]
 pub enum Tryte {

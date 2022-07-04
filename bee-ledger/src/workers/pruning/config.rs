@@ -10,7 +10,7 @@ const DEFAULT_DELAY: u32 = 60480;
 const DEFAULT_PRUNE_RECEIPTS: bool = false;
 
 /// Builder for a [`PruningConfig`].
-#[derive(Default, Deserialize, PartialEq, Eq)]
+#[derive(Default, Deserialize, Eq, PartialEq)]
 #[must_use]
 pub struct PruningConfigBuilder {
     enabled: Option<bool>,

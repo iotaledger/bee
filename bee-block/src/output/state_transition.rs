@@ -5,7 +5,7 @@ use crate::semantic::ValidationContext;
 
 ///
 #[allow(missing_docs)]
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum StateTransitionError {
     InconsistentCreatedFoundriesCount,
     InconsistentFoundrySerialNumber,

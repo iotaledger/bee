@@ -349,11 +349,7 @@ impl<P: AsRef<PeerId>, const N: usize> PeerRing<P, N> {
     }
 
     pub(crate) fn get_oldest(&self) -> Option<&P> {
-        if self.0.is_empty() {
-            None
-        } else {
-            self.0.back()
-        }
+        if self.0.is_empty() { None } else { self.0.back() }
     }
 
     pub(crate) fn len(&self) -> usize {

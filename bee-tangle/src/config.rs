@@ -6,7 +6,7 @@ use serde::Deserialize;
 const DEFAULT_BELOW_MAX_DEPTH: u32 = 15;
 
 /// A builder type for a tangle configuration.
-#[derive(Default, Deserialize, PartialEq, Eq)]
+#[derive(Default, Deserialize, Eq, PartialEq)]
 #[must_use]
 pub struct TangleConfigBuilder {
     #[serde(alias = "belowMaxDepth")]

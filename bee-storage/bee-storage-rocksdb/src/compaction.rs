@@ -4,7 +4,7 @@
 use rocksdb::DBCompactionStyle;
 use serde::Deserialize;
 
-#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Deserialize, Eq, PartialEq)]
 pub enum CompactionStyle {
     Level,
     Universal,

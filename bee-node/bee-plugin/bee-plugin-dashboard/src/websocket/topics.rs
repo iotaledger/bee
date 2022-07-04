@@ -4,7 +4,7 @@
 use serde_repr::Serialize_repr;
 
 #[repr(u8)]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize_repr)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize_repr)]
 pub(crate) enum WsTopic {
     SyncStatus = 0,
     PublicNodeStatus = 1,

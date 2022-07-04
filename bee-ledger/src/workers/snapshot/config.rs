@@ -15,7 +15,7 @@ const DEFAULT_INTERVAL_SYNCED: u32 = 50;
 const DEFAULT_INTERVAL_UNSYNCED: u32 = 1000;
 
 /// Contains URLs to download the full and delta snapshot files.
-#[derive(Clone, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Deserialize, Eq, PartialEq)]
 pub struct DownloadUrls {
     full: Url,
     delta: Url,
@@ -34,7 +34,7 @@ impl DownloadUrls {
 }
 
 /// Builder for a `SnapshotConfig`.
-#[derive(Default, Deserialize, PartialEq, Eq)]
+#[derive(Default, Deserialize, Eq, PartialEq)]
 #[must_use]
 pub struct SnapshotConfigBuilder {
     #[serde(alias = "fullPath")]
