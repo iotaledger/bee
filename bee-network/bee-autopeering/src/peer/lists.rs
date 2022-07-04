@@ -352,7 +352,7 @@ impl<P: AsRef<PeerId>, const N: usize> PeerRing<P, N> {
         if self.0.is_empty() {
             None
         } else {
-            self.0.get(self.0.len() - 1)
+            self.0.back()
         }
     }
 

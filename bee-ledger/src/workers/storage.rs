@@ -285,7 +285,7 @@ pub(crate) fn delete_receipt_batch<B: StorageBackend>(
 }
 
 pub(crate) fn insert_snapshot_info<B: StorageBackend>(storage: &B, snapshot_info: &SnapshotInfo) -> Result<(), Error> {
-    Insert::<(), SnapshotInfo>::insert(&*storage, &(), snapshot_info).map_err(|e| Error::Storage(Box::new(e)))
+    Insert::<(), SnapshotInfo>::insert(storage, &(), snapshot_info).map_err(|e| Error::Storage(Box::new(e)))
 }
 
 pub(crate) fn fetch_snapshot_info<B: StorageBackend>(storage: &B) -> Result<Option<SnapshotInfo>, Error> {

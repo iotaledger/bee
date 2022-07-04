@@ -48,7 +48,7 @@ fn insert(x: i8, elem: usize, trit: Btrit) -> i8 {
         elem
     );
     let utrit = trit.shift();
-    debug_assert!(x >= -13 && x <= 13);
+    debug_assert!((-13..=13).contains(&x));
     let ux = x + BALANCE_DIFF;
     let ux = ux + (utrit.into_u8() as i8 - (ux / 3i8.pow(elem as u32)) % 3) * 3i8.pow(elem as u32);
     debug_assert!(ux - BALANCE_DIFF >= -13 && ux - BALANCE_DIFF <= 13);
@@ -115,7 +115,7 @@ impl RawEncoding for T3B1 {
     }
 
     fn is_valid(b: i8) -> bool {
-        b >= -BALANCE_DIFF && b <= BALANCE_DIFF
+        (-BALANCE_DIFF..=BALANCE_DIFF).contains(&b)
     }
 
     unsafe fn from_raw_unchecked(b: &[i8], num_trits: usize) -> &Self {

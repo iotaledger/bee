@@ -113,7 +113,7 @@ impl RawEncoding for T5B1 {
     }
 
     fn is_valid(b: i8) -> bool {
-        b >= -BALANCE_DIFF && b <= BALANCE_DIFF
+        (-BALANCE_DIFF..=BALANCE_DIFF).contains(&b)
     }
 
     unsafe fn from_raw_unchecked(b: &[i8], num_trits: usize) -> &Self {

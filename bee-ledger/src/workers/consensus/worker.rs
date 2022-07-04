@@ -166,7 +166,7 @@ where
     };
 
     storage::apply_milestone(
-        &*storage,
+        storage,
         metadata.milestone_index,
         &metadata.created_outputs,
         &metadata.consumed_outputs,

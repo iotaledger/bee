@@ -114,7 +114,7 @@ impl AutopeeringConfig {
 // too awkward and also a bit too cumbersome to me: serde(default = "default_providing_function_name").
 
 /// The autopeering config builder.
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 #[must_use]
 pub struct AutopeeringConfigBuilder {
     /// Whether autopeering should be enabled.

@@ -8,7 +8,7 @@ use num_traits::{AsPrimitive, CheckedAdd, CheckedSub, FromPrimitive, Num, Signed
 use crate::{Btrit, RawEncoding, RawEncodingBuf, Trit, TritBuf, Trits, Utrit};
 
 /// An error that may be produced during numeric conversion.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Error {
     /// The trit slice didn't contain enough trits to be considered a numeric value.
     Empty,

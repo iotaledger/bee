@@ -197,7 +197,7 @@ impl Default for NetworkConfig {
 }
 
 /// A network configuration builder.
-#[derive(Default, Deserialize, PartialEq)]
+#[derive(Default, Deserialize, PartialEq, Eq)]
 #[must_use]
 pub struct NetworkConfigBuilder {
     #[serde(alias = "bindAddress", alias = "bind_address")]
@@ -386,7 +386,7 @@ impl std::hash::Hash for Peer {
     }
 }
 
-#[derive(Default, Deserialize, PartialEq)]
+#[derive(Default, Deserialize, PartialEq, Eq)]
 #[must_use]
 pub struct ManualPeeringConfigBuilder {
     pub peers: Option<Vec<PeerBuilder>>,
@@ -435,7 +435,7 @@ fn split_multiaddr(multiaddr: &str) -> Result<(Multiaddr, PeerId), Error> {
     }
 }
 
-#[derive(Deserialize, PartialEq)]
+#[derive(Deserialize, PartialEq, Eq)]
 #[must_use]
 pub struct PeerBuilder {
     #[serde(alias = "address")]

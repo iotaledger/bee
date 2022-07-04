@@ -35,7 +35,7 @@ pub(crate) const DEFAULT_FEATURE_PROOF_OF_WORK: bool = true;
 pub(crate) const DEFAULT_WHITE_FLAG_SOLIDIFICATION_TIMEOUT: Duration = Duration::from_secs(2);
 
 /// REST API configuration builder.
-#[derive(Default, Deserialize, PartialEq)]
+#[derive(Default, Deserialize, PartialEq, Eq)]
 #[must_use]
 pub struct RestApiConfigBuilder {
     /// REST API binding address.
