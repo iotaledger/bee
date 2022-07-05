@@ -17,7 +17,7 @@ mod block;
 mod block_id;
 mod error;
 
-/// A module that provides a Dto for U256.
+/// A module that provides a Dtos.
 #[cfg(feature = "dto")]
 pub mod dto;
 
