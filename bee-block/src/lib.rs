@@ -17,8 +17,9 @@ mod block;
 mod block_id;
 mod error;
 
+/// A module that provides DTOs.
 #[cfg(feature = "dto")]
-pub(crate) mod dto;
+pub mod dto;
 
 /// A module that provides types and syntactic validations of addresses.
 pub mod address;
