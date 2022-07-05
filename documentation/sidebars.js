@@ -10,68 +10,84 @@
  */
 
 module.exports = {
-  mySidebar: [{
+  mySidebar: [
+    {
       type: 'doc',
       id: 'welcome',
       label: 'Welcome'
     },
     {
-      type: 'category',
+      type: 'doc',
+      id: 'getting_started/getting_started',
       label: 'Getting Started',
-      items: [{
-        type: 'doc',
-        id: 'getting_started/getting_started',
-        label: 'Getting Started',
-      }, {
-        type: 'doc',
-        id: 'getting_started/nodes_101',
-        label: 'Nodes 101',
-      }, {
-        type: 'doc',
-        id: 'getting_started/security_101',
-        label: 'Security 101',
-      }, {
-        type: 'doc',
-        id: 'getting_started/docker',
-        label: 'Using Docker',
-      }, ],
-    },
-    {
-      type: 'doc',
-      id: 'configuration',
-      label: 'Configuration',
-    },
-    {
-      type: 'doc',
-      id: 'setup_a_node',
-      label: 'Setup a Node',
-    },
-    {
-      type: 'doc',
-      id: 'crate_overview',
-      label: 'Crate Overview',
-    },
-    {
-      type: 'doc',
-      id: 'api_reference',
-      label: 'API Reference',
     },
     {
       type: 'category',
+      label: 'How To',
+      items: [
+        {
+          type: 'doc',
+          id: 'how_tos/setup_a_node',
+          label: 'Setup a Node',
+        },
+        {
+          type: 'doc',
+          id: 'how_tos/docker',
+          label: 'Using Docker',
+        },
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Explanations',
+      items: [
+        {
+          type: 'doc',
+          id: 'explanations/nodes_101',
+          label: 'Nodes 101',
+        },
+        {
+          type: 'doc',
+          id: 'explanations/security_101',
+          label: 'Security 101',
+        },
+      ],
+    },
+    {
+      type: 'category',
+      label: 'References',
+      items: [
+        {
+          type: 'doc',
+          id: 'references/configuration',
+          label: 'Configuration',
+        },
+        {
+          type: 'doc',
+          id: 'references/api_reference',
+          label: 'API Reference',
+        },
+        {
+          type: 'doc',
+          id: 'references/crate_overview',
+          label: 'Crate Overview',
+        },
+      ],
+    },
+    {
+      type: 'doc',
+      id: 'contribute',
       label: 'Contribute',
-      items: [{
-        type: 'doc',
-        id: 'contribute/contribute',
-        label: 'Contribute',
-      }, {
-        type: 'doc',
-        id: 'contribute/security_vulnerabilities',
-        label: 'Security Vulnerabilities',
-      }, {
-        type: 'doc',
-        id: 'contribute/code_of_conduct',
-        label: 'Code of Conduct',
-      }, ]
-    }
+    },
+    {
+      type: 'doc',
+      id: 'security_vulnerabilities',
+      label: 'Security Vulnerabilities',
+    },
+    {
+      type: 'doc',
+      id: 'code_of_conduct',
+      label: 'Code of Conduct',
+    },
   ]
 };
