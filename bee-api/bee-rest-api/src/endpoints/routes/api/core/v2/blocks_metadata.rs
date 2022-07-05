@@ -131,6 +131,7 @@ async fn block_metadata<B: StorageBackend>(
                 milestone_index,
                 ledger_inclusion_state,
                 conflict_reason: conflict_reason.map(|c| c as u8),
+                white_flag_index: metadata.white_flag_index(),
                 should_promote,
                 should_reattach,
             })

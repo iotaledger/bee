@@ -31,6 +31,8 @@ pub struct BlockMetadata {
     omrsi_and_ymrsi: Option<(IndexId, IndexId)>,
     #[packable(unpack_error_with = BlockMetadataError::Conflict)]
     conflict: ConflictReason,
+    #[packable(unpack_error_with = BlockMetadataError::OptionWhiteFlagIndex)]
+    white_flag_index: Option<u32>,
 }
 
 impl BlockMetadata {
@@ -44,6 +46,7 @@ impl BlockMetadata {
         reference_timestamp: u32,
         omrsi_and_ymrsi: Option<(IndexId, IndexId)>,
         conflict: ConflictReason,
+        white_flag_index: Option<u32>,
     ) -> Self {
         Self {
             flags,
@@ -53,6 +56,7 @@ impl BlockMetadata {
             reference_timestamp,
             omrsi_and_ymrsi,
             conflict,
+            white_flag_index,
         }
     }
 
@@ -144,6 +148,16 @@ impl BlockMetadata {
     pub fn set_conflict(&mut self, conflict: ConflictReason) {
         self.conflict = conflict;
     }
+
+    /// Get the white flag index of this block.
+    pub fn white_flag_index(&self) -> Option<u32> {
+        self.white_flag_index
+    }
+
+    /// Set the white flag index of this block.
+    pub fn set_white_flag_index(&mut self, white_flag_index: u32) {
+        self.white_flag_index.replace(white_flag_index);
+    }
 }
 
 /// An error that may occur when manipulating block metadata.
@@ -151,6 +165,8 @@ impl BlockMetadata {
 pub enum BlockMetadataError {
     /// A packing error occurred.
     OptionIndex(<Option<MilestoneIndex> as Packable>::UnpackError),
+    /// A packing error occurred.
+    OptionWhiteFlagIndex(<Option<u32> as Packable>::UnpackError),
     /// A packing error occurred.
     OptionIndexId(<Option<IndexId> as Packable>::UnpackError),
     /// An error relating to a conflict reason occurred.

@@ -29,5 +29,6 @@ pub fn rand_block_metadata() -> BlockMetadata {
             IndexId::new(rand_milestone_index(), rand_block_id()),
         )),
         rand_conflict_reason(),
+        rand_option(rand_number()),
     )
 }

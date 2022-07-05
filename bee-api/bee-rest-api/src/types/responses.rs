@@ -210,6 +210,8 @@ pub struct BlockMetadataResponse {
     pub ledger_inclusion_state: Option<LedgerInclusionStateDto>,
     #[serde(rename = "conflictReason", skip_serializing_if = "Option::is_none")]
     pub conflict_reason: Option<u8>,
+    #[serde(rename = "whiteFlagIndex", skip_serializing_if = "Option::is_none")]
+    pub white_flag_index: Option<u32>,
     #[serde(rename = "shouldPromote", skip_serializing_if = "Option::is_none")]
     pub should_promote: Option<bool>,
     #[serde(rename = "shouldReattach", skip_serializing_if = "Option::is_none")]
