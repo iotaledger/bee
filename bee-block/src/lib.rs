@@ -17,7 +17,7 @@ mod block;
 mod block_id;
 mod error;
 
-/// A module that provides a Dtos.
+/// A module that provides DTOs.
 #[cfg(feature = "dto")]
 pub mod dto;
 
