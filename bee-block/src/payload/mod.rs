@@ -95,7 +95,7 @@ impl Payload {
 
 /// Representation of an optional [`Payload`].
 /// Essentially an `Option<Payload>` with a different [`Packable`] implementation, to conform to specs.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct OptionalPayload(Option<Payload>);
 

@@ -54,7 +54,7 @@ fn import_solid_entry_points<U: Unpacker<Error = std::io::Error>, B: StorageBack
     Truncate::<SolidEntryPoint, MilestoneIndex>::truncate(storage).map_err(|e| Error::Storage(Box::new(e)))?;
     for _ in 0..sep_count {
         Insert::<SolidEntryPoint, MilestoneIndex>::insert(
-            &*storage,
+            storage,
             &SolidEntryPoint::unpack::<_, true>(unpacker)?,
             &index,
         )
@@ -73,7 +73,7 @@ fn import_outputs<U: Unpacker<Error = std::io::Error>, B: StorageBackend>(
         let output_id = OutputId::unpack::<_, true>(unpacker)?;
         let created_output = CreatedOutput::unpack::<_, true>(unpacker)?;
 
-        create_output(&*storage, &output_id, &created_output)?;
+        create_output(storage, &output_id, &created_output)?;
     }
 
     Ok(())
@@ -88,7 +88,7 @@ fn import_milestone_diffs<U: Unpacker<Error = std::io::Error>, B: StorageBackend
         let diff = MilestoneDiff::unpack::<_, true>(unpacker)?;
         let index = diff.milestone().essence().index();
         // Unwrap is fine because ledger index was inserted just before.
-        let ledger_index = *storage::fetch_ledger_index(&*storage)?.unwrap();
+        let ledger_index = *storage::fetch_ledger_index(storage)?.unwrap();
 
         let consumed = diff
             .consumed()
@@ -115,9 +115,9 @@ fn import_milestone_diffs<U: Unpacker<Error = std::io::Error>, B: StorageBackend
         };
 
         if index == MilestoneIndex(ledger_index + 1) {
-            apply_milestone(&*storage, index, diff.created(), &consumed, &migration)?;
+            apply_milestone(storage, index, diff.created(), &consumed, &migration)?;
         } else if index == MilestoneIndex(ledger_index) {
-            rollback_milestone(&*storage, index, diff.created(), &consumed, &migration)?;
+            rollback_milestone(storage, index, diff.created(), &consumed, &migration)?;
         } else {
             return Err(Error::Snapshot(SnapshotError::UnexpectedMilestoneDiffIndex(index)));
         }
@@ -166,7 +166,7 @@ fn import_full_snapshot<B: StorageBackend>(storage: &B, path: &Path, network_id:
     }
 
     storage::insert_treasury_output(
-        &*storage,
+        storage,
         &TreasuryOutput::new(
             output::TreasuryOutput::new(full_header.treasury_output_amount())?,
             *full_header.treasury_output_milestone_id(),

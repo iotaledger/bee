@@ -98,7 +98,7 @@ pub struct ProtocolResponse {
 
 /// Returned in [`InfoResponse`].
 /// Pending protocol parameters.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct PendingProtocolParameter {
     #[serde(rename = "type")]
     pub kind: u8,

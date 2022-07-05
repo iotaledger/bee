@@ -40,8 +40,7 @@ async fn blocks_submit<B: StorageBackend>(
         }
     }
     submit_block_json::<B>(
-        serde_json::from_slice(&bytes.to_vec())
-            .map_err(|e| ApiError::DependencyError(DependencyError::SerdeJsonError(e)))?,
+        serde_json::from_slice(&bytes).map_err(|e| ApiError::DependencyError(DependencyError::SerdeJsonError(e)))?,
         args.clone(),
     )
     .await

@@ -12,7 +12,7 @@ const DEFAULT_BYTE_COST_FACTOR_DATA: u64 = 1;
 type ConfirmationUnixTimestamp = u32;
 
 /// Builder for a [`ByteCostConfig`].
-#[derive(Default, PartialEq)]
+#[derive(Default, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize))]
 #[must_use]
 pub struct ByteCostConfigBuilder {

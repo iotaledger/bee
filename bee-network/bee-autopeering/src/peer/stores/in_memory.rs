@@ -61,8 +61,9 @@ impl PeerStore for InMemoryPeerStore {
     fn store_all_active(&self, peers: &ActivePeersList) -> Result<(), Self::Error> {
         let read = peers.read();
         let mut write = self.write();
+        let peers = read.iter().map(|p| (p.peer_id(), p));
 
-        for (peer_id, peer) in read.iter().map(|p| (p.peer_id(), p)) {
+        for (peer_id, peer) in peers {
             let _ = write.active_peers.insert(*peer_id, peer.clone());
         }
 
@@ -81,8 +82,9 @@ impl PeerStore for InMemoryPeerStore {
     fn store_all_replacements(&self, peers: &ReplacementPeersList) -> Result<(), Self::Error> {
         let read = peers.read();
         let mut write = self.write();
+        let peers = read.iter().map(|p| (p.peer_id(), p));
 
-        for (peer_id, peer) in read.iter().map(|p| (p.peer_id(), p)) {
+        for (peer_id, peer) in peers {
             let _ = write.replacements.insert(*peer_id, peer.clone());
         }
 

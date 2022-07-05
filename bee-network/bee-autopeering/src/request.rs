@@ -37,7 +37,7 @@ pub(crate) const RESPONSE_TIMEOUT: Duration = Duration::from_millis(500);
 // Marker trait for requests.
 pub(crate) trait Request: Debug + Clone {}
 
-#[derive(PartialEq, Eq, Hash, Debug, Clone)]
+#[derive(Eq, PartialEq, Hash, Debug, Clone)]
 pub(crate) struct RequestKey {
     pub(crate) peer_id: PeerId,
     pub(crate) request_id: TypeId,
