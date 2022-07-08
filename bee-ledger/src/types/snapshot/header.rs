@@ -61,6 +61,7 @@ impl Packable for SnapshotHeader {
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         SNAPSHOT_VERSION.pack(packer)?;
+
         self.kind.pack(packer)?;
         self.timestamp.pack(packer)?;
         self.network_id.pack(packer)?;
@@ -171,11 +172,12 @@ impl FullSnapshotHeader {
     }
 }
 
-// This can't be derived as there is an additional length prefix required by Hornet.
 impl Packable for FullSnapshotHeader {
     type UnpackError = Error;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        SNAPSHOT_VERSION.pack(packer)?;
+
         self.genesis_milestone_index.pack(packer)?;
         self.target_milestone_index.pack(packer)?;
         self.target_milestone_timestamp.pack(packer)?;
@@ -196,6 +198,15 @@ impl Packable for FullSnapshotHeader {
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let version = u8::unpack::<_, VERIFY>(unpacker).coerce()?;
+
+        if VERIFY && SNAPSHOT_VERSION != version {
+            return Err(UnpackError::Packable(Error::UnsupportedVersion(
+                SNAPSHOT_VERSION,
+                version,
+            )));
+        }
+
         let genesis_milestone_index = MilestoneIndex::unpack::<_, VERIFY>(unpacker).coerce()?;
         let target_milestone_index = MilestoneIndex::unpack::<_, VERIFY>(unpacker).coerce()?;
         let target_milestone_timestamp = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
@@ -227,7 +238,7 @@ impl Packable for FullSnapshotHeader {
 }
 
 /// Describes a snapshot header specific to delta snapshots.
-#[derive(Clone, Packable)]
+#[derive(Clone)]
 pub struct DeltaSnapshotHeader {
     target_milestone_index: MilestoneIndex,
     target_milestone_timestamp: u32,
@@ -266,5 +277,51 @@ impl DeltaSnapshotHeader {
     /// Returns the SEP count of a [`DeltaSnapshotHeader`].
     pub fn sep_count(&self) -> u16 {
         self.sep_count
+    }
+}
+
+impl Packable for DeltaSnapshotHeader {
+    type UnpackError = Error;
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        SNAPSHOT_VERSION.pack(packer)?;
+
+        self.target_milestone_index.pack(packer)?;
+        self.target_milestone_timestamp.pack(packer)?;
+        self.full_snapshot_target_milestone_id.pack(packer)?;
+        self.sep_file_offset.pack(packer)?;
+        self.milestone_diff_count.pack(packer)?;
+        self.sep_count.pack(packer)?;
+
+        Ok(())
+    }
+
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let version = u8::unpack::<_, VERIFY>(unpacker).coerce()?;
+
+        if VERIFY && SNAPSHOT_VERSION != version {
+            return Err(UnpackError::Packable(Error::UnsupportedVersion(
+                SNAPSHOT_VERSION,
+                version,
+            )));
+        }
+
+        let target_milestone_index = MilestoneIndex::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let target_milestone_timestamp = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let full_snapshot_target_milestone_id = MilestoneId::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let sep_file_offset = u64::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let milestone_diff_count = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let sep_count = u16::unpack::<_, VERIFY>(unpacker).coerce()?;
+
+        Ok(Self {
+            target_milestone_index,
+            target_milestone_timestamp,
+            full_snapshot_target_milestone_id,
+            sep_file_offset,
+            milestone_diff_count,
+            sep_count,
+        })
     }
 }
