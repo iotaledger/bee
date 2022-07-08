@@ -110,8 +110,8 @@ pub struct FullSnapshotHeader {
     treasury_output_amount: u64,
     protocol_parameters: ProtocolParemeters,
     output_count: u64,
-    milestone_diff_count: u64,
-    sep_count: u64,
+    milestone_diff_count: u32,
+    sep_count: u16,
 }
 
 impl FullSnapshotHeader {
@@ -161,12 +161,12 @@ impl FullSnapshotHeader {
     }
 
     /// Returns the milestone diff count of a [`FullSnapshotHeader`].
-    pub fn milestone_diff_count(&self) -> u64 {
+    pub fn milestone_diff_count(&self) -> u32 {
         self.milestone_diff_count
     }
 
     /// Returns the SEP count of a [`FullSnapshotHeader`].
-    pub fn sep_count(&self) -> u64 {
+    pub fn sep_count(&self) -> u16 {
         self.sep_count
     }
 }
@@ -207,8 +207,8 @@ impl Packable for FullSnapshotHeader {
         let _protocol_parameters_length = u16::unpack::<_, VERIFY>(unpacker).coerce()?;
         let protocol_parameters = ProtocolParemeters::unpack::<_, VERIFY>(unpacker).coerce()?;
         let output_count = u64::unpack::<_, VERIFY>(unpacker).coerce()?;
-        let milestone_diff_count = u64::unpack::<_, VERIFY>(unpacker).coerce()?;
-        let sep_count = u64::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let milestone_diff_count = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let sep_count = u16::unpack::<_, VERIFY>(unpacker).coerce()?;
 
         Ok(Self {
             genesis_milestone_index,
@@ -229,18 +229,42 @@ impl Packable for FullSnapshotHeader {
 /// Describes a snapshot header specific to delta snapshots.
 #[derive(Clone, Packable)]
 pub struct DeltaSnapshotHeader {
-    sep_count: u64,
-    milestone_diff_count: u64,
+    target_milestone_index: MilestoneIndex,
+    target_milestone_timestamp: u32,
+    full_snapshot_target_milestone_id: MilestoneId,
+    sep_file_offset: u64,
+    milestone_diff_count: u32,
+    sep_count: u16,
 }
 
 impl DeltaSnapshotHeader {
-    /// Returns the solid entry point count of a `DeltaSnapshotHeader`.
-    pub fn sep_count(&self) -> u64 {
-        self.sep_count
+    /// Returns the target milestone index of a [`DeltaSnapshotHeader`].
+    pub fn target_milestone_index(&self) -> MilestoneIndex {
+        self.target_milestone_index
     }
 
-    /// Returns the milestone diff count of a `DeltaSnapshotHeader`.
-    pub fn milestone_diff_count(&self) -> u64 {
+    /// Returns the target milestone timestamp of a [`DeltaSnapshotHeader`].
+    pub fn target_milestone_timestamp(&self) -> u32 {
+        self.target_milestone_timestamp
+    }
+
+    /// Returns the full snapshot target milestone ID of a [`DeltaSnapshotHeader`].
+    pub fn full_snapshot_target_milestone_id(&self) -> &MilestoneId {
+        &self.full_snapshot_target_milestone_id
+    }
+
+    /// Returns the SEP file offset of a [`DeltaSnapshotHeader`].
+    pub fn sep_file_offset(&self) -> u64 {
+        self.sep_file_offset
+    }
+
+    /// Returns the milestone diff count of a [`DeltaSnapshotHeader`].
+    pub fn milestone_diff_count(&self) -> u32 {
         self.milestone_diff_count
+    }
+
+    /// Returns the SEP count of a [`DeltaSnapshotHeader`].
+    pub fn sep_count(&self) -> u16 {
+        self.sep_count
     }
 }
