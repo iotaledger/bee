@@ -54,6 +54,8 @@ impl Packable for MilestoneDiff {
     type UnpackError = Error;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        // This is required by hornet.
+        (self.packed_len() as u32).pack(packer)?;
         (self.milestone.packed_len() as u32 + MilestonePayload::KIND).pack(packer)?;
         MilestonePayload::KIND.pack(packer)?;
         self.milestone.pack(packer)?;
@@ -90,6 +92,8 @@ impl Packable for MilestoneDiff {
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        // This is required by hornet.
+        let _ = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
         let milestone_len = u32::unpack::<_, VERIFY>(unpacker).coerce()? as usize;
         let payload = Payload::unpack::<_, VERIFY>(unpacker).coerce()?;
         let milestone = match payload {
