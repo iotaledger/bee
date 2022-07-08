@@ -123,7 +123,7 @@ impl Packable for MilestoneDiff {
 
         for _ in 0..created_count {
             let output_id = OutputId::unpack::<_, VERIFY>(unpacker).coerce()?;
-            let created_output = CreatedOutput::unpack::<_, VERIFY>(unpacker).coerce()?;
+            let created_output = CreatedOutput::unpack_with_length::<_, VERIFY>(unpacker).coerce()?;
 
             created_outputs.insert(output_id, created_output);
         }
@@ -133,7 +133,7 @@ impl Packable for MilestoneDiff {
 
         for _ in 0..consumed_count {
             let output_id = OutputId::unpack::<_, VERIFY>(unpacker).coerce()?;
-            let created_output = CreatedOutput::unpack::<_, VERIFY>(unpacker).coerce()?;
+            let created_output = CreatedOutput::unpack_with_length::<_, VERIFY>(unpacker).coerce()?;
             let target = TransactionId::unpack::<_, VERIFY>(unpacker).coerce()?;
 
             consumed_outputs.insert(

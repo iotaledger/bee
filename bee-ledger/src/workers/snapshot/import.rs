@@ -71,7 +71,7 @@ fn import_outputs<U: Unpacker<Error = std::io::Error>, B: StorageBackend>(
 ) -> Result<(), Error> {
     for _ in 0..output_count {
         let output_id = OutputId::unpack::<_, true>(unpacker)?;
-        let created_output = CreatedOutput::unpack::<_, true>(unpacker)?;
+        let created_output = CreatedOutput::unpack_with_length::<_, true>(unpacker)?;
 
         create_output(storage, &output_id, &created_output)?;
     }
