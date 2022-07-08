@@ -77,7 +77,7 @@ impl Packable for SnapshotHeader {
         let version = u8::unpack::<_, VERIFY>(unpacker).coerce()?;
 
         if VERIFY && SNAPSHOT_VERSION != version {
-            return Err(UnpackError::Packable(Error::UnsupportedVersion(
+            return Err(UnpackError::Packable(Error::UnsupportedSnapshotVersion(
                 SNAPSHOT_VERSION,
                 version,
             )));
@@ -177,6 +177,7 @@ impl Packable for FullSnapshotHeader {
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         SNAPSHOT_VERSION.pack(packer)?;
+        SnapshotKind::Full.pack(packer)?;
 
         self.genesis_milestone_index.pack(packer)?;
         self.target_milestone_index.pack(packer)?;
@@ -201,10 +202,16 @@ impl Packable for FullSnapshotHeader {
         let version = u8::unpack::<_, VERIFY>(unpacker).coerce()?;
 
         if VERIFY && SNAPSHOT_VERSION != version {
-            return Err(UnpackError::Packable(Error::UnsupportedVersion(
+            return Err(UnpackError::Packable(Error::UnsupportedSnapshotVersion(
                 SNAPSHOT_VERSION,
                 version,
             )));
+        }
+
+        let kind = SnapshotKind::unpack::<_, VERIFY>(unpacker).coerce()?;
+
+        if VERIFY && kind != SnapshotKind::Full {
+            return Err(UnpackError::Packable(Error::InvalidSnapshotKind(kind as u8)));
         }
 
         let genesis_milestone_index = MilestoneIndex::unpack::<_, VERIFY>(unpacker).coerce()?;
@@ -285,6 +292,7 @@ impl Packable for DeltaSnapshotHeader {
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         SNAPSHOT_VERSION.pack(packer)?;
+        SnapshotKind::Delta.pack(packer)?;
 
         self.target_milestone_index.pack(packer)?;
         self.target_milestone_timestamp.pack(packer)?;
@@ -302,10 +310,16 @@ impl Packable for DeltaSnapshotHeader {
         let version = u8::unpack::<_, VERIFY>(unpacker).coerce()?;
 
         if VERIFY && SNAPSHOT_VERSION != version {
-            return Err(UnpackError::Packable(Error::UnsupportedVersion(
+            return Err(UnpackError::Packable(Error::UnsupportedSnapshotVersion(
                 SNAPSHOT_VERSION,
                 version,
             )));
+        }
+
+        let kind = SnapshotKind::unpack::<_, VERIFY>(unpacker).coerce()?;
+
+        if VERIFY && kind != SnapshotKind::Delta {
+            return Err(UnpackError::Packable(Error::InvalidSnapshotKind(kind as u8)));
         }
 
         let target_milestone_index = MilestoneIndex::unpack::<_, VERIFY>(unpacker).coerce()?;
