@@ -74,6 +74,7 @@ pub mod dto {
         #[serde(rename = "type")]
         pub kind: u32,
         pub tag: String,
+        #[serde(skip_serializing_if = "String::is_empty", default)]
         pub data: String,
     }
 
@@ -93,7 +94,11 @@ pub mod dto {
         fn try_from(value: &TaggedDataPayloadDto) -> Result<Self, Self::Error> {
             Ok(TaggedDataPayload::new(
                 prefix_hex::decode(&value.tag).map_err(|_| DtoError::InvalidField("tag"))?,
-                prefix_hex::decode(&value.data).map_err(|_| DtoError::InvalidField("data"))?,
+                if !value.data.is_empty() {
+                    prefix_hex::decode(&value.data).map_err(|_| DtoError::InvalidField("data"))?
+                } else {
+                    Vec::new()
+                },
             )?)
         }
     }
