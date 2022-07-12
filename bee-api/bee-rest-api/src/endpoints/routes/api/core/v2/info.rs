@@ -69,9 +69,9 @@ async fn info<B: StorageBackend>(Extension(args): Extension<ApiArgsFullNode<B>>)
             bech32_hrp: args.bech32_hrp.clone(),
             min_pow_score: args.protocol_config.minimum_pow_score(),
             rent_structure: RentStructureResponse {
-                v_byte_cost: args.protocol_config.byte_cost().v_byte_cost,
-                v_byte_factor_key: args.protocol_config.byte_cost().v_byte_factor_key,
-                v_byte_factor_data: args.protocol_config.byte_cost().v_byte_factor_data,
+                v_byte_cost: args.protocol_config.rent().v_byte_cost,
+                v_byte_factor_key: args.protocol_config.rent().v_byte_factor_key,
+                v_byte_factor_data: args.protocol_config.rent().v_byte_factor_data,
             },
             token_supply: TOKEN_SUPPLY.to_string(),
         },

@@ -70,7 +70,7 @@ pub enum Error {
     InvalidSnapshotKind(u8),
     /// Unsupported snapshot version.
     #[error("unsupported snapshot version: supports {0}, read {1}")]
-    UnsupportedVersion(u8, u8),
+    UnsupportedSnapshotVersion(u8, u8),
     /// Missing consumed treasury.
     #[error("missing consumed treasury")]
     MissingConsumedTreasury,

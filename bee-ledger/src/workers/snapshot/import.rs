@@ -48,7 +48,7 @@ fn snapshot_reader(path: &Path) -> Result<BufReader<File>, Error> {
 fn import_solid_entry_points<U: Unpacker<Error = std::io::Error>, B: StorageBackend>(
     unpacker: &mut U,
     storage: &B,
-    sep_count: u64,
+    sep_count: u16,
     index: MilestoneIndex,
 ) -> Result<(), Error> {
     Truncate::<SolidEntryPoint, MilestoneIndex>::truncate(storage).map_err(|e| Error::Storage(Box::new(e)))?;
@@ -71,7 +71,7 @@ fn import_outputs<U: Unpacker<Error = std::io::Error>, B: StorageBackend>(
 ) -> Result<(), Error> {
     for _ in 0..output_count {
         let output_id = OutputId::unpack::<_, true>(unpacker)?;
-        let created_output = CreatedOutput::unpack::<_, true>(unpacker)?;
+        let created_output = CreatedOutput::unpack_with_length::<_, true>(unpacker)?;
 
         create_output(storage, &output_id, &created_output)?;
     }
@@ -82,7 +82,7 @@ fn import_outputs<U: Unpacker<Error = std::io::Error>, B: StorageBackend>(
 fn import_milestone_diffs<U: Unpacker<Error = std::io::Error>, B: StorageBackend>(
     unpacker: &mut U,
     storage: &B,
-    milestone_diff_count: u64,
+    milestone_diff_count: u32,
 ) -> Result<(), Error> {
     for _ in 0..milestone_diff_count {
         let diff = MilestoneDiff::unpack::<_, true>(unpacker)?;

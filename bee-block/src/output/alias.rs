@@ -17,8 +17,8 @@ use crate::{
     output::{
         feature::{verify_allowed_features, Feature, FeatureFlags, Features},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        AliasId, ByteCost, ByteCostConfig, ChainId, NativeToken, NativeTokens, Output, OutputAmount,
-        OutputBuilderAmount, OutputId, StateTransitionError, StateTransitionVerifier,
+        AliasId, ChainId, NativeToken, NativeTokens, Output, OutputAmount, OutputBuilderAmount, OutputId, Rent,
+        RentStructure, StateTransitionError, StateTransitionVerifier,
     },
     semantic::{ConflictReason, ValidationContext},
     unlock::Unlock,
@@ -52,10 +52,10 @@ impl AliasOutputBuilder {
     /// Creates an [`AliasOutputBuilder`] with a provided byte cost config.
     /// The amount will be set to the minimum storage deposit.
     pub fn new_with_minimum_storage_deposit(
-        byte_cost_config: ByteCostConfig,
+        rent_structure: RentStructure,
         alias_id: AliasId,
     ) -> Result<AliasOutputBuilder, Error> {
-        Self::new(OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config), alias_id)
+        Self::new(OutputBuilderAmount::MinimumStorageDeposit(rent_structure), alias_id)
     }
 
     fn new(amount: OutputBuilderAmount, alias_id: AliasId) -> Result<AliasOutputBuilder, Error> {
@@ -81,8 +81,8 @@ impl AliasOutputBuilder {
 
     /// Sets the amount to the minimum storage deposit.
     #[inline(always)]
-    pub fn with_minimum_storage_deposit(mut self, byte_cost_config: ByteCostConfig) -> Self {
-        self.amount = OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config);
+    pub fn with_minimum_storage_deposit(mut self, rent_structure: RentStructure) -> Self {
+        self.amount = OutputBuilderAmount::MinimumStorageDeposit(rent_structure);
         self
     }
 
@@ -244,8 +244,8 @@ impl AliasOutputBuilder {
 
         output.amount = match self.amount {
             OutputBuilderAmount::Amount(amount) => amount,
-            OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config) => Output::Alias(output.clone())
-                .byte_cost(&byte_cost_config)
+            OutputBuilderAmount::MinimumStorageDeposit(rent_structure) => Output::Alias(output.clone())
+                .rent_cost(&rent_structure)
                 .try_into()
                 .map_err(Error::InvalidOutputAmount)?,
         };
@@ -322,11 +322,8 @@ impl AliasOutput {
     /// Creates a new [`AliasOutput`] with a provided byte cost config.
     /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
-    pub fn new_with_minimum_storage_deposit(
-        byte_cost_config: ByteCostConfig,
-        alias_id: AliasId,
-    ) -> Result<Self, Error> {
-        AliasOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config, alias_id)?.finish()
+    pub fn new_with_minimum_storage_deposit(rent_structure: RentStructure, alias_id: AliasId) -> Result<Self, Error> {
+        AliasOutputBuilder::new_with_minimum_storage_deposit(rent_structure, alias_id)?.finish()
     }
 
     /// Creates a new [`AliasOutputBuilder`] with a provided amount.
@@ -339,10 +336,10 @@ impl AliasOutput {
     /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
     pub fn build_with_minimum_storage_deposit(
-        byte_cost_config: ByteCostConfig,
+        rent_structure: RentStructure,
         alias_id: AliasId,
     ) -> Result<AliasOutputBuilder, Error> {
-        AliasOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config, alias_id)
+        AliasOutputBuilder::new_with_minimum_storage_deposit(rent_structure, alias_id)
     }
 
     ///

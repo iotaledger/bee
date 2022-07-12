@@ -1,7 +1,7 @@
 {
   "alias": "Bee alphanet node",
   "bech32Hrp": "rms",
-  "networkId": "alphanet-7",
+  "networkId": "alphanet-8",
   "logger": {
     "outputs": [
       {
@@ -75,7 +75,7 @@
       "statusInterval": 10,
       "milestoneSyncCount": 200
     },
-    "byteCost": {
+    "rent": {
       "vByteCost": 500,
       "vByteFactorKey": 10,
       "vByteFactorData": 1

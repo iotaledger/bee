@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use alloc::string::String;
+use alloc::string::{FromUtf8Error, String};
 use core::{convert::Infallible, fmt};
 
 use crypto::Error as CryptoError;
@@ -56,6 +56,7 @@ pub enum Error {
     InvalidInputKind(u8),
     InvalidInputCount(<InputCount as TryFrom<usize>>::Error),
     InvalidInputOutputIndex(<OutputIndex as TryFrom<u16>>::Error),
+    InvalidBech32Hrp(FromUtf8Error),
     InvalidBlockLength(usize),
     InvalidStateMetadataLength(<StateMetadataLength as TryFrom<usize>>::Error),
     InvalidMetadataFeatureLength(<MetadataFeatureLength as TryFrom<usize>>::Error),
@@ -64,6 +65,7 @@ pub enum Error {
     InvalidMilestoneOptionKind(u8),
     InvalidMigratedFundsEntryAmount(<MigratedFundsAmount as TryFrom<u64>>::Error),
     InvalidNativeTokenCount(<NativeTokenCount as TryFrom<usize>>::Error),
+    InvalidNetworkName(FromUtf8Error),
     InvalidNftIndex(<UnlockIndex as TryFrom<u16>>::Error),
     InvalidOutputAmount(<OutputAmount as TryFrom<u64>>::Error),
     InvalidOutputCount(<OutputCount as TryFrom<usize>>::Error),
@@ -157,6 +159,7 @@ impl fmt::Display for Error {
             Error::InvalidAddress => write!(f, "invalid address provided"),
             Error::InvalidAddressKind(k) => write!(f, "invalid address kind: {}", k),
             Error::InvalidAliasIndex(index) => write!(f, "invalid alias index: {}", index),
+            Error::InvalidBech32Hrp(err) => write!(f, "invalid bech32 hrp: {err}"),
             Error::InvalidBinaryParametersLength(length) => {
                 write!(f, "invalid binary parameters length: {length}")
             }
@@ -205,6 +208,7 @@ impl fmt::Display for Error {
                 write!(f, "invalid migrated funds entry amount: {amount}")
             }
             Error::InvalidNativeTokenCount(count) => write!(f, "invalid native token count: {}", count),
+            Error::InvalidNetworkName(err) => write!(f, "invalid network name: {err}"),
             Error::InvalidNftIndex(index) => write!(f, "invalid nft index: {}", index),
             Error::InvalidOutputAmount(amount) => write!(f, "invalid output amount: {}", amount),
             Error::InvalidOutputCount(count) => write!(f, "invalid output count: {}", count),

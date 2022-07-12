@@ -10,7 +10,7 @@ use crate::{
     output::{
         feature::{verify_allowed_features, Feature, FeatureFlags, Features},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        ByteCost, ByteCostConfig, NativeToken, NativeTokens, Output, OutputAmount, OutputBuilderAmount, OutputId,
+        NativeToken, NativeTokens, Output, OutputAmount, OutputBuilderAmount, OutputId, Rent, RentStructure,
     },
     semantic::{ConflictReason, ValidationContext},
     unlock::Unlock,
@@ -39,8 +39,8 @@ impl BasicOutputBuilder {
     /// Creates an [`BasicOutputBuilder`] with a provided byte cost config.
     /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
-    pub fn new_with_minimum_storage_deposit(byte_cost_config: ByteCostConfig) -> Result<Self, Error> {
-        Self::new(OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config))
+    pub fn new_with_minimum_storage_deposit(rent_structure: RentStructure) -> Result<Self, Error> {
+        Self::new(OutputBuilderAmount::MinimumStorageDeposit(rent_structure))
     }
 
     fn new(amount: OutputBuilderAmount) -> Result<Self, Error> {
@@ -61,8 +61,8 @@ impl BasicOutputBuilder {
 
     /// Sets the amount to the minimum storage deposit.
     #[inline(always)]
-    pub fn with_minimum_storage_deposit(mut self, byte_cost_config: ByteCostConfig) -> Self {
-        self.amount = OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config);
+    pub fn with_minimum_storage_deposit(mut self, rent_structure: RentStructure) -> Self {
+        self.amount = OutputBuilderAmount::MinimumStorageDeposit(rent_structure);
         self
     }
 
@@ -149,8 +149,8 @@ impl BasicOutputBuilder {
 
         output.amount = match self.amount {
             OutputBuilderAmount::Amount(amount) => amount,
-            OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config) => Output::Basic(output.clone())
-                .byte_cost(&byte_cost_config)
+            OutputBuilderAmount::MinimumStorageDeposit(rent_structure) => Output::Basic(output.clone())
+                .rent_cost(&rent_structure)
                 .try_into()
                 .map_err(Error::InvalidOutputAmount)?,
         };
@@ -214,8 +214,8 @@ impl BasicOutput {
     /// Creates a new [`BasicOutput`] with a provided byte cost config.
     /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
-    pub fn new_with_minimum_storage_deposit(byte_cost_config: ByteCostConfig) -> Result<Self, Error> {
-        BasicOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config)?.finish()
+    pub fn new_with_minimum_storage_deposit(rent_structure: RentStructure) -> Result<Self, Error> {
+        BasicOutputBuilder::new_with_minimum_storage_deposit(rent_structure)?.finish()
     }
 
     /// Creates a new [`BasicOutputBuilder`] with a provided amount.
@@ -227,8 +227,8 @@ impl BasicOutput {
     /// Creates a new [`BasicOutputBuilder`] with a provided byte cost config.
     /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
-    pub fn build_with_minimum_storage_deposit(byte_cost_config: ByteCostConfig) -> Result<BasicOutputBuilder, Error> {
-        BasicOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config)
+    pub fn build_with_minimum_storage_deposit(rent_structure: RentStructure) -> Result<BasicOutputBuilder, Error> {
+        BasicOutputBuilder::new_with_minimum_storage_deposit(rent_structure)
     }
 
     ///

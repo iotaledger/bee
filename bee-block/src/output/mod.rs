@@ -4,7 +4,6 @@
 mod alias;
 mod alias_id;
 mod basic;
-mod byte_cost;
 mod chain_id;
 mod foundry;
 mod foundry_id;
@@ -13,6 +12,7 @@ mod native_token;
 mod nft;
 mod nft_id;
 mod output_id;
+mod rent;
 mod state_transition;
 mod token_id;
 mod token_scheme;
@@ -40,7 +40,6 @@ pub use self::{
     alias::{AliasOutput, AliasOutputBuilder},
     alias_id::AliasId,
     basic::{BasicOutput, BasicOutputBuilder},
-    byte_cost::{ByteCost, ByteCostConfig, ByteCostConfigBuilder},
     chain_id::ChainId,
     feature::{Feature, Features},
     foundry::{FoundryOutput, FoundryOutputBuilder},
@@ -50,6 +49,7 @@ pub use self::{
     nft::{NftOutput, NftOutputBuilder},
     nft_id::NftId,
     output_id::OutputId,
+    rent::{Rent, RentStructure, RentStructureBuilder},
     state_transition::{StateTransitionError, StateTransitionVerifier},
     token_id::TokenId,
     token_scheme::{SimpleTokenScheme, TokenScheme},
@@ -73,7 +73,7 @@ pub type OutputAmount = BoundedU64<{ *Output::AMOUNT_RANGE.start() }, { *Output:
 #[derive(Clone)]
 pub(crate) enum OutputBuilderAmount {
     Amount(OutputAmount),
-    MinimumStorageDeposit(ByteCostConfig),
+    MinimumStorageDeposit(RentStructure),
 }
 
 /// A generic output that can represent different types defining the deposit of funds.
@@ -218,11 +218,11 @@ impl Output {
     }
 
     /// Verifies if a valid storage deposit was made. Each [`Output`] has to have an amount that covers its associated
-    /// byte cost, given by [`ByteCostConfig`].
+    /// byte cost, given by [`RentStructure`].
     /// If there is a [`StorageDepositReturnUnlockCondition`](unlock_condition::StorageDepositReturnUnlockCondition),
     /// its amount is also checked.
-    pub fn verify_storage_deposit(&self, config: &ByteCostConfig) -> Result<(), Error> {
-        let required_output_amount = self.byte_cost(config);
+    pub fn verify_storage_deposit(&self, rent_structure: &RentStructure) -> Result<(), Error> {
+        let required_output_amount = self.rent_cost(rent_structure) as u64;
 
         if self.amount() < required_output_amount {
             return Err(Error::InsufficientStorageDepositAmount {
@@ -244,7 +244,7 @@ impl Output {
                 });
             }
 
-            let minimum_deposit = minimum_storage_deposit(config, return_condition.return_address());
+            let minimum_deposit = minimum_storage_deposit(rent_structure, return_condition.return_address());
 
             // `Minimum Storage Deposit` ≤  `Return Amount`
             if return_condition.amount() < minimum_deposit {
@@ -259,19 +259,19 @@ impl Output {
     }
 }
 
-impl ByteCost for Output {
-    fn weighted_bytes(&self, config: &ByteCostConfig) -> u64 {
-        self.packed_len() as u64 * config.v_byte_factor_data
+impl Rent for Output {
+    fn weighted_bytes(&self, rent_structure: &RentStructure) -> u64 {
+        self.packed_len() as u64 * rent_structure.v_byte_factor_data as u64
     }
 }
 
 /// Computes the minimum amount that a storage deposit has to match to allow creating a return [`Output`] back to the
 /// sender [`Address`].
-fn minimum_storage_deposit(config: &ByteCostConfig, address: &Address) -> u64 {
+fn minimum_storage_deposit(rent_structure: &RentStructure, address: &Address) -> u64 {
     let address_condition = UnlockCondition::Address(AddressUnlockCondition::new(*address));
     // PANIC: This can never fail because the amount will always be within the valid range. Also, the actual value is
     // not important, we are only interested in the storage requirements of the type.
-    BasicOutputBuilder::new_with_minimum_storage_deposit(config.clone())
+    BasicOutputBuilder::new_with_minimum_storage_deposit(rent_structure.clone())
         .unwrap()
         .add_unlock_condition(address_condition)
         .finish()

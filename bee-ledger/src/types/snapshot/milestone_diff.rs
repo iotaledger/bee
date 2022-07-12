@@ -54,6 +54,8 @@ impl Packable for MilestoneDiff {
     type UnpackError = Error;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        // This is required by hornet.
+        (self.packed_len() as u32).pack(packer)?;
         (self.milestone.packed_len() as u32 + MilestonePayload::KIND).pack(packer)?;
         MilestonePayload::KIND.pack(packer)?;
         self.milestone.pack(packer)?;
@@ -69,14 +71,14 @@ impl Packable for MilestoneDiff {
             }
         }
 
-        (self.created_outputs.len() as u64).pack(packer)?;
+        (self.created_outputs.len() as u32).pack(packer)?;
 
         for (output_id, created) in self.created_outputs.iter() {
             output_id.pack(packer)?;
             created.pack(packer)?;
         }
 
-        (self.consumed_outputs.len() as u64).pack(packer)?;
+        (self.consumed_outputs.len() as u32).pack(packer)?;
 
         for (output_id, (created, consumed)) in self.consumed_outputs.iter() {
             output_id.pack(packer)?;
@@ -90,6 +92,8 @@ impl Packable for MilestoneDiff {
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        // This is required by hornet.
+        let _ = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
         let milestone_len = u32::unpack::<_, VERIFY>(unpacker).coerce()? as usize;
         let payload = Payload::unpack::<_, VERIFY>(unpacker).coerce()?;
         let milestone = match payload {
@@ -118,22 +122,22 @@ impl Packable for MilestoneDiff {
             None
         };
 
-        let created_count = u64::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let created_count = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
         let mut created_outputs = HashMap::with_capacity(created_count as usize);
 
         for _ in 0..created_count {
             let output_id = OutputId::unpack::<_, VERIFY>(unpacker).coerce()?;
-            let created_output = CreatedOutput::unpack::<_, VERIFY>(unpacker).coerce()?;
+            let created_output = CreatedOutput::unpack_with_length::<_, VERIFY>(unpacker).coerce()?;
 
             created_outputs.insert(output_id, created_output);
         }
 
-        let consumed_count = u64::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let consumed_count = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
         let mut consumed_outputs = HashMap::with_capacity(consumed_count as usize);
 
         for _ in 0..consumed_count {
             let output_id = OutputId::unpack::<_, VERIFY>(unpacker).coerce()?;
-            let created_output = CreatedOutput::unpack::<_, VERIFY>(unpacker).coerce()?;
+            let created_output = CreatedOutput::unpack_with_length::<_, VERIFY>(unpacker).coerce()?;
             let target = TransactionId::unpack::<_, VERIFY>(unpacker).coerce()?;
 
             consumed_outputs.insert(

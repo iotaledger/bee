@@ -2,7 +2,7 @@
 
 alias      = "Bee alphanet node"
 bech32_hrp = "rms"
-network_id = "alphanet-7"
+network_id = "alphanet-8"
 
 [logger]
 [[logger.outputs]]
@@ -69,7 +69,7 @@ end         = 0
 status_interval       = 10
 milestone_sync_count  = 200
 
-[protocol.byte_cost]
+[protocol.rent]
 v_byte_cost = 500
 v_byte_factor_key = 10
 v_byte_factor_data = 1
