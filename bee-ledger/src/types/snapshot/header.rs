@@ -100,7 +100,7 @@ impl Packable for SnapshotHeader {
 }
 
 /// Describes a snapshot header specific to full snapshots.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct FullSnapshotHeader {
     genesis_milestone_index: MilestoneIndex,
     target_milestone_index: MilestoneIndex,
@@ -245,7 +245,7 @@ impl Packable for FullSnapshotHeader {
 }
 
 /// Describes a snapshot header specific to delta snapshots.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct DeltaSnapshotHeader {
     target_milestone_index: MilestoneIndex,
     target_milestone_timestamp: u32,
