@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_block::payload::milestone::{MilestoneId, MilestoneIndex, ParametersMilestoneOption};
+use bee_block::payload::milestone::{MilestoneId, MilestoneIndex, MilestoneOption, ParametersMilestoneOption};
 use packable::{
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
@@ -106,7 +106,7 @@ pub struct FullSnapshotHeader {
     ledger_milestone_index: MilestoneIndex,
     treasury_output_milestone_id: MilestoneId,
     treasury_output_amount: u64,
-    parameters_milestone_option: ParametersMilestoneOption,
+    parameters_milestone_option: MilestoneOption,
     output_count: u64,
     milestone_diff_count: u32,
     sep_count: u16,
@@ -149,7 +149,7 @@ impl FullSnapshotHeader {
     }
 
     /// Returns the parameters milestone option of a [`FullSnapshotHeader`].
-    pub fn parameters_milestone_option(&self) -> &ParametersMilestoneOption {
+    pub fn parameters_milestone_option(&self) -> &MilestoneOption {
         &self.parameters_milestone_option
     }
 
@@ -220,7 +220,7 @@ impl Packable for FullSnapshotHeader {
         let treasury_output_amount = u64::unpack::<_, VERIFY>(unpacker).coerce()?;
         // This is only required in Hornet.
         let _parameters_milestone_option_length = u16::unpack::<_, VERIFY>(unpacker).coerce()?;
-        let parameters_milestone_option = ParametersMilestoneOption::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let parameters_milestone_option = MilestoneOption::unpack::<_, VERIFY>(unpacker).coerce()?;
         let output_count = u64::unpack::<_, VERIFY>(unpacker).coerce()?;
         let milestone_diff_count = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
         let sep_count = u16::unpack::<_, VERIFY>(unpacker).coerce()?;
