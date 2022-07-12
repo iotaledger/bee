@@ -1,10 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_block::{
-    payload::milestone::{MilestoneId, MilestoneIndex},
-    protocol::ProtocolParemeters,
-};
+use bee_block::payload::milestone::{MilestoneId, MilestoneIndex, ParametersMilestoneOption};
 use packable::{
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
@@ -109,7 +106,7 @@ pub struct FullSnapshotHeader {
     ledger_milestone_index: MilestoneIndex,
     treasury_output_milestone_id: MilestoneId,
     treasury_output_amount: u64,
-    protocol_parameters: ProtocolParemeters,
+    parameters_milestone_option: ParametersMilestoneOption,
     output_count: u64,
     milestone_diff_count: u32,
     sep_count: u16,
@@ -151,9 +148,9 @@ impl FullSnapshotHeader {
         self.treasury_output_amount
     }
 
-    /// Returns the protocol parameters of a [`FullSnapshotHeader`].
-    pub fn protocol_parameters(&self) -> &ProtocolParemeters {
-        &self.protocol_parameters
+    /// Returns the parameters milestone option of a [`FullSnapshotHeader`].
+    pub fn parameters_milestone_option(&self) -> &ParametersMilestoneOption {
+        &self.parameters_milestone_option
     }
 
     /// Returns the output count of a [`FullSnapshotHeader`].
@@ -187,8 +184,8 @@ impl Packable for FullSnapshotHeader {
         self.treasury_output_milestone_id.pack(packer)?;
         self.treasury_output_amount.pack(packer)?;
         // This is only required in Hornet.
-        (self.protocol_parameters.packed_len() as u16).pack(packer)?;
-        self.protocol_parameters.pack(packer)?;
+        (self.parameters_milestone_option.packed_len() as u16).pack(packer)?;
+        self.parameters_milestone_option.pack(packer)?;
         self.output_count.pack(packer)?;
         self.milestone_diff_count.pack(packer)?;
         self.sep_count.pack(packer)?;
@@ -222,8 +219,8 @@ impl Packable for FullSnapshotHeader {
         let treasury_output_milestone_id = MilestoneId::unpack::<_, VERIFY>(unpacker).coerce()?;
         let treasury_output_amount = u64::unpack::<_, VERIFY>(unpacker).coerce()?;
         // This is only required in Hornet.
-        let _protocol_parameters_length = u16::unpack::<_, VERIFY>(unpacker).coerce()?;
-        let protocol_parameters = ProtocolParemeters::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let _parameters_milestone_option_length = u16::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let parameters_milestone_option = ParametersMilestoneOption::unpack::<_, VERIFY>(unpacker).coerce()?;
         let output_count = u64::unpack::<_, VERIFY>(unpacker).coerce()?;
         let milestone_diff_count = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
         let sep_count = u16::unpack::<_, VERIFY>(unpacker).coerce()?;
@@ -236,7 +233,7 @@ impl Packable for FullSnapshotHeader {
             ledger_milestone_index,
             treasury_output_milestone_id,
             treasury_output_amount,
-            protocol_parameters,
+            parameters_milestone_option,
             output_count,
             milestone_diff_count,
             sep_count,
