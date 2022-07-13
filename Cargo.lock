@@ -257,6 +257,7 @@ dependencies = [
  "rand 0.8.5",
  "ring",
  "rocksdb",
+ "rustversion",
  "serde",
  "serde_json",
  "sled",
