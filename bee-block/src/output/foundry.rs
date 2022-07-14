@@ -697,7 +697,7 @@ pub mod dto {
 
             let mut builder = match amount {
                 OutputBuilderAmountDto::Amount(amount) => FoundryOutputBuilder::new_with_amount(
-                    amount.parse::<u64>().map_err(|_| DtoError::InvalidField("amount"))?,
+                    amount.parse().map_err(|_| DtoError::InvalidField("amount"))?,
                     serial_number,
                     token_scheme,
                 )?,
@@ -711,18 +711,18 @@ pub mod dto {
             };
 
             if let Some(native_tokens) = native_tokens {
-                let tokens = native_tokens
+                let native_tokens = native_tokens
                     .iter()
                     .map(NativeToken::try_from)
                     .collect::<Result<Vec<NativeToken>, DtoError>>()?;
-                builder = builder.with_native_tokens(tokens);
+                builder = builder.with_native_tokens(native_tokens);
             }
 
-            let conditions = unlock_conditions
+            let unlock_conditions = unlock_conditions
                 .iter()
                 .map(UnlockCondition::try_from)
                 .collect::<Result<Vec<UnlockCondition>, DtoError>>()?;
-            builder = builder.with_unlock_conditions(conditions);
+            builder = builder.with_unlock_conditions(unlock_conditions);
 
             if let Some(features) = features {
                 let features = features
