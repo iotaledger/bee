@@ -300,6 +300,12 @@ pub mod dto {
     };
     use crate::error::dto::DtoError;
 
+    #[derive(Clone, Debug, Deserialize)]
+    pub enum OutputBuilderAmountDto {
+        Amount(String),
+        MinimumStorageDeposit(ByteCostConfig),
+    }
+
     /// Describes all the different output types.
     #[derive(Clone, Debug, Eq, PartialEq)]
     pub enum OutputDto {
