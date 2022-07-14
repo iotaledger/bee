@@ -393,21 +393,21 @@ pub mod dto {
             if let Some(native_tokens) = native_tokens {
                 let tokens = native_tokens
                     .iter()
-                    .map(|native_token| Ok(NativeToken::try_from(native_token)?))
+                    .map(NativeToken::try_from)
                     .collect::<Result<Vec<NativeToken>, DtoError>>()?;
                 builder = builder.with_native_tokens(tokens);
             }
 
             let conditions = unlock_conditions
                 .iter()
-                .map(|unlock_condition| Ok(UnlockCondition::try_from(unlock_condition)?))
+                .map(UnlockCondition::try_from)
                 .collect::<Result<Vec<UnlockCondition>, DtoError>>()?;
             builder = builder.with_unlock_conditions(conditions);
 
             if let Some(features) = features {
                 let features = features
                     .iter()
-                    .map(|feature| Ok(Feature::try_from(feature)?))
+                    .map(Feature::try_from)
                     .collect::<Result<Vec<Feature>, DtoError>>()?;
                 builder = builder.with_features(features);
             }
