@@ -35,6 +35,7 @@ prost = { version = "0.10.4", default-features = false, features = [ "std" ] }
 rand = { version = "0.8.5", default-features = false, features = [ "std", "std_rng" ] }
 ring = { version = "0.16.20", default-features = false }
 rocksdb = { version = "0.18.0", default-features = false, optional = true }
+rustversion = { version = "1.0.0", default-features = false }
 serde = { version = "1.0.137", default-features = false, features = [ "derive" ] }
 sled = { version = "0.34.7", default-features = false, optional = true }
 thiserror = { version = "1.0.31", default-features = false  }
