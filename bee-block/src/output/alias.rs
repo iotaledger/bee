@@ -769,20 +769,17 @@ pub mod dto {
             features: Option<Vec<FeatureDto>>,
             immutable_features: Option<Vec<FeatureDto>>,
         ) -> Result<AliasOutputDto, DtoError> {
-            let mut builder: AliasOutputBuilder;
             let alias_id = AliasId::try_from(alias_id)?;
 
-            match amount {
-                OutputBuilderAmountDto::Amount(amount) => {
-                    builder = AliasOutputBuilder::new_with_amount(
-                        amount.parse::<u64>().map_err(|_| DtoError::InvalidField("amount"))?,
-                        alias_id,
-                    )?;
-                }
+            let mut builder = match amount {
+                OutputBuilderAmountDto::Amount(amount) => AliasOutputBuilder::new_with_amount(
+                    amount.parse::<u64>().map_err(|_| DtoError::InvalidField("amount"))?,
+                    alias_id,
+                )?,
                 OutputBuilderAmountDto::MinimumStorageDeposit(byte_cost_config) => {
-                    builder = AliasOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config, alias_id)?;
+                    AliasOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config, alias_id)?
                 }
-            }
+            };
 
             if let Some(native_tokens) = native_tokens {
                 let tokens = native_tokens

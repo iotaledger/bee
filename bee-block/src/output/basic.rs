@@ -377,18 +377,14 @@ pub mod dto {
             unlock_conditions: Vec<UnlockConditionDto>,
             features: Option<Vec<FeatureDto>>,
         ) -> Result<BasicOutputDto, DtoError> {
-            let mut builder: BasicOutputBuilder;
-
-            match amount {
-                OutputBuilderAmountDto::Amount(amount) => {
-                    builder = BasicOutputBuilder::new_with_amount(
-                        amount.parse::<u64>().map_err(|_| DtoError::InvalidField("amount"))?,
-                    )?;
-                }
+            let mut builder = match amount {
+                OutputBuilderAmountDto::Amount(amount) => BasicOutputBuilder::new_with_amount(
+                    amount.parse::<u64>().map_err(|_| DtoError::InvalidField("amount"))?,
+                )?,
                 OutputBuilderAmountDto::MinimumStorageDeposit(byte_cost_config) => {
-                    builder = BasicOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config)?;
+                    BasicOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config)?
                 }
-            }
+            };
 
             if let Some(native_tokens) = native_tokens {
                 let tokens = native_tokens

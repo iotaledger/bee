@@ -554,19 +554,16 @@ pub mod dto {
             immutable_features: Option<Vec<FeatureDto>>,
         ) -> Result<NftOutputDto, DtoError> {
             let nft_id = NftId::try_from(nft_id)?;
-            let mut builder: NftOutputBuilder;
 
-            match amount {
-                OutputBuilderAmountDto::Amount(amount) => {
-                    builder = NftOutputBuilder::new_with_amount(
-                        amount.parse::<u64>().map_err(|_| DtoError::InvalidField("amount"))?,
-                        nft_id,
-                    )?;
-                }
+            let mut builder = match amount {
+                OutputBuilderAmountDto::Amount(amount) => NftOutputBuilder::new_with_amount(
+                    amount.parse::<u64>().map_err(|_| DtoError::InvalidField("amount"))?,
+                    nft_id,
+                )?,
                 OutputBuilderAmountDto::MinimumStorageDeposit(byte_cost_config) => {
-                    builder = NftOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config, nft_id)?;
+                    NftOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config, nft_id)?
                 }
-            }
+            };
 
             if let Some(native_tokens) = native_tokens {
                 let tokens = native_tokens

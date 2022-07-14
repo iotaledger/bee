@@ -693,25 +693,22 @@ pub mod dto {
             features: Option<Vec<FeatureDto>>,
             immutable_features: Option<Vec<FeatureDto>>,
         ) -> Result<FoundryOutputDto, DtoError> {
-            let mut builder: FoundryOutputBuilder;
             let token_scheme = TokenScheme::try_from(token_scheme)?;
 
-            match amount {
-                OutputBuilderAmountDto::Amount(amount) => {
-                    builder = FoundryOutputBuilder::new_with_amount(
-                        amount.parse::<u64>().map_err(|_| DtoError::InvalidField("amount"))?,
-                        serial_number,
-                        token_scheme,
-                    )?;
-                }
+            let mut builder = match amount {
+                OutputBuilderAmountDto::Amount(amount) => FoundryOutputBuilder::new_with_amount(
+                    amount.parse::<u64>().map_err(|_| DtoError::InvalidField("amount"))?,
+                    serial_number,
+                    token_scheme,
+                )?,
                 OutputBuilderAmountDto::MinimumStorageDeposit(byte_cost_config) => {
-                    builder = FoundryOutputBuilder::new_with_minimum_storage_deposit(
+                    FoundryOutputBuilder::new_with_minimum_storage_deposit(
                         byte_cost_config,
                         serial_number,
                         token_scheme,
-                    )?;
+                    )?
                 }
-            }
+            };
 
             if let Some(native_tokens) = native_tokens {
                 let tokens = native_tokens
