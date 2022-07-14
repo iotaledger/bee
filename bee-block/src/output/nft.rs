@@ -544,15 +544,15 @@ pub mod dto {
         }
     }
 
-    impl NftOutputDto {
-        pub fn new(
+    impl NftOutput {
+        pub fn from_dtos(
             amount: OutputBuilderAmountDto,
             native_tokens: Option<Vec<NativeTokenDto>>,
             nft_id: &NftIdDto,
             unlock_conditions: Vec<UnlockConditionDto>,
             features: Option<Vec<FeatureDto>>,
             immutable_features: Option<Vec<FeatureDto>>,
-        ) -> Result<NftOutputDto, DtoError> {
+        ) -> Result<NftOutput, DtoError> {
             let nft_id = NftId::try_from(nft_id)?;
 
             let mut builder = match amount {
@@ -595,7 +595,7 @@ pub mod dto {
                 builder = builder.with_immutable_features(immutable_features);
             }
 
-            Ok((&builder.finish()?).into())
+            Ok(builder.finish()?)
         }
     }
 }

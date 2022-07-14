@@ -683,8 +683,8 @@ pub mod dto {
         }
     }
 
-    impl FoundryOutputDto {
-        pub fn new(
+    impl FoundryOutput {
+        pub fn from_dtos(
             amount: OutputBuilderAmountDto,
             native_tokens: Option<Vec<NativeTokenDto>>,
             serial_number: u32,
@@ -692,7 +692,7 @@ pub mod dto {
             unlock_conditions: Vec<UnlockConditionDto>,
             features: Option<Vec<FeatureDto>>,
             immutable_features: Option<Vec<FeatureDto>>,
-        ) -> Result<FoundryOutputDto, DtoError> {
+        ) -> Result<FoundryOutput, DtoError> {
             let token_scheme = TokenScheme::try_from(token_scheme)?;
 
             let mut builder = match amount {
@@ -740,7 +740,7 @@ pub mod dto {
                 builder = builder.with_immutable_features(immutable_features);
             }
 
-            Ok((&builder.finish()?).into())
+            Ok(builder.finish()?)
         }
     }
 }

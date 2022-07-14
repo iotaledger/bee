@@ -756,9 +756,9 @@ pub mod dto {
         }
     }
 
-    impl AliasOutputDto {
+    impl AliasOutput {
         #[allow(clippy::too_many_arguments)]
-        pub fn new(
+        pub fn from_dtos(
             amount: OutputBuilderAmountDto,
             native_tokens: Option<Vec<NativeTokenDto>>,
             alias_id: &AliasIdDto,
@@ -768,7 +768,7 @@ pub mod dto {
             unlock_conditions: Vec<UnlockConditionDto>,
             features: Option<Vec<FeatureDto>>,
             immutable_features: Option<Vec<FeatureDto>>,
-        ) -> Result<AliasOutputDto, DtoError> {
+        ) -> Result<AliasOutput, DtoError> {
             let alias_id = AliasId::try_from(alias_id)?;
 
             let mut builder = match amount {
@@ -823,7 +823,7 @@ pub mod dto {
                 builder = builder.with_immutable_features(immutable_features);
             }
 
-            Ok((&builder.finish()?).into())
+            Ok(builder.finish()?)
         }
     }
 }

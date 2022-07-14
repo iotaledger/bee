@@ -370,13 +370,13 @@ pub mod dto {
         }
     }
 
-    impl BasicOutputDto {
-        pub fn new(
+    impl BasicOutput {
+        pub fn from_dtos(
             amount: OutputBuilderAmountDto,
             native_tokens: Option<Vec<NativeTokenDto>>,
             unlock_conditions: Vec<UnlockConditionDto>,
             features: Option<Vec<FeatureDto>>,
-        ) -> Result<BasicOutputDto, DtoError> {
+        ) -> Result<BasicOutput, DtoError> {
             let mut builder = match amount {
                 OutputBuilderAmountDto::Amount(amount) => BasicOutputBuilder::new_with_amount(
                     amount.parse::<u64>().map_err(|_| DtoError::InvalidField("amount"))?,
@@ -408,7 +408,7 @@ pub mod dto {
                 builder = builder.with_features(features);
             }
 
-            Ok((&builder.finish()?).into())
+            Ok(builder.finish()?)
         }
     }
 }
