@@ -300,7 +300,7 @@ pub mod dto {
     };
     use crate::error::dto::DtoError;
 
-    #[derive(Clone)]
+    #[derive(Clone, Debug, Deserialize)]
     pub enum OutputBuilderAmountDto {
         Amount(String),
         MinimumStorageDeposit(ByteCostConfig),
