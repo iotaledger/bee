@@ -684,7 +684,6 @@ pub mod dto {
     }
 
     impl FoundryOutputDto {
-        #[allow(clippy::too_many_arguments)]
         pub fn new(
             amount: OutputBuilderAmountDto,
             native_tokens: Option<Vec<NativeTokenDto>>,
