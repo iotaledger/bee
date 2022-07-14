@@ -607,8 +607,8 @@ pub mod dto {
     use crate::{
         error::dto::DtoError,
         output::{
-            feature::dto::FeatureDto, native_token::dto::NativeTokenDto, token_scheme::dto::TokenSchemeDto,
-            unlock_condition::dto::UnlockConditionDto,
+            dto::OutputBuilderAmountDto, feature::dto::FeatureDto, native_token::dto::NativeTokenDto,
+            token_scheme::dto::TokenSchemeDto, unlock_condition::dto::UnlockConditionDto,
         },
     };
 
@@ -680,6 +680,71 @@ pub mod dto {
             }
 
             Ok(builder.finish()?)
+        }
+    }
+
+    impl FoundryOutputDto {
+        #[allow(clippy::too_many_arguments)]
+        pub fn new(
+            amount: OutputBuilderAmountDto,
+            native_tokens: Option<Vec<NativeTokenDto>>,
+            serial_number: u32,
+            token_scheme: &TokenSchemeDto,
+            unlock_conditions: Vec<UnlockConditionDto>,
+            features: Option<Vec<FeatureDto>>,
+            immutable_features: Option<Vec<FeatureDto>>,
+        ) -> Result<FoundryOutputDto, DtoError> {
+            let mut builder: FoundryOutputBuilder;
+            let token_scheme = TokenScheme::try_from(token_scheme)?;
+
+            match amount {
+                OutputBuilderAmountDto::Amount(amount) => {
+                    builder = FoundryOutputBuilder::new_with_amount(
+                        amount.parse::<u64>().map_err(|_| DtoError::InvalidField("amount"))?,
+                        serial_number,
+                        token_scheme,
+                    )?;
+                }
+                OutputBuilderAmountDto::MinimumStorageDeposit(byte_cost_config) => {
+                    builder = FoundryOutputBuilder::new_with_minimum_storage_deposit(
+                        byte_cost_config,
+                        serial_number,
+                        token_scheme,
+                    )?;
+                }
+            }
+
+            if let Some(native_tokens) = native_tokens {
+                let tokens = native_tokens
+                    .iter()
+                    .map(|native_token| Ok(NativeToken::try_from(native_token)?))
+                    .collect::<Result<Vec<NativeToken>, DtoError>>()?;
+                builder = builder.with_native_tokens(tokens);
+            }
+
+            let conditions = unlock_conditions
+                .iter()
+                .map(|unlock_condition| Ok(UnlockCondition::try_from(unlock_condition)?))
+                .collect::<Result<Vec<UnlockCondition>, DtoError>>()?;
+            builder = builder.with_unlock_conditions(conditions);
+
+            if let Some(features) = features {
+                let features = features
+                    .iter()
+                    .map(|feature| Ok(Feature::try_from(feature)?))
+                    .collect::<Result<Vec<Feature>, DtoError>>()?;
+                builder = builder.with_features(features);
+            }
+
+            if let Some(immutable_features) = immutable_features {
+                let immutable_features = immutable_features
+                    .iter()
+                    .map(|feature| Ok(Feature::try_from(feature)?))
+                    .collect::<Result<Vec<Feature>, DtoError>>()?;
+                builder = builder.with_immutable_features(immutable_features);
+            }
+
+            Ok((&builder.finish()?).into())
         }
     }
 }

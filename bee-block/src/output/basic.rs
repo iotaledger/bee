@@ -310,7 +310,8 @@ pub mod dto {
     use crate::{
         error::dto::DtoError,
         output::{
-            feature::dto::FeatureDto, native_token::dto::NativeTokenDto, unlock_condition::dto::UnlockConditionDto,
+            dto::OutputBuilderAmountDto, feature::dto::FeatureDto, native_token::dto::NativeTokenDto,
+            unlock_condition::dto::UnlockConditionDto,
         },
     };
 
@@ -366,6 +367,52 @@ pub mod dto {
             }
 
             Ok(builder.finish()?)
+        }
+    }
+
+    impl BasicOutputDto {
+        pub fn new(
+            amount: OutputBuilderAmountDto,
+            native_tokens: Option<Vec<NativeTokenDto>>,
+            unlock_conditions: Vec<UnlockConditionDto>,
+            features: Option<Vec<FeatureDto>>,
+        ) -> Result<BasicOutputDto, DtoError> {
+            let mut builder: BasicOutputBuilder;
+
+            match amount {
+                OutputBuilderAmountDto::Amount(amount) => {
+                    builder = BasicOutputBuilder::new_with_amount(
+                        amount.parse::<u64>().map_err(|_| DtoError::InvalidField("amount"))?,
+                    )?;
+                }
+                OutputBuilderAmountDto::MinimumStorageDeposit(byte_cost_config) => {
+                    builder = BasicOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config)?;
+                }
+            }
+
+            if let Some(native_tokens) = native_tokens {
+                let tokens = native_tokens
+                    .iter()
+                    .map(|native_token| Ok(NativeToken::try_from(native_token)?))
+                    .collect::<Result<Vec<NativeToken>, DtoError>>()?;
+                builder = builder.with_native_tokens(tokens);
+            }
+
+            let conditions = unlock_conditions
+                .iter()
+                .map(|unlock_condition| Ok(UnlockCondition::try_from(unlock_condition)?))
+                .collect::<Result<Vec<UnlockCondition>, DtoError>>()?;
+            builder = builder.with_unlock_conditions(conditions);
+
+            if let Some(features) = features {
+                let features = features
+                    .iter()
+                    .map(|feature| Ok(Feature::try_from(feature)?))
+                    .collect::<Result<Vec<Feature>, DtoError>>()?;
+                builder = builder.with_features(features);
+            }
+
+            Ok((&builder.finish()?).into())
         }
     }
 }
