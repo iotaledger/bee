@@ -3,8 +3,6 @@
 
 use core::mem::size_of;
 
-use serde::Deserialize;
-
 use crate::{output::OutputId, payload::milestone::MilestoneIndex, BlockId};
 
 const DEFAULT_BYTE_COST: u64 = 500;
