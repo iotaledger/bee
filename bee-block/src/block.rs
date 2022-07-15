@@ -8,7 +8,7 @@ use crypto::hashes::{blake2b::Blake2b256, Digest};
 use packable::{
     error::{UnexpectedEOF, UnpackError, UnpackErrorExt},
     packer::Packer,
-    unpacker::{CounterUnpacker, Unpacker},
+    unpacker::{CounterUnpacker, SliceUnpacker, Unpacker},
     Packable, PackableExt,
 };
 
@@ -155,7 +155,7 @@ impl Block {
     pub fn unpack_strict<T: AsRef<[u8]>>(
         bytes: T,
     ) -> Result<Self, UnpackError<<Self as Packable>::UnpackError, UnexpectedEOF>> {
-        let mut unpacker = CounterUnpacker::new(bytes.as_ref());
+        let mut unpacker = CounterUnpacker::new(SliceUnpacker::new(bytes.as_ref()));
         let block = Self::unpack::<_, true>(&mut unpacker)?;
 
         // When parsing the block is complete, there should not be any trailing bytes left that were not parsed.

@@ -28,7 +28,7 @@ futures = { version = "0.3.21", default-features = false, optional = true }
 hashbrown = { version = "0.12.1", default-features = false, optional = true }
 iota-crypto = { version = "0.12.1", default-features = false, features = [ "blake2b" ], optional = true }
 log = { version = "0.4.17", default-features = false, optional = true }
-packable = { version = "0.4.0", default-features = false, features = [ "serde", "io" ] }
+packable = { version = "0.5.0", default-features = false, features = [ "serde", "io" ] }
 prefix-hex = { version = "0.4.0", default-features = false, optional = true }
 ref-cast = { version = "1.0.7", default-features = false, optional = true }
 reqwest = { version = "0.11.10", default-features = false, features = [ "default-tls", "stream" ], optional = true }
