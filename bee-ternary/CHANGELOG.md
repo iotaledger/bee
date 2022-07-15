@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 1.0.0-alpha.1 - 2022-07-15
+
+First alpha release.
+
 ## 0.6.0 - 2022-04-12
 
 ### Changed
