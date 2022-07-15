@@ -245,7 +245,7 @@ dependencies = [
  "fern",
  "hash32",
  "hex",
- "iota-crypto",
+ "iota-crypto 0.12.1",
  "libp2p-core",
  "log",
  "num",
@@ -272,7 +272,7 @@ name = "bee-block"
 version = "0.1.0"
 dependencies = [
  "bech32",
- "bee-pow",
+ "bee-pow 1.0.0-alpha.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "bee-ternary 0.6.0",
  "bee-test",
  "bitflags",
@@ -280,7 +280,7 @@ dependencies = [
  "derive_more",
  "hashbrown 0.12.1",
  "hex",
- "iota-crypto",
+ "iota-crypto 0.12.1",
  "iterator-sorted",
  "num_cpus",
  "packable",
@@ -326,7 +326,7 @@ dependencies = [
  "bytes",
  "futures",
  "hashbrown 0.12.1",
- "iota-crypto",
+ "iota-crypto 0.12.1",
  "log",
  "packable",
  "prefix-hex",
@@ -369,7 +369,7 @@ dependencies = [
  "futures",
  "fxhash",
  "hex",
- "iota-crypto",
+ "iota-crypto 0.12.1",
  "log",
  "multiaddr",
  "packable",
@@ -454,11 +454,22 @@ dependencies = [
 
 [[package]]
 name = "bee-pow"
-version = "0.2.0"
+version = "1.0.0-alpha.1"
 dependencies = [
- "bee-ternary 0.6.0",
+ "bee-ternary 1.0.0-alpha.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "bee-test",
- "iota-crypto",
+ "iota-crypto 0.13.0",
+ "thiserror",
+]
+
+[[package]]
+name = "bee-pow"
+version = "1.0.0-alpha.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d8e36e724dc98f8671c4f674b8419785def4ea81ad7af4fba061ff11724210c1"
+dependencies = [
+ "bee-ternary 1.0.0-alpha.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "iota-crypto 0.13.0",
  "thiserror",
 ]
 
@@ -473,7 +484,7 @@ dependencies = [
  "bee-block",
  "bee-gossip",
  "bee-ledger",
- "bee-pow",
+ "bee-pow 1.0.0-alpha.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "bee-runtime",
  "bee-storage",
  "bee-tangle",
@@ -506,14 +517,14 @@ dependencies = [
  "bee-block",
  "bee-gossip",
  "bee-ledger",
- "bee-pow",
+ "bee-pow 1.0.0-alpha.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "bee-protocol",
  "bee-runtime",
  "bee-storage",
  "bee-tangle",
  "digest 0.10.3",
  "futures",
- "iota-crypto",
+ "iota-crypto 0.12.1",
  "lazy_static",
  "log",
  "multiaddr",
@@ -657,6 +668,16 @@ dependencies = [
  "autocfg",
  "num-traits",
  "serde",
+]
+
+[[package]]
+name = "bee-ternary"
+version = "1.0.0-alpha.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a9252b65ddd9a863b0efc06ddab6c26334ecbe00fb8fa47bbde10babda2981b2"
+dependencies = [
+ "autocfg",
+ "num-traits",
 ]
 
 [[package]]
@@ -1883,12 +1904,22 @@ version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f03717e934972fad6f1c9b4cd25f662e1753b58a7f76e3dceadeb646e034b252"
 dependencies = [
- "bee-ternary 0.6.0",
  "blake2",
  "digest 0.10.3",
  "ed25519-zebra",
  "getrandom 0.2.6",
  "sha2 0.10.2",
+]
+
+[[package]]
+name = "iota-crypto"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "538b238fbd6fa732f526f6401656fa6a366598b9fe1ca35185e47f3978369707"
+dependencies = [
+ "bee-ternary 1.0.0-alpha.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "blake2",
+ "digest 0.10.3",
 ]
 
 [[package]]
