@@ -1,6 +1,6 @@
 [package]
 name = "bee-ternary"
-version = "0.6.0"
+version = "1.0.0-alpha.1"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "Ergonomic ternary manipulation utilities"
@@ -18,7 +18,7 @@ rustdoc-args = [ "--cfg", "doc_cfg" ]
 
 [dependencies]
 num-traits = { version = "0.2.15", default-features = false }
-serde = { version = "1.0.137", default-features = false, optional = true }
+serde = { version = "1.0.139", default-features = false, optional = true }
 
 [build-dependencies]
 autocfg = { version = "1.1.0", default-features = false }

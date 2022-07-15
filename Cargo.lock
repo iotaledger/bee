@@ -273,7 +273,7 @@ version = "0.1.0"
 dependencies = [
  "bech32",
  "bee-pow",
- "bee-ternary 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bee-ternary 0.6.0",
  "bee-test",
  "bitflags",
  "bytemuck",
@@ -456,7 +456,7 @@ dependencies = [
 name = "bee-pow"
 version = "0.2.0"
 dependencies = [
- "bee-ternary 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bee-ternary 0.6.0",
  "bee-test",
  "iota-crypto",
  "thiserror",
@@ -642,6 +642,8 @@ dependencies = [
 [[package]]
 name = "bee-ternary"
 version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b0b9489a68e42231e9f4f1443c765d3f80433a52101510ab413e6a9cd2240d21"
 dependencies = [
  "autocfg",
  "num-traits",
@@ -650,9 +652,7 @@ dependencies = [
 
 [[package]]
 name = "bee-ternary"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b0b9489a68e42231e9f4f1443c765d3f80433a52101510ab413e6a9cd2240d21"
+version = "1.0.0-alpha.1"
 dependencies = [
  "autocfg",
  "num-traits",
@@ -666,7 +666,7 @@ dependencies = [
  "bee-block",
  "bee-ledger",
  "bee-tangle",
- "bee-ternary 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bee-ternary 0.6.0",
  "bytemuck",
  "hex",
  "primitive-types",
@@ -1883,7 +1883,7 @@ version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f03717e934972fad6f1c9b4cd25f662e1753b58a7f76e3dceadeb646e034b252"
 dependencies = [
- "bee-ternary 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bee-ternary 0.6.0",
  "blake2",
  "digest 0.10.3",
  "ed25519-zebra",
@@ -3486,9 +3486,9 @@ checksum = "8cb243bdfdb5936c8dc3c45762a19d12ab4550cdc753bc247637d4ec35a040fd"
 
 [[package]]
 name = "serde"
-version = "1.0.137"
+version = "1.0.139"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "61ea8d54c77f8315140a05f4c7237403bf38b72704d031543aa1d16abbf517d1"
+checksum = "0171ebb889e45aa68b44aee0859b3eede84c6f5f5c228e6f140c0b2a0a46cad6"
 dependencies = [
  "serde_derive",
 ]
@@ -3514,9 +3514,9 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.137"
+version = "1.0.139"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1f26faba0c3959972377d3b2d306ee9f71faee9714294e41bb777f83f88578be"
+checksum = "dc1d3230c1de7932af58ad8ffbe1d784bd55efd5a9d84ac24f69c72d83543dfb"
 dependencies = [
  "proc-macro2",
  "quote",
