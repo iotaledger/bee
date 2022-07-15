@@ -20,7 +20,7 @@ pub(crate) type TaggedDataLength =
     BoundedU32<{ *TaggedDataPayload::DATA_LENGTH_RANGE.start() }, { *TaggedDataPayload::DATA_LENGTH_RANGE.end() }>;
 
 /// A payload which holds a tag and associated data.
-#[derive(Clone, Debug, Eq, PartialEq, Packable)]
+#[derive(Clone, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error)]
 pub struct TaggedDataPayload {
@@ -57,6 +57,15 @@ impl TaggedDataPayload {
     /// Returns the data of a [`TaggedDataPayload`].
     pub fn data(&self) -> &[u8] {
         &self.data
+    }
+}
+
+impl core::fmt::Debug for TaggedDataPayload {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("TaggedDataPayload")
+            .field("tag", &prefix_hex::encode(self.tag()))
+            .field("data", &prefix_hex::encode(self.data()))
+            .finish()
     }
 }
 
