@@ -70,7 +70,8 @@ impl ByteCostConfigBuilder {
 }
 
 /// Specifies the current parameters for the byte cost computation.
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ByteCostConfig {
     /// Cost in tokens per virtual byte.
     pub v_byte_cost: u64,
