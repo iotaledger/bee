@@ -3,8 +3,6 @@
 
 use core::mem::size_of;
 
-use serde::Deserialize;
-
 use crate::{output::OutputId, payload::milestone::MilestoneIndex, BlockId};
 
 const DEFAULT_BYTE_COST: u64 = 500;
@@ -70,7 +68,8 @@ impl ByteCostConfigBuilder {
 }
 
 /// Specifies the current parameters for the byte cost computation.
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ByteCostConfig {
     /// Cost in tokens per virtual byte.
     pub v_byte_cost: u64,
