@@ -3,7 +3,7 @@
 
 use bee_ledger::workers::storage::StorageBackend as LedgerStorageBackend;
 use bee_protocol::workers::storage::StorageBackend as ProtocolStorageBackend;
-use bee_rest_api::endpoints::storage::StorageBackend as RestApiStorageBackend;
+use bee_rest_api::storage::StorageBackend as RestApiStorageBackend;
 use bee_tangle::storage::StorageBackend as TangleStorageBackend;
 
 /// Node storage operations.

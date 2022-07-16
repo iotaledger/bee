@@ -15,7 +15,7 @@ pub(crate) mod sync_status;
 pub(crate) mod tip_info;
 pub(crate) mod vertex;
 
-use bee_rest_api::types::responses::PeersResponse;
+use bee_api_types::responses::PeersResponse;
 use serde::Serialize;
 
 use self::{

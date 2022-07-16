@@ -240,6 +240,7 @@ dependencies = [
  "axum",
  "bee-block",
  "bee-ledger",
+ "bee-protocol",
  "serde",
  "thiserror",
 ]
@@ -412,6 +413,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "auth-helper",
+ "bee-api-types",
  "bee-block",
  "bee-gossip",
  "bee-ledger",
@@ -525,6 +527,7 @@ dependencies = [
  "axum",
  "base64 0.13.0",
  "bech32",
+ "bee-api-types",
  "bee-block",
  "bee-gossip",
  "bee-ledger",

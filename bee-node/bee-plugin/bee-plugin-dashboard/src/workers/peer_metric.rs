@@ -3,8 +3,8 @@
 
 use std::time::Duration;
 
+use bee_api_types::{dtos::PeerDto, responses::PeersResponse};
 use bee_protocol::workers::PeerManager;
-use bee_rest_api::types::{dtos::PeerDto, responses::PeersResponse};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
 use futures::StreamExt;
 use log::debug;
