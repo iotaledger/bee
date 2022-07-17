@@ -37,7 +37,7 @@ fern-logger = { version = "0.5.0", default-features = false }
 futures = { version = "0.3.21", default-features = false }
 fxhash = { version = "0.2.1", default-features = false }
 hex = { version = "0.4.3", default-features = false }
-iota-crypto = { version = "0.12.1", default-features = false, features = [ "ed25519", "random", "blake2b" ] }
+iota-crypto = { version = "0.13.0", default-features = false, features = [ "ed25519", "random", "blake2b" ] }
 log = { version = "0.4.17", default-features = false }
 multiaddr = { version = "0.14.0", default-features = false }
 packable = { version = "0.5.0", default-features = false, features = [ "io" ] }

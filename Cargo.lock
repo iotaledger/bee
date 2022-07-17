@@ -257,7 +257,7 @@ dependencies = [
  "fern",
  "hash32",
  "hex",
- "iota-crypto 0.12.1",
+ "iota-crypto",
  "libp2p-core",
  "log",
  "num",
@@ -292,7 +292,7 @@ dependencies = [
  "derive_more",
  "hashbrown 0.12.1",
  "hex",
- "iota-crypto 0.12.1",
+ "iota-crypto",
  "iterator-sorted",
  "num_cpus",
  "packable",
@@ -339,7 +339,7 @@ dependencies = [
  "bytes",
  "futures",
  "hashbrown 0.12.1",
- "iota-crypto 0.12.1",
+ "iota-crypto",
  "log",
  "packable",
  "prefix-hex",
@@ -391,7 +391,7 @@ dependencies = [
  "futures",
  "fxhash",
  "hex",
- "iota-crypto 0.12.1",
+ "iota-crypto",
  "log",
  "multiaddr",
  "packable",
@@ -481,7 +481,7 @@ version = "1.0.0-alpha.1"
 dependencies = [
  "bee-ternary 1.0.0-alpha.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "bee-test",
- "iota-crypto 0.13.0",
+ "iota-crypto",
  "thiserror",
 ]
 
@@ -492,7 +492,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d8e36e724dc98f8671c4f674b8419785def4ea81ad7af4fba061ff11724210c1"
 dependencies = [
  "bee-ternary 1.0.0-alpha.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "iota-crypto 0.13.0",
+ "iota-crypto",
  "thiserror",
 ]
 
@@ -558,7 +558,7 @@ dependencies = [
  "bee-tangle",
  "digest 0.10.3",
  "futures",
- "iota-crypto 0.12.1",
+ "iota-crypto",
  "lazy_static",
  "log",
  "multiaddr",
@@ -1924,19 +1924,6 @@ dependencies = [
 
 [[package]]
 name = "iota-crypto"
-version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f03717e934972fad6f1c9b4cd25f662e1753b58a7f76e3dceadeb646e034b252"
-dependencies = [
- "blake2",
- "digest 0.10.3",
- "ed25519-zebra",
- "getrandom 0.2.6",
- "sha2 0.10.2",
-]
-
-[[package]]
-name = "iota-crypto"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "538b238fbd6fa732f526f6401656fa6a366598b9fe1ca35185e47f3978369707"
@@ -1944,6 +1931,9 @@ dependencies = [
  "bee-ternary 1.0.0-alpha.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "blake2",
  "digest 0.10.3",
+ "ed25519-zebra",
+ "getrandom 0.2.6",
+ "sha2 0.10.2",
 ]
 
 [[package]]
