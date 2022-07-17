@@ -8,7 +8,7 @@ use bee_block::{
     payload::milestone::{MilestoneId, MilestoneIndex},
     BlockId,
 };
-use bee_ledger::workers::consensus::{ConsensusWorker, ConsensusWorkerCommand};
+use bee_ledger::consensus::{ConsensusWorker, ConsensusWorkerCommand};
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{
     event::SolidMilestoneChanged, milestone_metadata::MilestoneMetadata, traversal, Tangle, TangleWorker,

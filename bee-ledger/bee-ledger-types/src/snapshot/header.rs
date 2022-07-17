@@ -9,7 +9,7 @@ use packable::{
     Packable,
 };
 
-use crate::types::{error::Error, snapshot::SnapshotKind};
+use crate::{error::Error, snapshot::SnapshotKind};
 
 const SNAPSHOT_VERSION: u8 = 2;
 

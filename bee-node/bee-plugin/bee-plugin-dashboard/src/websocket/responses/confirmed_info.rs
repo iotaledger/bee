@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_block::BlockId;
-use bee_ledger::workers::event::MilestoneConfirmed;
+use bee_ledger::event::MilestoneConfirmed;
 use serde::Serialize;
 
 use crate::websocket::{

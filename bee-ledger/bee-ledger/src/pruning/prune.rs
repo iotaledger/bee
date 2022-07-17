@@ -12,7 +12,7 @@ use bee_storage::access::{Batch, Truncate};
 use bee_tangle::{solid_entry_point::SolidEntryPoint, Tangle};
 use log::{debug, info};
 
-use crate::workers::{
+use crate::{
     event::PrunedIndex,
     pruning::{
         batch,

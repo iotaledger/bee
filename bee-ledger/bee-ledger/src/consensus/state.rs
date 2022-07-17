@@ -8,11 +8,9 @@ use bee_block::{
 use bee_storage::access::AsIterator;
 
 use crate::{
+    error::Error,
+    storage::{self, StorageBackend},
     types::Unspent,
-    workers::{
-        error::Error,
-        storage::{self, StorageBackend},
-    },
 };
 
 fn validate_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury: u64) -> Result<(), Error> {

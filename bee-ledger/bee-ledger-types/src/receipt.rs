@@ -6,7 +6,7 @@ use bee_block::{
     payload::milestone::{MilestoneIndex, ReceiptMilestoneOption},
 };
 
-use crate::types::{error::Error, TreasuryOutput};
+use crate::{error::Error, TreasuryOutput};
 
 /// A type that wraps a receipt and the index of the milestone in which it was included.
 #[derive(Clone, Debug, Eq, PartialEq, packable::Packable)]

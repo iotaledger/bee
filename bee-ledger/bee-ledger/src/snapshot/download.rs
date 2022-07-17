@@ -11,8 +11,8 @@ use packable::{error::UnpackError, PackableExt};
 use reqwest::Response;
 
 use crate::{
+    snapshot::{config::DownloadUrls, error::Error},
     types::snapshot::SnapshotHeader,
-    workers::snapshot::{config::DownloadUrls, error::Error},
 };
 
 async fn download_snapshot_header(download_url: &str) -> Result<SnapshotHeader, Error> {

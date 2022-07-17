@@ -4,7 +4,7 @@
 use bee_block::payload::milestone::MilestoneIndex;
 use bee_tangle::{storage::StorageBackend, Tangle};
 
-use crate::{types::LedgerIndex, workers::pruning::config::PruningConfig};
+use crate::{pruning::config::PruningConfig, types::LedgerIndex};
 
 const PRUNING_BATCH_SIZE_MAX: u32 = 200;
 

@@ -5,7 +5,7 @@ use core::ops::Deref;
 
 use bee_block::{output::Output, payload::milestone::MilestoneIndex, BlockId};
 
-use crate::types::error::Error;
+use crate::error::Error;
 
 /// Represents a newly created output.
 #[derive(Clone, Debug, Eq, PartialEq, packable::Packable)]

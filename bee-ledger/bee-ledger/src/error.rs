@@ -12,8 +12,8 @@ use bee_block::{
 use packable::error::UnpackError;
 
 use crate::{
+    snapshot::error::Error as SnapshotError,
     types::{Error as TypesError, Unspent},
-    workers::snapshot::error::Error as SnapshotError,
 };
 
 /// Errors occurring during ledger workers operations.

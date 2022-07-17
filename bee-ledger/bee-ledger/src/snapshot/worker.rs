@@ -11,7 +11,7 @@ use bee_tangle::{solid_entry_point::SolidEntryPoint, Tangle, TangleWorker};
 use log::info;
 use time_helper as time;
 
-use crate::workers::{
+use crate::{
     error::Error,
     snapshot::{config::SnapshotConfig, error::Error as SnapshotError, import::import_snapshots},
     storage::{self, StorageBackend},

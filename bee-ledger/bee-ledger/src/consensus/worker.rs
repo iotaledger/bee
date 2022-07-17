@@ -22,15 +22,13 @@ use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use crate::{
+    consensus::{metadata::WhiteFlagMetadata, state::validate_ledger_state, white_flag},
+    error::Error,
+    event::{BlockReferenced, LedgerUpdated, MilestoneConfirmed, OutputConsumed, OutputCreated, ReceiptCreated},
+    pruning::{condition::should_prune, config::PruningConfig, prune},
+    snapshot::{condition::should_snapshot, config::SnapshotConfig, worker::SnapshotWorker},
+    storage::{self, StorageBackend},
     types::{CreatedOutput, LedgerIndex, Migration, Receipt, TreasuryOutput},
-    workers::{
-        consensus::{metadata::WhiteFlagMetadata, state::validate_ledger_state, white_flag},
-        error::Error,
-        event::{BlockReferenced, LedgerUpdated, MilestoneConfirmed, OutputConsumed, OutputCreated, ReceiptCreated},
-        pruning::{condition::should_prune, config::PruningConfig, prune},
-        snapshot::{condition::should_snapshot, config::SnapshotConfig, worker::SnapshotWorker},
-        storage::{self, StorageBackend},
-    },
 };
 
 pub(crate) const EXTRA_SNAPSHOT_DEPTH: u32 = 5;

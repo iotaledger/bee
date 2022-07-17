@@ -11,7 +11,7 @@ use std::{fs, path::Path};
 
 use bee_autopeering::config::{AutopeeringConfig, AutopeeringConfigBuilder};
 use bee_gossip::{NetworkConfig, NetworkConfigBuilder};
-use bee_ledger::workers::{
+use bee_ledger::{
     pruning::config::{PruningConfig, PruningConfigBuilder},
     snapshot::config::{SnapshotConfig, SnapshotConfigBuilder},
 };

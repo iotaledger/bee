@@ -19,12 +19,10 @@ use bee_tangle::Tangle;
 use crypto::hashes::blake2b::Blake2b256;
 
 use crate::{
+    consensus::{merkle_hasher::MerkleHasher, metadata::WhiteFlagMetadata},
+    error::Error,
+    storage::{self, StorageBackend},
     types::{ConsumedOutput, CreatedOutput},
-    workers::{
-        consensus::{merkle_hasher::MerkleHasher, metadata::WhiteFlagMetadata},
-        error::Error,
-        storage::{self, StorageBackend},
-    },
 };
 
 fn apply_regular_essence<B: StorageBackend>(

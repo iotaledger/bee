@@ -4,7 +4,7 @@
 use std::{convert::Infallible, time::Duration};
 
 use async_trait::async_trait;
-use bee_ledger::workers::event::{MilestoneConfirmed, PrunedIndex, SnapshottedIndex};
+use bee_ledger::event::{MilestoneConfirmed, PrunedIndex, SnapshottedIndex};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use futures::StreamExt;
 use log::info;

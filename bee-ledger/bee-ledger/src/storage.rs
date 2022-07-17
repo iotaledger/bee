@@ -16,11 +16,11 @@ use bee_tangle::{
 };
 
 use crate::{
+    error::Error,
     types::{
         snapshot::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, Migration, OutputDiff, Receipt,
         TreasuryDiff, TreasuryOutput, Unspent,
     },
-    workers::error::Error,
 };
 
 /// A blanket-implemented helper trait for the storage layer.

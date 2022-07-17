@@ -3,7 +3,7 @@
 
 use bee_autopeering::config::AutopeeringConfig;
 use bee_gossip::NetworkConfig;
-use bee_ledger::workers::{pruning::config::PruningConfig, snapshot::config::SnapshotConfig};
+use bee_ledger::{pruning::config::PruningConfig, snapshot::config::SnapshotConfig};
 #[cfg(feature = "dashboard")]
 use bee_plugin_dashboard::config::DashboardConfig;
 use bee_protocol::workers::config::ProtocolConfig;

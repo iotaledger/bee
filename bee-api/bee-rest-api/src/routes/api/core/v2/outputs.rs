@@ -5,8 +5,9 @@ use axum::{extract::Extension, routing::get, Router};
 use bee_api_types::responses::OutputResponse;
 use bee_block::output::OutputId;
 use bee_ledger::{
+    consensus::ConsensusWorkerCommand,
+    error::Error,
     types::{ConsumedOutput, CreatedOutput, LedgerIndex},
-    workers::{consensus::ConsensusWorkerCommand, error::Error},
 };
 use bee_storage::access::Fetch;
 use futures::channel::oneshot;

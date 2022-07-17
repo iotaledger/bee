@@ -16,7 +16,7 @@ pub trait StorageBackend:
     + Fetch<OutputId, ConsumedOutput>
     + for<'a> AsIterator<'a, (MilestoneIndex, Receipt), ()>
     + bee_protocol::workers::storage::StorageBackend
-    + bee_ledger::workers::storage::StorageBackend
+    + bee_ledger::storage::StorageBackend
 {
 }
 
@@ -28,6 +28,6 @@ impl<T> StorageBackend for T where
         + Fetch<OutputId, ConsumedOutput>
         + for<'a> AsIterator<'a, (MilestoneIndex, Receipt), ()>
         + bee_protocol::workers::storage::StorageBackend
-        + bee_ledger::workers::storage::StorageBackend
+        + bee_ledger::storage::StorageBackend
 {
 }

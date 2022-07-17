@@ -3,7 +3,7 @@
 
 use bee_tangle::{storage::StorageBackend, Tangle};
 
-use crate::{types::LedgerIndex, workers::snapshot::config::SnapshotConfig};
+use crate::{snapshot::config::SnapshotConfig, types::LedgerIndex};
 
 /// Reasons for skipping snapshotting.
 #[derive(Debug)]

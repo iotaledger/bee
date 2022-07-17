@@ -332,6 +332,33 @@ version = "0.7.0"
 dependencies = [
  "async-trait",
  "bee-block",
+ "bee-ledger-types",
+ "bee-runtime",
+ "bee-storage",
+ "bee-tangle",
+ "bytes",
+ "futures",
+ "hashbrown 0.12.1",
+ "iota-crypto 0.12.1",
+ "log",
+ "packable",
+ "prefix-hex",
+ "ref-cast",
+ "reqwest",
+ "serde",
+ "thiserror",
+ "time-helper",
+ "tokio",
+ "tokio-stream",
+ "url",
+]
+
+[[package]]
+name = "bee-ledger-types"
+version = "1.0.0-alpha.1"
+dependencies = [
+ "async-trait",
+ "bee-block",
  "bee-runtime",
  "bee-storage",
  "bee-tangle",

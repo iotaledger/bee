@@ -22,17 +22,15 @@ use packable::{
 use time_helper as time;
 
 use crate::{
+    consensus::worker::migration_from_milestone,
+    error::Error,
+    snapshot::{config::SnapshotConfig, download::download_latest_snapshot_files, error::Error as SnapshotError},
+    storage::{self, apply_milestone, create_output, rollback_milestone, StorageBackend},
     types::{
         snapshot::{
             DeltaSnapshotHeader, FullSnapshotHeader, MilestoneDiff, SnapshotHeader, SnapshotInfo, SnapshotKind,
         },
         CreatedOutput, TreasuryOutput,
-    },
-    workers::{
-        consensus::worker::migration_from_milestone,
-        error::Error,
-        snapshot::{config::SnapshotConfig, download::download_latest_snapshot_files, error::Error as SnapshotError},
-        storage::{self, apply_milestone, create_output, rollback_milestone, StorageBackend},
     },
 };
 

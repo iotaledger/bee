@@ -13,15 +13,13 @@ use hashbrown::{HashMap, HashSet};
 use ref_cast::RefCast;
 
 use crate::{
-    types::{ConsumedOutput, CreatedOutput, OutputDiff, Receipt},
-    workers::{
-        consensus::worker::EXTRA_PRUNING_DEPTH,
-        pruning::{
-            error::Error,
-            metrics::{ConfirmedDataPruningMetrics, MilestoneDataPruningMetrics, UnconfirmedDataPruningMetrics},
-        },
-        storage::StorageBackend,
+    consensus::worker::EXTRA_PRUNING_DEPTH,
+    pruning::{
+        error::Error,
+        metrics::{ConfirmedDataPruningMetrics, MilestoneDataPruningMetrics, UnconfirmedDataPruningMetrics},
     },
+    storage::StorageBackend,
+    types::{ConsumedOutput, CreatedOutput, OutputDiff, Receipt},
 };
 
 pub type Blocks = HashSet<BlockId>;

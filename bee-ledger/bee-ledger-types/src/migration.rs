@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::types::{Receipt, TreasuryOutput};
+use crate::{Receipt, TreasuryOutput};
 
 /// A type to tie together the receipt, consumed treasury and created treasury of a migration.
 pub struct Migration {

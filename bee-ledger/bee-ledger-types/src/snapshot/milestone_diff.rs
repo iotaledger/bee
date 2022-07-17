@@ -18,7 +18,7 @@ use packable::{
     Packable, PackableExt,
 };
 
-use crate::types::{ConsumedOutput, CreatedOutput, Error};
+use crate::{ConsumedOutput, CreatedOutput, Error};
 
 /// Describe the ledger changes occurring within a milestone.
 pub struct MilestoneDiff {

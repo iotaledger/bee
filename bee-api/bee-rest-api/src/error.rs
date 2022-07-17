@@ -42,7 +42,7 @@ pub enum DependencyError {
     #[error("{0}")]
     InvalidDto(#[from] bee_block::DtoError),
     #[error("{0}")]
-    InvalidWhiteflag(#[from] bee_ledger::workers::error::Error),
+    InvalidWhiteflag(#[from] bee_ledger::error::Error),
 }
 
 impl IntoResponse for ApiError {

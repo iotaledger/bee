@@ -6,7 +6,7 @@ use core::convert::Infallible;
 use bee_block::output::OutputId;
 use packable::prefix::{UnpackPrefixError, VecPrefix};
 
-use crate::types::{error::Error, TreasuryDiff};
+use crate::{error::Error, TreasuryDiff};
 
 fn unpack_prefix_error_to_error(err: UnpackPrefixError<bee_block::Error, Infallible>) -> Error {
     err.into_item_err().into()

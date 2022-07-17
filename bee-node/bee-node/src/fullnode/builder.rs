@@ -267,7 +267,7 @@ fn initialize_ledger<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> Full
     let snapshot_cfg = config.snapshot.clone();
     let pruning_cfg = config.pruning.clone();
 
-    bee_ledger::workers::init::<FullNode<S>>(builder, network_id, snapshot_cfg, pruning_cfg)
+    bee_ledger::init::<FullNode<S>>(builder, network_id, snapshot_cfg, pruning_cfg)
 }
 
 /// Initializes the protocol.
