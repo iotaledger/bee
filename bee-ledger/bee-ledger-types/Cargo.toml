@@ -18,43 +18,6 @@ rustdoc-args = [ "--cfg", "doc_cfg" ]
 
 [dependencies]
 bee-block = { version = "0.1.0", path = "../../bee-block", default-features = false, features = [ "std" ] }
-bee-runtime = { version = "0.1.1-alpha", path = "../../bee-runtime", default-features = false, optional = true }
-bee-storage = { version = "0.12.0", path = "../../bee-storage/bee-storage", default-features = false, optional = true }
-bee-tangle = { version = "0.3.0", path = "../../bee-tangle", default-features = false, optional = true }
 
-async-trait = { version = "0.1.56", default-features = false, optional = true }
-bytes = { version = "1.1.0", default-features = false, optional = true }
-futures = { version = "0.3.21", default-features = false, optional = true }
-hashbrown = { version = "0.12.1", default-features = false, optional = true }
-iota-crypto = { version = "0.12.1", default-features = false, features = [ "blake2b" ], optional = true }
-log = { version = "0.4.17", default-features = false, optional = true }
 packable = { version = "0.5.0", default-features = false, features = [ "serde", "io" ] }
-prefix-hex = { version = "0.4.0", default-features = false, optional = true }
-ref-cast = { version = "1.0.7", default-features = false, optional = true }
-reqwest = { version = "0.11.10", default-features = false, features = [ "default-tls", "stream" ], optional = true }
-serde = { version = "1.0.137", default-features = false, features = [ "derive" ], optional = true }
 thiserror = { version = "1.0.31", default-features = false }
-time-helper = { version = "0.1.0", default-features = false }
-tokio = { version = "1.19.2", default-features = false, features = [ "sync", "fs" ], optional = true }
-tokio-stream = { version = "0.1.9", default-features = false, optional = true }
-url = { version = "2.2.2", default-features = false, optional = true }
-
-[features]
-workers = [
-  "bee-runtime",
-  "bee-storage",
-  "bee-tangle",
-  "async-trait",
-  "bytes",
-  "futures",
-  "hashbrown",
-  "iota-crypto",
-  "log",
-  "prefix-hex",
-  "ref-cast",
-  "reqwest",
-  "serde",
-  "tokio",
-  "tokio-stream",
-  "url/serde"
-]

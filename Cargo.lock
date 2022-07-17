@@ -357,26 +357,9 @@ dependencies = [
 name = "bee-ledger-types"
 version = "1.0.0-alpha.1"
 dependencies = [
- "async-trait",
  "bee-block",
- "bee-runtime",
- "bee-storage",
- "bee-tangle",
- "bytes",
- "futures",
- "hashbrown 0.12.1",
- "iota-crypto 0.12.1",
- "log",
  "packable",
- "prefix-hex",
- "ref-cast",
- "reqwest",
- "serde",
  "thiserror",
- "time-helper",
- "tokio",
- "tokio-stream",
- "url",
 ]
 
 [[package]]
@@ -550,32 +533,9 @@ dependencies = [
 name = "bee-protocol-types"
 version = "1.0.0-alpha.1"
 dependencies = [
- "async-channel",
- "async-priority-queue",
- "async-trait",
- "bee-autopeering",
  "bee-block",
  "bee-gossip",
- "bee-ledger",
- "bee-pow 1.0.0-alpha.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "bee-runtime",
- "bee-storage",
- "bee-tangle",
- "futures",
- "futures-util",
- "fxhash",
- "hex",
- "log",
- "num_cpus",
- "packable",
- "parking_lot 0.12.1",
- "rand 0.8.5",
- "ref-cast",
  "serde",
- "thiserror",
- "tokio",
- "tokio-stream",
- "twox-hash",
 ]
 
 [[package]]
