@@ -686,17 +686,6 @@ dependencies = [
 
 [[package]]
 name = "bee-ternary"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b0b9489a68e42231e9f4f1443c765d3f80433a52101510ab413e6a9cd2240d21"
-dependencies = [
- "autocfg",
- "num-traits",
- "serde",
-]
-
-[[package]]
-name = "bee-ternary"
 version = "1.0.0-alpha.1"
 dependencies = [
  "autocfg",
@@ -722,7 +711,7 @@ dependencies = [
  "bee-block",
  "bee-ledger",
  "bee-tangle",
- "bee-ternary 0.6.0",
+ "bee-ternary 1.0.0-alpha.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "bytemuck",
  "hex",
  "primitive-types",
