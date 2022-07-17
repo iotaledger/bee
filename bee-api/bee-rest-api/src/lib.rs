@@ -22,6 +22,7 @@ use axum::{
     extract::Extension, handler::Handler, http::StatusCode, middleware::from_extractor, response::IntoResponse,
     routing::get, Router,
 };
+pub use bee_api_types as types;
 use bee_gossip::{Keypair, NetworkCommandSender, PeerId};
 use bee_ledger::workers::consensus::{ConsensusWorker, ConsensusWorkerCommand};
 use bee_protocol::workers::{
