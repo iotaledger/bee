@@ -1,0 +1,193 @@
+// Copyright 2020-2022 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+mod manager;
+mod manager_res;
+mod packet_handler;
+
+use std::sync::Arc;
+
+use bee_block::payload::milestone::MilestoneIndex;
+use bee_runtime::resource::ResourceHandle;
+use bee_tangle::Tangle;
+use futures::{channel::oneshot, future::FutureExt};
+use log::{debug, error, info, trace};
+use tokio::sync::mpsc;
+use tokio_stream::wrappers::UnboundedReceiverStream;
+
+pub(crate) use self::manager::{PeerManagerConfig, PeerManagerWorker};
+pub use self::manager_res::{PeerManager, PeerManagerResWorker};
+use crate::{
+    types::{metrics::NodeMetrics, peer::Peer},
+    {
+        packets::{
+            tlv_from_bytes, BlockPacket, BlockRequestPacket, HeaderPacket, HeartbeatPacket, MilestoneRequestPacket,
+            Packet, TlvError,
+        },
+        peer::packet_handler::PacketHandler,
+        requester::request_latest_milestone,
+        storage::StorageBackend,
+        BlockResponderWorkerEvent, HasherWorkerEvent, MilestoneRequesterWorkerEvent, MilestoneResponderWorkerEvent,
+        RequestedMilestones,
+    },
+};
+
+#[derive(Debug)]
+pub(crate) enum Error {
+    UnsupportedPacketType(u8),
+    TlvError(TlvError),
+}
+
+impl From<TlvError> for Error {
+    fn from(error: TlvError) -> Self {
+        Error::TlvError(error)
+    }
+}
+
+pub struct PeerWorker {
+    peer: Arc<Peer>,
+    metrics: ResourceHandle<NodeMetrics>,
+    hasher: mpsc::UnboundedSender<HasherWorkerEvent>,
+    block_responder: mpsc::UnboundedSender<BlockResponderWorkerEvent>,
+    milestone_responder: mpsc::UnboundedSender<MilestoneResponderWorkerEvent>,
+    milestone_requester: mpsc::UnboundedSender<MilestoneRequesterWorkerEvent>,
+}
+
+impl PeerWorker {
+    pub(crate) fn new(
+        peer: Arc<Peer>,
+        metrics: ResourceHandle<NodeMetrics>,
+        hasher: mpsc::UnboundedSender<HasherWorkerEvent>,
+        block_responder: mpsc::UnboundedSender<BlockResponderWorkerEvent>,
+        milestone_responder: mpsc::UnboundedSender<MilestoneResponderWorkerEvent>,
+        milestone_requester: mpsc::UnboundedSender<MilestoneRequesterWorkerEvent>,
+    ) -> Self {
+        Self {
+            peer,
+            metrics,
+            hasher,
+            block_responder,
+            milestone_responder,
+            milestone_requester,
+        }
+    }
+
+    pub(crate) async fn run<B: StorageBackend>(
+        mut self,
+        tangle: ResourceHandle<Tangle<B>>,
+        requested_milestones: ResourceHandle<RequestedMilestones>,
+        receiver: UnboundedReceiverStream<Vec<u8>>,
+        shutdown: oneshot::Receiver<()>,
+    ) {
+        info!("[{}] Running.", self.peer.alias());
+
+        let shutdown_fused = shutdown.fuse();
+
+        let mut packet_handler = PacketHandler::new(receiver, shutdown_fused, self.peer.address().clone());
+
+        request_latest_milestone(
+            &*tangle,
+            &self.milestone_requester,
+            &*requested_milestones,
+            Some(*self.peer.id()),
+        );
+
+        // TODO is this needed ?
+        let tangle = tangle.into_weak();
+
+        while let Some((header, bytes)) = packet_handler.fetch_packet().await {
+            let tangle = tangle.upgrade().expect("Needed Tangle resource but it was removed");
+
+            if let Err(e) = self.process_packet(&tangle, &header, bytes) {
+                error!("[{}] Processing packet failed: {:?}.", self.peer.alias(), e);
+                self.peer.metrics().invalid_packets_inc();
+                self.metrics.invalid_packets_inc();
+            }
+        }
+
+        info!("[{}] Stopped.", self.peer.alias());
+    }
+
+    fn process_packet<B: StorageBackend>(
+        &mut self,
+        tangle: &Tangle<B>,
+        header: &HeaderPacket,
+        bytes: &[u8],
+    ) -> Result<(), Error> {
+        match header.packet_type {
+            MilestoneRequestPacket::ID => {
+                trace!("[{}] Reading MilestoneRequestPacket...", self.peer.alias());
+
+                let packet = tlv_from_bytes::<MilestoneRequestPacket>(header, bytes)?;
+
+                let _ = self.milestone_responder.send(MilestoneResponderWorkerEvent {
+                    peer_id: *self.peer.id(),
+                    request: packet,
+                });
+
+                self.peer.metrics().milestone_requests_received_inc();
+                self.metrics.milestone_requests_received_inc();
+            }
+            BlockPacket::ID => {
+                trace!("[{}] Reading BlockPacket...", self.peer.alias());
+
+                let packet = tlv_from_bytes::<BlockPacket>(header, bytes)?;
+
+                let _ = self.hasher.send(HasherWorkerEvent {
+                    from: Some(*self.peer.id()),
+                    block_packet: packet,
+                    notifier: None,
+                });
+
+                self.peer.metrics().blocks_received_inc();
+                self.metrics.blocks_received_inc();
+            }
+            BlockRequestPacket::ID => {
+                trace!("[{}] Reading BlockRequestPacket...", self.peer.alias());
+
+                let packet = tlv_from_bytes::<BlockRequestPacket>(header, bytes)?;
+
+                let _ = self.block_responder.send(BlockResponderWorkerEvent {
+                    peer_id: *self.peer.id(),
+                    request: packet,
+                });
+
+                self.peer.metrics().block_requests_received_inc();
+                self.metrics.block_requests_received_inc();
+            }
+            HeartbeatPacket::ID => {
+                trace!("[{}] Reading HeartbeatPacket...", self.peer.alias());
+
+                let packet = tlv_from_bytes::<HeartbeatPacket>(header, bytes)?;
+
+                self.peer.set_solid_milestone_index(packet.solid_milestone_index.into());
+                self.peer.set_pruned_index(packet.pruned_index.into());
+                self.peer
+                    .set_latest_milestone_index(packet.latest_milestone_index.into());
+                self.peer.set_connected_peers(packet.connected_peers);
+                self.peer.set_synced_peers(packet.synced_peers);
+                self.peer.set_heartbeat_received_timestamp();
+
+                if !tangle.is_synced()
+                    && !self
+                        .peer
+                        .has_data(MilestoneIndex(*tangle.get_solid_milestone_index() + 1))
+                {
+                    debug!(
+                        "The peer {} can't help syncing because the required index {} is not in its database [{};{}].",
+                        self.peer.alias(),
+                        *tangle.get_solid_milestone_index() + 1,
+                        packet.pruned_index,
+                        packet.solid_milestone_index
+                    );
+                }
+
+                self.peer.metrics().heartbeats_received_inc();
+                self.metrics.heartbeats_received_inc();
+            }
+            _ => return Err(Error::UnsupportedPacketType(header.packet_type)),
+        };
+
+        Ok(())
+    }
+}

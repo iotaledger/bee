@@ -7,7 +7,7 @@ use std::{
 };
 
 use axum::{extract::Extension, http::StatusCode, response::IntoResponse, routing::get, Router};
-use bee_protocol::workers::PeerManager;
+use bee_protocol::PeerManager;
 use bee_tangle::Tangle;
 
 use crate::{storage::StorageBackend, ApiArgsFullNode};

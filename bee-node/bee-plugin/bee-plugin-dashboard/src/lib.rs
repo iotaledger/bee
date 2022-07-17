@@ -25,7 +25,7 @@ use async_trait::async_trait;
 use bee_api_types::body::{DefaultErrorResponse, ErrorBody};
 use bee_gossip::{Keypair, PeerId};
 use bee_ledger::event::MilestoneConfirmed;
-use bee_protocol::workers::{
+use bee_protocol::{
     event::{BlockSolidified, MpsMetricsUpdated, TipAdded, TipRemoved, VertexCreated},
     MetricsWorker, PeerManagerResWorker,
 };

@@ -9,7 +9,7 @@ use bee_block::{
     Block, BlockBuilder, BlockId,
 };
 use bee_pow::providers::{miner::MinerBuilder, NonceProviderBuilder};
-use bee_protocol::workers::{BlockSubmitterError, BlockSubmitterWorkerEvent};
+use bee_protocol::{BlockSubmitterError, BlockSubmitterWorkerEvent};
 use futures::channel::oneshot;
 use log::error;
 use packable::PackableExt;

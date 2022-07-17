@@ -19,6 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+<!-- ## Unreleased - YYYY-MM-DD
+
+### Removed
+
+- Moved base types to crate `bee-ledger-types`;
+
+-->
+
 ## 0.2.2 - 2022-03-07
 
 ### Changed

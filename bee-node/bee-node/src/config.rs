@@ -17,7 +17,7 @@ use bee_ledger::{
 };
 #[cfg(feature = "dashboard")]
 use bee_plugin_dashboard::config::{DashboardConfig, DashboardConfigBuilder};
-use bee_protocol::workers::config::{ProtocolConfig, ProtocolConfigBuilder};
+use bee_protocol::config::{ProtocolConfig, ProtocolConfigBuilder};
 use bee_rest_api::config::{RestApiConfig, RestApiConfigBuilder};
 use bee_tangle::config::{TangleConfig, TangleConfigBuilder};
 use fern_logger::{LoggerConfig, LoggerConfigBuilder, LOGGER_STDOUT_NAME};

@@ -25,7 +25,7 @@ use axum::{
 pub use bee_api_types as types;
 use bee_gossip::{Keypair, NetworkCommandSender, PeerId};
 use bee_ledger::consensus::{ConsensusWorker, ConsensusWorkerCommand};
-use bee_protocol::workers::{
+use bee_protocol::{
     config::ProtocolConfig, BlockRequesterWorker, BlockSubmitterWorker, BlockSubmitterWorkerEvent, PeerManager,
     PeerManagerResWorker, RequestedBlocks,
 };

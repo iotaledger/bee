@@ -288,7 +288,7 @@ fn initialize_protocol<S: NodeStorageBackend>(
 
     let protocol_cfg = config.protocol.clone();
 
-    bee_protocol::workers::init::<FullNode<S>>(
+    bee_protocol::init::<FullNode<S>>(
         protocol_cfg,
         (network_name, network_id),
         gossip_events,

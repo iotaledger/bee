@@ -37,7 +37,7 @@ pub enum DependencyError {
     #[error("{0}")]
     SerdeJsonError(#[from] serde_json::error::Error),
     #[error("{0}")]
-    InvalidBlockSubmitted(#[from] bee_protocol::workers::BlockSubmitterError),
+    InvalidBlockSubmitted(#[from] bee_protocol::BlockSubmitterError),
     #[error("{0}")]
     InvalidBlock(#[from] bee_block::Error),
     #[error("{0}")]

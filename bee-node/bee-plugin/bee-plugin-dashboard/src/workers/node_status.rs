@@ -7,7 +7,7 @@ use std::{
 };
 
 use bee_gossip::PeerId;
-use bee_protocol::{types::metrics::NodeMetrics, workers::PeerManager};
+use bee_protocol::{types::metrics::NodeMetrics, PeerManager};
 use bee_rest_api::routes::health::is_healthy;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
 use bee_tangle::Tangle;

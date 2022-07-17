@@ -14,6 +14,7 @@ members = [
 	"bee-node/bee-plugin/bee-plugin-version-checker",
 	"bee-pow",
 	"bee-protocol/bee-protocol",
+	"bee-protocol/bee-protocol-types",
 	"bee-runtime",
 	"bee-storage/bee-storage",
 	"bee-storage/bee-storage-memory",

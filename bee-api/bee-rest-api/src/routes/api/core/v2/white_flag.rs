@@ -10,7 +10,7 @@ use std::{
 use axum::{extract::Extension, routing::post, Router};
 use bee_block::{payload::milestone::MilestoneIndex, BlockId};
 use bee_ledger::consensus::{self, WhiteFlagMetadata};
-use bee_protocol::workers::{event::BlockSolidified, request_block};
+use bee_protocol::{event::BlockSolidified, request_block};
 use futures::channel::oneshot;
 use serde_json::Value;
 use tokio::time::timeout;
