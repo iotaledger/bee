@@ -2,15 +2,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use axum::{extract::Extension, routing::post, Router};
-use bee_api_types::{
-    dtos::{PeerDto, RelationDto},
-    responses::AddPeerResponse,
-};
 use bee_gossip::{Command::AddPeer, Multiaddr, PeerId, PeerRelation, Protocol};
 use log::error;
 use serde_json::Value;
 
-use crate::{error::ApiError, extractors::json::CustomJson, storage::StorageBackend, ApiArgsFullNode};
+use crate::{
+    error::ApiError,
+    extractors::json::CustomJson,
+    storage::StorageBackend,
+    types::{
+        dtos::{PeerDto, RelationDto},
+        responses::AddPeerResponse,
+    },
+    ApiArgsFullNode,
+};
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/peers", post(peers_add::<B>))

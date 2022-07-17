@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use axum::{body::Bytes, extract::Extension, http::header::HeaderMap, routing::post, Router};
-use bee_api_types::responses::SubmitBlockResponse;
 use bee_block::{
     constant::PROTOCOL_VERSION,
     parent::Parents,
@@ -20,6 +19,7 @@ use crate::{
     error::{ApiError, DependencyError},
     routes::api::core::v2::blocks::BYTE_CONTENT_HEADER,
     storage::StorageBackend,
+    types::responses::SubmitBlockResponse,
     ApiArgsFullNode,
 };
 

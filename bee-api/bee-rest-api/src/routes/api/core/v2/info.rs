@@ -2,13 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use axum::{extract::Extension, routing::get, Router};
-use bee_api_types::responses::{
-    BaseTokenResponse, ConfirmedMilestoneResponse, InfoResponse, LatestMilestoneResponse, MetricsResponse,
-    ProtocolResponse, RentStructureResponse, StatusResponse,
-};
 use bee_block::constant::{PROTOCOL_VERSION, TOKEN_SUPPLY};
 
-use crate::{routes::health, storage::StorageBackend, ApiArgsFullNode};
+use crate::{
+    routes::health,
+    storage::StorageBackend,
+    types::responses::{
+        BaseTokenResponse, ConfirmedMilestoneResponse, InfoResponse, LatestMilestoneResponse, MetricsResponse,
+        ProtocolResponse, RentStructureResponse, StatusResponse,
+    },
+    ApiArgsFullNode,
+};
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/info", get(info::<B>))

@@ -2,11 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use axum::{extract::Extension, routing::get, Router};
-use bee_api_types::responses::TreasuryResponse;
 use bee_ledger::storage;
 use log::error;
 
-use crate::{error::ApiError, storage::StorageBackend, ApiArgsFullNode};
+use crate::{error::ApiError, storage::StorageBackend, types::responses::TreasuryResponse, ApiArgsFullNode};
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/treasury", get(treasury::<B>))

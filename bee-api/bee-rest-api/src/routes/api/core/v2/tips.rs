@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use axum::{extract::Extension, routing::get, Router};
-use bee_api_types::responses::TipsResponse;
 use bee_block::BlockId;
 
-use crate::{error::ApiError, storage::StorageBackend, ApiArgsFullNode, CONFIRMED_THRESHOLD};
+use crate::{
+    error::ApiError, storage::StorageBackend, types::responses::TipsResponse, ApiArgsFullNode, CONFIRMED_THRESHOLD,
+};
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/tips", get(tips::<B>))

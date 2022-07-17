@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use axum::{extract::Extension, routing::get, Router};
-use bee_api_types::responses::OutputResponse;
 use bee_block::output::OutputId;
 use bee_ledger::{
     consensus::ConsensusWorkerCommand,
@@ -14,7 +13,10 @@ use futures::channel::oneshot;
 use log::error;
 
 use super::outputs_metadata::create_output_metadata;
-use crate::{error::ApiError, extractors::path::CustomPath, storage::StorageBackend, ApiArgsFullNode};
+use crate::{
+    error::ApiError, extractors::path::CustomPath, storage::StorageBackend, types::responses::OutputResponse,
+    ApiArgsFullNode,
+};
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/outputs/:output_id", get(outputs::<B>))

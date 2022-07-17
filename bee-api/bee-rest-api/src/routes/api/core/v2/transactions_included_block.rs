@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use axum::{extract::Extension, http::header::HeaderMap, routing::get, Router};
-use bee_api_types::responses::BlockResponse;
 use bee_block::{output::OutputId, payload::transaction::TransactionId, BlockId};
 use bee_ledger::types::CreatedOutput;
 use bee_storage::access::Fetch;
@@ -13,6 +12,7 @@ use crate::{
     extractors::path::CustomPath,
     routes::api::core::v2::blocks::{blocks_json, blocks_raw, BYTE_CONTENT_HEADER},
     storage::StorageBackend,
+    types::responses::BlockResponse,
     ApiArgsFullNode,
 };
 

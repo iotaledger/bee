@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use axum::{extract::Extension, routing::get, Router};
-use bee_api_types::responses::UtxoChangesResponse;
 use bee_block::{output::OutputId, payload::milestone::MilestoneIndex};
 use bee_ledger::types::OutputDiff;
 use bee_storage::access::Fetch;
 use log::error;
 
-use crate::{error::ApiError, extractors::path::CustomPath, storage::StorageBackend, ApiArgsFullNode};
+use crate::{
+    error::ApiError, extractors::path::CustomPath, storage::StorageBackend, types::responses::UtxoChangesResponse,
+    ApiArgsFullNode,
+};
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route(

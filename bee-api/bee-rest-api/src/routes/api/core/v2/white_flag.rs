@@ -8,7 +8,6 @@ use std::{
 };
 
 use axum::{extract::Extension, routing::post, Router};
-use bee_api_types::responses::WhiteFlagResponse;
 use bee_block::{payload::milestone::MilestoneIndex, BlockId};
 use bee_ledger::consensus::{self, WhiteFlagMetadata};
 use bee_protocol::workers::{event::BlockSolidified, request_block};
@@ -20,6 +19,7 @@ use crate::{
     error::{ApiError, DependencyError},
     extractors::json::CustomJson,
     storage::StorageBackend,
+    types::responses::WhiteFlagResponse,
     ApiArgsFullNode,
 };
 

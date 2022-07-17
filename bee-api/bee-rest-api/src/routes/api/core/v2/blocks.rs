@@ -7,12 +7,14 @@ use axum::{
     routing::get,
     Router,
 };
-use bee_api_types::responses::BlockResponse;
 use bee_block::{BlockDto, BlockId};
 use lazy_static::lazy_static;
 use packable::PackableExt;
 
-use crate::{error::ApiError, extractors::path::CustomPath, storage::StorageBackend, ApiArgsFullNode};
+use crate::{
+    error::ApiError, extractors::path::CustomPath, storage::StorageBackend, types::responses::BlockResponse,
+    ApiArgsFullNode,
+};
 
 lazy_static! {
     pub(crate) static ref BYTE_CONTENT_HEADER: HeaderValue =

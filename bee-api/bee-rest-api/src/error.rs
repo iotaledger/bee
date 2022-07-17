@@ -6,8 +6,9 @@ use axum::{
     response::{IntoResponse, Response},
     Json,
 };
-use bee_api_types::body::{DefaultErrorResponse, ErrorBody};
 use thiserror::Error;
+
+use crate::types::body::{DefaultErrorResponse, ErrorBody};
 
 // Errors that are returned to the user.
 #[derive(Error, Debug)]
