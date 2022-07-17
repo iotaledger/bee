@@ -18,18 +18,16 @@ use tokio_stream::wrappers::UnboundedReceiverStream;
 pub(crate) use self::manager::{PeerManagerConfig, PeerManagerWorker};
 pub use self::manager_res::{PeerManager, PeerManagerResWorker};
 use crate::{
-    types::{metrics::NodeMetrics, peer::Peer},
-    {
-        packets::{
-            tlv_from_bytes, BlockPacket, BlockRequestPacket, HeaderPacket, HeartbeatPacket, MilestoneRequestPacket,
-            Packet, TlvError,
-        },
-        peer::packet_handler::PacketHandler,
-        requester::request_latest_milestone,
-        storage::StorageBackend,
-        BlockResponderWorkerEvent, HasherWorkerEvent, MilestoneRequesterWorkerEvent, MilestoneResponderWorkerEvent,
-        RequestedMilestones,
+    packets::{
+        tlv_from_bytes, BlockPacket, BlockRequestPacket, HeaderPacket, HeartbeatPacket, MilestoneRequestPacket, Packet,
+        TlvError,
     },
+    peer::packet_handler::PacketHandler,
+    requester::request_latest_milestone,
+    storage::StorageBackend,
+    types::{metrics::NodeMetrics, peer::Peer},
+    BlockResponderWorkerEvent, HasherWorkerEvent, MilestoneRequesterWorkerEvent, MilestoneResponderWorkerEvent,
+    RequestedMilestones,
 };
 
 #[derive(Debug)]

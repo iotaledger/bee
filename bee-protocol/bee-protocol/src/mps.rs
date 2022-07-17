@@ -10,10 +10,7 @@ use log::info;
 use tokio::time::interval;
 use tokio_stream::wrappers::IntervalStream;
 
-use crate::{
-    types::metrics::NodeMetrics,
-    {event::MpsMetricsUpdated, MetricsWorker},
-};
+use crate::{event::MpsMetricsUpdated, types::metrics::NodeMetrics, MetricsWorker};
 
 const MPS_INTERVAL: Duration = Duration::from_secs(1);
 

@@ -10,10 +10,7 @@ use log::{debug, info};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
-use crate::{
-    types::metrics::NodeMetrics,
-    {storage::StorageBackend, MetricsWorker},
-};
+use crate::{storage::StorageBackend, types::metrics::NodeMetrics, MetricsWorker};
 
 pub(crate) struct TaggedDataPayloadWorkerEvent {}
 

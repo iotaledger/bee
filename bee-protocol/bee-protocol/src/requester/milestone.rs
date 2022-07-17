@@ -21,11 +21,8 @@ use tokio::{sync::mpsc, time::interval};
 use tokio_stream::wrappers::{IntervalStream, UnboundedReceiverStream};
 
 use crate::{
-    types::metrics::NodeMetrics,
-    {
-        packets::MilestoneRequestPacket, peer::PeerManager, sender::Sender, storage::StorageBackend, MetricsWorker,
-        PeerManagerResWorker,
-    },
+    packets::MilestoneRequestPacket, peer::PeerManager, sender::Sender, storage::StorageBackend,
+    types::metrics::NodeMetrics, MetricsWorker, PeerManagerResWorker,
 };
 
 const RETRY_INTERVAL: Duration = Duration::from_millis(2500);

@@ -13,11 +13,8 @@ use tokio::time::interval;
 use tokio_stream::wrappers::IntervalStream;
 
 use crate::{
-    types::metrics::NodeMetrics,
-    {
-        packets::HeartbeatPacket, peer::PeerManager, sender::Sender, storage::StorageBackend, MetricsWorker,
-        PeerManagerResWorker,
-    },
+    packets::HeartbeatPacket, peer::PeerManager, sender::Sender, storage::StorageBackend, types::metrics::NodeMetrics,
+    MetricsWorker, PeerManagerResWorker,
 };
 
 const HEARTBEAT_SEND_INTERVAL: Duration = Duration::from_secs(30);

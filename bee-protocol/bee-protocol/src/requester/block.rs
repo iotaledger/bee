@@ -23,11 +23,8 @@ use tokio::time::interval;
 use tokio_stream::wrappers::IntervalStream;
 
 use crate::{
-    types::metrics::NodeMetrics,
-    {
-        packets::BlockRequestPacket, peer::PeerManager, sender::Sender, storage::StorageBackend, MetricsWorker,
-        PeerManagerResWorker,
-    },
+    packets::BlockRequestPacket, peer::PeerManager, sender::Sender, storage::StorageBackend,
+    types::metrics::NodeMetrics, MetricsWorker, PeerManagerResWorker,
 };
 
 const RETRY_INTERVAL: Duration = Duration::from_millis(2500);

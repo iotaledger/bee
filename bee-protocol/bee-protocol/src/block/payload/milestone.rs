@@ -19,12 +19,13 @@ use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use crate::{
+    config::ProtocolConfig,
+    heartbeater::broadcast_heartbeat,
+    peer::PeerManager,
+    storage::StorageBackend,
     types::{metrics::NodeMetrics, milestone_key_manager::MilestoneKeyManager},
-    {
-        config::ProtocolConfig, heartbeater::broadcast_heartbeat, peer::PeerManager, storage::StorageBackend,
-        MetricsWorker, MilestoneRequesterWorker, MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent,
-        PeerManagerResWorker, RequestedMilestones,
-    },
+    MetricsWorker, MilestoneRequesterWorker, MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent,
+    PeerManagerResWorker, RequestedMilestones,
 };
 
 #[derive(Debug)]

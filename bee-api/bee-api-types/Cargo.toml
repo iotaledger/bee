@@ -18,8 +18,8 @@ rustdoc-args = [ "--cfg", "doc_cfg" ]
 
 [dependencies]
 bee-block = { version = "0.1.0", path = "../../bee-block", default-features = false, features = [ "dto" ] }
-bee-ledger = { version = "0.7.0", path = "../../bee-ledger/bee-ledger", default-features = false }
-bee-protocol = { version = "0.2.2", path = "../../bee-protocol/bee-protocol", default-features = false, optional = true }
+bee-ledger-types = { version = "1.0.0-alpha.1", path = "../../bee-ledger/bee-ledger-types", default-features = false }
+bee-protocol-types = { version = "1.0.0-alpha.1", path = "../../bee-protocol/bee-protocol-types", default-features = false, optional = true }
 
 axum = { version = "0.5.4", default-features = false, features = [ "json" ] }
 serde = { version = "1.0.137", default-features = false, features = [ "derive" ] }
@@ -27,4 +27,4 @@ thiserror = { version = "1.0.31", default-features = false }
 
 [features]
 default = [ "peer" ]
-peer = [ "bee-protocol" ]
+peer = [ "bee-protocol-types" ]

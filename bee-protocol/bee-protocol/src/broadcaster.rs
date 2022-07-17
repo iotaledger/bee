@@ -12,8 +12,8 @@ use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use crate::{
-    types::metrics::NodeMetrics,
-    {packets::BlockPacket, peer::PeerManager, sender::Sender, MetricsWorker, PeerManagerResWorker},
+    packets::BlockPacket, peer::PeerManager, sender::Sender, types::metrics::NodeMetrics, MetricsWorker,
+    PeerManagerResWorker,
 };
 
 pub(crate) struct BroadcasterWorkerEvent {

@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_block::payload::milestone::option::dto::ReceiptMilestoneOptionDto;
-use bee_ledger::types::Receipt;
+use bee_ledger_types::Receipt;
 #[cfg(feature = "peer")]
-use bee_protocol::types::peer::Peer;
+use bee_protocol_types::peer::Peer;
 use serde::{Deserialize, Serialize};
 
 /// Describes a peer.

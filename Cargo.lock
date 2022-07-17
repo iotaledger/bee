@@ -239,8 +239,8 @@ version = "1.0.0-alpha.1"
 dependencies = [
  "axum",
  "bee-block",
- "bee-ledger",
- "bee-protocol",
+ "bee-ledger-types",
+ "bee-protocol-types",
  "serde",
  "thiserror",
 ]

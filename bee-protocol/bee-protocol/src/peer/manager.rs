@@ -16,14 +16,12 @@ use log::{info, trace, warn};
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use crate::{
+    heartbeater::{new_heartbeat, send_heartbeat},
+    peer::PeerManager,
+    storage::StorageBackend,
     types::{metrics::NodeMetrics, peer::Peer},
-    {
-        heartbeater::{new_heartbeat, send_heartbeat},
-        peer::PeerManager,
-        storage::StorageBackend,
-        BlockResponderWorker, HasherWorker, MetricsWorker, MilestoneRequesterWorker, MilestoneResponderWorker,
-        PeerManagerResWorker, PeerWorker, RequestedMilestones,
-    },
+    BlockResponderWorker, HasherWorker, MetricsWorker, MilestoneRequesterWorker, MilestoneResponderWorker,
+    PeerManagerResWorker, PeerWorker, RequestedMilestones,
 };
 
 pub(crate) struct PeerManagerConfig {

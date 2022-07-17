@@ -14,14 +14,12 @@ use tokio::sync::mpsc::{self, UnboundedSender};
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use crate::{
+    packets::{BlockPacket, MilestoneRequestPacket},
+    peer::PeerManager,
+    sender::Sender,
+    storage::StorageBackend,
     types::metrics::NodeMetrics,
-    {
-        packets::{BlockPacket, MilestoneRequestPacket},
-        peer::PeerManager,
-        sender::Sender,
-        storage::StorageBackend,
-        MetricsWorker, PeerManagerResWorker,
-    },
+    MetricsWorker, PeerManagerResWorker,
 };
 
 pub(crate) struct MilestoneResponderWorkerEvent {

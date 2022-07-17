@@ -14,14 +14,12 @@ use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use crate::{
+    block::{BlockSubmitterError, HashCache, ProcessorWorker, ProcessorWorkerEvent},
+    config::ProtocolConfig,
+    packets::BlockPacket,
+    storage::StorageBackend,
     types::metrics::NodeMetrics,
-    {
-        block::{BlockSubmitterError, HashCache, ProcessorWorker, ProcessorWorkerEvent},
-        config::ProtocolConfig,
-        packets::BlockPacket,
-        storage::StorageBackend,
-        MetricsWorker, PeerManager, PeerManagerResWorker,
-    },
+    MetricsWorker, PeerManager, PeerManagerResWorker,
 };
 
 pub(crate) struct HasherWorkerEvent {

@@ -15,8 +15,8 @@ use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use crate::{
-    types::metrics::NodeMetrics,
-    {storage::StorageBackend, MetricsWorker, TaggedDataPayloadWorker, TaggedDataPayloadWorkerEvent},
+    storage::StorageBackend, types::metrics::NodeMetrics, MetricsWorker, TaggedDataPayloadWorker,
+    TaggedDataPayloadWorkerEvent,
 };
 
 pub(crate) struct TransactionPayloadWorkerEvent {

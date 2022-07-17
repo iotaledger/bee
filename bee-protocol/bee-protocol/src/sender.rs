@@ -7,11 +7,9 @@ use bee_gossip::PeerId;
 use log::warn;
 
 use crate::{
+    packets::{tlv_to_bytes, BlockPacket, BlockRequestPacket, HeartbeatPacket, MilestoneRequestPacket, Packet},
+    peer::PeerManager,
     types::metrics::NodeMetrics,
-    {
-        packets::{tlv_to_bytes, BlockPacket, BlockRequestPacket, HeartbeatPacket, MilestoneRequestPacket, Packet},
-        peer::PeerManager,
-    },
 };
 
 pub(crate) struct Sender<P: Packet> {

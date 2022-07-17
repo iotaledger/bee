@@ -19,15 +19,13 @@ use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use crate::{
+    heartbeater::broadcast_heartbeat,
+    peer::PeerManager,
+    requester::{request_block, request_milestone},
+    storage::StorageBackend,
     types::metrics::NodeMetrics,
-{
-        heartbeater::broadcast_heartbeat,
-        peer::PeerManager,
-        requester::{request_block, request_milestone},
-        storage::StorageBackend,
-        BlockRequesterWorker, IndexUpdaterWorker, IndexUpdaterWorkerEvent, MetricsWorker, MilestoneRequesterWorker,
-        PeerManagerResWorker, RequestedBlocks, RequestedMilestones,
-    },
+    BlockRequesterWorker, IndexUpdaterWorker, IndexUpdaterWorkerEvent, MetricsWorker, MilestoneRequesterWorker,
+    PeerManagerResWorker, RequestedBlocks, RequestedMilestones,
 };
 
 pub(crate) struct MilestoneSolidifierWorkerEvent(pub MilestoneIndex);

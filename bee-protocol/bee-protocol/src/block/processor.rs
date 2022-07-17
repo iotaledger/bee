@@ -19,18 +19,16 @@ use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use crate::{
+    block::submitter::{notify_block, notify_invalid_block},
+    event::{BlockProcessed, VertexCreated},
+    packets::BlockPacket,
+    peer::PeerManager,
+    requester::request_block,
+    storage::StorageBackend,
     types::metrics::NodeMetrics,
-{
-        block::submitter::{notify_block, notify_invalid_block},
-        event::{BlockProcessed, VertexCreated},
-        packets::BlockPacket,
-        peer::PeerManager,
-        requester::request_block,
-        storage::StorageBackend,
-        BlockRequesterWorker, BlockSubmitterError, BroadcasterWorker, BroadcasterWorkerEvent, MetricsWorker,
-        PayloadWorker, PayloadWorkerEvent, PeerManagerResWorker, PropagatorWorker, PropagatorWorkerEvent,
-        RequestedBlocks, UnreferencedBlockInserterWorker, UnreferencedBlockInserterWorkerEvent,
-    },
+    BlockRequesterWorker, BlockSubmitterError, BroadcasterWorker, BroadcasterWorkerEvent, MetricsWorker, PayloadWorker,
+    PayloadWorkerEvent, PeerManagerResWorker, PropagatorWorker, PropagatorWorkerEvent, RequestedBlocks,
+    UnreferencedBlockInserterWorker, UnreferencedBlockInserterWorkerEvent,
 };
 
 pub(crate) struct ProcessorWorkerEvent {

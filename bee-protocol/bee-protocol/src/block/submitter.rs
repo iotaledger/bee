@@ -16,8 +16,7 @@ use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use crate::{
-    types::metrics::NodeMetrics,
-    {packets::BlockPacket, storage::StorageBackend, HasherWorker, HasherWorkerEvent},
+    packets::BlockPacket, storage::StorageBackend, types::metrics::NodeMetrics, HasherWorker, HasherWorkerEvent,
 };
 
 pub(crate) fn notify_invalid_block(
