@@ -1,0 +1,23 @@
+[package]
+name = "bee-protocol-types"
+version = "1.0.0-alpha.1"
+authors = [ "IOTA Stiftung" ]
+edition = "2021"
+description = "All types enabling the IOTA protocol."
+readme = "README.md"
+repository = "https://github.com/iotaledger/bee"
+license = "Apache-2.0"
+keywords = [ "iota", "tangle", "bee", "framework", "protocol" ]
+homepage = "https://www.iota.org"
+
+[package.metadata.docs.rs]
+# To build locally:
+# RUSTDOCFLAGS="--cfg doc_cfg" cargo +nightly doc --all-features --no-deps --open
+all-features = true
+rustdoc-args = [ "--cfg", "doc_cfg" ]
+
+[dependencies]
+bee-block = { version = "0.1.0", path = "../../bee-block", default-features = false, features = [ "serde" ] }
+bee-gossip = { version = "0.6.0", path = "../../bee-network/bee-gossip", default-features = false }
+
+serde = { version = "1.0.137", default-features = false, features = [ "derive" ]}

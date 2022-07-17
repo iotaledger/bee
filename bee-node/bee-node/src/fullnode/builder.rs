@@ -13,7 +13,7 @@ use bee_autopeering::{
 };
 use bee_gossip::{Keypair, NetworkEventReceiver, Protocol};
 use bee_plugin_version_checker::VersionCheckerPlugin;
-use bee_rest_api::endpoints::InitFullNodeConfig;
+use bee_rest_api::InitFullNodeConfig;
 use bee_runtime::{
     event::Bus,
     node::{Node, NodeBuilder},
@@ -267,7 +267,7 @@ fn initialize_ledger<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> Full
     let snapshot_cfg = config.snapshot.clone();
     let pruning_cfg = config.pruning.clone();
 
-    bee_ledger::workers::init::<FullNode<S>>(builder, network_id, snapshot_cfg, pruning_cfg)
+    bee_ledger::init::<FullNode<S>>(builder, network_id, snapshot_cfg, pruning_cfg)
 }
 
 /// Initializes the protocol.
@@ -288,7 +288,7 @@ fn initialize_protocol<S: NodeStorageBackend>(
 
     let protocol_cfg = config.protocol.clone();
 
-    bee_protocol::workers::init::<FullNode<S>>(
+    bee_protocol::init::<FullNode<S>>(
         protocol_cfg,
         (network_name, network_id),
         gossip_events,
@@ -395,7 +395,7 @@ fn initialize_api<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> FullNod
         dashboard_username: config.dashboard.auth().user().to_owned(),
     };
 
-    bee_rest_api::endpoints::init_full_node::<FullNode<S>>(init_config, builder)
+    bee_rest_api::init_full_node::<FullNode<S>>(init_config, builder)
 }
 
 /// Initializes the Tangle.

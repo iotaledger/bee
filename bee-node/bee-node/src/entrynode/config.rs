@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_autopeering::AutopeeringConfig;
-use bee_rest_api::endpoints::config::RestApiConfig;
+use bee_rest_api::config::RestApiConfig;
 use fern_logger::LoggerConfig;
 
 use crate::{

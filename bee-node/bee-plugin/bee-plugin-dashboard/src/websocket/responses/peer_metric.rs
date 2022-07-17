@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_rest_api::types::responses::PeersResponse;
+use bee_api_types::responses::PeersResponse;
 
 use crate::websocket::{
     responses::{WsEvent, WsEventInner},

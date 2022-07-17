@@ -14,7 +14,7 @@ use bee_autopeering::{
 };
 use bee_gossip::Keypair;
 use bee_plugin_version_checker::VersionCheckerPlugin;
-use bee_rest_api::endpoints::InitEntryNodeConfig;
+use bee_rest_api::InitEntryNodeConfig;
 use bee_runtime::{
     event::Bus,
     node::{Node, NodeBuilder},
@@ -276,7 +276,7 @@ fn initialize_api(builder: EntryNodeBuilder) -> EntryNodeBuilder {
         rest_api_config: config.rest_api.clone(),
     };
 
-    bee_rest_api::endpoints::init_entry_node::<EntryNode>(init_config, builder)
+    bee_rest_api::init_entry_node::<EntryNode>(init_config, builder)
 }
 
 #[derive(Clone)]

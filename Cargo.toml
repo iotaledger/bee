@@ -1,8 +1,10 @@
 [workspace]
 members = [
+	"bee-api/bee-api-types",
 	"bee-api/bee-rest-api",
 	"bee-block",
-	"bee-ledger",
+	"bee-ledger/bee-ledger",
+	"bee-ledger/bee-ledger-types",
 	"bee-network/bee-autopeering",
 	"bee-network/bee-gossip",
 	"bee-node/bee-node",
@@ -11,7 +13,8 @@ members = [
 	"bee-node/bee-plugin/bee-plugin-mps",
 	"bee-node/bee-plugin/bee-plugin-version-checker",
 	"bee-pow",
-	"bee-protocol",
+	"bee-protocol/bee-protocol",
+	"bee-protocol/bee-protocol-types",
 	"bee-runtime",
 	"bee-storage/bee-storage",
 	"bee-storage/bee-storage-memory",

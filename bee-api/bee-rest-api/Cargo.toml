@@ -17,58 +17,34 @@ all-features = true
 rustdoc-args = [ "--cfg", "doc_cfg" ]
 
 [dependencies]
+bee-api-types = { version = "1.0.0-alpha.1", path = "../bee-api-types", default-features = false, features = [ "peer" ] }
 bee-block = { version = "0.1.0", path = "../../bee-block", default-features = false, features = [ "dto" ] }
-bee-gossip = { version = "0.6.0", path = "../../bee-network/bee-gossip", default-features = false, optional = true }
-bee-ledger = { version = "0.7.0", path = "../../bee-ledger", default-features = false }
-bee-pow = { version = "1.0.0-alpha.1", default-features = false, optional = true }
-bee-protocol = { version = "0.2.2", path = "../../bee-protocol", default-features = false, optional = true }
-bee-runtime = { version = "0.1.1-alpha", path = "../../bee-runtime", default-features = false, optional = true  }
-bee-storage = { version = "0.12.0", path = "../../bee-storage/bee-storage", default-features = false, optional = true }
-bee-tangle = { version = "0.3.0", path = "../../bee-tangle", default-features = false, optional = true }
+bee-gossip = { version = "0.6.0", path = "../../bee-network/bee-gossip", default-features = false }
+bee-ledger = { version = "0.7.0", path = "../../bee-ledger/bee-ledger", default-features = false }
+bee-pow = { version = "1.0.0-alpha.1", default-features = false }
+bee-protocol = { version = "0.2.2", path = "../../bee-protocol/bee-protocol", default-features = false }
+bee-runtime = { version = "0.1.1-alpha", path = "../../bee-runtime", default-features = false  }
+bee-storage = { version = "0.12.0", path = "../../bee-storage/bee-storage", default-features = false }
+bee-tangle = { version = "0.3.0", path = "../../bee-tangle", default-features = false }
 
-async-trait = { version = "0.1.56", default-features = false, optional = true }
-auth-helper = { version = "0.2.0", default-features = false, optional = true }
+async-trait = { version = "0.1.56", default-features = false }
+auth-helper = { version = "0.2.0", default-features = false }
 axum = { version = "0.5.4", default-features = false, features = [ "json", "headers", "original-uri" ] }
-bech32 = { version = "0.9.0", default-features = false, optional = true }
-base64 = { version = "0.13.0", default-features = false, optional = true }
-digest = { version = "0.10.3", default-features = false, optional = true }
-futures = { version = "0.3.21", default-features = false, optional = true }
-iota-crypto = { version = "0.12.1", default-features = false, features = [ "blake2b" ], optional = true }
-lazy_static = {version = "1.4.0", default-features = false, optional = true }
-log = { version = "0.4.17", default-features = false, optional = true }
-multiaddr = { version = "0.14.0", default-features = false, optional = true }
-num_cpus = { version = "1.13.1", default-features = false, optional = true }
-packable = { version = "0.5.0", default-features = false, optional = true }
-regex = { version = "1.5.5", default-features = false, optional = true }
+bech32 = { version = "0.9.0", default-features = false }
+base64 = { version = "0.13.0", default-features = false }
+digest = { version = "0.10.3", default-features = false }
+futures = { version = "0.3.21", default-features = false }
+iota-crypto = { version = "0.13.0", default-features = false, features = [ "blake2b" ] }
+lazy_static = {version = "1.4.0", default-features = false }
+log = { version = "0.4.17", default-features = false }
+multiaddr = { version = "0.14.0", default-features = false }
+num_cpus = { version = "1.13.1", default-features = false }
+packable = { version = "0.5.0", default-features = false }
+regex = { version = "1.5.5", default-features = false }
 serde = { version = "1.0.137", default-features = false, features = [ "derive" ] }
-serde_json = { version = "1.0.81", default-features = false, features = [ "alloc" ], optional = true }
+serde_json = { version = "1.0.81", default-features = false, features = [ "alloc" ] }
 thiserror = { version = "1.0.31", default-features = false }
-tokio = { version = "1.19.2", default-features = false, optional = true }
+tokio = { version = "1.19.2", default-features = false }
 
 [features]
-default = [ "peer" ]
-dashboard = []
-endpoints = [
-  "bee-gossip",
-  "bee-pow",
-  "bee-protocol/workers",
-  "bee-runtime",
-  "bee-storage",
-  "bee-tangle",
-  "async-trait",
-  "auth-helper",
-  "base64",
-  "bech32",
-  "digest",
-  "futures",
-  "iota-crypto",
-  "lazy_static",
-  "log",
-  "multiaddr",
-  "num_cpus",
-  "packable",
-  "regex",
-  "serde_json",
-  "tokio",
-]
-peer = [ "bee-protocol" ]
+dashboard = [ ]

@@ -9,7 +9,7 @@ use std::convert::Infallible;
 
 use async_trait::async_trait;
 use bee_plugin::Plugin;
-use bee_protocol::workers::event::MpsMetricsUpdated;
+use bee_protocol::event::MpsMetricsUpdated;
 use bee_runtime::event::Bus;
 use log::info;
 

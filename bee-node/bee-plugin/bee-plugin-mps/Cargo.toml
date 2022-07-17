@@ -12,7 +12,7 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 bee-plugin = { version = "0.1.0", path = "../bee-plugin", default-features = false }
-bee-protocol = { version = "0.2.0", path = "../../../bee-protocol", default-features = false, features = [ "workers" ] }
+bee-protocol = { version = "0.2.0", path = "../../../bee-protocol/bee-protocol", default-features = false }
 bee-runtime = { version = "0.1.1-alpha", path = "../../../bee-runtime", default-features = false }
 
 async-trait = { version = "0.1.56", default-features = false }

@@ -11,14 +11,14 @@ use std::{fs, path::Path};
 
 use bee_autopeering::config::{AutopeeringConfig, AutopeeringConfigBuilder};
 use bee_gossip::{NetworkConfig, NetworkConfigBuilder};
-use bee_ledger::workers::{
+use bee_ledger::{
     pruning::config::{PruningConfig, PruningConfigBuilder},
     snapshot::config::{SnapshotConfig, SnapshotConfigBuilder},
 };
 #[cfg(feature = "dashboard")]
 use bee_plugin_dashboard::config::{DashboardConfig, DashboardConfigBuilder};
-use bee_protocol::workers::config::{ProtocolConfig, ProtocolConfigBuilder};
-use bee_rest_api::endpoints::config::{RestApiConfig, RestApiConfigBuilder};
+use bee_protocol::config::{ProtocolConfig, ProtocolConfigBuilder};
+use bee_rest_api::config::{RestApiConfig, RestApiConfigBuilder};
 use bee_tangle::config::{TangleConfig, TangleConfigBuilder};
 use fern_logger::{LoggerConfig, LoggerConfigBuilder, LOGGER_STDOUT_NAME};
 use serde::Deserialize;

@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_ledger::workers::event::MilestoneConfirmed;
+use bee_ledger::event::MilestoneConfirmed;
 use bee_protocol::types::metrics::NodeMetrics;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
 use futures::StreamExt;

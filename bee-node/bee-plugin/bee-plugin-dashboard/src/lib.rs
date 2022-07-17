@@ -22,16 +22,14 @@ use std::{
 };
 
 use async_trait::async_trait;
+use bee_api_types::body::{DefaultErrorResponse, ErrorBody};
 use bee_gossip::{Keypair, PeerId};
-use bee_ledger::workers::event::MilestoneConfirmed;
-use bee_protocol::workers::{
+use bee_ledger::event::MilestoneConfirmed;
+use bee_protocol::{
     event::{BlockSolidified, MpsMetricsUpdated, TipAdded, TipRemoved, VertexCreated},
     MetricsWorker, PeerManagerResWorker,
 };
-use bee_rest_api::{
-    endpoints::config::RestApiConfig,
-    types::body::{DefaultErrorResponse, ErrorBody},
-};
+use bee_rest_api::config::RestApiConfig;
 use bee_runtime::{
     node::{Node, NodeBuilder},
     shutdown_stream::ShutdownStream,
