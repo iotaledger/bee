@@ -22,7 +22,7 @@ bee-block = { version = "0.1.0", path = "../../bee-block", default-features = fa
 bee-gossip = { version = "0.6.0", path = "../../bee-network/bee-gossip", default-features = false, optional = true }
 bee-ledger = { version = "0.7.0", path = "../../bee-ledger/bee-ledger", default-features = false }
 bee-pow = { version = "1.0.0-alpha.1", default-features = false, optional = true }
-bee-protocol = { version = "0.2.2", path = "../../bee-protocol", default-features = false, optional = true }
+bee-protocol = { version = "0.2.2", path = "../../bee-protocol/bee-protocol", default-features = false, optional = true }
 bee-runtime = { version = "0.1.1-alpha", path = "../../bee-runtime", default-features = false, optional = true  }
 bee-storage = { version = "0.12.0", path = "../../bee-storage/bee-storage", default-features = false, optional = true }
 bee-tangle = { version = "0.3.0", path = "../../bee-tangle", default-features = false, optional = true }

@@ -12,7 +12,7 @@ members = [
 	"bee-node/bee-plugin/bee-plugin-mps",
 	"bee-node/bee-plugin/bee-plugin-version-checker",
 	"bee-pow",
-	"bee-protocol",
+	"bee-protocol/bee-protocol",
 	"bee-runtime",
 	"bee-storage/bee-storage",
 	"bee-storage/bee-storage-memory",

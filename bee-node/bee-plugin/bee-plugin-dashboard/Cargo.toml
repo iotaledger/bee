@@ -15,7 +15,7 @@ bee-api-types = { version = "1.0.0-alpha.1", path = "../../../bee-api/bee-api-ty
 bee-block = { version = "0.1.0", path = "../../../bee-block", default-features = false }
 bee-gossip = { version = "0.6.0", path = "../../../bee-network/bee-gossip", default-features = false }
 bee-ledger = { version = "0.7.0", path = "../../../bee-ledger/bee-ledger", default-features = false, features = [ "workers" ] }
-bee-protocol = { version = "0.2.0", path = "../../../bee-protocol", default-features = false, features = [ "workers" ] }
+bee-protocol = { version = "0.2.0", path = "../../../bee-protocol/bee-protocol", default-features = false, features = [ "workers" ] }
 bee-rest-api = { version = "0.2.0", path = "../../../bee-api/bee-rest-api", default-features = false, features = [ "endpoints", "peer" ] }
 bee-runtime = { version = "0.1.1-alpha", path = "../../../bee-runtime", default-features = false }
 bee-storage = { version = "0.12.0", path = "../../../bee-storage/bee-storage", default-features = false }
