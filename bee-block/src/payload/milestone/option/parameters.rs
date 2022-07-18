@@ -3,6 +3,7 @@
 
 //! Module describing the parameters milestone option.
 
+use alloc::vec::Vec;
 use core::ops::RangeInclusive;
 
 use packable::{bounded::BoundedU16, prefix::BoxedSlicePrefix, Packable};

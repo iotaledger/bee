@@ -4,6 +4,8 @@
 mod parameters;
 mod receipt;
 
+use alloc::{boxed::Box, vec::Vec};
+
 use derive_more::{Deref, From};
 use iterator_sorted::is_unique_sorted;
 use packable::{bounded::BoundedU8, prefix::BoxedSlicePrefix, Packable};
@@ -67,7 +69,7 @@ impl TryFrom<Vec<MilestoneOption>> for MilestoneOptions {
 
 impl IntoIterator for MilestoneOptions {
     type Item = MilestoneOption;
-    type IntoIter = std::vec::IntoIter<Self::Item>;
+    type IntoIter = alloc::vec::IntoIter<Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {
         Vec::from(Into::<Box<[MilestoneOption]>>::into(self.0)).into_iter()

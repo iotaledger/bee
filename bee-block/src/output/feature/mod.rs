@@ -6,7 +6,7 @@ mod metadata;
 mod sender;
 mod tag;
 
-use alloc::vec::Vec;
+use alloc::{boxed::Box, vec::Vec};
 
 use bitflags::bitflags;
 use derive_more::{Deref, From};
@@ -94,7 +94,7 @@ impl TryFrom<Vec<Feature>> for Features {
 
 impl IntoIterator for Features {
     type Item = Feature;
-    type IntoIter = std::vec::IntoIter<Self::Item>;
+    type IntoIter = alloc::vec::IntoIter<Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {
         Vec::from(Into::<Box<[Feature]>>::into(self.0)).into_iter()
