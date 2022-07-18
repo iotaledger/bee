@@ -38,7 +38,7 @@ serde_json = { version = "1.0.82", default-features = false, features = [ "alloc
 thiserror = { version = "1.0.31", default-features = false }
 
 [dev-dependencies]
-bee-test = { version = "0.1.0", path = "../bee-test", default-features = false }
+bee-test = { path = "../bee-test", default-features = false }
 
 num_cpus = { version = "1.13.1", default-features = false }
 
