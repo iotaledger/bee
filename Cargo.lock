@@ -709,7 +709,7 @@ name = "bee-test"
 version = "0.1.0"
 dependencies = [
  "bee-block",
- "bee-ledger",
+ "bee-ledger-types",
  "bee-tangle",
  "bee-ternary 1.0.0-alpha.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "bytemuck",
