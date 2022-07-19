@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use alloc::vec::Vec;
+use alloc::{boxed::Box, vec::Vec};
 
 use derive_more::{Deref, DerefMut};
 use hashbrown::HashMap;
@@ -136,7 +136,7 @@ impl TryFrom<Vec<NativeToken>> for NativeTokens {
 
 impl IntoIterator for NativeTokens {
     type Item = NativeToken;
-    type IntoIter = std::vec::IntoIter<Self::Item>;
+    type IntoIter = alloc::vec::IntoIter<Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {
         Vec::from(Into::<Box<[NativeToken]>>::into(self.0)).into_iter()

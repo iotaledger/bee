@@ -281,7 +281,7 @@ dependencies = [
 
 [[package]]
 name = "bee-block"
-version = "0.1.0"
+version = "1.0.0-beta.1"
 dependencies = [
  "bech32",
  "bee-pow 1.0.0-alpha.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -290,7 +290,7 @@ dependencies = [
  "bitflags",
  "bytemuck",
  "derive_more",
- "hashbrown 0.12.1",
+ "hashbrown 0.12.3",
  "hex",
  "iota-crypto",
  "iterator-sorted",
@@ -312,7 +312,7 @@ dependencies = [
  "bee-runtime",
  "fern",
  "futures",
- "hashbrown 0.12.1",
+ "hashbrown 0.12.3",
  "hex",
  "libp2p",
  "libp2p-core",
@@ -338,7 +338,7 @@ dependencies = [
  "bee-tangle",
  "bytes",
  "futures",
- "hashbrown 0.12.1",
+ "hashbrown 0.12.3",
  "iota-crypto",
  "log",
  "packable",
@@ -673,7 +673,7 @@ dependencies = [
  "bitflags",
  "criterion",
  "futures",
- "hashbrown 0.12.1",
+ "hashbrown 0.12.3",
  "log",
  "packable",
  "rand 0.8.5",
@@ -846,9 +846,9 @@ checksum = "87c5fdd0166095e1d463fc6cc01aa8ce547ad77a4e84d42eb6762b084e28067e"
 
 [[package]]
 name = "bytemuck"
-version = "1.9.1"
+version = "1.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cdead85bdec19c194affaeeb670c0e41fe23de31459efd1c174d049269cf02cc"
+checksum = "c53dfa917ec274df8ed3c572698f381a24eef2efba9492d797301b72b6db408a"
 
 [[package]]
 name = "byteorder"
@@ -1244,7 +1244,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3495912c9c1ccf2e18976439f4443f3fee0fd61f424ff99fde6a66b15ecb448f"
 dependencies = [
  "cfg-if",
- "hashbrown 0.12.1",
+ "hashbrown 0.12.3",
  "lock_api",
  "parking_lot_core 0.9.3",
 ]
@@ -1703,9 +1703,9 @@ dependencies = [
 
 [[package]]
 name = "hashbrown"
-version = "0.12.1"
+version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db0d4cf898abf0081f964436dc980e96670a0f36863e4b83aaacdb65c9d7ccc3"
+checksum = "8a9ee70c43aaf417c914396645a0fa852624801b24ebb7ae78fe8272889ac888"
 dependencies = [
  "ahash",
 ]
@@ -3570,9 +3570,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.81"
+version = "1.0.82"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b7ce2b32a1aed03c558dc61a5cd328f15aff2dbc17daad8fb8af04d2100e15c"
+checksum = "82c2c1fdcd807d1098552c5b9a36e425e42e9fbd7c6a37a8425f390f781f7fa7"
 dependencies = [
  "itoa 1.0.1",
  "ryu",
