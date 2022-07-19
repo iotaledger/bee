@@ -10,7 +10,7 @@ use bee_block::output::{
     self, unlock_condition::ImmutableAliasAddressUnlockCondition, InputsCommitment, Output, OutputId,
     SimpleTokenScheme, TokenScheme, OUTPUT_INDEX_RANGE,
 };
-use bee_ledger::types::{ConsumedOutput, CreatedOutput, TreasuryOutput, Unspent};
+use bee_ledger_types::{ConsumedOutput, CreatedOutput, TreasuryOutput, Unspent};
 use primitive_types::U256;
 
 use crate::rand::{
