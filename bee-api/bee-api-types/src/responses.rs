@@ -380,3 +380,10 @@ impl IntoResponse for WhiteFlagResponse {
         Json(self).into_response()
     }
 }
+
+/// Response of GET /api/routes.
+/// Returns the available API route groups of the node.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct RoutesResponse {
+    pub routes: Vec<String>,
+}
