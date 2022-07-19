@@ -1,6 +1,6 @@
 [package]
 name = "bee-ledger-types"
-version = "1.0.0-alpha.1"
+version = "1.0.0-beta.1"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "All types required to compute and maintain the ledger state."
