@@ -23,4 +23,4 @@ bee-storage = { version = "0.12.0", path = "../bee-storage", default-features = 
 bee-tangle = { version = "0.3.0", path = "../../bee-tangle", default-features = false }
 bee-test = { version = "0.1.0", path = "../../bee-test", default-features = false }
 
-packable = { version = "0.5.0", default-features = false, features = [ "serde" ] }
+packable = { git = "https://github.com/pvdrz/common-rs", rev = "60f4b8b2109362e2c2e7f94d0034a96d21aa2c45", default-features = false, features = [ "serde" ] }

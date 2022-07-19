@@ -24,7 +24,7 @@ fn main() -> io::Result<()> {
 
         file.read_to_end(&mut buffer)?;
 
-        if let Err(err) = Block::unpack_strict(&mut buffer.as_slice()) {
+        if let Err(err) = Block::unpack_strict(&mut buffer.as_slice(), &mut ()) {
             if !matches!(err, UnpackError::Unpacker(..)) {
                 let mut file = OpenOptions::new()
                     .write(true)

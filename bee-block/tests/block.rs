@@ -70,18 +70,17 @@ fn invalid_payload_kind() {
 
 #[test]
 fn unpack_valid_no_remaining_bytes() {
-    assert!(
-        Block::unpack_strict(
-            &mut vec![
-                2, 2, 140, 28, 186, 52, 147, 145, 96, 9, 105, 89, 78, 139, 3, 71, 249, 97, 149, 190, 63, 238, 168, 202,
-                82, 140, 227, 66, 173, 19, 110, 93, 117, 34, 225, 202, 251, 10, 156, 58, 144, 225, 54, 79, 62, 38, 20,
-                121, 95, 90, 112, 109, 6, 166, 126, 145, 13, 62, 52, 68, 248, 135, 223, 119, 137, 13, 0, 0, 0, 0, 21,
-                205, 91, 7, 0, 0, 0, 0,
-            ]
-            .as_slice()
-        )
-        .is_ok()
+    assert!(Block::unpack_strict(
+        &mut vec![
+            2, 2, 140, 28, 186, 52, 147, 145, 96, 9, 105, 89, 78, 139, 3, 71, 249, 97, 149, 190, 63, 238, 168, 202, 82,
+            140, 227, 66, 173, 19, 110, 93, 117, 34, 225, 202, 251, 10, 156, 58, 144, 225, 54, 79, 62, 38, 20, 121, 95,
+            90, 112, 109, 6, 166, 126, 145, 13, 62, 52, 68, 248, 135, 223, 119, 137, 13, 0, 0, 0, 0, 21, 205, 91, 7, 0,
+            0, 0, 0,
+        ]
+        .as_slice(),
+        &mut ()
     )
+    .is_ok())
 }
 
 #[test]
@@ -94,7 +93,8 @@ fn unpack_invalid_remaining_bytes() {
                 121, 95, 90, 112, 109, 6, 166, 126, 145, 13, 62, 52, 68, 248, 135, 223, 119, 137, 13, 0, 0, 0, 0, 21,
                 205, 91, 7, 0, 0, 0, 0, 42
             ]
-            .as_slice()
+            .as_slice(),
+            &mut ()
         ),
         Err(UnpackError::Packable(Error::RemainingBytesAfterBlock))
     ))
@@ -109,7 +109,7 @@ fn pack_unpack_valid() {
     assert_eq!(packed_block.len(), block.packed_len());
     assert_eq!(
         block,
-        PackableExt::unpack_verified(&mut packed_block.as_slice()).unwrap()
+        PackableExt::unpack_verified(&mut packed_block.as_slice(), &mut ()).unwrap()
     );
 }
 

@@ -67,7 +67,7 @@ fn packed_len() {
 fn pack_unpack() {
     let output_id = OutputId::from_str(OUTPUT_ID).unwrap();
     let input_1 = UtxoInput::new(*output_id.transaction_id(), output_id.index()).unwrap();
-    let input_2 = UtxoInput::unpack_verified(&mut input_1.pack_to_vec().as_slice()).unwrap();
+    let input_2 = UtxoInput::unpack_verified(&mut input_1.pack_to_vec().as_slice(), &mut ()).unwrap();
 
     assert_eq!(input_1, input_2);
 }

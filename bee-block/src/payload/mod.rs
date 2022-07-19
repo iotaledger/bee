@@ -116,6 +116,7 @@ impl Deref for OptionalPayload {
 
 impl Packable for OptionalPayload {
     type UnpackError = Error;
+    type UnpackVisitor = ();
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         match &self.0 {
@@ -126,15 +127,16 @@ impl Packable for OptionalPayload {
 
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
+        visitor: &mut Self::UnpackVisitor,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let len = u32::unpack::<_, VERIFY>(unpacker).coerce()? as usize;
+        let len = u32::unpack::<_, VERIFY>(unpacker, visitor).coerce()? as usize;
 
         if len > 0 {
             unpacker.ensure_bytes(len)?;
 
             let start_opt = unpacker.read_bytes();
 
-            let payload = Payload::unpack::<_, VERIFY>(unpacker)?;
+            let payload = Payload::unpack::<_, VERIFY>(unpacker, visitor)?;
 
             let actual_len = if let (Some(start), Some(end)) = (start_opt, unpacker.read_bytes()) {
                 end - start

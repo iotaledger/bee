@@ -29,7 +29,7 @@ futures = { version = "0.3.21", default-features = false }
 hashbrown = { version = "0.12.1", default-features = false }
 iota-crypto = { version = "0.13.0", default-features = false, features = [ "blake2b" ] }
 log = { version = "0.4.17", default-features = false }
-packable = { version = "0.5.0", default-features = false, features = [ "serde", "io" ] }
+packable = { git = "https://github.com/pvdrz/common-rs", rev = "60f4b8b2109362e2c2e7f94d0034a96d21aa2c45", default-features = false, features = [ "serde", "io" ] }
 prefix-hex = { version = "0.4.0", default-features = false }
 ref-cast = { version = "1.0.7", default-features = false }
 reqwest = { version = "0.11.10", default-features = false, features = [ "default-tls", "stream" ] }

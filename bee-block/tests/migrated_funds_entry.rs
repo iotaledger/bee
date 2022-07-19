@@ -56,7 +56,7 @@ fn pack_unpack_valid() {
     let address = Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap());
     let amount = 42424242;
     let mfe_1 = MigratedFundsEntry::new(rand_tail_transaction_hash(), address, amount).unwrap();
-    let mfe_2 = MigratedFundsEntry::unpack_verified(&mut mfe_1.pack_to_vec().as_slice()).unwrap();
+    let mfe_2 = MigratedFundsEntry::unpack_verified(&mut mfe_1.pack_to_vec().as_slice(), &mut ()).unwrap();
 
     assert_eq!(mfe_1.tail_transaction_hash(), mfe_2.tail_transaction_hash());
     assert_eq!(*mfe_1.address(), *mfe_2.address());
@@ -73,7 +73,7 @@ fn pack_unpack_invalid_amount() {
     ];
 
     assert!(matches!(
-        MigratedFundsEntry::unpack_verified(&mut bytes.as_slice()),
+        MigratedFundsEntry::unpack_verified(&mut bytes.as_slice(), &mut ()),
         Err(UnpackError::Packable(Error::InvalidMigratedFundsEntryAmount(
             InvalidBoundedU64(3_038_287_259_199_220_266)
         )))

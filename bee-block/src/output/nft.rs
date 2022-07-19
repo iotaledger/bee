@@ -401,6 +401,7 @@ impl StateTransitionVerifier for NftOutput {
 
 impl Packable for NftOutput {
     type UnpackError = Error;
+    type UnpackVisitor = ();
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         self.amount.pack(packer)?;
@@ -415,23 +416,25 @@ impl Packable for NftOutput {
 
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
+        visitor: &mut Self::UnpackVisitor,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let amount = OutputAmount::unpack::<_, VERIFY>(unpacker).map_packable_err(Error::InvalidOutputAmount)?;
-        let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker)?;
-        let nft_id = NftId::unpack::<_, VERIFY>(unpacker).coerce()?;
-        let unlock_conditions = UnlockConditions::unpack::<_, VERIFY>(unpacker)?;
+        let amount =
+            OutputAmount::unpack::<_, VERIFY>(unpacker, visitor).map_packable_err(Error::InvalidOutputAmount)?;
+        let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker, visitor)?;
+        let nft_id = NftId::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
+        let unlock_conditions = UnlockConditions::unpack::<_, VERIFY>(unpacker, visitor)?;
 
         if VERIFY {
             verify_unlock_conditions(&unlock_conditions, &nft_id).map_err(UnpackError::Packable)?;
         }
 
-        let features = Features::unpack::<_, VERIFY>(unpacker)?;
+        let features = Features::unpack::<_, VERIFY>(unpacker, visitor)?;
 
         if VERIFY {
             verify_allowed_features(&features, NftOutput::ALLOWED_FEATURES).map_err(UnpackError::Packable)?;
         }
 
-        let immutable_features = Features::unpack::<_, VERIFY>(unpacker)?;
+        let immutable_features = Features::unpack::<_, VERIFY>(unpacker, visitor)?;
 
         if VERIFY {
             verify_allowed_features(&immutable_features, NftOutput::ALLOWED_IMMUTABLE_FEATURES)

@@ -22,7 +22,7 @@ fn pack_unpack() {
     let packed = milestone.pack_to_vec();
 
     assert_eq!(
-        MilestoneMetadata::unpack_verified(&mut packed.as_slice()).unwrap(),
+        MilestoneMetadata::unpack_verified(&mut packed.as_slice(), &mut ()).unwrap(),
         milestone
     );
 }

@@ -80,9 +80,9 @@ impl<'a> StorageIterator<'a, u8, System> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (u8, System) {
         (
             // Unpacking from storage is fine.
-            u8::unpack_unverified(&mut key).unwrap(),
+            u8::unpack_unverified(&mut key, &mut ()).unwrap(),
             // Unpacking from storage is fine.
-            System::unpack_unverified(&mut value).unwrap(),
+            System::unpack_unverified(&mut value, &mut ()).unwrap(),
         )
     }
 }
@@ -91,9 +91,9 @@ impl<'a> StorageIterator<'a, BlockId, Block> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (BlockId, Block) {
         (
             // Unpacking from storage is fine.
-            BlockId::unpack_unverified(&mut key).unwrap(),
+            BlockId::unpack_unverified(&mut key, &mut ()).unwrap(),
             // Unpacking from storage is fine.
-            Block::unpack_unverified(&mut value).unwrap(),
+            Block::unpack_unverified(&mut value, &mut ()).unwrap(),
         )
     }
 }
@@ -102,9 +102,9 @@ impl<'a> StorageIterator<'a, BlockId, BlockMetadata> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (BlockId, BlockMetadata) {
         (
             // Unpacking from storage is fine.
-            BlockId::unpack_unverified(&mut key).unwrap(),
+            BlockId::unpack_unverified(&mut key, &mut ()).unwrap(),
             // Unpacking from storage is fine.
-            BlockMetadata::unpack_unverified(&mut value).unwrap(),
+            BlockMetadata::unpack_unverified(&mut value, &mut ()).unwrap(),
         )
     }
 }
@@ -116,9 +116,9 @@ impl<'a> StorageIterator<'a, (BlockId, BlockId), ()> {
         (
             (
                 // Unpacking from storage is fine.
-                BlockId::unpack_unverified(&mut parent).unwrap(),
+                BlockId::unpack_unverified(&mut parent, &mut ()).unwrap(),
                 // Unpacking from storage is fine.
-                BlockId::unpack_unverified(&mut child).unwrap(),
+                BlockId::unpack_unverified(&mut child, &mut ()).unwrap(),
             ),
             (),
         )
@@ -129,9 +129,9 @@ impl<'a> StorageIterator<'a, OutputId, CreatedOutput> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (OutputId, CreatedOutput) {
         (
             // Unpacking from storage is fine.
-            OutputId::unpack_unverified(&mut key).unwrap(),
+            OutputId::unpack_unverified(&mut key, &mut ()).unwrap(),
             // Unpacking from storage is fine.
-            CreatedOutput::unpack_unverified(&mut value).unwrap(),
+            CreatedOutput::unpack_unverified(&mut value, &mut ()).unwrap(),
         )
     }
 }
@@ -140,9 +140,9 @@ impl<'a> StorageIterator<'a, OutputId, ConsumedOutput> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (OutputId, ConsumedOutput) {
         (
             // Unpacking from storage is fine.
-            OutputId::unpack_unverified(&mut key).unwrap(),
+            OutputId::unpack_unverified(&mut key, &mut ()).unwrap(),
             // Unpacking from storage is fine.
-            ConsumedOutput::unpack_unverified(&mut value).unwrap(),
+            ConsumedOutput::unpack_unverified(&mut value, &mut ()).unwrap(),
         )
     }
 }
@@ -151,7 +151,7 @@ impl<'a> StorageIterator<'a, Unspent, ()> {
     fn unpack_key_value(mut key: &[u8], _: &[u8]) -> (Unspent, ()) {
         (
             // Unpacking from storage is fine.
-            Unspent::unpack_unverified(&mut key).unwrap(),
+            Unspent::unpack_unverified(&mut key, &mut ()).unwrap(),
             (),
         )
     }
@@ -164,9 +164,9 @@ impl<'a> StorageIterator<'a, (Ed25519Address, OutputId), ()> {
         (
             (
                 // Unpacking from storage is fine.
-                Ed25519Address::unpack_unverified(&mut address).unwrap(),
+                Ed25519Address::unpack_unverified(&mut address, &mut ()).unwrap(),
                 // Unpacking from storage is fine.
-                OutputId::unpack_unverified(&mut output_id).unwrap(),
+                OutputId::unpack_unverified(&mut output_id, &mut ()).unwrap(),
             ),
             (),
         )
@@ -178,7 +178,7 @@ impl<'a> StorageIterator<'a, (), LedgerIndex> {
         (
             (),
             // Unpacking from storage is fine.
-            LedgerIndex::unpack_unverified(&mut value).unwrap(),
+            LedgerIndex::unpack_unverified(&mut value, &mut ()).unwrap(),
         )
     }
 }
@@ -187,9 +187,9 @@ impl<'a> StorageIterator<'a, MilestoneIndex, MilestoneMetadata> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (MilestoneIndex, MilestoneMetadata) {
         (
             // Unpacking from storage is fine.
-            MilestoneIndex::unpack_unverified(&mut key).unwrap(),
+            MilestoneIndex::unpack_unverified(&mut key, &mut ()).unwrap(),
             // Unpacking from storage is fine.
-            MilestoneMetadata::unpack_unverified(&mut value).unwrap(),
+            MilestoneMetadata::unpack_unverified(&mut value, &mut ()).unwrap(),
         )
     }
 }
@@ -198,9 +198,9 @@ impl<'a> StorageIterator<'a, MilestoneId, MilestonePayload> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (MilestoneId, MilestonePayload) {
         (
             // Unpacking from storage is fine.
-            MilestoneId::unpack_unverified(&mut key).unwrap(),
+            MilestoneId::unpack_unverified(&mut key, &mut ()).unwrap(),
             // Unpacking from storage is fine.
-            MilestonePayload::unpack_unverified(&mut value).unwrap(),
+            MilestonePayload::unpack_unverified(&mut value, &mut ()).unwrap(),
         )
     }
 }
@@ -210,7 +210,7 @@ impl<'a> StorageIterator<'a, (), SnapshotInfo> {
         (
             (),
             // Unpacking from storage is fine.
-            SnapshotInfo::unpack_unverified(&mut value).unwrap(),
+            SnapshotInfo::unpack_unverified(&mut value, &mut ()).unwrap(),
         )
     }
 }
@@ -219,9 +219,9 @@ impl<'a> StorageIterator<'a, SolidEntryPoint, MilestoneIndex> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (SolidEntryPoint, MilestoneIndex) {
         (
             // Unpacking from storage is fine.
-            SolidEntryPoint::unpack_unverified(&mut key).unwrap(),
+            SolidEntryPoint::unpack_unverified(&mut key, &mut ()).unwrap(),
             // Unpacking from storage is fine.
-            MilestoneIndex::unpack_unverified(&mut value).unwrap(),
+            MilestoneIndex::unpack_unverified(&mut value, &mut ()).unwrap(),
         )
     }
 }
@@ -230,9 +230,9 @@ impl<'a> StorageIterator<'a, MilestoneIndex, OutputDiff> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (MilestoneIndex, OutputDiff) {
         (
             // Unpacking from storage is fine.
-            MilestoneIndex::unpack_unverified(&mut key).unwrap(),
+            MilestoneIndex::unpack_unverified(&mut key, &mut ()).unwrap(),
             // Unpacking from storage is fine.
-            OutputDiff::unpack_unverified(&mut value).unwrap(),
+            OutputDiff::unpack_unverified(&mut value, &mut ()).unwrap(),
         )
     }
 }
@@ -244,9 +244,9 @@ impl<'a> StorageIterator<'a, (MilestoneIndex, UnreferencedBlock), ()> {
         (
             (
                 // Unpacking from storage is fine.
-                MilestoneIndex::unpack_unverified(&mut index).unwrap(),
+                MilestoneIndex::unpack_unverified(&mut index, &mut ()).unwrap(),
                 // Unpacking from storage is fine.
-                UnreferencedBlock::unpack_unverified(&mut unreferenced_block).unwrap(),
+                UnreferencedBlock::unpack_unverified(&mut unreferenced_block, &mut ()).unwrap(),
             ),
             (),
         )
@@ -260,9 +260,9 @@ impl<'a> StorageIterator<'a, (MilestoneIndex, Receipt), ()> {
         (
             (
                 // Unpacking from storage is fine.
-                MilestoneIndex::unpack_unverified(&mut index).unwrap(),
+                MilestoneIndex::unpack_unverified(&mut index, &mut ()).unwrap(),
                 // Unpacking from storage is fine.
-                Receipt::unpack_unverified(&mut receipt).unwrap(),
+                Receipt::unpack_unverified(&mut receipt, &mut ()).unwrap(),
             ),
             (),
         )
@@ -276,9 +276,9 @@ impl<'a> StorageIterator<'a, (bool, TreasuryOutput), ()> {
         (
             (
                 // Unpacking from storage is fine.
-                bool::unpack_unverified(&mut index).unwrap(),
+                bool::unpack_unverified(&mut index, &mut ()).unwrap(),
                 // Unpacking from storage is fine.
-                TreasuryOutput::unpack_unverified(&mut receipt).unwrap(),
+                TreasuryOutput::unpack_unverified(&mut receipt, &mut ()).unwrap(),
             ),
             (),
         )

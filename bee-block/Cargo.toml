@@ -29,7 +29,7 @@ hashbrown = { version = "0.12.3", default-features = false, features = [ "ahash"
 hex = { version = "0.4.3", default-features = false, features = [ "alloc" ] }
 iota-crypto = { version = "0.13.0", default-features = false, features = [ "ed25519", "blake2b" ] }
 iterator-sorted = { version = "0.1.0", default-features = false }
-packable = { version = "0.5.0", default-features = false, features = [ "serde", "primitive-types" ] }
+packable = { git = "https://github.com/pvdrz/common-rs", rev = "60f4b8b2109362e2c2e7f94d0034a96d21aa2c45", default-features = false, features = [ "serde", "primitive-types" ] }
 prefix-hex = { version = "0.4.0", default-features = false, features = [ "primitive-types" ] }
 primitive-types = { version = "0.11.1", default-features = false, features = [ "serde" ] }
 serde = { version = "1.0.139", default-features = false, optional = true }

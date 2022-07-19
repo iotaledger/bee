@@ -51,7 +51,7 @@ fn packed_len() {
 #[test]
 fn pack_unpack_valid() {
     let reference_1 = ReferenceUnlock::try_from(42).unwrap();
-    let reference_2 = ReferenceUnlock::unpack_verified(&mut reference_1.pack_to_vec().as_slice()).unwrap();
+    let reference_2 = ReferenceUnlock::unpack_verified(&mut reference_1.pack_to_vec().as_slice(), &mut ()).unwrap();
 
     assert_eq!(reference_1, reference_2);
 }
@@ -59,7 +59,7 @@ fn pack_unpack_valid() {
 #[test]
 fn pack_unpack_invalid_index() {
     assert!(matches!(
-        ReferenceUnlock::unpack_verified(&mut vec![0x2a, 0x2a].as_slice()),
+        ReferenceUnlock::unpack_verified(&mut vec![0x2a, 0x2a].as_slice(), &mut ()),
         Err(UnpackError::Packable(Error::InvalidReferenceIndex(InvalidBoundedU16(
             10794
         ))))

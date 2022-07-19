@@ -102,7 +102,7 @@ fn packed_len() {
 #[test]
 fn pack_unpack_valid() {
     let output_id_1 = OutputId::from_str(OUTPUT_ID).unwrap();
-    let output_id_2 = OutputId::unpack_verified(&mut output_id_1.pack_to_vec().as_slice()).unwrap();
+    let output_id_2 = OutputId::unpack_verified(&mut output_id_1.pack_to_vec().as_slice(), &mut ()).unwrap();
 
     assert_eq!(output_id_1, output_id_2);
 }
@@ -115,7 +115,7 @@ fn pack_unpack_invalid() {
     ];
 
     assert!(matches!(
-        OutputId::unpack_verified(&mut bytes.as_slice()),
+        OutputId::unpack_verified(&mut bytes.as_slice(), &mut ()),
         Err(UnpackError::Packable(Error::InvalidInputOutputIndex(
             InvalidBoundedU16(128)
         )))

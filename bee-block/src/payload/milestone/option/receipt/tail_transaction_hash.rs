@@ -62,6 +62,7 @@ impl fmt::Debug for TailTransactionHash {
 
 impl Packable for TailTransactionHash {
     type UnpackError = Error;
+    type UnpackVisitor = ();
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         packer.pack_bytes(self.as_ref())
@@ -69,8 +70,9 @@ impl Packable for TailTransactionHash {
 
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
+        visitor: &mut Self::UnpackVisitor,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        Self::new(<[u8; TailTransactionHash::LENGTH]>::unpack::<_, VERIFY>(unpacker).coerce()?)
+        Self::new(<[u8; TailTransactionHash::LENGTH]>::unpack::<_, VERIFY>(unpacker, visitor).coerce()?)
             .map_err(UnpackError::Packable)
     }
 }

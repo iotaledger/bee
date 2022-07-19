@@ -119,7 +119,7 @@ where
                     {
                         trace!("Processing received block...");
 
-                        let block = match Block::unpack_strict(&mut &block_packet.bytes[..]) {
+                        let block = match Block::unpack_strict(&mut &block_packet.bytes[..], &mut ()) {
                             Ok(block) => block,
                             Err(e) => {
                                 notify_invalid_block(format!("Invalid block: {:?}.", e), &metrics, notifier);

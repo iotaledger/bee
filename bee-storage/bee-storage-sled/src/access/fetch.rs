@@ -27,7 +27,7 @@ impl Fetch<u8, System> for Storage {
             .inner
             .get(&[key])?
             // Unpacking from storage is fine.
-            .map(|v| System::unpack_unverified(&mut v.as_ref()).unwrap()))
+            .map(|v| System::unpack_unverified(&mut v.as_ref(), &mut ()).unwrap()))
     }
 }
 
@@ -38,7 +38,7 @@ impl Fetch<BlockId, Block> for Storage {
             .open_tree(TREE_BLOCK_ID_TO_BLOCK)?
             .get(block_id)?
             // Unpacking from storage is fine.
-            .map(|v| Block::unpack_unverified(&mut v.as_ref()).unwrap()))
+            .map(|v| Block::unpack_unverified(&mut v.as_ref(), &mut ()).unwrap()))
     }
 }
 
@@ -49,7 +49,7 @@ impl Fetch<BlockId, BlockMetadata> for Storage {
             .open_tree(TREE_BLOCK_ID_TO_METADATA)?
             .get(block_id)?
             // Unpacking from storage is fine.
-            .map(|v| BlockMetadata::unpack_unverified(&mut v.as_ref()).unwrap()))
+            .map(|v| BlockMetadata::unpack_unverified(&mut v.as_ref(), &mut ()).unwrap()))
     }
 }
 
@@ -79,7 +79,7 @@ impl Fetch<OutputId, CreatedOutput> for Storage {
             .open_tree(TREE_OUTPUT_ID_TO_CREATED_OUTPUT)?
             .get(output_id.pack_to_vec())?
             // Unpacking from storage is fine.
-            .map(|v| CreatedOutput::unpack_unverified(&mut v.as_ref()).unwrap()))
+            .map(|v| CreatedOutput::unpack_unverified(&mut v.as_ref(), &mut ()).unwrap()))
     }
 }
 
@@ -90,7 +90,7 @@ impl Fetch<OutputId, ConsumedOutput> for Storage {
             .open_tree(TREE_OUTPUT_ID_TO_CONSUMED_OUTPUT)?
             .get(output_id.pack_to_vec())?
             // Unpacking from storage is fine.
-            .map(|v| ConsumedOutput::unpack_unverified(&mut v.as_ref()).unwrap()))
+            .map(|v| ConsumedOutput::unpack_unverified(&mut v.as_ref(), &mut ()).unwrap()))
     }
 }
 
@@ -121,7 +121,7 @@ impl Fetch<(), LedgerIndex> for Storage {
             .open_tree(TREE_LEDGER_INDEX)?
             .get([0x00u8])?
             // Unpacking from storage is fine.
-            .map(|v| LedgerIndex::unpack_unverified(&mut v.as_ref()).unwrap()))
+            .map(|v| LedgerIndex::unpack_unverified(&mut v.as_ref(), &mut ()).unwrap()))
     }
 }
 
@@ -132,7 +132,7 @@ impl Fetch<MilestoneIndex, MilestoneMetadata> for Storage {
             .open_tree(TREE_MILESTONE_INDEX_TO_MILESTONE_METADATA)?
             .get(index.pack_to_vec())?
             // Unpacking from storage is fine.
-            .map(|v| MilestoneMetadata::unpack_unverified(&mut v.as_ref()).unwrap()))
+            .map(|v| MilestoneMetadata::unpack_unverified(&mut v.as_ref(), &mut ()).unwrap()))
     }
 }
 
@@ -143,7 +143,7 @@ impl Fetch<MilestoneId, MilestonePayload> for Storage {
             .open_tree(TREE_MILESTONE_ID_TO_MILESTONE_PAYLOAD)?
             .get(id.pack_to_vec())?
             // Unpacking from storage is fine.
-            .map(|v| MilestonePayload::unpack_unverified(&mut v.as_ref()).unwrap()))
+            .map(|v| MilestonePayload::unpack_unverified(&mut v.as_ref(), &mut ()).unwrap()))
     }
 }
 
@@ -154,7 +154,7 @@ impl Fetch<(), SnapshotInfo> for Storage {
             .open_tree(TREE_SNAPSHOT_INFO)?
             .get([0x00u8])?
             // Unpacking from storage is fine.
-            .map(|v| SnapshotInfo::unpack_unverified(&mut v.as_ref()).unwrap()))
+            .map(|v| SnapshotInfo::unpack_unverified(&mut v.as_ref(), &mut ()).unwrap()))
     }
 }
 
@@ -165,7 +165,7 @@ impl Fetch<SolidEntryPoint, MilestoneIndex> for Storage {
             .open_tree(TREE_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)?
             .get(sep.as_ref())?
             // Unpacking from storage is fine.
-            .map(|v| MilestoneIndex::unpack_unverified(&mut v.as_ref()).unwrap()))
+            .map(|v| MilestoneIndex::unpack_unverified(&mut v.as_ref(), &mut ()).unwrap()))
     }
 }
 
@@ -176,7 +176,7 @@ impl Fetch<MilestoneIndex, OutputDiff> for Storage {
             .open_tree(TREE_MILESTONE_INDEX_TO_OUTPUT_DIFF)?
             .get(index.pack_to_vec())?
             // Unpacking from storage is fine.
-            .map(|v| OutputDiff::unpack_unverified(&mut v.as_ref()).unwrap()))
+            .map(|v| OutputDiff::unpack_unverified(&mut v.as_ref(), &mut ()).unwrap()))
     }
 }
 
@@ -209,7 +209,7 @@ impl Fetch<MilestoneIndex, Vec<Receipt>> for Storage {
                     let (_, receipt) = key.split_at_mut(std::mem::size_of::<MilestoneIndex>());
                     // Unpacking from storage is fine.
                     #[allow(clippy::useless_asref)]
-                    Ok(Receipt::unpack_unverified(&mut receipt.as_ref()).unwrap())
+                    Ok(Receipt::unpack_unverified(&mut receipt.as_ref(), &mut ()).unwrap())
                 })
                 .collect::<Result<Vec<Receipt>, Self::Error>>()?,
         ))
@@ -227,7 +227,7 @@ impl Fetch<bool, Vec<TreasuryOutput>> for Storage {
                     let (_, output) = key.split_at_mut(std::mem::size_of::<bool>());
                     // Unpacking from storage is fine.
                     #[allow(clippy::useless_asref)]
-                    Ok(TreasuryOutput::unpack_unverified(&mut output.as_ref()).unwrap())
+                    Ok(TreasuryOutput::unpack_unverified(&mut output.as_ref(), &mut ()).unwrap())
                 })
                 .collect::<Result<Vec<TreasuryOutput>, Self::Error>>()?,
         ))

@@ -67,7 +67,7 @@ fn packed_len() {
 #[test]
 fn pack_unpack_valid() {
     let input_1 = TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID_VALID).unwrap());
-    let input_2 = TreasuryInput::unpack_verified(&mut input_1.pack_to_vec().as_slice()).unwrap();
+    let input_2 = TreasuryInput::unpack_verified(&mut input_1.pack_to_vec().as_slice(), &mut ()).unwrap();
 
     assert_eq!(input_1, input_2);
 }

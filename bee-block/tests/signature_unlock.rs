@@ -59,7 +59,7 @@ fn pack_unpack_valid_ed25519() {
         rand_bytes(64).try_into().unwrap(),
     )));
     let signature_bytes = signature_1.pack_to_vec();
-    let signature_2 = SignatureUnlock::unpack_verified(&mut signature_bytes.as_slice()).unwrap();
+    let signature_2 = SignatureUnlock::unpack_verified(&mut signature_bytes.as_slice(), &mut ()).unwrap();
 
     assert_eq!(signature_bytes[0], 0);
     assert_eq!(signature_1, signature_2);
@@ -76,7 +76,8 @@ fn pack_unpack_invalid_kind() {
                 254, 218, 2, 234, 91, 56, 50, 122, 112, 200, 110, 181, 15, 166, 100, 53, 115, 124, 220, 90, 50, 188,
                 45, 124, 67, 30, 124, 38, 34, 89, 92
             ]
-            .as_slice()
+            .as_slice(),
+            &mut ()
         ),
         Err(UnpackError::Packable(Error::InvalidSignatureKind(1)))
     ));

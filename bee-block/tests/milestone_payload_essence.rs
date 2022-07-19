@@ -23,19 +23,17 @@ use packable::PackableExt;
 
 #[test]
 fn new_valid() {
-    assert!(
-        MilestoneEssence::new(
-            MilestoneIndex(0),
-            0,
-            rand_milestone_id(),
-            rand_parents(),
-            rand_merkle_root(),
-            rand_merkle_root(),
-            vec![],
-            MilestoneOptions::new(vec![]).unwrap(),
-        )
-        .is_ok()
-    );
+    assert!(MilestoneEssence::new(
+        MilestoneIndex(0),
+        0,
+        rand_milestone_id(),
+        rand_parents(),
+        rand_merkle_root(),
+        rand_merkle_root(),
+        vec![],
+        MilestoneOptions::new(vec![]).unwrap(),
+    )
+    .is_ok());
 }
 
 #[test]
@@ -124,7 +122,7 @@ fn pack_unpack_valid() {
     let packed = milestone_payload.pack_to_vec();
 
     assert_eq!(
-        MilestoneEssence::unpack_verified(&mut packed.as_slice()).unwrap(),
+        MilestoneEssence::unpack_verified(&mut packed.as_slice(), &mut ()).unwrap(),
         milestone_payload,
     );
 }

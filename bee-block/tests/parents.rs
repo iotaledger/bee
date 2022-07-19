@@ -74,7 +74,7 @@ fn packed_len() {
 #[test]
 fn pack_unpack_valid() {
     let parents_1 = Parents::new(rand_block_ids(8)).unwrap();
-    let parents_2 = Parents::unpack_verified(&mut parents_1.pack_to_vec().as_slice()).unwrap();
+    let parents_2 = Parents::unpack_verified(&mut parents_1.pack_to_vec().as_slice(), &mut ()).unwrap();
 
     assert_eq!(parents_1, parents_2);
 }
@@ -88,7 +88,7 @@ fn pack_unpack_invalid_less_than_min() {
     ];
 
     assert!(matches!(
-        Parents::unpack_verified(&mut bytes.as_slice()),
+        Parents::unpack_verified(&mut bytes.as_slice(), &mut ()),
         Err(UnpackError::Packable(Error::InvalidParentCount(
             TryIntoBoundedU8Error::Invalid(0)
         )))
@@ -104,7 +104,7 @@ fn pack_unpack_invalid_more_than_max() {
     ];
 
     assert!(matches!(
-        Parents::unpack_verified(&mut bytes.as_slice()),
+        Parents::unpack_verified(&mut bytes.as_slice(), &mut ()),
         Err(UnpackError::Packable(Error::InvalidParentCount(
             TryIntoBoundedU8Error::Invalid(9)
         )))
@@ -118,7 +118,7 @@ fn unpack_invalid_not_sorted() {
     let inner = VecPrefix::<_, u8>::try_from(inner).unwrap();
 
     let packed = inner.pack_to_vec();
-    let parents = Parents::unpack_verified(&mut packed.as_slice());
+    let parents = Parents::unpack_verified(&mut packed.as_slice(), &mut ());
 
     assert!(matches!(
         parents,
@@ -133,7 +133,7 @@ fn unpack_invalid_not_unique() {
     let inner = VecPrefix::<_, u8>::try_from(inner).unwrap();
 
     let packed = inner.pack_to_vec();
-    let parents = Parents::unpack_verified(&mut packed.as_slice());
+    let parents = Parents::unpack_verified(&mut packed.as_slice(), &mut ());
 
     assert!(matches!(
         parents,

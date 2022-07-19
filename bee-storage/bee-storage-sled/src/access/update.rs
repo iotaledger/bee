@@ -17,7 +17,7 @@ impl Update<BlockId, BlockMetadata> for Storage {
             .fetch_and_update(block_id, move |opt_bytes| {
                 opt_bytes.map(|mut bytes| {
                     // Unpacking from storage is fine.
-                    let mut metadata = BlockMetadata::unpack_unverified(&mut bytes).unwrap();
+                    let mut metadata = BlockMetadata::unpack_unverified(&mut bytes, &mut ()).unwrap();
                     f(&mut metadata);
                     metadata.pack_to_vec()
                 })
