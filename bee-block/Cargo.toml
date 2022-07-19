@@ -1,6 +1,6 @@
 [package]
 name = "bee-block"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "Implementation of the IOTA protocol block layouts"
