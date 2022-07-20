@@ -14,6 +14,9 @@ mod error;
 mod ledger_index;
 mod migration;
 mod output_diff;
+/// A module that provides utilities for random generation of types.
+#[cfg(feature = "rand")]
+pub mod rand;
 mod receipt;
 mod treasury_diff;
 mod treasury_output;

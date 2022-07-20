@@ -3,13 +3,12 @@
 
 use std::collections::HashMap;
 
-use bee_block::payload::milestone::MilestoneIndex;
-use bee_ledger::types::Receipt;
+use bee_block::{payload::milestone::MilestoneIndex, rand::milestone::rand_milestone_index};
+use bee_ledger_types::{rand::receipt::rand_ledger_receipt, Receipt};
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend,
 };
-use bee_test::rand::{milestone::rand_milestone_index, receipt::rand_ledger_receipt};
 
 pub trait StorageBackend:
     backend::StorageBackend

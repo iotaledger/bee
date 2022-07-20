@@ -19,6 +19,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
-## 0.1.0 - 2022-XX-XX
+## 1.0.0-beta.2 - 2022-07-20
+
+### Added
+
+- `ProtocolParameters` type;
+
+### Changed
+
+- Add "No Native Tokens" rule for storage deposit returns;
+- Rename `ByteCost*` to `Rent*`;
+- Moved random generation of types from `bee-test` to `rand` module within crate;
+
+### Fixed
+
+- Add expiration check for input storage deposit returns selection;
+
+## 1.0.0-beta.1 - 2022-07-19
 
 Initial implementation of the `Block` related TIPs.

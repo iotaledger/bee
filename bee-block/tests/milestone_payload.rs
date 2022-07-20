@@ -4,14 +4,14 @@
 use bee_block::{
     parent::Parents,
     payload::milestone::{MilestoneEssence, MilestoneIndex, MilestoneOptions, MilestonePayload},
+    rand::{
+        block::rand_block_ids,
+        milestone::{rand_merkle_root, rand_milestone_id, rand_milestone_index},
+        number::rand_number,
+        parents::rand_parents,
+    },
     signature::{Ed25519Signature, Signature},
     Error,
-};
-use bee_test::rand::{
-    self,
-    block::rand_block_ids,
-    milestone::{rand_merkle_root, rand_milestone_id},
-    parents::rand_parents,
 };
 use packable::{bounded::TryIntoBoundedU8Error, PackableExt};
 
@@ -137,8 +137,8 @@ fn pack_unpack_valid() {
 #[test]
 fn getters() {
     let essence = MilestoneEssence::new(
-        rand::milestone::rand_milestone_index(),
-        rand::number::rand_number::<u32>(),
+        rand_milestone_index(),
+        rand_number::<u32>(),
         rand_milestone_id(),
         rand_parents(),
         rand_merkle_root(),

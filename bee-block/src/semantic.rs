@@ -9,7 +9,7 @@ use primitive_types::U256;
 use crate::{
     address::Address,
     error::Error,
-    output::{ChainId, FoundryId, InputsCommitment, NativeTokens, Output, OutputId, TokenId, UnlockCondition},
+    output::{ChainId, FoundryId, InputsCommitment, NativeTokens, Output, OutputId, TokenId},
     payload::transaction::{RegularTransactionEssence, TransactionEssence, TransactionId},
     unlock::Unlocks,
 };
@@ -232,15 +232,17 @@ pub fn semantic_validation(
             return Ok(ConflictReason::TimelockNotExpired);
         }
 
-        if let Some(storage_deposit_return) = unlock_conditions.storage_deposit_return() {
-            let amount = context
-                .storage_deposit_returns
-                .entry(*storage_deposit_return.return_address())
-                .or_default();
+        if !unlock_conditions.is_expired(context.milestone_timestamp) {
+            if let Some(storage_deposit_return) = unlock_conditions.storage_deposit_return() {
+                let amount = context
+                    .storage_deposit_returns
+                    .entry(*storage_deposit_return.return_address())
+                    .or_default();
 
-            *amount = amount
-                .checked_add(storage_deposit_return.amount())
-                .ok_or(Error::StorageDepositReturnOverflow)?;
+                *amount = amount
+                    .checked_add(storage_deposit_return.amount())
+                    .ok_or(Error::StorageDepositReturnOverflow)?;
+            }
         }
 
         context.input_amount = context
@@ -261,15 +263,14 @@ pub fn semantic_validation(
     for created_output in context.essence.outputs() {
         let (amount, created_native_tokens, features) = match created_output {
             Output::Basic(output) => {
-                if let [UnlockCondition::Address(address)] = output.unlock_conditions().as_ref() {
-                    if output.features().is_empty() {
-                        let amount = context.simple_deposits.entry(*address.address()).or_default();
+                if let Some(address) = output.simple_deposit_address() {
+                    let amount = context.simple_deposits.entry(*address).or_default();
 
-                        *amount = amount
-                            .checked_add(output.amount())
-                            .ok_or(Error::CreatedAmountOverflow)?;
-                    }
+                    *amount = amount
+                        .checked_add(output.amount())
+                        .ok_or(Error::CreatedAmountOverflow)?;
                 }
+
                 (output.amount(), output.native_tokens(), output.features())
             }
             Output::Alias(output) => (output.amount(), output.native_tokens(), output.features()),

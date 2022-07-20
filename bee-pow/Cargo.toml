@@ -23,4 +23,4 @@ iota-crypto = { version = "0.13.0", default-features = false, features = [ "blak
 thiserror = { version = "1.0.31", default-features = false }
 
 [dev-dependencies]
-bee-test = { path = "../bee-test", default-features = false }
+bee-block = { path = "../bee-block", default-features = false, features = [ "rand" ] }

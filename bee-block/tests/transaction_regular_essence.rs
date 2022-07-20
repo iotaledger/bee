@@ -11,12 +11,12 @@ use bee_block::{
         transaction::{RegularTransactionEssence, TransactionId},
         Payload,
     },
+    rand::{
+        bytes::rand_bytes_array,
+        output::rand_inputs_commitment,
+        payload::{rand_tagged_data_payload, rand_treasury_transaction_payload},
+    },
     Error,
-};
-use bee_test::rand::{
-    bytes::rand_bytes_array,
-    output::rand_inputs_commitment,
-    payload::{rand_tagged_data_payload, rand_treasury_transaction_payload},
 };
 use packable::bounded::TryIntoBoundedU16Error;
 

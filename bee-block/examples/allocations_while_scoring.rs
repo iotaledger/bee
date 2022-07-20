@@ -12,12 +12,11 @@ use std::{
     sync::atomic::{AtomicUsize, Ordering::SeqCst},
 };
 
-use bee_block::BlockBuilder;
+use bee_block::{rand::parents::rand_parents, BlockBuilder};
 use bee_pow::{
     providers::{miner::MinerBuilder, NonceProviderBuilder},
     score::PoWScorer,
 };
-use bee_test::rand::parents::rand_parents;
 use packable::PackableExt;
 
 struct CheckAlloc;

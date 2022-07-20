@@ -1,13 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_block::{payload::milestone::MilestoneIndex, BlockId};
+use bee_block::{payload::milestone::MilestoneIndex, rand::block::rand_block_id, BlockId};
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, InsertStrict, MultiFetch, Truncate, Update},
     backend,
 };
-use bee_tangle::block_metadata::BlockMetadata;
-use bee_test::rand::{block::rand_block_id, block_metadata::rand_block_metadata};
+use bee_tangle::{block_metadata::BlockMetadata, rand::block_metadata::rand_block_metadata};
 
 pub trait StorageBackend:
     backend::StorageBackend

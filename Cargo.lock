@@ -281,12 +281,11 @@ dependencies = [
 
 [[package]]
 name = "bee-block"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 dependencies = [
  "bech32",
  "bee-pow 1.0.0-alpha.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "bee-ternary 1.0.0-alpha.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "bee-test",
  "bitflags",
  "bytemuck",
  "derive_more",
@@ -298,6 +297,7 @@ dependencies = [
  "packable",
  "prefix-hex",
  "primitive-types",
+ "rand 0.8.5",
  "serde",
  "serde-big-array",
  "serde_json",
@@ -355,7 +355,7 @@ dependencies = [
 
 [[package]]
 name = "bee-ledger-types"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 dependencies = [
  "bee-block",
  "packable",
@@ -479,8 +479,8 @@ dependencies = [
 name = "bee-pow"
 version = "1.0.0-alpha.1"
 dependencies = [
+ "bee-block",
  "bee-ternary 1.0.0-alpha.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "bee-test",
  "iota-crypto",
  "thiserror",
 ]
@@ -601,7 +601,6 @@ dependencies = [
  "bee-storage",
  "bee-storage-test",
  "bee-tangle",
- "bee-test",
  "serde",
  "thiserror",
 ]
@@ -622,7 +621,6 @@ dependencies = [
  "bee-storage",
  "bee-storage-test",
  "bee-tangle",
- "bee-test",
  "num_cpus",
  "packable",
  "parking_lot 0.12.1",
@@ -640,7 +638,6 @@ dependencies = [
  "bee-storage",
  "bee-storage-test",
  "bee-tangle",
- "bee-test",
  "num_cpus",
  "packable",
  "serde",
@@ -653,7 +650,7 @@ name = "bee-storage-test"
 version = "0.6.0"
 dependencies = [
  "bee-block",
- "bee-ledger",
+ "bee-ledger-types",
  "bee-storage",
  "bee-tangle",
  "bee-test",
@@ -669,7 +666,6 @@ dependencies = [
  "bee-runtime",
  "bee-storage",
  "bee-storage-null",
- "bee-test",
  "bitflags",
  "criterion",
  "futures",
@@ -708,13 +704,8 @@ dependencies = [
 name = "bee-test"
 version = "0.1.0"
 dependencies = [
- "bee-block",
- "bee-ledger-types",
- "bee-tangle",
  "bee-ternary 1.0.0-alpha.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "bytemuck",
  "hex",
- "primitive-types",
  "rand 0.8.5",
  "serde",
  "serde_json",

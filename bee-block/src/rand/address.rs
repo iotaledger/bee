@@ -1,12 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_block::{
+use crate::{
     address::{Address, AliasAddress, Ed25519Address, NftAddress},
     output::{AliasId, NftId},
+    rand::{bytes::rand_bytes_array, number::rand_number},
 };
-
-use crate::rand::{bytes::rand_bytes_array, number::rand_number};
 
 /// Generates a random Ed25519 address.
 pub fn rand_ed25519_address() -> Ed25519Address {
