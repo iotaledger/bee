@@ -359,10 +359,7 @@ name = "bee-ledger-types"
 version = "1.0.0-beta.2"
 dependencies = [
  "bee-block",
- "bee-ternary 1.0.0-alpha.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "bytemuck",
  "packable",
- "rand 0.8.5",
  "thiserror",
 ]
 
