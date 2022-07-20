@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Add "No Native Tokens" rule for storage deposit returns;
+- Moved random generation of types from `bee-test` to `rand` module within crate;
 
 ### Fixed
 
