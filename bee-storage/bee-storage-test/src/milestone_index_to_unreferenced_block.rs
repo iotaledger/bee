@@ -3,13 +3,12 @@
 
 use std::collections::HashMap;
 
-use bee_block::payload::milestone::MilestoneIndex;
+use bee_block::{payload::milestone::MilestoneIndex, rand::milestone::rand_milestone_index};
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend,
 };
-use bee_tangle::unreferenced_block::UnreferencedBlock;
-use bee_test::rand::{milestone::rand_milestone_index, unreferenced_block::rand_unreferenced_block};
+use bee_tangle::{rand::unreferenced_block::rand_unreferenced_block, unreferenced_block::UnreferencedBlock};
 
 pub trait StorageBackend:
     backend::StorageBackend

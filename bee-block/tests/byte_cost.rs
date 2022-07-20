@@ -1,8 +1,10 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_block::output::{ByteCost, ByteCostConfig, ByteCostConfigBuilder, Output};
-use bee_test::rand::output::{rand_alias_output, rand_basic_output, rand_foundry_output, rand_nft_output};
+use bee_block::{
+    output::{ByteCost, ByteCostConfig, ByteCostConfigBuilder, Output},
+    rand::output::{rand_alias_output, rand_basic_output, rand_foundry_output, rand_nft_output},
+};
 
 const BYTE_COST: u64 = 1;
 const FACTOR_KEY: u64 = 10;

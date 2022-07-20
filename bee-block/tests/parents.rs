@@ -3,8 +3,11 @@
 
 use core::ops::Deref;
 
-use bee_block::{parent::Parents, BlockId, Error};
-use bee_test::rand::block::{rand_block_id, rand_block_ids};
+use bee_block::{
+    parent::Parents,
+    rand::block::{rand_block_id, rand_block_ids},
+    BlockId, Error,
+};
 use packable::{bounded::TryIntoBoundedU8Error, error::UnpackError, prefix::VecPrefix, PackableExt};
 
 #[test]

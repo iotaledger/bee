@@ -3,12 +3,13 @@
 
 use std::collections::HashMap;
 
+use bee_block::rand::bool::rand_bool;
 use bee_ledger::types::TreasuryOutput;
+use bee_ledger_types::rand::output::rand_ledger_treasury_output;
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend,
 };
-use bee_test::rand::{bool::rand_bool, output::rand_ledger_treasury_output};
 
 pub trait StorageBackend:
     backend::StorageBackend

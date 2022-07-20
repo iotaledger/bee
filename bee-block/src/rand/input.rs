@@ -1,9 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_block::input::{Input, TreasuryInput, UtxoInput};
-
-use crate::rand::{milestone::rand_milestone_id, number::rand_number, output::rand_output_id};
+use crate::{
+    input::{Input, TreasuryInput, UtxoInput},
+    rand::{milestone::rand_milestone_id, number::rand_number, output::rand_output_id},
+};
 
 /// Generates a random Utxo input.
 pub fn rand_utxo_input() -> UtxoInput {

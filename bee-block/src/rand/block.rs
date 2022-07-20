@@ -1,10 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_block::{parent::Parents, Block, BlockBuilder, BlockId};
-
-use crate::rand::{
-    bytes::rand_bytes_array, number::rand_number, parents::rand_parents, payload::rand_payload_for_block,
+use crate::{
+    parent::Parents,
+    rand::{bytes::rand_bytes_array, number::rand_number, parents::rand_parents, payload::rand_payload_for_block},
+    Block, BlockBuilder, BlockId,
 };
 
 /// Generates a random block id.

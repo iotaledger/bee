@@ -1,6 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_block::rand::bytes::rand_bytes;
 use bee_pow::{
     providers::{
         miner::{MinerBuilder, MinerCancel},
@@ -8,7 +9,6 @@ use bee_pow::{
     },
     score::PoWScorer,
 };
-use bee_test::rand::bytes::rand_bytes;
 
 #[test]
 fn miner_provide() {
