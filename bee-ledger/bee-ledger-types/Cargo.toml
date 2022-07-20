@@ -17,7 +17,7 @@ all-features = true
 rustdoc-args = [ "--cfg", "doc_cfg" ]
 
 [dependencies]
-bee-block = { version = "1.0.0-beta.2", path = "../../bee-block", default-features = false, features = [ "std", "rand" ] }
+bee-block = { version = "1.0.0-beta.2", path = "../../bee-block", default-features = false, features = [ "std" ] }
 bee-ternary = { version = "1.0.0-alpha.1", default-features = false, features = [ "serde" ], optional = true }
 
 bytemuck = { version = "1.9.1", default-features = false, optional = true }
@@ -26,4 +26,9 @@ rand = { version = "0.8.5", default-features = false, features = [ "min_const_ge
 thiserror = { version = "1.0.31", default-features = false }
 
 [features]
-rand = [ "dep:bee-ternary", "dep:bytemuck", "dep:rand" ]
+rand = [
+    "bee-block/rand",
+    "dep:bee-ternary",
+    "dep:bytemuck",
+    "dep:rand",
+]
