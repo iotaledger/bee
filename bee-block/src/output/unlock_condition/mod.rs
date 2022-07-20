@@ -249,6 +249,15 @@ impl UnlockConditions {
             None => false,
         }
     }
+
+    /// Returns whether an expiration exists and is expired.
+    #[inline(always)]
+    pub fn is_expired(&self, milestone_timestamp: u32) -> bool {
+        match self.expiration() {
+            Some(expiration) => milestone_timestamp >= expiration.timestamp(),
+            None => false,
+        }
+    }
 }
 
 #[inline]

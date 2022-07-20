@@ -232,15 +232,17 @@ pub fn semantic_validation(
             return Ok(ConflictReason::TimelockNotExpired);
         }
 
-        if let Some(storage_deposit_return) = unlock_conditions.storage_deposit_return() {
-            let amount = context
-                .storage_deposit_returns
-                .entry(*storage_deposit_return.return_address())
-                .or_default();
+        if !unlock_conditions.is_expired(context.milestone_timestamp) {
+            if let Some(storage_deposit_return) = unlock_conditions.storage_deposit_return() {
+                let amount = context
+                    .storage_deposit_returns
+                    .entry(*storage_deposit_return.return_address())
+                    .or_default();
 
-            *amount = amount
-                .checked_add(storage_deposit_return.amount())
-                .ok_or(Error::StorageDepositReturnOverflow)?;
+                *amount = amount
+                    .checked_add(storage_deposit_return.amount())
+                    .ok_or(Error::StorageDepositReturnOverflow)?;
+            }
         }
 
         context.input_amount = context
