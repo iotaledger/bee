@@ -76,9 +76,9 @@ impl RentStructureBuilder {
 pub struct RentStructure {
     /// Cost in tokens per virtual byte.
     pub v_byte_cost: u32,
-    /// The weight factor used for key fields in the ouputs.
+    /// The weight factor used for key fields in the outputs.
     pub v_byte_factor_key: u8,
-    /// The weight factor used for data fields in the ouputs.
+    /// The weight factor used for data fields in the outputs.
     pub v_byte_factor_data: u8,
     /// The offset in addition to the other fields.
     v_byte_offset: u32,
