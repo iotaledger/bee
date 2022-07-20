@@ -36,7 +36,7 @@ impl BasicOutputBuilder {
         ))
     }
 
-    /// Creates an [`BasicOutputBuilder`] with a provided byte cost config.
+    /// Creates an [`BasicOutputBuilder`] with a provided rent structure.
     /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
     pub fn new_with_minimum_storage_deposit(rent_structure: RentStructure) -> Result<Self, Error> {
@@ -211,7 +211,7 @@ impl BasicOutput {
         BasicOutputBuilder::new_with_amount(amount)?.finish()
     }
 
-    /// Creates a new [`BasicOutput`] with a provided byte cost config.
+    /// Creates a new [`BasicOutput`] with a provided rent structure.
     /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
     pub fn new_with_minimum_storage_deposit(rent_structure: RentStructure) -> Result<Self, Error> {
@@ -224,7 +224,7 @@ impl BasicOutput {
         BasicOutputBuilder::new_with_amount(amount)
     }
 
-    /// Creates a new [`BasicOutputBuilder`] with a provided byte cost config.
+    /// Creates a new [`BasicOutputBuilder`] with a provided rent structure.
     /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
     pub fn build_with_minimum_storage_deposit(rent_structure: RentStructure) -> Result<BasicOutputBuilder, Error> {

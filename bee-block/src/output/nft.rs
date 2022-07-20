@@ -278,7 +278,7 @@ impl NftOutput {
         NftOutputBuilder::new_with_amount(amount, nft_id)
     }
 
-    /// Creates a new [`NftOutputBuilder`] with a provided byte cost config.
+    /// Creates a new [`NftOutputBuilder`] with a provided rent structure.
     /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
     pub fn build_with_minimum_storage_deposit(

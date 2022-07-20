@@ -51,7 +51,7 @@ impl FoundryOutputBuilder {
         )
     }
 
-    /// Creates a [`FoundryOutputBuilder`] with a provided byte cost config.
+    /// Creates a [`FoundryOutputBuilder`] with a provided rent structure.
     /// The amount will be set to the minimum storage deposit.
     pub fn new_with_minimum_storage_deposit(
         rent_structure: RentStructure,
@@ -287,7 +287,7 @@ impl FoundryOutput {
         FoundryOutputBuilder::new_with_amount(amount, serial_number, token_scheme)?.finish()
     }
 
-    /// Creates a new [`FoundryOutput`] with a provided byte cost config.
+    /// Creates a new [`FoundryOutput`] with a provided rent structure.
     /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
     pub fn new_with_minimum_storage_deposit(
@@ -308,7 +308,7 @@ impl FoundryOutput {
         FoundryOutputBuilder::new_with_amount(amount, serial_number, token_scheme)
     }
 
-    /// Creates a new [`FoundryOutputBuilder`] with a provided byte cost config.
+    /// Creates a new [`FoundryOutputBuilder`] with a provided rent structure.
     /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
     pub fn build_with_minimum_storage_deposit(

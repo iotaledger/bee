@@ -49,7 +49,7 @@ impl AliasOutputBuilder {
         )
     }
 
-    /// Creates an [`AliasOutputBuilder`] with a provided byte cost config.
+    /// Creates an [`AliasOutputBuilder`] with a provided rent structure.
     /// The amount will be set to the minimum storage deposit.
     pub fn new_with_minimum_storage_deposit(
         rent_structure: RentStructure,
@@ -319,7 +319,7 @@ impl AliasOutput {
         AliasOutputBuilder::new_with_amount(amount, alias_id)?.finish()
     }
 
-    /// Creates a new [`AliasOutput`] with a provided byte cost config.
+    /// Creates a new [`AliasOutput`] with a provided rent structure.
     /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
     pub fn new_with_minimum_storage_deposit(rent_structure: RentStructure, alias_id: AliasId) -> Result<Self, Error> {
@@ -332,7 +332,7 @@ impl AliasOutput {
         AliasOutputBuilder::new_with_amount(amount, alias_id)
     }
 
-    /// Creates a new [`AliasOutputBuilder`] with a provided byte cost config.
+    /// Creates a new [`AliasOutputBuilder`] with a provided rent structure.
     /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
     pub fn build_with_minimum_storage_deposit(
