@@ -5,8 +5,6 @@
 pub mod address;
 /// Module providing random block generation utilities.
 pub mod block;
-/// Module providing random block metadata generation utilities.
-pub mod block_metadata;
 /// Module providing random boolean generation utilities.
 pub mod bool;
 /// Module providing random byte generation utilities.
@@ -23,21 +21,13 @@ pub mod number;
 pub mod option;
 /// Module providing random output generation utilities.
 pub mod output;
-/// Module providing random output diff generation utilities.
-pub mod output_diff;
 /// Module providing random parents generation utilities.
 pub mod parents;
 /// Module providing random payload generation utilities.
 pub mod payload;
 /// Module providing random receipt generation utilities.
 pub mod receipt;
-/// Module providing random snapshot generation utilities.
-pub mod snapshot;
-/// Module providing random solid entry point generation utilities.
-pub mod solid_entry_point;
 /// Module providing random string generation utilities.
 pub mod string;
 /// Module providing random transaction generation utilities.
 pub mod transaction;
-/// Module providing random unreferenced block generation utilities.
-pub mod unreferenced_block;

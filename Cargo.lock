@@ -298,6 +298,7 @@ dependencies = [
  "packable",
  "prefix-hex",
  "primitive-types",
+ "rand 0.8.5",
  "serde",
  "serde-big-array",
  "serde_json",
@@ -358,7 +359,10 @@ name = "bee-ledger-types"
 version = "1.0.0-beta.2"
 dependencies = [
  "bee-block",
+ "bee-ternary 1.0.0-alpha.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bytemuck",
  "packable",
+ "rand 0.8.5",
  "thiserror",
 ]
 
@@ -479,8 +483,8 @@ dependencies = [
 name = "bee-pow"
 version = "1.0.0-alpha.1"
 dependencies = [
+ "bee-block",
  "bee-ternary 1.0.0-alpha.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "bee-test",
  "iota-crypto",
  "thiserror",
 ]
@@ -654,9 +658,9 @@ version = "0.6.0"
 dependencies = [
  "bee-block",
  "bee-ledger",
+ "bee-ledger-types",
  "bee-storage",
  "bee-tangle",
- "bee-test",
  "packable",
 ]
 
@@ -666,6 +670,7 @@ version = "0.3.0"
 dependencies = [
  "async-trait",
  "bee-block",
+ "bee-ledger-types",
  "bee-runtime",
  "bee-storage",
  "bee-storage-null",

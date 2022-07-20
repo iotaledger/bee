@@ -1,13 +1,15 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_block::semantic::ConflictReason;
-use bee_tangle::{
+use bee_block::{
+    rand::{block::rand_block_id, milestone::rand_milestone_index, number::rand_number, option::rand_option},
+    semantic::ConflictReason,
+};
+
+use crate::{
     block_metadata::{BlockMetadata, IndexId},
     flags::Flags,
 };
-
-use crate::rand::{block::rand_block_id, milestone::rand_milestone_index, number::rand_number, option::rand_option};
 
 /// Generates a random conflict reason.
 /// It leaves out [`ConflictReason::SemanticValidationFailed`] as it is just a placeholder defined by the protocol but

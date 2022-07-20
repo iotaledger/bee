@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_ledger::types::snapshot::SnapshotInfo;
+use bee_ledger_types::rand::snapshot::rand_snapshot_info;
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend,
 };
-use bee_test::rand::snapshot::rand_snapshot_info;
 
 pub trait StorageBackend:
     backend::StorageBackend

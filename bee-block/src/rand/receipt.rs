@@ -1,14 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_block::payload::milestone::option::{MigratedFundsEntry, TailTransactionHash};
-use bee_ledger_types::Receipt;
 use bee_ternary::{T5B1Buf, Tryte, TryteBuf};
 use bytemuck::cast_slice;
 
-use crate::rand::{
-    address::rand_address, milestone::rand_milestone_index, milestone_option::rand_receipt_milestone_option,
-    number::rand_number_range, string::rand_string_charset,
+use crate::{
+    payload::milestone::option::{MigratedFundsEntry, TailTransactionHash},
+    rand::{address::rand_address, number::rand_number_range, string::rand_string_charset},
 };
 
 /// Generates a random tail transaction hash.
@@ -32,9 +30,4 @@ pub fn rand_migrated_funds_entry() -> MigratedFundsEntry {
         rand_number_range(MigratedFundsEntry::AMOUNT_RANGE),
     )
     .unwrap()
-}
-
-/// Generates a random ledger receipt.
-pub fn rand_ledger_receipt() -> Receipt {
-    Receipt::new(rand_receipt_milestone_option(), rand_milestone_index())
 }

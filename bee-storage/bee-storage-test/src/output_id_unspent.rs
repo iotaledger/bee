@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_ledger::types::Unspent;
+use bee_ledger_types::rand::output::rand_unspent_output_id;
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Insert, Truncate},
     backend,
 };
-use bee_test::rand::output::rand_unspent_output_id;
 
 pub trait StorageBackend:
     backend::StorageBackend
