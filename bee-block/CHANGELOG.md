@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Add no Native Tokens rule for simple deposit returns;
+- Add no Native Tokens rule for storage deposit returns;
 
 ## 1.0.0-beta.1 - 2022-07-19
 
