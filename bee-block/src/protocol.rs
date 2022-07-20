@@ -9,7 +9,7 @@ use crate::{output::RentStructure, Error};
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Packable)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error)]
-pub struct ProtocolParemeters {
+pub struct ProtocolParameters {
     // The version of the protocol running.
     version: u8,
     // The human friendly name of the network.
