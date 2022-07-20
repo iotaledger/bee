@@ -235,7 +235,7 @@ checksum = "c5738be7561b0eeb501ef1d5c5db3f24e01ceb55fededd9b00039aada34966ad"
 
 [[package]]
 name = "bee-api-types"
-version = "1.0.0-alpha.1"
+version = "1.0.0-beta.1"
 dependencies = [
  "axum",
  "bee-block",
@@ -531,7 +531,7 @@ dependencies = [
 
 [[package]]
 name = "bee-protocol-types"
-version = "1.0.0-alpha.1"
+version = "1.0.0-beta.1"
 dependencies = [
  "bee-block",
  "bee-gossip",
@@ -653,7 +653,6 @@ dependencies = [
  "bee-ledger-types",
  "bee-storage",
  "bee-tangle",
- "bee-test",
  "packable",
 ]
 
