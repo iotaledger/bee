@@ -14,9 +14,9 @@ use bee_block::{
         },
         TreasuryTransactionPayload,
     },
+    rand::number::rand_number,
     Error,
 };
-use bee_test::rand::number::rand_number;
 use packable::{bounded::TryIntoBoundedU16Error, PackableExt};
 
 const AMOUNT: u64 = 1_000_000;

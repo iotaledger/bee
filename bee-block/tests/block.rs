@@ -5,6 +5,12 @@ use bee_block::{
     constant::PROTOCOL_VERSION,
     parent::Parents,
     payload::{Payload, TaggedDataPayload},
+    rand::{
+        block::rand_block_ids,
+        number::rand_number,
+        parents::rand_parents,
+        payload::{rand_tagged_data_payload, rand_treasury_transaction_payload},
+    },
     Block, BlockBuilder, Error,
 };
 use bee_pow::{
@@ -13,12 +19,6 @@ use bee_pow::{
         NonceProviderBuilder,
     },
     score::PoWScorer,
-};
-use bee_test::rand::{
-    block::rand_block_ids,
-    number::rand_number,
-    parents::rand_parents,
-    payload::{rand_tagged_data_payload, rand_treasury_transaction_payload},
 };
 use packable::{error::UnpackError, PackableExt};
 

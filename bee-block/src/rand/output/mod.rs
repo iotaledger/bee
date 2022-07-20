@@ -11,7 +11,8 @@ use primitive_types::U256;
 use crate::{
     output::{
         unlock_condition::ImmutableAliasAddressUnlockCondition, AliasId, AliasOutput, BasicOutput, FoundryOutput,
-        NftId, NftOutput, Output, OutputId, SimpleTokenScheme, TokenScheme, TreasuryOutput, OUTPUT_INDEX_RANGE,
+        InputsCommitment, NftId, NftOutput, Output, OutputId, SimpleTokenScheme, TokenScheme, TreasuryOutput,
+        OUTPUT_INDEX_RANGE,
     },
     rand::{
         address::rand_alias_address,
@@ -110,6 +111,11 @@ pub fn rand_nft_output() -> NftOutput {
         .add_unlock_condition(rand_address_unlock_condition_different_from(&nft_id).into())
         .finish()
         .unwrap()
+}
+
+/// Generates a random [`InputsCommitment`].
+pub fn rand_inputs_commitment() -> InputsCommitment {
+    InputsCommitment::from(rand_bytes_array())
 }
 
 /// Generates a random [`Output`].

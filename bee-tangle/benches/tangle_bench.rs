@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_block::{
-    rand::{block::rand_block, block_metadata::rand_block_metadata, number::rand_number},
+    rand::{block::rand_block, number::rand_number},
     semantic::ConflictReason,
     Block, BlockId,
 };
 use bee_runtime::resource::ResourceHandle;
 use bee_storage_null::Storage as NullStorage;
-use bee_tangle::{block_metadata::BlockMetadata, config::TangleConfig, Tangle};
+use bee_tangle::{
+    block_metadata::BlockMetadata, config::TangleConfig, rand::block_metadata::rand_block_metadata, Tangle,
+};
 use criterion::*;
 use rand::seq::SliceRandom;
 
