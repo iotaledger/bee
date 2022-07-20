@@ -44,7 +44,7 @@ impl NftOutputBuilder {
         )
     }
 
-    /// Creates an [`NftOutputBuilder`] with a provided byte cost config.
+    /// Creates an [`NftOutputBuilder`] with a provided rent structure.
     /// The amount will be set to the minimum storage deposit.
     pub fn new_with_minimum_storage_deposit(
         rent_structure: RentStructure,
