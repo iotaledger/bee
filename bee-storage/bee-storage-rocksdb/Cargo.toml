@@ -31,4 +31,3 @@ thiserror = { version = "1.0.31", default-features = false }
 
 [dev-dependencies]
 bee-storage-test = { path = "../bee-storage-test", default-features = false }
-bee-test = { path = "../../bee-test", default-features = false }

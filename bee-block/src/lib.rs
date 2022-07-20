@@ -35,6 +35,9 @@ pub mod parent;
 pub mod payload;
 /// A module that provides types and syntactic validations of protocol parameters.
 pub mod protocol;
+/// A module that provides utilities for random generation of types.
+#[cfg(feature = "rand")]
+pub mod rand;
 /// A module that provides types and rules for semantic validation.
 pub mod semantic;
 /// A module that provides types and syntactic validations of signatures.

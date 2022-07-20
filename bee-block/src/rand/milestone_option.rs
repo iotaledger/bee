@@ -1,11 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_block::payload::milestone::ReceiptMilestoneOption;
-
-use crate::rand::{
-    bool::rand_bool, milestone::rand_milestone_index, payload::rand_treasury_transaction_payload,
-    receipt::rand_migrated_funds_entry,
+use crate::{
+    payload::milestone::ReceiptMilestoneOption,
+    rand::{
+        bool::rand_bool, milestone::rand_milestone_index, payload::rand_treasury_transaction_payload,
+        receipt::rand_migrated_funds_entry,
+    },
 };
 
 /// Generates a random receipt milestone option.

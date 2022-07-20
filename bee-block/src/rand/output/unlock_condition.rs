@@ -1,7 +1,7 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_block::{
+use crate::{
     address::Address,
     output::{
         unlock_condition::{
@@ -9,9 +9,8 @@ use bee_block::{
         },
         AliasId, NftId,
     },
+    rand::address::{rand_address, rand_alias_address, rand_nft_address},
 };
-
-use crate::rand::address::{rand_address, rand_alias_address, rand_nft_address};
 
 /// Generates a random [`AddressUnlockCondition`].
 pub fn rand_address_unlock_condition() -> AddressUnlockCondition {

@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add "No Native Tokens" rule for storage deposit returns;
 - Rename `ByteCost*` to `Rent*`;
+- Moved random generation of types from `bee-test` to `rand` module within crate;
 
 ### Fixed
 

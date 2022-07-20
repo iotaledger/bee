@@ -1,8 +1,10 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_block::output::{Output, Rent, RentStructure, RentStructureBuilder};
-use bee_test::rand::output::{rand_alias_output, rand_basic_output, rand_foundry_output, rand_nft_output};
+use bee_block::{
+    output::{Output, Rent, RentStructure, RentStructureBuilder},
+    rand::output::{rand_alias_output, rand_basic_output, rand_foundry_output, rand_nft_output},
+};
 
 const BYTE_COST: u32 = 1;
 const FACTOR_KEY: u8 = 10;

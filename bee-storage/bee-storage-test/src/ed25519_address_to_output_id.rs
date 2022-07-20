@@ -3,12 +3,15 @@
 
 use std::collections::HashMap;
 
-use bee_block::{address::Ed25519Address, output::OutputId};
+use bee_block::{
+    address::Ed25519Address,
+    output::OutputId,
+    rand::{address::rand_ed25519_address, output::rand_output_id},
+};
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend,
 };
-use bee_test::rand::{address::rand_ed25519_address, output::rand_output_id};
 
 pub trait StorageBackend:
     backend::StorageBackend

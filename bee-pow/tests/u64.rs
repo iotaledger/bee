@@ -1,8 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_block::rand::bytes::rand_bytes;
 use bee_pow::providers::NonceProvider;
-use bee_test::rand::bytes::rand_bytes;
 
 #[test]
 fn constant_provide() {
