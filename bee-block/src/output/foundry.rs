@@ -16,8 +16,8 @@ use crate::{
     output::{
         feature::{verify_allowed_features, Feature, FeatureFlags, Features},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        ByteCost, ByteCostConfig, ChainId, FoundryId, NativeToken, NativeTokens, Output, OutputAmount,
-        OutputBuilderAmount, OutputId, StateTransitionError, StateTransitionVerifier, TokenId, TokenScheme,
+        ChainId, FoundryId, NativeToken, NativeTokens, Output, OutputAmount, OutputBuilderAmount, OutputId, Rent,
+        RentStructure, StateTransitionError, StateTransitionVerifier, TokenId, TokenScheme,
     },
     semantic::{ConflictReason, ValidationContext},
     unlock::Unlock,
@@ -54,12 +54,12 @@ impl FoundryOutputBuilder {
     /// Creates a [`FoundryOutputBuilder`] with a provided byte cost config.
     /// The amount will be set to the minimum storage deposit.
     pub fn new_with_minimum_storage_deposit(
-        byte_cost_config: ByteCostConfig,
+        rent_structure: RentStructure,
         serial_number: u32,
         token_scheme: TokenScheme,
     ) -> Result<FoundryOutputBuilder, Error> {
         Self::new(
-            OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config),
+            OutputBuilderAmount::MinimumStorageDeposit(rent_structure),
             serial_number,
             token_scheme,
         )
@@ -90,8 +90,8 @@ impl FoundryOutputBuilder {
 
     /// Sets the amount to the minimum storage deposit.
     #[inline(always)]
-    pub fn with_minimum_storage_deposit(mut self, byte_cost_config: ByteCostConfig) -> Self {
-        self.amount = OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config);
+    pub fn with_minimum_storage_deposit(mut self, rent_structure: RentStructure) -> Self {
+        self.amount = OutputBuilderAmount::MinimumStorageDeposit(rent_structure);
         self
     }
 
@@ -226,8 +226,8 @@ impl FoundryOutputBuilder {
 
         output.amount = match self.amount {
             OutputBuilderAmount::Amount(amount) => amount,
-            OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config) => Output::Foundry(output.clone())
-                .byte_cost(&byte_cost_config)
+            OutputBuilderAmount::MinimumStorageDeposit(rent_structure) => Output::Foundry(output.clone())
+                .rent_cost(&rent_structure)
                 .try_into()
                 .map_err(Error::InvalidOutputAmount)?,
         };
@@ -291,11 +291,11 @@ impl FoundryOutput {
     /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
     pub fn new_with_minimum_storage_deposit(
-        byte_cost_config: ByteCostConfig,
+        rent_structure: RentStructure,
         serial_number: u32,
         token_scheme: TokenScheme,
     ) -> Result<Self, Error> {
-        FoundryOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config, serial_number, token_scheme)?.finish()
+        FoundryOutputBuilder::new_with_minimum_storage_deposit(rent_structure, serial_number, token_scheme)?.finish()
     }
 
     /// Creates a new [`FoundryOutputBuilder`] with a provided amount.
@@ -312,11 +312,11 @@ impl FoundryOutput {
     /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
     pub fn build_with_minimum_storage_deposit(
-        byte_cost_config: ByteCostConfig,
+        rent_structure: RentStructure,
         serial_number: u32,
         token_scheme: TokenScheme,
     ) -> Result<FoundryOutputBuilder, Error> {
-        FoundryOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config, serial_number, token_scheme)
+        FoundryOutputBuilder::new_with_minimum_storage_deposit(rent_structure, serial_number, token_scheme)
     }
 
     ///
@@ -701,12 +701,8 @@ pub mod dto {
                     serial_number,
                     token_scheme,
                 )?,
-                OutputBuilderAmountDto::MinimumStorageDeposit(byte_cost_config) => {
-                    FoundryOutputBuilder::new_with_minimum_storage_deposit(
-                        byte_cost_config,
-                        serial_number,
-                        token_scheme,
-                    )?
+                OutputBuilderAmountDto::MinimumStorageDeposit(rent_structure) => {
+                    FoundryOutputBuilder::new_with_minimum_storage_deposit(rent_structure, serial_number, token_scheme)?
                 }
             };
 

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_block::{
-    output::{ByteCostConfig, ByteCostConfigBuilder},
+    output::{RentStructure, RentStructureBuilder},
     payload::milestone::MilestoneIndex,
 };
 use serde::Deserialize;
@@ -44,8 +44,7 @@ pub struct ProtocolConfigBuilder {
     minimum_pow_score: Option<f64>,
     coordinator: ProtocolCoordinatorConfigBuilder,
     workers: ProtocolWorkersConfigBuilder,
-    #[serde(alias = "byteCost")]
-    byte_cost: ByteCostConfigBuilder,
+    rent: RentStructureBuilder,
 }
 
 impl ProtocolConfigBuilder {
@@ -115,7 +114,7 @@ impl ProtocolConfigBuilder {
                     .milestone_sync_count
                     .unwrap_or(DEFAULT_MILESTONE_SYNC_COUNT),
             },
-            byte_cost: self.byte_cost.finish(),
+            rent: self.rent.finish(),
         }
     }
 }
@@ -141,7 +140,7 @@ pub struct ProtocolConfig {
     pub(crate) minimum_pow_score: f64,
     pub(crate) coordinator: ProtocolCoordinatorConfig,
     pub(crate) workers: ProtocolWorkersConfig,
-    pub(crate) byte_cost: ByteCostConfig,
+    pub(crate) rent: RentStructure,
 }
 
 impl ProtocolConfig {
@@ -160,8 +159,8 @@ impl ProtocolConfig {
         &self.coordinator
     }
 
-    /// Returns the byte cost configuration of the `ProtocolConfig`.
-    pub fn byte_cost(&self) -> &ByteCostConfig {
-        &self.byte_cost
+    /// Returns the rent configuration of the `ProtocolConfig`.
+    pub fn rent(&self) -> &RentStructure {
+        &self.rent
     }
 }

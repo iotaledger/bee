@@ -21,9 +21,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 1.0.0-beta.2 - 2022-07-20
 
+### Added
+
+- `ProtocolParemeters` types;
+
 ### Changed
 
 - Add "No Native Tokens" rule for storage deposit returns;
+- Rename `ByteCost*` to `Rent*`;
 
 ### Fixed
 
