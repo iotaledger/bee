@@ -279,6 +279,19 @@ impl BasicOutput {
 
         locked_address.unlock(unlock, inputs, context)
     }
+
+    /// Returns the address of the unlock conditions if the output is a simple deposit.
+    /// Simple deposit outputs are basic outputs with only an address unlock condition, no native tokens and no
+    /// features. They are used to return storage deposits.
+    pub fn simple_deposit_address(&self) -> Option<&Address> {
+        if let [UnlockCondition::Address(address)] = self.unlock_conditions().as_ref() {
+            if self.native_tokens.is_empty() && self.features.is_empty() {
+                return Some(address.address());
+            }
+        }
+
+        None
+    }
 }
 
 fn verify_unlock_conditions<const VERIFY: bool>(unlock_conditions: &UnlockConditions) -> Result<(), Error> {

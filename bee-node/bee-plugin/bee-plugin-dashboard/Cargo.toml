@@ -12,7 +12,7 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 bee-api-types = { version = "1.0.0-alpha.1", path = "../../../bee-api/bee-api-types", default-features = false }
-bee-block = { version = "1.0.0-beta.1", path = "../../../bee-block", default-features = false }
+bee-block = { version = "1.0.0-beta.2", path = "../../../bee-block", default-features = false }
 bee-gossip = { version = "0.6.0", path = "../../../bee-network/bee-gossip", default-features = false }
 bee-ledger = { version = "0.7.0", path = "../../../bee-ledger/bee-ledger", default-features = false }
 bee-protocol = { version = "0.2.0", path = "../../../bee-protocol/bee-protocol", default-features = false }
