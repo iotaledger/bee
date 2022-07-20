@@ -18,7 +18,6 @@ rustdoc-args = [ "--cfg", "doc_cfg" ]
 
 [dependencies]
 bee-block = { version = "1.0.0-beta.2", path = "../bee-block", default-features = false, features = [ "serde" ] }
-bee-ledger-types = { version = "1.0.0-beta.1", path = "../bee-ledger/bee-ledger-types", default-features = false, optional = true }
 bee-runtime = { version = "0.1.1-alpha", path = "../bee-runtime", default-features = false }
 bee-storage = { version = "0.12.0", path = "../bee-storage/bee-storage", default-features = false }
 
@@ -37,17 +36,13 @@ tokio-stream = { version = "0.1.9", default-features = false, features = [ "time
 
 [dev-dependencies]
 bee-storage-null = { version = "0.3.0", path = "../bee-storage/bee-storage-null", default-features = false }
-bee-test = { path = "../bee-test", default-features = false }
 
 criterion = { version = "0.3.5", default-features = false, features = [ "async_tokio" ] }
 rand = { version = "0.8.5", default-features = false }
 tokio = { version = "1.19.2", default-features = false, features = [ "rt", "rt-multi-thread", "sync", "time" ] }
 
 [features]
-rand = [
-    "bee-ledger-types/rand",
-    "bee-block/rand",
-]
+rand = [ "bee-block/rand" ]
 
 [[bench]]
 name = "tangle_bench"
