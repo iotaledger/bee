@@ -15,8 +15,8 @@ use crate::{
     output::{
         feature::{verify_allowed_features, Feature, FeatureFlags, Features},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        ByteCost, ByteCostConfig, ChainId, NativeToken, NativeTokens, NftId, Output, OutputAmount, OutputBuilderAmount,
-        OutputId, StateTransitionError, StateTransitionVerifier,
+        ChainId, NativeToken, NativeTokens, NftId, Output, OutputAmount, OutputBuilderAmount, OutputId, Rent,
+        RentStructure, StateTransitionError, StateTransitionVerifier,
     },
     semantic::{ConflictReason, ValidationContext},
     unlock::Unlock,
@@ -44,13 +44,13 @@ impl NftOutputBuilder {
         )
     }
 
-    /// Creates an [`NftOutputBuilder`] with a provided byte cost config.
+    /// Creates an [`NftOutputBuilder`] with a provided rent structure.
     /// The amount will be set to the minimum storage deposit.
     pub fn new_with_minimum_storage_deposit(
-        byte_cost_config: ByteCostConfig,
+        rent_structure: RentStructure,
         nft_id: NftId,
     ) -> Result<NftOutputBuilder, Error> {
-        Self::new(OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config), nft_id)
+        Self::new(OutputBuilderAmount::MinimumStorageDeposit(rent_structure), nft_id)
     }
 
     fn new(amount: OutputBuilderAmount, nft_id: NftId) -> Result<NftOutputBuilder, Error> {
@@ -73,8 +73,8 @@ impl NftOutputBuilder {
 
     /// Sets the amount to the minimum storage deposit.
     #[inline(always)]
-    pub fn with_minimum_storage_deposit(mut self, byte_cost_config: ByteCostConfig) -> Self {
-        self.amount = OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config);
+    pub fn with_minimum_storage_deposit(mut self, rent_structure: RentStructure) -> Self {
+        self.amount = OutputBuilderAmount::MinimumStorageDeposit(rent_structure);
         self
     }
 
@@ -201,8 +201,8 @@ impl NftOutputBuilder {
 
         output.amount = match self.amount {
             OutputBuilderAmount::Amount(amount) => amount,
-            OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config) => Output::Nft(output.clone())
-                .byte_cost(&byte_cost_config)
+            OutputBuilderAmount::MinimumStorageDeposit(rent_structure) => Output::Nft(output.clone())
+                .rent_cost(&rent_structure)
                 .try_into()
                 .map_err(Error::InvalidOutputAmount)?,
         };
@@ -265,11 +265,11 @@ impl NftOutput {
         NftOutputBuilder::new_with_amount(amount, nft_id)?.finish()
     }
 
-    /// Creates a new [`NftOutput`] with a provided byte cost config.
+    /// Creates a new [`NftOutput`] with a provided rent structure.
     /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
-    pub fn new_with_minimum_storage_deposit(byte_cost_config: ByteCostConfig, nft_id: NftId) -> Result<Self, Error> {
-        NftOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config, nft_id)?.finish()
+    pub fn new_with_minimum_storage_deposit(rent_structure: RentStructure, nft_id: NftId) -> Result<Self, Error> {
+        NftOutputBuilder::new_with_minimum_storage_deposit(rent_structure, nft_id)?.finish()
     }
 
     /// Creates a new [`NftOutputBuilder`] with a provided amount.
@@ -278,14 +278,14 @@ impl NftOutput {
         NftOutputBuilder::new_with_amount(amount, nft_id)
     }
 
-    /// Creates a new [`NftOutputBuilder`] with a provided byte cost config.
+    /// Creates a new [`NftOutputBuilder`] with a provided rent structure.
     /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
     pub fn build_with_minimum_storage_deposit(
-        byte_cost_config: ByteCostConfig,
+        rent_structure: RentStructure,
         nft_id: NftId,
     ) -> Result<NftOutputBuilder, Error> {
-        NftOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config, nft_id)
+        NftOutputBuilder::new_with_minimum_storage_deposit(rent_structure, nft_id)
     }
 
     ///
@@ -560,8 +560,8 @@ pub mod dto {
                     amount.parse().map_err(|_| DtoError::InvalidField("amount"))?,
                     nft_id,
                 )?,
-                OutputBuilderAmountDto::MinimumStorageDeposit(byte_cost_config) => {
-                    NftOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config, nft_id)?
+                OutputBuilderAmountDto::MinimumStorageDeposit(rent_structure) => {
+                    NftOutputBuilder::new_with_minimum_storage_deposit(rent_structure, nft_id)?
                 }
             };
 
