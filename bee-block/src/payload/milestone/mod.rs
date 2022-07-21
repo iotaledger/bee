@@ -283,17 +283,21 @@ pub mod dto {
 }
 
 #[cfg(feature = "inx")]
-impl TryFrom<inx::proto::RawMilestone> for MilestonePayload {
-    type Error = crate::error::inx::InxError;
+mod inx {
+    use super::*;
 
-    fn try_from(value: inx::proto::RawMilestone) -> Result<Self, Self::Error> {
-        use packable::PackableExt;
-        let payload = crate::payload::Payload::unpack_verified(value.data)
-            .map_err(|e| Self::Error::InvalidRawBytes(e.to_string()))?;
+    impl TryFrom<inx_bindings::proto::RawMilestone> for MilestonePayload {
+        type Error = crate::error::inx::InxError;
 
-        match payload {
-            crate::payload::Payload::Milestone(payload) => Ok(*payload),
-            _ => Err(crate::Error::InvalidPayloadKind(payload.kind()).into()),
+        fn try_from(value: inx_bindings::proto::RawMilestone) -> Result<Self, Self::Error> {
+            use packable::PackableExt;
+            let payload = crate::payload::Payload::unpack_verified(value.data)
+                .map_err(|e| Self::Error::InvalidRawBytes(e.to_string()))?;
+
+            match payload {
+                crate::payload::Payload::Milestone(payload) => Ok(*payload),
+                _ => Err(crate::Error::InvalidPayloadKind(payload.kind()).into()),
+            }
         }
     }
 }

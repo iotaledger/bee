@@ -385,7 +385,7 @@ pub mod inx {
 
     #[derive(Debug)]
     pub enum InxError {
-        InvalidField(&'static str),
+        InvalidId(&'static str, Vec<u8>),
         InvalidString(String),
         InvalidRawBytes(String),
         MissingField(&'static str),
@@ -395,10 +395,10 @@ pub mod inx {
     impl fmt::Display for InxError {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             match self {
-                InxError::InvalidField(field) => write!(f, "{field}"),
+                InxError::InvalidId(ty, bytes) => write!(f, "invalid `{ty}` with bytes `{}`", hex::encode(bytes)),
                 InxError::InvalidString(error) => write!(f, "invalid string: {error}"),
                 InxError::InvalidRawBytes(error) => write!(f, "invalid raw bytes: {error}"),
-                InxError::MissingField(field) => write!(f, "{field}"),
+                InxError::MissingField(field) => write!(f, "missing field `{field}`"),
                 InxError::Block(error) => write!(f, "{error}"),
             }
         }

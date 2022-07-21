@@ -11,18 +11,24 @@ impl_id!(
 string_serde_impl!(MilestoneId);
 
 #[cfg(feature = "inx")]
-impl From<MilestoneId> for inx::proto::MilestoneId {
-    fn from(value: MilestoneId) -> Self {
-        Self { id: value.0.to_vec() }
+mod inx {
+    use super::*;
+
+    impl From<MilestoneId> for inx_bindings::proto::MilestoneId {
+        fn from(value: MilestoneId) -> Self {
+            Self { id: value.0.to_vec() }
+        }
     }
-}
 
-#[cfg(feature = "inx")]
-impl TryFrom<inx::proto::MilestoneId> for MilestoneId {
-    type Error = crate::error::inx::InxError;
+    impl TryFrom<inx_bindings::proto::MilestoneId> for MilestoneId {
+        type Error = crate::error::inx::InxError;
 
-    fn try_from(value: inx::proto::MilestoneId) -> Result<Self, Self::Error> {
-        let bytes: [u8; MilestoneId::LENGTH] = value.id.try_into().map_err(|_| Self::Error::InvalidField("id"))?;
-        Ok(MilestoneId::from(bytes))
+        fn try_from(value: inx_bindings::proto::MilestoneId) -> Result<Self, Self::Error> {
+            let bytes: [u8; MilestoneId::LENGTH] = value
+                .id
+                .try_into()
+                .map_err(|e| Self::Error::InvalidId("MilestoneId", e))?;
+            Ok(MilestoneId::from(bytes))
+        }
     }
 }

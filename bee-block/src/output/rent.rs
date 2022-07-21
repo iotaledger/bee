@@ -144,12 +144,16 @@ fn v_byte_offset(v_byte_factor_key: u8, v_byte_factor_data: u8) -> u32 {
 }
 
 #[cfg(feature = "inx")]
-impl From<inx::proto::RentStructure> for RentStructure {
-    fn from(value: inx::proto::RentStructure) -> Self {
-        RentStructureBuilder::new()
-            .byte_cost(value.v_byte_cost as u32)
-            .data_factor(value.v_byte_factor_data as u8)
-            .key_factor(value.v_byte_factor_key as u8)
-            .finish()
+mod inx {
+    use super::*;
+
+    impl From<inx_bindings::proto::RentStructure> for RentStructure {
+        fn from(value: inx_bindings::proto::RentStructure) -> Self {
+            RentStructureBuilder::new()
+                .byte_cost(value.v_byte_cost as u32)
+                .data_factor(value.v_byte_factor_data as u8)
+                .key_factor(value.v_byte_factor_key as u8)
+                .finish()
+        }
     }
 }
