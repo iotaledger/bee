@@ -78,6 +78,7 @@ pub enum Error {
     InvalidReferenceIndex(<UnlockIndex as TryFrom<u16>>::Error),
     InvalidSignature,
     InvalidSignatureKind(u8),
+    InvalidStringPrefix(<u8 as TryFrom<usize>>::Error),
     InvalidTaggedDataLength(<TaggedDataLength as TryFrom<usize>>::Error),
     InvalidTagFeatureLength(<TagFeatureLength as TryFrom<usize>>::Error),
     InvalidTagLength(<TagLength as TryFrom<usize>>::Error),
@@ -225,6 +226,7 @@ impl fmt::Display for Error {
             Error::InvalidReferenceIndex(index) => write!(f, "invalid reference index: {}", index),
             Error::InvalidSignature => write!(f, "invalid signature provided"),
             Error::InvalidSignatureKind(k) => write!(f, "invalid signature kind: {}", k),
+            Error::InvalidStringPrefix(p) => write!(f, "invalid string prefix: {p}"),
             Error::InvalidTaggedDataLength(length) => {
                 write!(f, "invalid tagged data length {}", length)
             }
