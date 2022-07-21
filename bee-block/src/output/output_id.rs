@@ -98,3 +98,22 @@ impl core::fmt::Debug for OutputId {
         write!(f, "OutputId({})", self)
     }
 }
+
+#[cfg(feature = "inx")]
+impl From<OutputId> for inx::proto::OutputId {
+    fn from(value: OutputId) -> Self {
+        Self {
+            id: value.pack_to_vec(),
+        }
+    }
+}
+
+#[cfg(feature = "inx")]
+impl TryFrom<inx::proto::OutputId> for OutputId {
+    type Error = crate::error::inx::InxError;
+
+    fn try_from(value: inx::proto::OutputId) -> Result<Self, Self::Error> {
+        let bytes: [u8; OutputId::LENGTH] = value.id.try_into().map_err(|_| Self::Error::InvalidField("id"))?;
+        OutputId::try_from(bytes).map_err(Self::Error::Block)
+    }
+}

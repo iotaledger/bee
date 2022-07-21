@@ -9,3 +9,20 @@ impl_id!(
 
 #[cfg(feature = "serde")]
 string_serde_impl!(BlockId);
+
+#[cfg(feature = "inx")]
+impl From<BlockId> for inx::proto::BlockId {
+    fn from(value: BlockId) -> Self {
+        Self { id: value.0.to_vec() }
+    }
+}
+
+#[cfg(feature = "inx")]
+impl TryFrom<inx::proto::BlockId> for BlockId {
+    type Error = crate::error::inx::InxError;
+
+    fn try_from(value: inx::proto::BlockId) -> Result<Self, Self::Error> {
+        let bytes: [u8; BlockId::LENGTH] = value.id.try_into().map_err(|_| Self::Error::InvalidField("id"))?;
+        Ok(BlockId::from(bytes))
+    }
+}
