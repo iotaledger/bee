@@ -28,6 +28,64 @@ pub struct ProtocolParameters {
     token_supply: u64,
 }
 
+impl ProtocolParameters {
+    /// Creates a new [`ProtocolParameters`].
+    pub fn new(
+        version: u8,
+        network_name: String,
+        bech32_hrp: String,
+        min_pow_score: u32,
+        below_max_depth: u8,
+        rent_structure: RentStructure,
+        token_supply: u64,
+    ) -> Result<ProtocolParameters, Error> {
+        Ok(ProtocolParameters {
+            version,
+            network_name: <StringPrefix<u8>>::try_from(network_name).map_err(Error::InvalidStringPrefix)?,
+            bech32_hrp: <StringPrefix<u8>>::try_from(bech32_hrp).map_err(Error::InvalidStringPrefix)?,
+            min_pow_score,
+            below_max_depth,
+            rent_structure,
+            token_supply,
+        })
+    }
+
+    /// Returns the version of the [`ProtocolParameters`].
+    pub fn version(&self) -> u8 {
+        self.version
+    }
+
+    /// Returns the network name of the [`ProtocolParameters`].
+    pub fn network_name(&self) -> &str {
+        &self.network_name
+    }
+
+    /// Returns the bech32 HRP of the [`ProtocolParameters`].
+    pub fn bech32_hrp(&self) -> &str {
+        &self.bech32_hrp
+    }
+
+    /// Returns the minimum PoW score of the [`ProtocolParameters`].
+    pub fn min_pow_score(&self) -> u32 {
+        self.min_pow_score
+    }
+
+    /// Returns the below max depth of the [`ProtocolParameters`].
+    pub fn below_max_depth(&self) -> u8 {
+        self.below_max_depth
+    }
+
+    /// Returns the rent structure of the [`ProtocolParameters`].
+    pub fn rent_structure(&self) -> &RentStructure {
+        &self.rent_structure
+    }
+
+    /// Returns the token supply of the [`ProtocolParameters`].
+    pub fn token_supply(&self) -> u64 {
+        self.token_supply
+    }
+}
+
 #[cfg(feature = "inx")]
 mod inx {
     use super::*;
