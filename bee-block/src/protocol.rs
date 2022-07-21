@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use alloc::string::String;
+
 use packable::{prefix::StringPrefix, Packable};
 
 use crate::{output::RentStructure, Error};
