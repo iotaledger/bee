@@ -387,6 +387,7 @@ pub mod inx {
     use super::*;
 
     #[derive(Debug)]
+    #[allow(missing_docs)]
     pub enum InxError {
         InvalidId(&'static str, Vec<u8>),
         InvalidString(String),
