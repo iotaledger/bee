@@ -368,3 +368,32 @@ pub fn semantic_validation(
 
     Ok(ConflictReason::None)
 }
+
+#[cfg(feature = "inx")]
+mod inx {
+    use super::*;
+
+    impl From<inx_bindings::proto::block_metadata::ConflictReason> for ConflictReason {
+        fn from(value: inx_bindings::proto::block_metadata::ConflictReason) -> Self {
+            use inx_bindings::proto::block_metadata::ConflictReason as InxConflictReason;
+            match value {
+                InxConflictReason::None => ConflictReason::None,
+                InxConflictReason::InputAlreadySpent => ConflictReason::InputUtxoAlreadySpent,
+                InxConflictReason::InputAlreadySpentInThisMilestone => {
+                    ConflictReason::InputUtxoAlreadySpentInThisMilestone
+                }
+                InxConflictReason::InputNotFound => ConflictReason::InputUtxoNotFound,
+                InxConflictReason::InputOutputSumMismatch => ConflictReason::CreatedConsumedAmountMismatch,
+                InxConflictReason::InvalidSignature => ConflictReason::InvalidSignature,
+                InxConflictReason::TimelockNotExpired => ConflictReason::TimelockNotExpired,
+                InxConflictReason::InvalidNativeTokens => ConflictReason::InvalidNativeTokens,
+                InxConflictReason::ReturnAmountNotFulfilled => ConflictReason::StorageDepositReturnUnfulfilled,
+                InxConflictReason::InvalidInputUnlock => ConflictReason::InvalidUnlock,
+                InxConflictReason::InvalidInputsCommitment => ConflictReason::InputsCommitmentsMismatch,
+                InxConflictReason::InvalidSender => ConflictReason::UnverifiedSender,
+                InxConflictReason::InvalidChainStateTransition => ConflictReason::InvalidChainStateTransition,
+                InxConflictReason::SemanticValidationFailed => ConflictReason::SemanticValidationFailed,
+            }
+        }
+    }
+}
