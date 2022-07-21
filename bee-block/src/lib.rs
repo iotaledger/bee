@@ -45,6 +45,8 @@ pub mod signature;
 /// A module that provides types and syntactic validations of unlocks.
 pub mod unlock;
 
+#[cfg(feature = "inx")]
+pub use self::error::inx::InxError;
 #[cfg(feature = "dto")]
 pub use self::{block::dto::BlockDto, error::dto::DtoError};
 pub use self::{

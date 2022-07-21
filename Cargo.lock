@@ -1948,12 +1948,11 @@ dependencies = [
 
 [[package]]
 name = "inx"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed7a3b1a41c5e1d1add9c75c969ca9fc8b14a5daec0b3928af166a0fa3385e7d"
+checksum = "5357b154ff0a565f7eeca20b547a68b284d75a7115db1c5122428df50c9b62be"
 dependencies = [
  "prost",
- "thiserror",
  "tonic",
  "tonic-build",
 ]
