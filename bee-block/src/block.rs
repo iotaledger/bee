@@ -310,7 +310,7 @@ pub mod dto {
 #[cfg(feature = "inx")]
 impl TryFrom<inx::proto::RawBlock> for Block {
     type Error = crate::error::inx::InxError;
-    
+
     fn try_from(value: inx::proto::RawBlock) -> Result<Self, Self::Error> {
         Self::unpack_verified(value.data).map_err(|e| Self::Error::InvalidRawBytes(e.to_string()))
     }

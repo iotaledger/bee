@@ -379,18 +379,26 @@ impl From<inx::proto::block_metadata::ConflictReason> for ConflictReason {
                 ConflictReason::InputUtxoAlreadySpentInThisMilestone
             }
             inx::proto::block_metadata::ConflictReason::InputNotFound => ConflictReason::InputUtxoNotFound,
-            inx::proto::block_metadata::ConflictReason::InputOutputSumMismatch => ConflictReason::CreatedConsumedAmountMismatch,
+            inx::proto::block_metadata::ConflictReason::InputOutputSumMismatch => {
+                ConflictReason::CreatedConsumedAmountMismatch
+            }
             inx::proto::block_metadata::ConflictReason::InvalidSignature => ConflictReason::InvalidSignature,
             inx::proto::block_metadata::ConflictReason::TimelockNotExpired => ConflictReason::TimelockNotExpired,
             inx::proto::block_metadata::ConflictReason::InvalidNativeTokens => ConflictReason::InvalidNativeTokens,
-            inx::proto::block_metadata::ConflictReason::ReturnAmountNotFulfilled => ConflictReason::StorageDepositReturnUnfulfilled,
+            inx::proto::block_metadata::ConflictReason::ReturnAmountNotFulfilled => {
+                ConflictReason::StorageDepositReturnUnfulfilled
+            }
             inx::proto::block_metadata::ConflictReason::InvalidInputUnlock => ConflictReason::InvalidUnlock,
-            inx::proto::block_metadata::ConflictReason::InvalidInputsCommitment => ConflictReason::InputsCommitmentsMismatch,
+            inx::proto::block_metadata::ConflictReason::InvalidInputsCommitment => {
+                ConflictReason::InputsCommitmentsMismatch
+            }
             inx::proto::block_metadata::ConflictReason::InvalidSender => ConflictReason::UnverifiedSender,
             inx::proto::block_metadata::ConflictReason::InvalidChainStateTransition => {
                 ConflictReason::InvalidChainStateTransition
             }
-            inx::proto::block_metadata::ConflictReason::SemanticValidationFailed => ConflictReason::SemanticValidationFailed,
+            inx::proto::block_metadata::ConflictReason::SemanticValidationFailed => {
+                ConflictReason::SemanticValidationFailed
+            }
         }
     }
 }

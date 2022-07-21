@@ -288,8 +288,8 @@ impl TryFrom<inx::proto::RawMilestone> for MilestonePayload {
 
     fn try_from(value: inx::proto::RawMilestone) -> Result<Self, Self::Error> {
         use packable::PackableExt;
-        let payload =
-            crate::payload::Payload::unpack_verified(value.data).map_err(|e| Self::Error::InvalidRawBytes(e.to_string()))?;
+        let payload = crate::payload::Payload::unpack_verified(value.data)
+            .map_err(|e| Self::Error::InvalidRawBytes(e.to_string()))?;
 
         match payload {
             crate::payload::Payload::Milestone(payload) => Ok(*payload),

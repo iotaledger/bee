@@ -35,8 +35,10 @@ impl TryFrom<inx::proto::ProtocolParameters> for ProtocolParameters {
     fn try_from(value: inx::proto::ProtocolParameters) -> Result<Self, Self::Error> {
         Ok(Self {
             version: value.version as u8,
-            network_name: <StringPrefix<u8>>::try_from(value.network_name).map_err(|e| Self::Error::InvalidString(e.to_string()))?,
-            bech32_hrp: <StringPrefix<u8>>::try_from(value.bech32_hrp).map_err(|e| Self::Error::InvalidString(e.to_string()))?,
+            network_name: <StringPrefix<u8>>::try_from(value.network_name)
+                .map_err(|e| Self::Error::InvalidString(e.to_string()))?,
+            bech32_hrp: <StringPrefix<u8>>::try_from(value.bech32_hrp)
+                .map_err(|e| Self::Error::InvalidString(e.to_string()))?,
             min_pow_score: value.min_po_w_score,
             below_max_depth: value.below_max_depth as u8,
             rent_structure: value
@@ -47,4 +49,3 @@ impl TryFrom<inx::proto::ProtocolParameters> for ProtocolParameters {
         })
     }
 }
-
