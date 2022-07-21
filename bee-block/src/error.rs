@@ -380,6 +380,7 @@ pub mod dto {
 }
 
 #[cfg(feature = "inx")]
+#[allow(missing_docs)]
 pub mod inx {
     use super::*;
 

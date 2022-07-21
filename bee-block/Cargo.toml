@@ -27,7 +27,7 @@ bytemuck = { version = "1.10.0", default-features = false }
 derive_more = { version = "0.99.17", default-features = false, features = [ "from", "as_ref", "deref", "deref_mut" ] }
 hashbrown = { version = "0.12.3", default-features = false, features = [ "ahash", "inline-more" ] }
 hex = { version = "0.4.3", default-features = false, features = [ "alloc" ] }
-inx-bindings = { package = "inx", version = "1.0.0-beta.1", default-features = false, optional = true }
+inx-bindings = { package = "inx", version = "1.0.0-beta.2", default-features = false, optional = true }
 iota-crypto = { version = "0.13.0", default-features = false, features = [ "ed25519", "blake2b" ] }
 iterator-sorted = { version = "0.1.0", default-features = false }
 packable = { version = "0.5.0", default-features = false, features = [ "serde", "primitive-types" ] }
