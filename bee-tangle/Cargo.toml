@@ -18,8 +18,8 @@ rustdoc-args = [ "--cfg", "doc_cfg" ]
 
 [dependencies]
 bee-block = { version = "1.0.0-beta.2", path = "../bee-block", default-features = false, features = [ "serde" ] }
-bee-runtime = { version = "0.1.1-alpha", path = "../bee-runtime", default-features = false }
-bee-storage = { version = "0.12.0", path = "../bee-storage/bee-storage", default-features = false }
+bee-runtime = { version = "1.0.0-beta.1", path = "../bee-runtime", default-features = false }
+bee-storage = { version = "1.0.0-beta.1", path = "../bee-storage/bee-storage", default-features = false }
 
 async-trait = { version = "0.1.56", default-features = false }
 bitflags = { version = "1.3.2", default-features = false }

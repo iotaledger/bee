@@ -2,8 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_block::{output::OutputId, rand::output::rand_output_id};
-use bee_ledger::types::CreatedOutput;
-use bee_ledger_types::rand::output::rand_created_output;
+use bee_ledger_types::{rand::output::rand_created_output, CreatedOutput};
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate},
     backend,

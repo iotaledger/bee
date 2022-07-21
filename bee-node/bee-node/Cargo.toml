@@ -13,7 +13,7 @@ homepage = "https://www.iota.org"
 [dependencies]
 bee-autopeering = { version = "0.5.0", path = "../../bee-network/bee-autopeering", default-features = false, features = [ "rocksdb" ] }
 bee-block = { version = "1.0.0-beta.2", path = "../../bee-block", default-features = false }
-bee-gossip = { version = "0.6.0", path = "../../bee-network/bee-gossip", default-features = false, features = [ "full" ] }
+bee-gossip = { version = "1.0.0-beta.1", path = "../../bee-network/bee-gossip", default-features = false, features = [ "full" ] }
 bee-ledger = { version = "0.7.0", path = "../../bee-ledger/bee-ledger", default-features = false }
 bee-plugin = { version = "0.1.0", path = "../bee-plugin/bee-plugin", default-features = false }
 bee-plugin-dashboard = { version = "0.1.0", path = "../bee-plugin/bee-plugin-dashboard", default-features = false, optional = true }
@@ -21,8 +21,8 @@ bee-plugin-mps = { version = "0.1.0", path = "../bee-plugin/bee-plugin-mps", def
 bee-plugin-version-checker = { version = "0.1.0", path = "../bee-plugin/bee-plugin-version-checker", default-features = false }
 bee-protocol = { version = "0.2.2", path = "../../bee-protocol/bee-protocol", default-features = false }
 bee-rest-api = { version = "0.2.0", path = "../../bee-api/bee-rest-api", default-features = false }
-bee-runtime = { version = "0.1.1-alpha", path = "../../bee-runtime", default-features = false }
-bee-storage = { version = "0.12.0", path = "../../bee-storage/bee-storage", default-features = false }
+bee-runtime = { version = "1.0.0-beta.1", path = "../../bee-runtime", default-features = false }
+bee-storage = { version = "1.0.0-beta.1", path = "../../bee-storage/bee-storage", default-features = false }
 bee-storage-null = { version = "0.3.0", path = "../../bee-storage/bee-storage-null", default-features = false }
 bee-storage-rocksdb = { version = "0.8.0", path = "../../bee-storage/bee-storage-rocksdb", default-features = false, optional = true }
 bee-storage-sled = { version = "0.7.0", path = "../../bee-storage/bee-storage-sled", default-features = false, optional = true }

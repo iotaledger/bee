@@ -4,8 +4,7 @@
 use std::collections::HashMap;
 
 use bee_block::{payload::milestone::MilestoneIndex, rand::milestone::rand_milestone_index};
-use bee_ledger::types::Receipt;
-use bee_ledger_types::rand::receipt::rand_ledger_receipt;
+use bee_ledger_types::{rand::receipt::rand_ledger_receipt, Receipt};
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend,

@@ -26,6 +26,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `bee-block` dependency;
 - Moved random generation of types from `bee-test` to `rand` module within crate;
 
-## 1.0.0-beta.1 - 2022-07-17
+## 1.0.0-beta.1 - 2022-07-19
 
-First alpha release.
+First beta release.

@@ -235,7 +235,7 @@ checksum = "c5738be7561b0eeb501ef1d5c5db3f24e01ceb55fededd9b00039aada34966ad"
 
 [[package]]
 name = "bee-api-types"
-version = "1.0.0-alpha.1"
+version = "1.0.0-beta.1"
 dependencies = [
  "axum",
  "bee-block",
@@ -306,7 +306,7 @@ dependencies = [
 
 [[package]]
 name = "bee-gossip"
-version = "0.6.0"
+version = "1.0.0-beta.1"
 dependencies = [
  "async-trait",
  "bee-runtime",
@@ -531,7 +531,7 @@ dependencies = [
 
 [[package]]
 name = "bee-protocol-types"
-version = "1.0.0-alpha.1"
+version = "1.0.0-beta.1"
 dependencies = [
  "bee-block",
  "bee-gossip",
@@ -573,7 +573,7 @@ dependencies = [
 
 [[package]]
 name = "bee-runtime"
-version = "0.1.1-alpha"
+version = "1.0.0-beta.1"
 dependencies = [
  "async-trait",
  "bee-storage",
@@ -585,7 +585,7 @@ dependencies = [
 
 [[package]]
 name = "bee-storage"
-version = "0.12.0"
+version = "1.0.0-beta.1"
 dependencies = [
  "packable",
  "serde",
@@ -650,7 +650,6 @@ name = "bee-storage-test"
 version = "0.6.0"
 dependencies = [
  "bee-block",
- "bee-ledger",
  "bee-ledger-types",
  "bee-storage",
  "bee-tangle",
@@ -2610,9 +2609,9 @@ dependencies = [
 
 [[package]]
 name = "once_cell"
-version = "1.12.0"
+version = "1.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7709cef83f0c1f58f666e746a08b21e0085f7440fa6a29cc194d68aac97a4225"
+checksum = "18a6dbe30758c9f83eb00cbea4ac95966305f5a7772f3f42ebfc7fc7eddbd8e1"
 
 [[package]]
 name = "oorandom"
@@ -3595,21 +3594,21 @@ dependencies = [
 
 [[package]]
 name = "serial_test"
-version = "0.7.0"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d19dbfb999a147cedbfe82f042eb9555f5b0fa4ef95ee4570b74349103d9c9f4"
+checksum = "7eec42e7232e5ca56aa59d63af3c7f991fe71ee6a3ddd2d3480834cf3902b007"
 dependencies = [
+ "futures",
  "lazy_static",
- "log",
  "parking_lot 0.12.1",
  "serial_test_derive",
 ]
 
 [[package]]
 name = "serial_test_derive"
-version = "0.7.0"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb9e2050b2be1d681f8f1c1a528bcfe4e00afa2d8995f713974f5333288659f2"
+checksum = "f1b95bb2f4f624565e8fe8140c789af7e2082c0e0561b5a82a1b678baa9703dc"
 dependencies = [
  "proc-macro-error",
  "proc-macro2",
@@ -3956,10 +3955,11 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 
 [[package]]
 name = "tokio"
-version = "1.19.2"
+version = "1.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c51a52ed6686dd62c320f9b89299e9dfb46f730c7a48e635c19f21d116cb1439"
+checksum = "57aec3cfa4c296db7255446efb4928a6be304b431a806216105542a67b6ca82e"
 dependencies = [
+ "autocfg",
  "bytes",
  "libc",
  "memchr",
