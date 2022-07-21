@@ -419,3 +419,16 @@ pub mod dto {
         }
     }
 }
+
+#[cfg(feature = "inx")]
+mod inx {
+    use super::*;
+
+    impl TryFrom<inx_bindings::proto::RawOutput> for Output {
+        type Error = crate::error::inx::InxError;
+
+        fn try_from(value: inx_bindings::proto::RawOutput) -> Result<Self, Self::Error> {
+            Self::unpack_verified(value.data).map_err(|e| Self::Error::InvalidRawBytes(e.to_string()))
+        }
+    }
+}

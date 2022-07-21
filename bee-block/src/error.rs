@@ -378,3 +378,38 @@ pub mod dto {
     #[cfg(feature = "std")]
     impl std::error::Error for DtoError {}
 }
+
+#[cfg(feature = "inx")]
+pub mod inx {
+    use super::*;
+
+    #[derive(Debug)]
+    pub enum InxError {
+        InvalidId(&'static str, Vec<u8>),
+        InvalidString(String),
+        InvalidRawBytes(String),
+        MissingField(&'static str),
+        Block(Error),
+    }
+
+    impl fmt::Display for InxError {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                InxError::InvalidId(ty, bytes) => write!(f, "invalid `{ty}` with bytes `{}`", hex::encode(bytes)),
+                InxError::InvalidString(error) => write!(f, "invalid string: {error}"),
+                InxError::InvalidRawBytes(error) => write!(f, "invalid raw bytes: {error}"),
+                InxError::MissingField(field) => write!(f, "missing field `{field}`"),
+                InxError::Block(error) => write!(f, "{error}"),
+            }
+        }
+    }
+
+    impl From<Error> for InxError {
+        fn from(error: Error) -> Self {
+            InxError::Block(error)
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for InxError {}
+}
