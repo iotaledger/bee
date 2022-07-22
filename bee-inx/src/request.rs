@@ -3,7 +3,28 @@
 
 use std::ops::{Bound, RangeBounds};
 
+use bee_block::payload::milestone::{MilestoneIndex, MilestoneId};
 use inx::proto;
+
+pub enum MilestoneRequest {
+    MilestoneIndex(MilestoneIndex),
+    MilestoneId(MilestoneId),
+}
+
+impl From<MilestoneRequest> for proto::MilestoneRequest {
+    fn from(value: MilestoneRequest) -> Self {
+        match value {
+            MilestoneRequest::MilestoneIndex(MilestoneIndex(milestone_index)) => Self {
+                milestone_index,
+                milestone_id: None,
+            },
+            MilestoneRequest::MilestoneId(milestone_id) => Self {
+                milestone_index: 0,
+                milestone_id: Some(milestone_id.into()),
+            },
+        }
+    }
+}
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct MilestoneRangeRequest(proto::MilestoneRangeRequest);

@@ -16,6 +16,7 @@ bee-block = { path = "../bee-block", version = "1.0.0-beta.3", default-features 
 futures = { version = "0.3.21", default-features = false }
 inx = { version = "1.0.0-beta.2", default-features = false }
 thiserror = { version = "1.0.31", default-features = false }
+packable = { version = "0.5.0", default-features = false }
 
 [dev-dependencies]
 tokio = { version = "1.18", default-features = false, features = [ "macros", "rt-multi-thread" ] }

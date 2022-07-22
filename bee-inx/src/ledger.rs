@@ -4,6 +4,8 @@
 use bee_block as bee;
 use inx::proto;
 
+use crate::Raw;
+
 /// Represents a new output in the ledger.
 #[allow(missing_docs)]
 #[derive(Clone, Debug, PartialEq)]
@@ -12,7 +14,7 @@ pub struct LedgerOutput {
     pub block_id: bee::BlockId,
     pub milestone_index_booked: u32,
     pub milestone_timestamp_booked: u32,
-    pub output: bee::output::Output,
+    pub output: Raw<bee::output::Output>,
 }
 
 /// Represents a spent output in the ledger.
@@ -56,7 +58,7 @@ impl TryFrom<proto::LedgerOutput> for LedgerOutput {
                 .try_into()?,
             milestone_index_booked: value.milestone_index_booked,
             milestone_timestamp_booked: value.milestone_timestamp_booked,
-            output: value.output.ok_or(Self::Error::MissingField("output"))?.try_into()?,
+            output: value.output.ok_or(Self::Error::MissingField("output"))?.into(),
         })
     }
 }

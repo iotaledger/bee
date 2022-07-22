@@ -11,7 +11,7 @@ pub struct NodeConfiguration {
     pub milestone_public_key_count: u32,
     // TODO: `milestone_key_ranges`
     // TODO: `base_token`
-    pub supported_protocol_versions: Vec<u8>,
+    pub supported_protocol_versions: Box<[u8]>,
     // TODO: `pending_protocol_parameters`
 }
 
@@ -20,8 +20,10 @@ impl TryFrom<proto::NodeConfiguration> for NodeConfiguration {
 
     fn try_from(value: proto::NodeConfiguration) -> Result<Self, Self::Error> {
         Ok(NodeConfiguration {
-            protocol_parameters: value.protocol_parameters.ok_or(Self::Error::MissingField("protocol_parameters"))?
-            .try_into()?,
+            protocol_parameters: value
+                .protocol_parameters
+                .ok_or(Self::Error::MissingField("protocol_parameters"))?
+                .try_into()?,
             milestone_public_key_count: value.milestone_public_key_count,
             supported_protocol_versions: value.supported_protocol_versions.into_iter().map(|v| v as u8).collect(),
         })

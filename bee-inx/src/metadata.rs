@@ -18,7 +18,7 @@ pub struct BlockMetadata {
     /// The id of the block.
     pub block_id: bee::BlockId,
     /// The parents of the block.
-    pub parents: Vec<bee::BlockId>,
+    pub parents: Box<[bee::BlockId]>,
     /// Status of the solidification process.
     pub is_solid: bool,
     /// Indicates that the block should be promoted.
@@ -54,7 +54,7 @@ impl TryFrom<proto::BlockMetadata> for BlockMetadata {
                 .block_id
                 .ok_or(Self::Error::MissingField("block_id"))?
                 .try_into()?,
-            parents,
+            parents: parents.into_boxed_slice(),
             is_solid: value.solid,
             should_promote: value.should_promote,
             should_reattach: value.should_reattach,

@@ -5,8 +5,9 @@ use bee_block as bee;
 
 mod info;
 
-pub use self::info::MilestoneInfo;
 use inx::proto;
+
+pub use self::info::MilestoneInfo;
 
 /// The [`Milestone`] type.
 #[derive(Clone, Debug, PartialEq)]
