@@ -8,6 +8,7 @@ mod info;
 use inx::proto;
 
 pub use self::info::MilestoneInfo;
+use crate::field;
 
 /// The [`Milestone`] type.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -23,10 +24,7 @@ impl TryFrom<proto::Milestone> for Milestone {
 
     fn try_from(value: proto::Milestone) -> Result<Self, Self::Error> {
         Ok(Milestone {
-            milestone_info: value
-                .milestone_info
-                .ok_or(Self::Error::MissingField("milestone_info"))?
-                .try_into()?,
+            milestone_info: field!(value.milestone_info).try_into()?,
             milestone: value.milestone.map(TryInto::try_into).transpose()?,
         })
     }

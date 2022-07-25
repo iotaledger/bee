@@ -72,6 +72,7 @@ impl Inx {
             .map(unpack_proto_msg))
     }
 
+    /// Reads the past cone of a milestone specified by a [`MilestoneRequest`].
     pub async fn read_milestone_cone(
         &mut self,
         request: MilestoneRequest,

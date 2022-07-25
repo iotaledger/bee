@@ -19,3 +19,10 @@ pub use self::{
 pub mod proto {
     pub use inx::proto::*;
 }
+
+#[macro_export]
+macro_rules! field {
+    ($object:ident.$field:ident) => {
+        $object.$field.ok_or(Self::Error::MissingField(stringify!($field)))?
+    };
+}

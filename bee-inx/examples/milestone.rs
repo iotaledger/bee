@@ -16,21 +16,18 @@ async fn main() -> Result<(), Error> {
         let milestone_index = milestone?.milestone_info.milestone_index;
         println!("Fetch cone of milestone {milestone_index}");
 
-        // Listen to messages in the past cone of a milestone.
+        // Listen to blocks in the past cone of a milestone.
         let mut cone_stream = inx.read_milestone_cone(milestone_index.into()).await?;
 
         // Keep track of the number of blocks.
         let mut count = 0usize;
 
         while let Some(Ok(block_metadata)) = cone_stream.next().await {
-            println!(
-                "Block {}: {:#?}",
-                block_metadata.metadata.block_id, block_metadata.block
-            );
+            println!("Received block with id `{}`", block_metadata.metadata.block_id);
             count += 1;
         }
 
-        println!("Milestone {:?} contained {count} blocks", milestone_index);
+        println!("Milestone `{:?}` contained {count} blocks", milestone_index);
     }
 
     Ok(())

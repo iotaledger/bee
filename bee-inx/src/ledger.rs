@@ -4,7 +4,7 @@
 use bee_block as bee;
 use inx::proto;
 
-use crate::Raw;
+use crate::{field, Raw};
 
 /// Represents a new output in the ledger.
 #[allow(missing_docs)]
@@ -48,17 +48,11 @@ impl TryFrom<proto::LedgerOutput> for LedgerOutput {
 
     fn try_from(value: proto::LedgerOutput) -> Result<Self, Self::Error> {
         Ok(Self {
-            output_id: value
-                .output_id
-                .ok_or(Self::Error::MissingField("output_id"))?
-                .try_into()?,
-            block_id: value
-                .block_id
-                .ok_or(Self::Error::MissingField("message_id"))?
-                .try_into()?,
+            output_id: field!(value.output_id).try_into()?,
+            block_id: field!(value.block_id).try_into()?,
             milestone_index_booked: value.milestone_index_booked,
             milestone_timestamp_booked: value.milestone_timestamp_booked,
-            output: value.output.ok_or(Self::Error::MissingField("output"))?.into(),
+            output: field!(value.output).into(),
         })
     }
 }
@@ -68,11 +62,8 @@ impl TryFrom<proto::LedgerSpent> for LedgerSpent {
 
     fn try_from(value: proto::LedgerSpent) -> Result<Self, Self::Error> {
         Ok(Self {
-            output: value.output.ok_or(Self::Error::MissingField("output"))?.try_into()?,
-            transaction_id_spent: value
-                .transaction_id_spent
-                .ok_or(Self::Error::MissingField("transaction_id"))?
-                .try_into()?,
+            output: field!(value.output).try_into()?,
+            transaction_id_spent: field!(value.transaction_id_spent).try_into()?,
             milestone_index_spent: value.milestone_index_spent,
             milestone_timestamp_spent: value.milestone_timestamp_spent,
         })
@@ -107,7 +98,7 @@ impl TryFrom<proto::UnspentOutput> for UnspentOutput {
     fn try_from(value: proto::UnspentOutput) -> Result<Self, Self::Error> {
         Ok(Self {
             ledger_index: value.ledger_index,
-            output: value.output.ok_or(Self::Error::MissingField("output"))?.try_into()?,
+            output: field!(value.output).try_into()?,
         })
     }
 }
