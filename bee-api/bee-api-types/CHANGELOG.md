@@ -19,6 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 1.0.0-beta.3 - 2022-07-25
+
+### Changed
+
+- Renamed:
+    - `bech32HRP` to `bech32Hrp`;
+    - `minPoWScore` to `minPowScore`;
+
 ## 1.0.0-beta.2 - 2022-07-21
 
 ### Changed
