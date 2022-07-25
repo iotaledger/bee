@@ -4,7 +4,7 @@
 use bee_block as bee;
 use inx::proto;
 
-use crate::field;
+use crate::maybe_missing;
 
 /// The [`NodeConfiguration`] type.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -22,7 +22,7 @@ impl TryFrom<proto::NodeConfiguration> for NodeConfiguration {
 
     fn try_from(value: proto::NodeConfiguration) -> Result<Self, Self::Error> {
         Ok(NodeConfiguration {
-            protocol_parameters: field!(value.protocol_parameters).try_into()?,
+            protocol_parameters: maybe_missing!(value.protocol_parameters).try_into()?,
             milestone_public_key_count: value.milestone_public_key_count,
             supported_protocol_versions: value.supported_protocol_versions.into_iter().map(|v| v as u8).collect(),
         })

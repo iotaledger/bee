@@ -90,9 +90,7 @@ mod test {
 
     #[test]
     fn inclusive() {
-        let from = 17u32;
-        let to = 42;
-        let range = MilestoneRangeRequest::from(from..=to);
+        let range = MilestoneRangeRequest::from(17..=42);
         assert_eq!(
             range,
             MilestoneRangeRequest(proto::MilestoneRangeRequest {

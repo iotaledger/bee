@@ -4,7 +4,7 @@
 use bee_block as bee;
 use inx::proto;
 
-use crate::{field, Milestone};
+use crate::{maybe_missing, Milestone};
 
 /// The [`NodeStatus`] type.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -31,8 +31,8 @@ impl TryFrom<proto::NodeStatus> for NodeStatus {
     fn try_from(value: proto::NodeStatus) -> Result<Self, Self::Error> {
         Ok(NodeStatus {
             is_healthy: value.is_healthy,
-            latest_milestone: field!(value.latest_milestone).try_into()?,
-            confirmed_milestone: field!(value.confirmed_milestone).try_into()?,
+            latest_milestone: maybe_missing!(value.latest_milestone).try_into()?,
+            confirmed_milestone: maybe_missing!(value.confirmed_milestone).try_into()?,
             tangle_pruning_index: value.tangle_pruning_index,
             milestones_pruning_index: value.milestones_pruning_index,
             ledger_pruning_index: value.ledger_pruning_index,

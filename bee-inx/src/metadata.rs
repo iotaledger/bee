@@ -4,7 +4,7 @@
 use bee_block as bee;
 use inx::proto;
 
-use crate::field;
+use crate::maybe_missing;
 
 #[allow(missing_docs)]
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -52,7 +52,7 @@ impl TryFrom<proto::BlockMetadata> for BlockMetadata {
         }
 
         Ok(BlockMetadata {
-            block_id: field!(value.block_id).try_into()?,
+            block_id: maybe_missing!(value.block_id).try_into()?,
             parents: parents.into_boxed_slice(),
             is_solid: value.solid,
             should_promote: value.should_promote,

@@ -21,7 +21,7 @@ pub mod proto {
 }
 
 #[macro_export]
-macro_rules! field {
+macro_rules! maybe_missing {
     ($object:ident.$field:ident) => {
         $object.$field.ok_or(Self::Error::MissingField(stringify!($field)))?
     };
@@ -33,7 +33,7 @@ mod test {
 
     #[test]
     fn macro_missing_field() {
-        let proto = proto::TreasuryOutput{
+        let proto = proto::TreasuryOutput {
             milestone_id: None,
             amount: 42,
         };

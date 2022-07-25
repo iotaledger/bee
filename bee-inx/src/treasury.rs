@@ -4,7 +4,7 @@
 use bee_block as bee;
 use inx::proto;
 
-use crate::field;
+use crate::maybe_missing;
 
 /// Represents a treasury output.
 #[allow(missing_docs)]
@@ -19,7 +19,7 @@ impl TryFrom<proto::TreasuryOutput> for TreasuryOutput {
 
     fn try_from(value: proto::TreasuryOutput) -> Result<Self, Self::Error> {
         Ok(TreasuryOutput {
-            milestone_id: field!(value.milestone_id).try_into()?,
+            milestone_id: maybe_missing!(value.milestone_id).try_into()?,
             amount: value.amount,
         })
     }
@@ -40,8 +40,8 @@ impl TryFrom<proto::TreasuryUpdate> for TreasuryUpdate {
     fn try_from(value: proto::TreasuryUpdate) -> Result<Self, Self::Error> {
         Ok(Self {
             milestone_index: value.milestone_index,
-            created: field!(value.created).try_into()?,
-            consumed: field!(value.consumed).try_into()?,
+            created: maybe_missing!(value.created).try_into()?,
+            consumed: maybe_missing!(value.consumed).try_into()?,
         })
     }
 }
