@@ -7,6 +7,7 @@ use inx::{proto, proto::inx_client::InxClient, tonic};
 use crate::{Error, MilestoneRangeRequest, MilestoneRequest, NodeConfiguration, NodeStatus};
 
 /// An INX client connection.
+#[derive(Clone, Debug)]
 pub struct Inx {
     inx: InxClient<inx::tonic::Channel>,
 }
