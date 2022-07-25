@@ -86,9 +86,9 @@ pub struct ProtocolResponse {
     pub version: u8,
     #[serde(rename = "networkName")]
     pub network_name: String,
-    #[serde(rename = "bech32HRP")]
+    #[serde(rename = "bech32Hrp")]
     pub bech32_hrp: String,
-    #[serde(rename = "minPoWScore")]
+    #[serde(rename = "minPowScore")]
     pub min_pow_score: f64,
     #[serde(rename = "rentStructure")]
     pub rent_structure: RentStructureResponse,
