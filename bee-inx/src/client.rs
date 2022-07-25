@@ -1,47 +1,52 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::ops::RangeBounds;
-
 use futures::stream::{Stream, StreamExt};
 use inx::{proto, proto::inx_client::InxClient, tonic};
 
-use crate::{Error, NodeConfiguration, NodeStatus, MilestoneRequest};
+use crate::{Error, MilestoneRangeRequest, MilestoneRequest, NodeConfiguration, NodeStatus};
 
+/// An INX client connection.
 pub struct Inx {
     inx: InxClient<inx::tonic::Channel>,
 }
 
-fn unpack_proto_msg<Proto, Bee>(msg: Result<Proto, tonic::Status>) -> Result<Bee, Error> where Bee: TryFrom<Proto, Error=bee_block::InxError> {
+fn unpack_proto_msg<Proto, Bee>(msg: Result<Proto, tonic::Status>) -> Result<Bee, Error>
+where
+    Bee: TryFrom<Proto, Error = bee_block::InxError>,
+{
     let inner = msg.map_err(Error::StatusCode)?;
     Bee::try_from(inner).map_err(Error::InxError)
 }
 
 impl Inx {
+    /// Connect to the INX interface of a node.
     pub async fn connect(address: String) -> Result<Self, Error> {
         Ok(Self {
             inx: InxClient::connect(address).await?,
         })
     }
 
+    /// Listens to confirmed milestones in the range of
     pub async fn listen_to_confirmed_milestones(
         &mut self,
-        range: impl RangeBounds<u32>,
+        request: MilestoneRangeRequest,
     ) -> Result<impl Stream<Item = Result<crate::Milestone, Error>>, Error> {
-        let request = crate::to_milestone_range_request(range);
         Ok(self
             .inx
-            .listen_to_confirmed_milestones(request)
+            .listen_to_confirmed_milestones(proto::MilestoneRangeRequest::from(request))
             .await?
             .into_inner()
             .map(unpack_proto_msg))
     }
 
-    pub async fn listen_to_ledger_updates(&mut self, range: impl RangeBounds<u32>) -> Result<impl Stream<Item = Result<crate::LedgerUpdate, Error>>, Error> {
-        let request = crate::to_milestone_range_request(range);
+    pub async fn listen_to_ledger_updates(
+        &mut self,
+        request: MilestoneRangeRequest,
+    ) -> Result<impl Stream<Item = Result<crate::LedgerUpdate, Error>>, Error> {
         Ok(self
             .inx
-            .listen_to_ledger_updates(request)
+            .listen_to_ledger_updates(proto::MilestoneRangeRequest::from(request))
             .await?
             .into_inner()
             .map(unpack_proto_msg))
@@ -79,4 +84,3 @@ impl Inx {
             .map(unpack_proto_msg))
     }
 }
-

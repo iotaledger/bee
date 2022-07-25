@@ -3,7 +3,7 @@
 
 use std::ops::{Bound, RangeBounds};
 
-use bee_block::payload::milestone::{MilestoneIndex, MilestoneId};
+use bee_block::payload::milestone::{MilestoneId, MilestoneIndex};
 use inx::proto;
 
 pub enum MilestoneRequest {
@@ -26,10 +26,13 @@ impl From<MilestoneRequest> for proto::MilestoneRequest {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct MilestoneRangeRequest(proto::MilestoneRangeRequest);
+impl From<u32> for MilestoneRequest {
+    fn from(value: u32) -> Self {
+        Self::MilestoneIndex(MilestoneIndex(value))
+    }
+}
 
-pub(crate) fn to_milestone_range_request<T, I>(range: T) -> proto::MilestoneRangeRequest
+fn to_milestone_range_request<T, I>(range: T) -> proto::MilestoneRangeRequest
 where
     T: RangeBounds<I>,
     I: Into<u32> + Copy,
@@ -50,25 +53,16 @@ where
     }
 }
 
+/// A request for a range of milestones by [`MilestoneIndex`].
+#[derive(Clone, Debug, PartialEq)]
+pub struct MilestoneRangeRequest(proto::MilestoneRangeRequest);
+
 impl<T> From<T> for MilestoneRangeRequest
 where
     T: RangeBounds<u32>,
 {
     fn from(value: T) -> MilestoneRangeRequest {
-        let start_milestone_index = match value.start_bound() {
-            Bound::Included(&idx) => idx,
-            Bound::Excluded(&idx) => idx + 1,
-            Bound::Unbounded => 0,
-        };
-        let end_milestone_index = match value.end_bound() {
-            Bound::Included(&idx) => idx,
-            Bound::Excluded(&idx) => idx - 1,
-            Bound::Unbounded => 0,
-        };
-        MilestoneRangeRequest(proto::MilestoneRangeRequest {
-            start_milestone_index,
-            end_milestone_index,
-        })
+        MilestoneRangeRequest(to_milestone_range_request(value))
     }
 }
 
