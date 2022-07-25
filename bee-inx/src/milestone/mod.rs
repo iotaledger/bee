@@ -10,7 +10,7 @@ use inx::proto;
 pub use self::info::MilestoneInfo;
 
 /// The [`Milestone`] type.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Milestone {
     /// Information about the milestone.
     pub milestone_info: MilestoneInfo,

@@ -7,7 +7,7 @@ use inx::proto;
 use crate::Milestone;
 
 /// The [`NodeStatus`] type.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct NodeStatus {
     /// Signals if the node is healthy.
     pub is_healthy: bool,

@@ -5,7 +5,7 @@ use bee_block as bee;
 use inx::proto;
 
 #[allow(missing_docs)]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum LedgerInclusionState {
     NoTransaction,
     Included,
@@ -13,7 +13,7 @@ pub enum LedgerInclusionState {
 }
 
 /// The metadata for a block with a given [`BlockId`](bee::BlockId).
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct BlockMetadata {
     /// The id of the block.
     pub block_id: bee::BlockId,

@@ -5,7 +5,7 @@ use bee_block as bee;
 use inx::proto;
 
 /// The [`Block`] type.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Block {
     /// The [`BlockId`](bee::BlockId) of the block.
     pub block_id: bee::BlockId,
@@ -16,7 +16,7 @@ pub struct Block {
 }
 
 /// The [`BlockWithMetadata`] type.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct BlockWithMetadata {
     /// The [`Metadata`](crate::BlockMetadata) of the block.
     pub metadata: crate::BlockMetadata,

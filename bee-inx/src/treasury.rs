@@ -6,7 +6,7 @@ use inx::proto;
 
 /// Represents a treasury output.
 #[allow(missing_docs)]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TreasuryOutput {
     pub milestone_id: bee::payload::milestone::MilestoneId,
     pub amount: u64,
@@ -28,7 +28,7 @@ impl TryFrom<proto::TreasuryOutput> for TreasuryOutput {
 
 /// Represents an update to the treasury.
 #[allow(missing_docs)]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TreasuryUpdate {
     pub milestone_index: u32,
     pub created: TreasuryOutput,

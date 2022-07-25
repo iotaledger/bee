@@ -5,7 +5,7 @@ use bee_block as bee;
 use inx::proto;
 
 /// The [`NodeConfiguration`] type.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct NodeConfiguration {
     pub protocol_parameters: bee::protocol::ProtocolParameters,
     pub milestone_public_key_count: u32,

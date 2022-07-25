@@ -10,7 +10,7 @@ use packable::{Packable, PackableExt};
 use crate::Error;
 
 /// Represents a type as raw bytes.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Raw<T: Packable> {
     data: Vec<u8>,
     phantom: PhantomData<T>,

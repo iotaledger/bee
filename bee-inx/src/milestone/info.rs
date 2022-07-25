@@ -5,7 +5,7 @@ use bee_block as bee;
 use inx::proto;
 
 /// The [`MilestoneInfo`] type.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MilestoneInfo {
     /// The [`MilestoneId`](bee::payload::milestone::MilestoneId) of the milestone.
     pub milestone_id: Option<bee::payload::milestone::MilestoneId>,

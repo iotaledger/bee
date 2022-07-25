@@ -8,7 +8,7 @@ use crate::Raw;
 
 /// Represents a new output in the ledger.
 #[allow(missing_docs)]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LedgerOutput {
     pub output_id: bee::output::OutputId,
     pub block_id: bee::BlockId,
@@ -19,7 +19,7 @@ pub struct LedgerOutput {
 
 /// Represents a spent output in the ledger.
 #[allow(missing_docs)]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LedgerSpent {
     pub output: LedgerOutput,
     pub transaction_id_spent: bee::payload::transaction::TransactionId,
@@ -28,7 +28,7 @@ pub struct LedgerSpent {
 }
 
 #[allow(missing_docs)]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct UnspentOutput {
     pub ledger_index: u32,
     pub output: LedgerOutput,
@@ -36,7 +36,7 @@ pub struct UnspentOutput {
 
 /// Represents an update to ledger.
 #[allow(missing_docs)]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LedgerUpdate {
     pub milestone_index: u32,
     pub created: Box<[LedgerOutput]>,
