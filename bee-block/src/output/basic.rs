@@ -10,7 +10,7 @@ use crate::{
     output::{
         feature::{verify_allowed_features, Feature, FeatureFlags, Features},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        ByteCost, ByteCostConfig, NativeToken, NativeTokens, Output, OutputAmount, OutputBuilderAmount, OutputId,
+        NativeToken, NativeTokens, Output, OutputAmount, OutputBuilderAmount, OutputId, Rent, RentStructure,
     },
     semantic::{ConflictReason, ValidationContext},
     unlock::Unlock,
@@ -36,11 +36,11 @@ impl BasicOutputBuilder {
         ))
     }
 
-    /// Creates an [`BasicOutputBuilder`] with a provided byte cost config.
+    /// Creates an [`BasicOutputBuilder`] with a provided rent structure.
     /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
-    pub fn new_with_minimum_storage_deposit(byte_cost_config: ByteCostConfig) -> Result<Self, Error> {
-        Self::new(OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config))
+    pub fn new_with_minimum_storage_deposit(rent_structure: RentStructure) -> Result<Self, Error> {
+        Self::new(OutputBuilderAmount::MinimumStorageDeposit(rent_structure))
     }
 
     fn new(amount: OutputBuilderAmount) -> Result<Self, Error> {
@@ -61,8 +61,8 @@ impl BasicOutputBuilder {
 
     /// Sets the amount to the minimum storage deposit.
     #[inline(always)]
-    pub fn with_minimum_storage_deposit(mut self, byte_cost_config: ByteCostConfig) -> Self {
-        self.amount = OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config);
+    pub fn with_minimum_storage_deposit(mut self, rent_structure: RentStructure) -> Self {
+        self.amount = OutputBuilderAmount::MinimumStorageDeposit(rent_structure);
         self
     }
 
@@ -149,8 +149,8 @@ impl BasicOutputBuilder {
 
         output.amount = match self.amount {
             OutputBuilderAmount::Amount(amount) => amount,
-            OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config) => Output::Basic(output.clone())
-                .byte_cost(&byte_cost_config)
+            OutputBuilderAmount::MinimumStorageDeposit(rent_structure) => Output::Basic(output.clone())
+                .rent_cost(&rent_structure)
                 .try_into()
                 .map_err(Error::InvalidOutputAmount)?,
         };
@@ -211,11 +211,11 @@ impl BasicOutput {
         BasicOutputBuilder::new_with_amount(amount)?.finish()
     }
 
-    /// Creates a new [`BasicOutput`] with a provided byte cost config.
+    /// Creates a new [`BasicOutput`] with a provided rent structure.
     /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
-    pub fn new_with_minimum_storage_deposit(byte_cost_config: ByteCostConfig) -> Result<Self, Error> {
-        BasicOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config)?.finish()
+    pub fn new_with_minimum_storage_deposit(rent_structure: RentStructure) -> Result<Self, Error> {
+        BasicOutputBuilder::new_with_minimum_storage_deposit(rent_structure)?.finish()
     }
 
     /// Creates a new [`BasicOutputBuilder`] with a provided amount.
@@ -224,11 +224,11 @@ impl BasicOutput {
         BasicOutputBuilder::new_with_amount(amount)
     }
 
-    /// Creates a new [`BasicOutputBuilder`] with a provided byte cost config.
+    /// Creates a new [`BasicOutputBuilder`] with a provided rent structure.
     /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
-    pub fn build_with_minimum_storage_deposit(byte_cost_config: ByteCostConfig) -> Result<BasicOutputBuilder, Error> {
-        BasicOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config)
+    pub fn build_with_minimum_storage_deposit(rent_structure: RentStructure) -> Result<BasicOutputBuilder, Error> {
+        BasicOutputBuilder::new_with_minimum_storage_deposit(rent_structure)
     }
 
     ///
@@ -278,6 +278,19 @@ impl BasicOutput {
             .locked_address(self.address(), context.milestone_timestamp);
 
         locked_address.unlock(unlock, inputs, context)
+    }
+
+    /// Returns the address of the unlock conditions if the output is a simple deposit.
+    /// Simple deposit outputs are basic outputs with only an address unlock condition, no native tokens and no
+    /// features. They are used to return storage deposits.
+    pub fn simple_deposit_address(&self) -> Option<&Address> {
+        if let [UnlockCondition::Address(address)] = self.unlock_conditions().as_ref() {
+            if self.native_tokens.is_empty() && self.features.is_empty() {
+                return Some(address.address());
+            }
+        }
+
+        None
     }
 }
 
@@ -378,8 +391,8 @@ pub mod dto {
                 OutputBuilderAmountDto::Amount(amount) => {
                     BasicOutputBuilder::new_with_amount(amount.parse().map_err(|_| DtoError::InvalidField("amount"))?)?
                 }
-                OutputBuilderAmountDto::MinimumStorageDeposit(byte_cost_config) => {
-                    BasicOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config)?
+                OutputBuilderAmountDto::MinimumStorageDeposit(rent_structure) => {
+                    BasicOutputBuilder::new_with_minimum_storage_deposit(rent_structure)?
                 }
             };
 

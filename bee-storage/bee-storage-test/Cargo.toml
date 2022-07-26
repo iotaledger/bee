@@ -17,10 +17,9 @@ all-features = true
 rustdoc-args = [ "--cfg", "doc_cfg" ]
 
 [dependencies]
-bee-block = { version = "1.0.0-beta.1", path = "../../bee-block", default-features = false }
-bee-ledger = { version = "0.7.0", path = "../../bee-ledger/bee-ledger", default-features = false }
-bee-storage = { version = "0.12.0", path = "../bee-storage", default-features = false }
-bee-tangle = { version = "0.3.0", path = "../../bee-tangle", default-features = false }
-bee-test = { version = "0.1.0", path = "../../bee-test", default-features = false }
+bee-block = { version = "1.0.0-beta.3", path = "../../bee-block", default-features = false, features = [ "rand" ] }
+bee-ledger-types = { version = "1.0.0-beta.1", path = "../../bee-ledger/bee-ledger-types", default-features = false, features = [ "rand" ] }
+bee-storage = { version = "1.0.0-beta.1", path = "../bee-storage", default-features = false }
+bee-tangle = { version = "0.3.0", path = "../../bee-tangle", default-features = false, features = [ "rand" ] }
 
 packable = { git = "https://github.com/pvdrz/common-rs", rev = "60f4b8b2109362e2c2e7f94d0034a96d21aa2c45", default-features = false, features = [ "serde" ] }

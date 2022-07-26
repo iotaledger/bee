@@ -1,6 +1,6 @@
 [package]
 name = "bee-block"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.3"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "Implementation of the IOTA protocol block layouts"
@@ -27,22 +27,24 @@ bytemuck = { version = "1.10.0", default-features = false }
 derive_more = { version = "0.99.17", default-features = false, features = [ "from", "as_ref", "deref", "deref_mut" ] }
 hashbrown = { version = "0.12.3", default-features = false, features = [ "ahash", "inline-more" ] }
 hex = { version = "0.4.3", default-features = false, features = [ "alloc" ] }
+inx-bindings = { package = "inx", version = "1.0.0-beta.2", default-features = false, optional = true }
 iota-crypto = { version = "0.13.0", default-features = false, features = [ "ed25519", "blake2b" ] }
 iterator-sorted = { version = "0.1.0", default-features = false }
 packable = { git = "https://github.com/pvdrz/common-rs", rev = "60f4b8b2109362e2c2e7f94d0034a96d21aa2c45", default-features = false, features = [ "serde", "primitive-types" ] }
 prefix-hex = { version = "0.4.0", default-features = false, features = [ "primitive-types" ] }
 primitive-types = { version = "0.11.1", default-features = false, features = [ "serde" ] }
+rand = { version = "0.8.5", default-features = false, features = [ "min_const_gen" ], optional = true }
 serde = { version = "1.0.139", default-features = false, optional = true }
 serde-big-array = { version = "0.4.1", default-features = false, optional = true }
 serde_json = { version = "1.0.82", default-features = false, features = [ "alloc" ], optional = true }
 thiserror = { version = "1.0.31", default-features = false }
 
 [dev-dependencies]
-bee-test = { path = "../bee-test", default-features = false }
-
 num_cpus = { version = "1.13.1", default-features = false }
 
 [features]
 dto = [ "serde", "dep:serde_json" ]
+inx = [ "dep:inx-bindings" ]
 serde = [ "dep:serde", "serde-big-array" ]
 std = [ ]
+rand = [ "dep:rand" ]

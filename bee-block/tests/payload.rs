@@ -12,14 +12,14 @@ use bee_block::{
         transaction::{RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayload},
         Payload, TaggedDataPayload, TreasuryTransactionPayload,
     },
+    rand::{
+        bytes::rand_bytes,
+        milestone::{rand_merkle_root, rand_milestone_id},
+        output::rand_inputs_commitment,
+        parents::rand_parents,
+    },
     signature::{Ed25519Signature, Signature},
     unlock::{ReferenceUnlock, SignatureUnlock, Unlock, Unlocks},
-};
-use bee_test::rand::{
-    bytes::rand_bytes,
-    milestone::{rand_merkle_root, rand_milestone_id},
-    output::rand_inputs_commitment,
-    parents::rand_parents,
 };
 use packable::PackableExt;
 

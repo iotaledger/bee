@@ -3,12 +3,11 @@
 
 use std::collections::HashMap;
 
-use bee_block::BlockId;
+use bee_block::{rand::block::rand_block_id, BlockId};
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend,
 };
-use bee_test::rand::block::rand_block_id;
 
 pub trait StorageBackend:
     backend::StorageBackend

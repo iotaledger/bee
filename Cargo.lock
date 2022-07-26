@@ -111,6 +111,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "async-stream"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dad5c83079eae9969be7fadefe640a1c566901f05ff91ab221de4b6f68d9507e"
+dependencies = [
+ "async-stream-impl",
+ "futures-core",
+]
+
+[[package]]
+name = "async-stream-impl"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "10f203db73a71dfa2fb6dd22763990fa26f3d2625a6da2da900d23b87d26be27"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "async-trait"
 version = "0.1.56"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -235,7 +256,7 @@ checksum = "c5738be7561b0eeb501ef1d5c5db3f24e01ceb55fededd9b00039aada34966ad"
 
 [[package]]
 name = "bee-api-types"
-version = "1.0.0-alpha.1"
+version = "1.0.0-beta.3"
 dependencies = [
  "axum",
  "bee-block",
@@ -281,23 +302,24 @@ dependencies = [
 
 [[package]]
 name = "bee-block"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.3"
 dependencies = [
  "bech32",
  "bee-pow 1.0.0-alpha.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "bee-ternary 1.0.0-alpha.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "bee-test",
  "bitflags",
  "bytemuck",
  "derive_more",
  "hashbrown 0.12.3",
  "hex",
+ "inx",
  "iota-crypto",
  "iterator-sorted",
  "num_cpus",
  "packable",
  "prefix-hex",
  "primitive-types",
+ "rand 0.8.5",
  "serde",
  "serde-big-array",
  "serde_json",
@@ -306,7 +328,7 @@ dependencies = [
 
 [[package]]
 name = "bee-gossip"
-version = "0.6.0"
+version = "1.0.0-beta.1"
 dependencies = [
  "async-trait",
  "bee-runtime",
@@ -324,6 +346,18 @@ dependencies = [
  "thiserror",
  "tokio",
  "tokio-stream",
+]
+
+[[package]]
+name = "bee-inx"
+version = "1.0.0-beta.1"
+dependencies = [
+ "bee-block",
+ "futures",
+ "inx",
+ "packable",
+ "thiserror",
+ "tokio",
 ]
 
 [[package]]
@@ -355,7 +389,7 @@ dependencies = [
 
 [[package]]
 name = "bee-ledger-types"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.3"
 dependencies = [
  "bee-block",
  "packable",
@@ -479,8 +513,8 @@ dependencies = [
 name = "bee-pow"
 version = "1.0.0-alpha.1"
 dependencies = [
+ "bee-block",
  "bee-ternary 1.0.0-alpha.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "bee-test",
  "iota-crypto",
  "thiserror",
 ]
@@ -531,7 +565,7 @@ dependencies = [
 
 [[package]]
 name = "bee-protocol-types"
-version = "1.0.0-alpha.1"
+version = "1.0.0-beta.2"
 dependencies = [
  "bee-block",
  "bee-gossip",
@@ -573,7 +607,7 @@ dependencies = [
 
 [[package]]
 name = "bee-runtime"
-version = "0.1.1-alpha"
+version = "1.0.0-beta.1"
 dependencies = [
  "async-trait",
  "bee-storage",
@@ -585,7 +619,7 @@ dependencies = [
 
 [[package]]
 name = "bee-storage"
-version = "0.12.0"
+version = "1.0.0-beta.1"
 dependencies = [
  "packable",
  "serde",
@@ -601,7 +635,6 @@ dependencies = [
  "bee-storage",
  "bee-storage-test",
  "bee-tangle",
- "bee-test",
  "serde",
  "thiserror",
 ]
@@ -622,7 +655,6 @@ dependencies = [
  "bee-storage",
  "bee-storage-test",
  "bee-tangle",
- "bee-test",
  "num_cpus",
  "packable",
  "parking_lot 0.12.1",
@@ -640,7 +672,6 @@ dependencies = [
  "bee-storage",
  "bee-storage-test",
  "bee-tangle",
- "bee-test",
  "num_cpus",
  "packable",
  "serde",
@@ -653,10 +684,9 @@ name = "bee-storage-test"
 version = "0.6.0"
 dependencies = [
  "bee-block",
- "bee-ledger",
+ "bee-ledger-types",
  "bee-storage",
  "bee-tangle",
- "bee-test",
  "packable",
 ]
 
@@ -669,7 +699,6 @@ dependencies = [
  "bee-runtime",
  "bee-storage",
  "bee-storage-null",
- "bee-test",
  "bitflags",
  "criterion",
  "futures",
@@ -708,13 +737,8 @@ dependencies = [
 name = "bee-test"
 version = "0.1.0"
 dependencies = [
- "bee-block",
- "bee-ledger-types",
- "bee-tangle",
  "bee-ternary 1.0.0-alpha.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "bytemuck",
  "hex",
- "primitive-types",
  "rand 0.8.5",
  "serde",
  "serde_json",
@@ -1841,6 +1865,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "hyper-timeout"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bbb958482e8c7be4bc3cf272a766a2b0bf1a6755e7a6ae777f017a31d11b13b1"
+dependencies = [
+ "hyper",
+ "pin-project-lite",
+ "tokio",
+ "tokio-io-timeout",
+]
+
+[[package]]
 name = "hyper-tls"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1920,6 +1956,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a5bbe824c507c5da5956355e86a746d82e0e1464f65d862cc5e71da70e94b2c"
 dependencies = [
  "cfg-if",
+]
+
+[[package]]
+name = "inx"
+version = "1.0.0-beta.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5357b154ff0a565f7eeca20b547a68b284d75a7115db1c5122428df50c9b62be"
+dependencies = [
+ "prost",
+ "tonic",
+ "tonic-build",
 ]
 
 [[package]]
@@ -2619,9 +2666,9 @@ dependencies = [
 
 [[package]]
 name = "once_cell"
-version = "1.12.0"
+version = "1.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7709cef83f0c1f58f666e746a08b21e0085f7440fa6a29cc194d68aac97a4225"
+checksum = "18a6dbe30758c9f83eb00cbea4ac95966305f5a7772f3f42ebfc7fc7eddbd8e1"
 
 [[package]]
 name = "oorandom"
@@ -2943,6 +2990,16 @@ dependencies = [
  "hex",
  "primitive-types",
  "uint",
+]
+
+[[package]]
+name = "prettyplease"
+version = "0.1.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "da6ffbe862780245013cb1c0a48c4e44b7d665548088f91f6b90876d0625e4c2"
+dependencies = [
+ "proc-macro2",
+ "syn",
 ]
 
 [[package]]
@@ -3602,21 +3659,21 @@ dependencies = [
 
 [[package]]
 name = "serial_test"
-version = "0.7.0"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d19dbfb999a147cedbfe82f042eb9555f5b0fa4ef95ee4570b74349103d9c9f4"
+checksum = "7eec42e7232e5ca56aa59d63af3c7f991fe71ee6a3ddd2d3480834cf3902b007"
 dependencies = [
+ "futures",
  "lazy_static",
- "log",
  "parking_lot 0.12.1",
  "serial_test_derive",
 ]
 
 [[package]]
 name = "serial_test_derive"
-version = "0.7.0"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb9e2050b2be1d681f8f1c1a528bcfe4e00afa2d8995f713974f5333288659f2"
+checksum = "f1b95bb2f4f624565e8fe8140c789af7e2082c0e0561b5a82a1b678baa9703dc"
 dependencies = [
  "proc-macro-error",
  "proc-macro2",
@@ -3963,10 +4020,11 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 
 [[package]]
 name = "tokio"
-version = "1.19.2"
+version = "1.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c51a52ed6686dd62c320f9b89299e9dfb46f730c7a48e635c19f21d116cb1439"
+checksum = "57aec3cfa4c296db7255446efb4928a6be304b431a806216105542a67b6ca82e"
 dependencies = [
+ "autocfg",
  "bytes",
  "libc",
  "memchr",
@@ -3978,6 +4036,16 @@ dependencies = [
  "socket2",
  "tokio-macros",
  "winapi",
+]
+
+[[package]]
+name = "tokio-io-timeout"
+version = "1.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "30b74022ada614a1b4834de765f9bb43877f910cc8ce4be40e89042c9223a8bf"
+dependencies = [
+ "pin-project-lite",
+ "tokio",
 ]
 
 [[package]]
@@ -4063,6 +4131,51 @@ dependencies = [
 ]
 
 [[package]]
+name = "tonic"
+version = "0.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5be9d60db39854b30b835107500cf0aca0b0d14d6e1c3de124217c23a29c2ddb"
+dependencies = [
+ "async-stream",
+ "async-trait",
+ "axum",
+ "base64 0.13.0",
+ "bytes",
+ "futures-core",
+ "futures-util",
+ "h2",
+ "http",
+ "http-body",
+ "hyper",
+ "hyper-timeout",
+ "percent-encoding",
+ "pin-project",
+ "prost",
+ "prost-derive",
+ "tokio",
+ "tokio-stream",
+ "tokio-util 0.7.1",
+ "tower",
+ "tower-layer",
+ "tower-service",
+ "tracing",
+ "tracing-futures",
+]
+
+[[package]]
+name = "tonic-build"
+version = "0.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d9263bf4c9bfaae7317c1c2faf7f18491d2fe476f70c414b73bf5d445b00ffa1"
+dependencies = [
+ "prettyplease",
+ "proc-macro2",
+ "prost-build",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "tower"
 version = "0.4.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4070,8 +4183,11 @@ checksum = "9a89fd63ad6adf737582df5db40d286574513c69a11dac5214dc3b5603d6713e"
 dependencies = [
  "futures-core",
  "futures-util",
+ "indexmap",
  "pin-project",
  "pin-project-lite",
+ "rand 0.8.5",
+ "slab",
  "tokio",
  "tokio-util 0.7.1",
  "tower-layer",
@@ -4141,6 +4257,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7709595b8878a4965ce5e87ebf880a7d39c9afc6837721b21a5a816a8117d921"
 dependencies = [
  "once_cell",
+]
+
+[[package]]
+name = "tracing-futures"
+version = "0.2.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "97d095ae15e245a057c8e8451bab9b3ee1e1f68e9ba2b4fbc18d0ac5237835f2"
+dependencies = [
+ "pin-project",
+ "tracing",
 ]
 
 [[package]]

@@ -1,12 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_tangle::milestone_metadata::MilestoneMetadata;
-use bee_test::rand::{
-    block::rand_block_id,
-    milestone::{rand_milestone_id, rand_milestone_metadata},
-    number::rand_number,
-};
+use bee_block::rand::{block::rand_block_id, milestone::rand_milestone_id, number::rand_number};
+use bee_tangle::{milestone_metadata::MilestoneMetadata, rand::milestone::rand_milestone_metadata};
 use packable::PackableExt;
 
 #[test]

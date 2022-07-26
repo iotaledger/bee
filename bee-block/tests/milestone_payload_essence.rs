@@ -11,13 +11,13 @@ use bee_block::{
         },
         TreasuryTransactionPayload,
     },
-};
-use bee_test::rand::{
-    self,
-    bytes::rand_bytes,
-    milestone::{rand_merkle_root, rand_milestone_id, rand_milestone_index},
-    number::{rand_number, rand_number_range},
-    parents::rand_parents,
+    rand::{
+        self,
+        bytes::rand_bytes,
+        milestone::{rand_merkle_root, rand_milestone_id, rand_milestone_index},
+        number::{rand_number, rand_number_range},
+        parents::rand_parents,
+    },
 };
 use packable::PackableExt;
 

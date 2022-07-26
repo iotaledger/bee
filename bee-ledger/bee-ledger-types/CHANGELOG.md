@@ -19,6 +19,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
-## 1.0.0-beta.1 - 2022-07-17
+## 1.0.0-beta.3 - 2022-07-21
 
-First alpha release.
+### Changed
+
+- Bump `bee-block` dependency;
+
+## 1.0.0-beta.2 - 2022-07-20
+
+### Changed
+
+- Bump `bee-block` dependency;
+- Moved random generation of types from `bee-test` to `rand` module within crate;
+
+## 1.0.0-beta.1 - 2022-07-19
+
+First beta release.

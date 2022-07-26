@@ -86,9 +86,9 @@ pub struct ProtocolResponse {
     pub version: u8,
     #[serde(rename = "networkName")]
     pub network_name: String,
-    #[serde(rename = "bech32HRP")]
+    #[serde(rename = "bech32Hrp")]
     pub bech32_hrp: String,
-    #[serde(rename = "minPoWScore")]
+    #[serde(rename = "minPowScore")]
     pub min_pow_score: f64,
     #[serde(rename = "rentStructure")]
     pub rent_structure: RentStructureResponse,
@@ -129,11 +129,11 @@ pub struct BaseTokenResponse {
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct RentStructureResponse {
     #[serde(rename = "vByteCost")]
-    pub v_byte_cost: u64,
+    pub v_byte_cost: u32,
     #[serde(rename = "vByteFactorKey")]
-    pub v_byte_factor_key: u64,
+    pub v_byte_factor_key: u8,
     #[serde(rename = "vByteFactorData")]
-    pub v_byte_factor_data: u64,
+    pub v_byte_factor_data: u8,
 }
 
 /// Returned in [`InfoResponse`].

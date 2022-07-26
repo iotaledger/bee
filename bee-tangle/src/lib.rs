@@ -16,6 +16,9 @@ pub mod event;
 pub mod flags;
 /// Milestone metadata.
 pub mod milestone_metadata;
+/// A module that provides utilities for random generation of types.
+#[cfg(feature = "rand")]
+pub mod rand;
 /// Types used to represent SEPs (Solid Entry Points).
 pub mod solid_entry_point;
 /// Types used for interoperation with a node's storage layer.

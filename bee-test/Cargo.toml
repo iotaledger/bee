@@ -11,13 +11,8 @@ keywords = [ "iota", "tangle", "bee", "framework", "test" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-block = { version = "1.0.0-beta.1", path = "../bee-block", default-features = false }
-bee-ledger-types = { version = "1.0.0-beta.1", path = "../bee-ledger/bee-ledger-types", default-features = false }
-bee-tangle = { version = "0.3.0", path = "../bee-tangle", default-features = false }
 bee-ternary = { version = "1.0.0-alpha.1", default-features = false, features = [ "serde" ] }
 
-bytemuck = { version = "1.9.1", default-features = false }
-primitive-types = { version = "0.11.1", default-features = false, features = [ "serde" ] }
 rand = { version = "0.8.5", default-features = false, features = [ "min_const_gen" ] }
 
 [dev-dependencies]

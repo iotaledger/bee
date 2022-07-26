@@ -1,8 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_block::{payload::tagged_data::TaggedDataPayload, Block, Error};
-use bee_test::rand::bytes::rand_bytes;
+use bee_block::{payload::tagged_data::TaggedDataPayload, rand::bytes::rand_bytes, Block, Error};
 use packable::{
     bounded::{TryIntoBoundedU32Error, TryIntoBoundedU8Error},
     error::UnpackError,

@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use alloc::string::String;
+use alloc::string::{FromUtf8Error, String};
 use core::{convert::Infallible, fmt};
 
 use crypto::Error as CryptoError;
@@ -56,6 +56,7 @@ pub enum Error {
     InvalidInputKind(u8),
     InvalidInputCount(<InputCount as TryFrom<usize>>::Error),
     InvalidInputOutputIndex(<OutputIndex as TryFrom<u16>>::Error),
+    InvalidBech32Hrp(FromUtf8Error),
     InvalidBlockLength(usize),
     InvalidStateMetadataLength(<StateMetadataLength as TryFrom<usize>>::Error),
     InvalidMetadataFeatureLength(<MetadataFeatureLength as TryFrom<usize>>::Error),
@@ -64,6 +65,7 @@ pub enum Error {
     InvalidMilestoneOptionKind(u8),
     InvalidMigratedFundsEntryAmount(<MigratedFundsAmount as TryFrom<u64>>::Error),
     InvalidNativeTokenCount(<NativeTokenCount as TryFrom<usize>>::Error),
+    InvalidNetworkName(FromUtf8Error),
     InvalidNftIndex(<UnlockIndex as TryFrom<u16>>::Error),
     InvalidOutputAmount(<OutputAmount as TryFrom<u64>>::Error),
     InvalidOutputCount(<OutputCount as TryFrom<usize>>::Error),
@@ -76,6 +78,7 @@ pub enum Error {
     InvalidReferenceIndex(<UnlockIndex as TryFrom<u16>>::Error),
     InvalidSignature,
     InvalidSignatureKind(u8),
+    InvalidStringPrefix(<u8 as TryFrom<usize>>::Error),
     InvalidTaggedDataLength(<TaggedDataLength as TryFrom<usize>>::Error),
     InvalidTagFeatureLength(<TagFeatureLength as TryFrom<usize>>::Error),
     InvalidTagLength(<TagLength as TryFrom<usize>>::Error),
@@ -157,6 +160,7 @@ impl fmt::Display for Error {
             Error::InvalidAddress => write!(f, "invalid address provided"),
             Error::InvalidAddressKind(k) => write!(f, "invalid address kind: {}", k),
             Error::InvalidAliasIndex(index) => write!(f, "invalid alias index: {}", index),
+            Error::InvalidBech32Hrp(err) => write!(f, "invalid bech32 hrp: {err}"),
             Error::InvalidBinaryParametersLength(length) => {
                 write!(f, "invalid binary parameters length: {length}")
             }
@@ -205,6 +209,7 @@ impl fmt::Display for Error {
                 write!(f, "invalid migrated funds entry amount: {amount}")
             }
             Error::InvalidNativeTokenCount(count) => write!(f, "invalid native token count: {}", count),
+            Error::InvalidNetworkName(err) => write!(f, "invalid network name: {err}"),
             Error::InvalidNftIndex(index) => write!(f, "invalid nft index: {}", index),
             Error::InvalidOutputAmount(amount) => write!(f, "invalid output amount: {}", amount),
             Error::InvalidOutputCount(count) => write!(f, "invalid output count: {}", count),
@@ -221,6 +226,7 @@ impl fmt::Display for Error {
             Error::InvalidReferenceIndex(index) => write!(f, "invalid reference index: {}", index),
             Error::InvalidSignature => write!(f, "invalid signature provided"),
             Error::InvalidSignatureKind(k) => write!(f, "invalid signature kind: {}", k),
+            Error::InvalidStringPrefix(p) => write!(f, "invalid string prefix: {p}"),
             Error::InvalidTaggedDataLength(length) => {
                 write!(f, "invalid tagged data length {}", length)
             }
@@ -373,4 +379,41 @@ pub mod dto {
 
     #[cfg(feature = "std")]
     impl std::error::Error for DtoError {}
+}
+
+#[cfg(feature = "inx")]
+#[allow(missing_docs)]
+pub mod inx {
+    use super::*;
+
+    #[derive(Debug)]
+    #[allow(missing_docs)]
+    pub enum InxError {
+        InvalidId(&'static str, Vec<u8>),
+        InvalidString(String),
+        InvalidRawBytes(String),
+        MissingField(&'static str),
+        Block(Error),
+    }
+
+    impl fmt::Display for InxError {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                InxError::InvalidId(ty, bytes) => write!(f, "invalid `{ty}` with bytes `{}`", hex::encode(bytes)),
+                InxError::InvalidString(error) => write!(f, "invalid string: {error}"),
+                InxError::InvalidRawBytes(error) => write!(f, "invalid raw bytes: {error}"),
+                InxError::MissingField(field) => write!(f, "missing field `{field}`"),
+                InxError::Block(error) => write!(f, "{error}"),
+            }
+        }
+    }
+
+    impl From<Error> for InxError {
+        fn from(error: Error) -> Self {
+            InxError::Block(error)
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for InxError {}
 }

@@ -7,9 +7,9 @@ use bee_block::{
     address::{Address, Ed25519Address},
     constant::TOKEN_SUPPLY,
     payload::milestone::option::MigratedFundsEntry,
+    rand::receipt::rand_tail_transaction_hash,
     Error,
 };
-use bee_test::rand::receipt::rand_tail_transaction_hash;
 use packable::{bounded::InvalidBoundedU64, error::UnpackError, PackableExt};
 
 const ED25519_ADDRESS: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
