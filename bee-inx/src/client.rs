@@ -4,7 +4,7 @@
 use futures::stream::{Stream, StreamExt};
 use inx::{proto, proto::inx_client::InxClient, tonic};
 
-use crate::{Error, MilestoneRangeRequest, MilestoneRequest, NodeConfiguration, NodeStatus};
+use crate::{Error, Milestone, MilestoneRangeRequest, MilestoneRequest, NodeConfiguration, NodeStatus};
 
 /// An INX client connection.
 #[derive(Clone, Debug)]
@@ -84,5 +84,15 @@ impl Inx {
             .await?
             .into_inner()
             .map(unpack_proto_msg))
+    }
+
+    pub async fn read_milestone(&mut self, request: MilestoneRequest) -> Result<Milestone, Error> {
+        Milestone::try_from(
+            self.inx
+                .read_milestone(proto::MilestoneRequest::from(request))
+                .await?
+                .into_inner(),
+        )
+        .map_err(Error::InxError)
     }
 }

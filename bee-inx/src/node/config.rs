@@ -55,19 +55,25 @@ pub struct NodeConfiguration {
     // TODO: `milestone_key_ranges`
     pub base_token: BaseToken,
     pub supported_protocol_versions: Box<[u8]>,
-    pub pending_protocol_parameters: PendingProtocolParameters,
+    pub pending_protocol_parameters: Box<[PendingProtocolParameters]>,
 }
 
 impl TryFrom<proto::NodeConfiguration> for NodeConfiguration {
     type Error = bee::InxError;
 
     fn try_from(value: proto::NodeConfiguration) -> Result<Self, Self::Error> {
+        let pending_protocol_parameters = value
+            .pending_protocol_parameters
+            .into_iter()
+            .map(Into::into)
+            .collect::<Vec<_>>();
+
         Ok(NodeConfiguration {
             protocol_parameters: maybe_missing!(value.protocol_parameters).try_into()?,
             milestone_public_key_count: value.milestone_public_key_count,
             base_token: maybe_missing!(value.base_token).into(),
             supported_protocol_versions: value.supported_protocol_versions.into_iter().map(|v| v as u8).collect(),
-            pending_protocol_parameters: maybe_missing!(value.pending_protocol_parameters).into(),
+            pending_protocol_parameters: pending_protocol_parameters.into_boxed_slice(),
         })
     }
 }

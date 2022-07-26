@@ -46,10 +46,11 @@ impl TryFrom<proto::BlockMetadata> for BlockMetadata {
         let ledger_inclusion_state = value.ledger_inclusion_state().into();
         let conflict_reason = value.conflict_reason().into();
 
-        let mut parents = Vec::with_capacity(value.parents.len());
-        for parent in value.parents {
-            parents.push(parent.try_into()?);
-        }
+        let parents = value
+            .parents
+            .into_iter()
+            .map(TryInto::try_into)
+            .collect::<Result<Vec<_>, _>>()?;
 
         Ok(BlockMetadata {
             block_id: maybe_missing!(value.block_id).try_into()?,
