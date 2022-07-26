@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 1.0.0-beta.2 - 2022-07-26
+
+### Fixed
+
+- Recursive definition of `impl From<proto::RawOutput> for Raw<Output>`;
+
 ## 1.0.0-beta.1 - 2022-07-26
 
 First beta release.
