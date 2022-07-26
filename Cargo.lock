@@ -349,6 +349,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "bee-inx"
+version = "0.1.0"
+dependencies = [
+ "bee-block",
+ "futures",
+ "inx",
+ "packable",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
 name = "bee-ledger"
 version = "0.7.0"
 dependencies = [
