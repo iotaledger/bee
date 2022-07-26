@@ -12,8 +12,8 @@ async fn main() -> Result<(), Error> {
     let mut milestone_stream = inx.listen_to_confirmed_milestones((..).into()).await?;
 
     // Listen to the milestones from the node.
-    while let Some(milestone) = milestone_stream.next().await {
-        let milestone_index = milestone?.milestone_info.milestone_index;
+    while let Some(milestone_and_params) = milestone_stream.next().await {
+        let milestone_index = milestone_and_params?.milestone.milestone_info.milestone_index;
         println!("Fetch cone of milestone {milestone_index}");
 
         // Listen to blocks in the past cone of a milestone.

@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 1.0.0-beta.4 - 2022-07-26
+
+### Changed
+
+- Bump `inx` to `v1.0.0-beta.3`;
+
 ## 1.0.0-beta.3 - 2022-07-21
 
 ### Added

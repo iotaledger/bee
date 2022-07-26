@@ -90,26 +90,16 @@ impl ProtocolParameters {
 
 #[cfg(feature = "inx")]
 mod inx {
-    use super::*;
+    use packable::PackableExt;
 
-    impl TryFrom<inx_bindings::proto::ProtocolParameters> for ProtocolParameters {
+    use super::*;
+    use crate::InxError;
+
+    impl TryFrom<inx_bindings::proto::RawProtocolParameters> for ProtocolParameters {
         type Error = crate::error::inx::InxError;
 
-        fn try_from(value: inx_bindings::proto::ProtocolParameters) -> Result<Self, Self::Error> {
-            Ok(Self {
-                version: value.version as u8,
-                network_name: <StringPrefix<u8>>::try_from(value.network_name)
-                    .map_err(|e| Self::Error::InvalidString(e.to_string()))?,
-                bech32_hrp: <StringPrefix<u8>>::try_from(value.bech32_hrp)
-                    .map_err(|e| Self::Error::InvalidString(e.to_string()))?,
-                min_pow_score: value.min_po_w_score,
-                below_max_depth: value.below_max_depth as u8,
-                rent_structure: value
-                    .rent_structure
-                    .ok_or(Self::Error::MissingField("rent_structure"))?
-                    .into(),
-                token_supply: value.token_supply,
-            })
+        fn try_from(value: inx_bindings::proto::RawProtocolParameters) -> Result<Self, Self::Error> {
+            Self::unpack_verified(value.params).map_err(|e| InxError::InvalidRawBytes(format!("{:?}", e)))
         }
     }
 }
