@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Bump `inx` to `v1.0.0-beta.3`;
+- Bump `bee-block` to `v1.0.0-beta.4`;
 
 ### Fixed
 
