@@ -54,5 +54,3 @@ pub use self::{
     block_id::BlockId,
     error::Error,
 };
-#[cfg(feature = "inx")]
-pub use self::error::inx::InxError;
