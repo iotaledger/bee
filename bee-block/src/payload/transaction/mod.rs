@@ -69,7 +69,7 @@ impl Packable for TransactionPayload {
 
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
-        visitor: &mut Self::UnpackVisitor,
+        visitor: &Self::UnpackVisitor,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let essence = TransactionEssence::unpack::<_, VERIFY>(unpacker, visitor)?;
         let unlocks = Unlocks::unpack::<_, VERIFY>(unpacker, visitor)?;

@@ -22,7 +22,7 @@ impl<T: Packable> Raw<T> {
         self.data
     }
 
-    pub fn inner(self, visitor: &mut T::UnpackVisitor) -> Result<T, Error> {
+    pub fn inner(self, visitor: &T::UnpackVisitor) -> Result<T, Error> {
         let unpacked = T::unpack_verified(self.data, visitor)
             .map_err(|e| bee_block::InxError::InvalidRawBytes(format!("{:?}", e)))?;
         Ok(unpacked)

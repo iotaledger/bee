@@ -2739,7 +2739,7 @@ dependencies = [
 [[package]]
 name = "packable"
 version = "0.5.0"
-source = "git+https://github.com/pvdrz/common-rs?rev=60f4b8b2109362e2c2e7f94d0034a96d21aa2c45#60f4b8b2109362e2c2e7f94d0034a96d21aa2c45"
+source = "git+https://github.com/pvdrz/common-rs?rev=65db6f4a83742f43dae68ac004cadb0416df8929#65db6f4a83742f43dae68ac004cadb0416df8929"
 dependencies = [
  "autocfg",
  "packable-derive",
@@ -2750,7 +2750,7 @@ dependencies = [
 [[package]]
 name = "packable-derive"
 version = "0.5.0"
-source = "git+https://github.com/pvdrz/common-rs?rev=60f4b8b2109362e2c2e7f94d0034a96d21aa2c45#60f4b8b2109362e2c2e7f94d0034a96d21aa2c45"
+source = "git+https://github.com/pvdrz/common-rs?rev=65db6f4a83742f43dae68ac004cadb0416df8929#65db6f4a83742f43dae68ac004cadb0416df8929"
 dependencies = [
  "proc-macro-crate",
  "proc-macro-error",

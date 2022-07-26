@@ -70,7 +70,7 @@ impl Packable for TailTransactionHash {
 
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
-        visitor: &mut Self::UnpackVisitor,
+        visitor: &Self::UnpackVisitor,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         Self::new(<[u8; TailTransactionHash::LENGTH]>::unpack::<_, VERIFY>(unpacker, visitor).coerce()?)
             .map_err(UnpackError::Packable)

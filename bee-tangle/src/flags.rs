@@ -86,7 +86,7 @@ impl Packable for Flags {
 
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
-        visitor: &mut Self::UnpackVisitor,
+        visitor: &Self::UnpackVisitor,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         // Flags are only expected to be unpacked from a trusted storage source.
         Ok(unsafe { Self::from_bits_unchecked(u8::unpack::<_, VERIFY>(unpacker, visitor)?) })

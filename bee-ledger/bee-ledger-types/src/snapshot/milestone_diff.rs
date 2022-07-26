@@ -90,7 +90,7 @@ impl Packable for MilestoneDiff {
 
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
-        visitor: &mut Self::UnpackVisitor,
+        visitor: &Self::UnpackVisitor,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let milestone_len = u32::unpack::<_, VERIFY>(unpacker, visitor).coerce()? as usize;
         let payload = Payload::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;

@@ -140,7 +140,7 @@ impl Packable for MilestoneEssence {
 
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
-        visitor: &mut Self::UnpackVisitor,
+        visitor: &Self::UnpackVisitor,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let index = MilestoneIndex::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
         let timestamp = u32::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;

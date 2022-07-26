@@ -105,7 +105,7 @@ impl Packable for RentStructure {
 
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
-        visitor: &mut Self::UnpackVisitor,
+        visitor: &Self::UnpackVisitor,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let v_byte_cost = u32::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
         let v_byte_factor_key = u8::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;

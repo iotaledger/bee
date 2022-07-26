@@ -568,7 +568,7 @@ impl Packable for AliasOutput {
 
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
-        visitor: &mut Self::UnpackVisitor,
+        visitor: &Self::UnpackVisitor,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let amount =
             OutputAmount::unpack::<_, VERIFY>(unpacker, visitor).map_packable_err(Error::InvalidOutputAmount)?;

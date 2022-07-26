@@ -154,7 +154,7 @@ impl Block {
     /// there are no trailing bytes in the sequence.
     pub fn unpack_strict<T: AsRef<[u8]>>(
         bytes: T,
-        visitor: &mut <Self as Packable>::UnpackVisitor,
+        visitor: &<Self as Packable>::UnpackVisitor,
     ) -> Result<Self, UnpackError<<Self as Packable>::UnpackError, UnexpectedEOF>> {
         let mut unpacker = CounterUnpacker::new(SliceUnpacker::new(bytes.as_ref()));
         let block = Self::unpack::<_, true>(&mut unpacker, visitor)?;
@@ -183,7 +183,7 @@ impl Packable for Block {
 
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
-        visitor: &mut Self::UnpackVisitor,
+        visitor: &Self::UnpackVisitor,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let start_opt = unpacker.read_bytes();
 
