@@ -53,8 +53,8 @@ mod test {
     #[test]
     fn raw_output() {
         let output = rand_output();
-        let proto = proto::RawOutput{
-            data: output.pack_to_vec()
+        let proto = proto::RawOutput {
+            data: output.pack_to_vec(),
         };
         let raw: Raw<bee::output::Output> = proto.into();
         assert_eq!(output, raw.inner().unwrap());
