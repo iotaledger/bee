@@ -1,6 +1,6 @@
 [package]
 name = "bee-block"
-version = "1.0.0-beta.4"
+version = "1.0.0-beta.5"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "Implementation of the IOTA protocol block layouts"
@@ -33,7 +33,7 @@ iterator-sorted = { version = "0.1.0", default-features = false }
 packable = { version = "0.5.0", default-features = false, features = [ "serde", "primitive-types" ] }
 prefix-hex = { version = "0.4.0", default-features = false, features = [ "primitive-types" ] }
 primitive-types = { version = "0.11.1", default-features = false, features = [ "serde" ] }
-rand = { version = "0.8.5", default-features = false, features = [ "min_const_gen" ], optional = true }
+rand = { version = "0.8.5", default-features = false, features = [ "min_const_gen", "std_rng" ], optional = true }
 serde = { version = "1.0.139", default-features = false, optional = true }
 serde-big-array = { version = "0.4.1", default-features = false, optional = true }
 serde_json = { version = "1.0.82", default-features = false, features = [ "alloc" ], optional = true }
@@ -47,4 +47,4 @@ dto = [ "serde", "dep:serde_json" ]
 inx = [ "dep:inx-bindings" ]
 serde = [ "dep:serde", "serde-big-array" ]
 std = [ ]
-rand = [ "dep:rand" ]
+rand = [ "dep:rand", "std" ]
