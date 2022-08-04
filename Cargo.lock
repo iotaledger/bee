@@ -350,7 +350,7 @@ dependencies = [
 
 [[package]]
 name = "bee-inx"
-version = "1.0.0-beta.2"
+version = "1.0.0-beta.3"
 dependencies = [
  "bee-block",
  "futures",
@@ -1960,9 +1960,9 @@ dependencies = [
 
 [[package]]
 name = "inx"
-version = "1.0.0-beta.3"
+version = "1.0.0-beta.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb13397ca8c1e0a5090669f89b2daa01a07d180e2ffdbadd15f94d8e3ec34959"
+checksum = "79d0e1c8561b44c85ab5a2a519bb7bc174b3e2f92cb366a62d5252a1cb31a5cb"
 dependencies = [
  "prost",
  "tonic",
