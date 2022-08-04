@@ -38,9 +38,9 @@ pub struct UnspentOutput {
 #[allow(missing_docs)]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Marker {
-    milestone_index: MilestoneIndex,
-    consumed_count: usize,
-    created_count: usize,
+    pub milestone_index: MilestoneIndex,
+    pub consumed_count: usize,
+    pub created_count: usize,
 }
 
 #[allow(missing_docs)]
