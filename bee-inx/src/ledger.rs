@@ -37,9 +37,10 @@ pub struct UnspentOutput {
 
 #[allow(missing_docs)]
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MarkerType {
-    Begin,
-    End,
+pub struct Marker {
+    milestone_index: MilestoneIndex,
+    consumed_count: usize,
+    created_count: usize,
 }
 
 #[allow(missing_docs)]
@@ -47,20 +48,26 @@ pub enum MarkerType {
 pub enum LedgerUpdate {
     Consumed(LedgerSpent),
     Created(LedgerOutput),
-    Marker {
-        marker_type: MarkerType,
-        milestone_index: MilestoneIndex,
-        consumed_count: usize,
-        created_count: usize,
-    },
+    Begin(Marker),
+    End(Marker),
 }
 
-impl From<proto::ledger_update::marker::MarkerType> for MarkerType {
-    fn from(value: proto::ledger_update::marker::MarkerType) -> Self {
+impl From<proto::ledger_update::Marker> for Marker {
+    fn from(value: proto::ledger_update::Marker) -> Self {
+        Self {
+            milestone_index: value.milestone_index.into(),
+            consumed_count: value.consumed_count as usize,
+            created_count: value.created_count as usize,
+        }
+    }
+}
+
+impl From<proto::ledger_update::Marker> for LedgerUpdate {
+    fn from(value: proto::ledger_update::Marker) -> Self {
         use proto::ledger_update::marker::MarkerType as proto;
-        match value {
-            proto::Begin => Self::Begin,
-            proto::End => Self::End,
+        match value.marker_type() {
+            proto::Begin => Self::Begin(value.into()),
+            proto::End => Self::End(value.into()),
         }
     }
 }
@@ -71,12 +78,7 @@ impl TryFrom<proto::LedgerUpdate> for LedgerUpdate {
     fn try_from(value: proto::LedgerUpdate) -> Result<Self, Self::Error> {
         use proto::ledger_update::Op as proto;
         Ok(match maybe_missing!(value.op) {
-            proto::BatchMarker(marker) => LedgerUpdate::Marker {
-                marker_type: marker.marker_type().into(),
-                milestone_index: marker.milestone_index.into(),
-                consumed_count: marker.consumed_count as usize,
-                created_count: marker.created_count as usize,
-            },
+            proto::BatchMarker(marker) => marker.into(),
             proto::Consumed(consumed) => LedgerUpdate::Consumed(consumed.try_into()?),
             proto::Created(created) => LedgerUpdate::Created(created.try_into()?),
         })
