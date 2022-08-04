@@ -1,7 +1,6 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee::payload::milestone::MilestoneIndex;
 use bee_block as bee;
 use inx::proto;
 
@@ -13,7 +12,7 @@ use crate::{maybe_missing, Raw};
 pub struct LedgerOutput {
     pub output_id: bee::output::OutputId,
     pub block_id: bee::BlockId,
-    pub milestone_index_booked: MilestoneIndex,
+    pub milestone_index_booked: bee::payload::milestone::MilestoneIndex,
     pub milestone_timestamp_booked: u32,
     pub output: Raw<bee::output::Output>,
 }
@@ -24,21 +23,21 @@ pub struct LedgerOutput {
 pub struct LedgerSpent {
     pub output: LedgerOutput,
     pub transaction_id_spent: bee::payload::transaction::TransactionId,
-    pub milestone_index_spent: MilestoneIndex,
+    pub milestone_index_spent: bee::payload::milestone::MilestoneIndex,
     pub milestone_timestamp_spent: u32,
 }
 
 #[allow(missing_docs)]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct UnspentOutput {
-    pub ledger_index: MilestoneIndex,
+    pub ledger_index: bee::payload::milestone::MilestoneIndex,
     pub output: LedgerOutput,
 }
 
 #[allow(missing_docs)]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Marker {
-    pub milestone_index: MilestoneIndex,
+    pub milestone_index: bee::payload::milestone::MilestoneIndex,
     pub consumed_count: usize,
     pub created_count: usize,
 }
