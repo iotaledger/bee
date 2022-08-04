@@ -19,6 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 1.0.0-beta.3 - 2022-08-04
+
+### Changed
+
+- Bump `inx` to `v1.0.0-beta.4`;
+- Bump `bee-block` to `v1.0.0-beta.5`;
+- Adapt `LedgerUpdate` to new INX representation;
+
 ## 1.0.0-beta.2 - 2022-07-26
 
 ### Changed
