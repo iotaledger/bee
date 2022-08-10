@@ -39,6 +39,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Install LLVM and Clang (Windows)
         uses: KyleMayes/install-llvm-action@32c4866ebb71e0949e8833eb49beeebed48532bd
         if: contains(matrix.os, 'windows')
