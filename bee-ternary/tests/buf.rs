@@ -1,9 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+mod common;
+
 use bee_ternary::*;
-use bee_test::ternary::*;
-use rand::prelude::*;
+use common::{fuzz, gen_buf_balanced, gen_buf_unbalanced, gen_trit_balanced, gen_trit_unbalanced};
+use rand::{thread_rng, Rng};
 
 fn create_generic<T: raw::RawEncodingBuf>() {
     assert!(TritBuf::<T>::new().len() == 0);

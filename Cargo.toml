@@ -25,7 +25,6 @@ members = [
 	"bee-storage/bee-storage-test",
 	"bee-tangle",
 	"bee-ternary",
-	"bee-test",
 ]
 
 [profile.dev]

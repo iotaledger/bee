@@ -1,8 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+mod common;
+
 use bee_ternary::{raw::*, *};
-use bee_test::ternary::*;
+use common::{gen_buf_balanced, gen_buf_unbalanced};
 use serde::{de::DeserializeOwned, *};
 
 fn serialize_generic<T: raw::RawEncodingBuf>()
