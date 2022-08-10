@@ -25,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Updated dependencies;
 
+### Fixed
+
+- Clippy warnings;
+
 ## 1.0.0-beta.1 - 2022-07-20
 
 First beta release.
