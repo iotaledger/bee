@@ -38,12 +38,7 @@ pub fn start_inbound_gossip_handler(
         let mut buf = vec![0u8; MSG_BUFFER_LEN];
 
         loop {
-            if let Some(len) = (&mut inbound_gossip_rx)
-                .read(&mut buf)
-                .await
-                .ok()
-                .filter(|len| *len > 0)
-            {
+            if let Some(len) = inbound_gossip_rx.read(&mut buf).await.ok().filter(|len| *len > 0) {
                 if inbound_gossip_tx.send(buf[..len].to_vec()).is_err() {
                     debug!("Terminating gossip protocol with {}.", alias!(peer_id));
 
@@ -93,8 +88,7 @@ pub fn start_outbound_gossip_handler(
                     .expect("send internal event");
 
                 break;
-            } else if (&mut outbound_gossip_tx).write_all(&message).await.is_err()
-                || (&mut outbound_gossip_tx).flush().await.is_err()
+            } else if outbound_gossip_tx.write_all(&message).await.is_err() || outbound_gossip_tx.flush().await.is_err()
             {
                 debug!("Peer {} terminated gossip protocol.", alias!(peer_id));
 
