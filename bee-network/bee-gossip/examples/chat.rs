@@ -106,7 +106,7 @@ async fn main() {
                     });
 
                     loop {
-                        if let Some(msg) = (&mut gossip_in).next().await {
+                        if let Some(msg) = gossip_in.next().await {
                             println!("\r{}: {}", alias!(peer_id), String::from_utf8(msg).unwrap());
                             print!("Me    : ");
                             stdout().flush().unwrap();
