@@ -1,2 +1,5 @@
 [advisories]
-ignore = ["RUSTSEC-2020-0159", "RUSTSEC-2020-0071", "RUSTSEC-2021-0127"]
+ignore = [
+    "RUSTSEC-2020-0071", # Potential segfault in the time crate: chrono 0.4.21 does not depend on the vulnerable parts of the time crate
+    "RUSTSEC-2021-0127", # serde_cbor is unmaintained: only used by `criterion` in `dev-dependencies`
+]
