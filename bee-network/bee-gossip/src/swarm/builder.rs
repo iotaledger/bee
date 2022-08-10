@@ -41,8 +41,8 @@ pub fn build_swarm(
             .timeout(Duration::from_secs(DEFAULT_CONNECTION_TIMEOUT_SECS))
             .boxed()
     } else {
-        let tcp_transport = tcp::TokioTcpTransport::new(tcp::GenTcpConfig::default().nodelay(true).port_reuse(true));
-        let dns_config = dns::TokioDnsConfig::system(tcp_transport)?;
+        let tcp_config = tcp::TokioTcpConfig::new().nodelay(true).port_reuse(true);
+        let dns_config = dns::TokioDnsConfig::system(tcp_config)?;
 
         dns_config
             .upgrade(upgrade::Version::V1Lazy)
