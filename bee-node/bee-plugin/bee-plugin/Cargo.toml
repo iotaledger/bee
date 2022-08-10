@@ -13,4 +13,4 @@ homepage = "https://www.iota.org"
 [dependencies]
 bee-runtime = { version = "1.0.0-beta.1", path = "../../../bee-runtime", default-features = false }
 
-async-trait = { version = "0.1.56", default-features = false }
+async-trait = { version = "0.1.57", default-features = false }

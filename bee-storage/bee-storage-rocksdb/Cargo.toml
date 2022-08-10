@@ -26,8 +26,8 @@ num_cpus = { version = "1.13.1", default-features = false }
 packable = { version = "0.5.0", default-features = false, features = [ "serde" ] }
 parking_lot = { version = "0.12.1", default-features = false }
 rocksdb = { version = "0.18.0", default-features = false }
-serde = { version = "1.0.137", default-features = false, features = [ "derive" ] }
-thiserror = { version = "1.0.31", default-features = false }
+serde = { version = "1.0.143", default-features = false, features = [ "derive" ] }
+thiserror = { version = "1.0.32", default-features = false }
 
 [dev-dependencies]
 bee-storage-test = { path = "../bee-storage-test", default-features = false }
