@@ -34,7 +34,7 @@ priority-queue = { version = "1.2.3", default-features = false }
 prost = { version = "0.11.0", default-features = false, features = [ "std" ] }
 rand = { version = "0.8.5", default-features = false, features = [ "std", "std_rng" ] }
 ring = { version = "0.16.20", default-features = false }
-rocksdb = { version = "0.18.0", default-features = false, optional = true }
+rocksdb = { version = "0.19.0", default-features = false, optional = true }
 rustversion = { version = "1.0.9", default-features = false }
 serde = { version = "1.0.143", default-features = false, features = [ "derive" ] }
 sled = { version = "0.34.7", default-features = false, optional = true }
