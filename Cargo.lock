@@ -727,8 +727,11 @@ name = "bee-ternary"
 version = "1.0.0-alpha.1"
 dependencies = [
  "autocfg",
+ "hex",
  "num-traits",
+ "rand 0.8.5",
  "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -740,17 +743,6 @@ dependencies = [
  "autocfg",
  "num-traits",
  "serde",
-]
-
-[[package]]
-name = "bee-test"
-version = "0.1.0"
-dependencies = [
- "bee-ternary 1.0.0-alpha.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "hex",
- "rand 0.8.5",
- "serde",
- "serde_json",
 ]
 
 [[package]]

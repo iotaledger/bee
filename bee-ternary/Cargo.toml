@@ -20,6 +20,12 @@ rustdoc-args = [ "--cfg", "doc_cfg" ]
 num-traits = { version = "0.2.15", default-features = false }
 serde = { version = "1.0.139", default-features = false, optional = true }
 
+[dev-dependencies]
+hex = { version = "0.4.3", default-features = false, features = [ "std" ] }
+rand = { version = "0.8.5", default-features = false, features = [ "min_const_gen", "std", "std_rng" ] }
+serde = { version = "1.0.137", default-features = false }
+serde_json = { version = "1.0.81", default-features = false, features = [ "alloc" ] }
+
 [build-dependencies]
 autocfg = { version = "1.1.0", default-features = false }
 
