@@ -13,7 +13,7 @@ use crate::Error;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Raw<T: Packable> {
     data: Vec<u8>,
-    phantom: PhantomData<T>,
+    _phantom: PhantomData<T>,
 }
 
 impl<T: Packable> Raw<T> {
@@ -33,13 +33,30 @@ impl<T: Packable> From<Vec<u8>> for Raw<T> {
     fn from(value: Vec<u8>) -> Self {
         Self {
             data: value,
-            phantom: PhantomData,
+            _phantom: PhantomData,
         }
     }
 }
 
 impl From<proto::RawOutput> for Raw<bee::output::Output> {
     fn from(value: proto::RawOutput) -> Self {
-        value.into()
+        value.data.into()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use bee::rand::output::rand_output;
+
+    use super::*;
+
+    #[test]
+    fn raw_output() {
+        let output = rand_output();
+        let proto = proto::RawOutput {
+            data: output.pack_to_vec(),
+        };
+        let raw: Raw<bee::output::Output> = proto.into();
+        assert_eq!(output, raw.inner(&()).unwrap());
     }
 }

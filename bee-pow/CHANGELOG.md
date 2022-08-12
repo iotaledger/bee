@@ -19,6 +19,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## Unreleased - 2022-XX-XX
+
+### Changed
+
+- Updated dependencies;
+
+### Fixed
+
+- Clippy warning;
+
 ## 1.0.0-alpha.1 - 2022-07-15
 
 First alpha release.

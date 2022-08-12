@@ -12,7 +12,7 @@ use crate::{maybe_missing, Raw};
 pub struct LedgerOutput {
     pub output_id: bee::output::OutputId,
     pub block_id: bee::BlockId,
-    pub milestone_index_booked: u32,
+    pub milestone_index_booked: bee::payload::milestone::MilestoneIndex,
     pub milestone_timestamp_booked: u32,
     pub output: Raw<bee::output::Output>,
 }
@@ -23,24 +23,65 @@ pub struct LedgerOutput {
 pub struct LedgerSpent {
     pub output: LedgerOutput,
     pub transaction_id_spent: bee::payload::transaction::TransactionId,
-    pub milestone_index_spent: u32,
+    pub milestone_index_spent: bee::payload::milestone::MilestoneIndex,
     pub milestone_timestamp_spent: u32,
 }
 
 #[allow(missing_docs)]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct UnspentOutput {
-    pub ledger_index: u32,
+    pub ledger_index: bee::payload::milestone::MilestoneIndex,
     pub output: LedgerOutput,
 }
 
-/// Represents an update to ledger.
 #[allow(missing_docs)]
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct LedgerUpdate {
-    pub milestone_index: u32,
-    pub created: Box<[LedgerOutput]>,
-    pub consumed: Box<[LedgerSpent]>,
+pub struct Marker {
+    pub milestone_index: bee::payload::milestone::MilestoneIndex,
+    pub consumed_count: usize,
+    pub created_count: usize,
+}
+
+#[allow(missing_docs)]
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum LedgerUpdate {
+    Consumed(LedgerSpent),
+    Created(LedgerOutput),
+    Begin(Marker),
+    End(Marker),
+}
+
+impl From<proto::ledger_update::Marker> for Marker {
+    fn from(value: proto::ledger_update::Marker) -> Self {
+        Self {
+            milestone_index: value.milestone_index.into(),
+            consumed_count: value.consumed_count as usize,
+            created_count: value.created_count as usize,
+        }
+    }
+}
+
+impl From<proto::ledger_update::Marker> for LedgerUpdate {
+    fn from(value: proto::ledger_update::Marker) -> Self {
+        use proto::ledger_update::marker::MarkerType as proto;
+        match value.marker_type() {
+            proto::Begin => Self::Begin(value.into()),
+            proto::End => Self::End(value.into()),
+        }
+    }
+}
+
+impl TryFrom<proto::LedgerUpdate> for LedgerUpdate {
+    type Error = bee::InxError;
+
+    fn try_from(value: proto::LedgerUpdate) -> Result<Self, Self::Error> {
+        use proto::ledger_update::Op as proto;
+        Ok(match maybe_missing!(value.op) {
+            proto::BatchMarker(marker) => marker.into(),
+            proto::Consumed(consumed) => LedgerUpdate::Consumed(consumed.try_into()?),
+            proto::Created(created) => LedgerUpdate::Created(created.try_into()?),
+        })
+    }
 }
 
 impl TryFrom<proto::LedgerOutput> for LedgerOutput {
@@ -50,7 +91,7 @@ impl TryFrom<proto::LedgerOutput> for LedgerOutput {
         Ok(Self {
             output_id: maybe_missing!(value.output_id).try_into()?,
             block_id: maybe_missing!(value.block_id).try_into()?,
-            milestone_index_booked: value.milestone_index_booked,
+            milestone_index_booked: value.milestone_index_booked.into(),
             milestone_timestamp_booked: value.milestone_timestamp_booked,
             output: maybe_missing!(value.output).into(),
         })
@@ -64,30 +105,8 @@ impl TryFrom<proto::LedgerSpent> for LedgerSpent {
         Ok(Self {
             output: maybe_missing!(value.output).try_into()?,
             transaction_id_spent: maybe_missing!(value.transaction_id_spent).try_into()?,
-            milestone_index_spent: value.milestone_index_spent,
+            milestone_index_spent: value.milestone_index_spent.into(),
             milestone_timestamp_spent: value.milestone_timestamp_spent,
-        })
-    }
-}
-
-impl TryFrom<proto::LedgerUpdate> for LedgerUpdate {
-    type Error = bee::InxError;
-
-    fn try_from(value: proto::LedgerUpdate) -> Result<Self, Self::Error> {
-        let mut created: Vec<LedgerOutput> = Vec::with_capacity(value.created.len());
-        for c in value.created {
-            created.push(c.try_into()?);
-        }
-
-        let mut consumed: Vec<LedgerSpent> = Vec::with_capacity(value.consumed.len());
-        for c in value.consumed {
-            consumed.push(c.try_into()?);
-        }
-
-        Ok(Self {
-            milestone_index: value.milestone_index,
-            created: created.into_boxed_slice(),
-            consumed: consumed.into_boxed_slice(),
         })
     }
 }
@@ -97,7 +116,7 @@ impl TryFrom<proto::UnspentOutput> for UnspentOutput {
 
     fn try_from(value: proto::UnspentOutput) -> Result<Self, Self::Error> {
         Ok(Self {
-            ledger_index: value.ledger_index,
+            ledger_index: value.ledger_index.into(),
             output: maybe_missing!(value.output).try_into()?,
         })
     }

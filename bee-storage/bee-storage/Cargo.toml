@@ -18,5 +18,5 @@ rustdoc-args = [ "--cfg", "doc_cfg" ]
 
 [dependencies]
 packable = { git = "https://github.com/pvdrz/common-rs", rev = "65db6f4a83742f43dae68ac004cadb0416df8929", default-features = false, features = [ "serde" ] }
-serde = { version = "1.0.139", features = [ "derive" ], default-features = false }
-thiserror = { version = "1.0.31", default-features = false }
+serde = { version = "1.0.143", features = [ "derive" ], default-features = false }
+thiserror = { version = "1.0.32", default-features = false }

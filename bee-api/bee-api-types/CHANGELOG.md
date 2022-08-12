@@ -19,6 +19,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## Unreleased - 2022-XX-XX
+
+### Changed
+
+- Updated dependencies;
+- Added the `"axum"` feature to gate the `axum` dependency, `IntoResponse` impls;
+
+## 1.0.0-beta.4 - 2022-07-26
+
+### Changed
+
+- Bump `bee-block` to `v1.0.0-beta.4`;
+
 ## 1.0.0-beta.3 - 2022-07-25
 
 ### Changed

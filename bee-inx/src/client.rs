@@ -32,7 +32,7 @@ impl Inx {
     pub async fn listen_to_confirmed_milestones(
         &mut self,
         request: MilestoneRangeRequest,
-    ) -> Result<impl Stream<Item = Result<crate::Milestone, Error>>, Error> {
+    ) -> Result<impl Stream<Item = Result<crate::MilestoneAndProtocolParameters, Error>>, Error> {
         Ok(self
             .inx
             .listen_to_confirmed_milestones(proto::MilestoneRangeRequest::from(request))
@@ -71,6 +71,18 @@ impl Inx {
             .await?
             .into_inner()
             .map(unpack_proto_msg))
+    }
+
+    pub async fn read_protocol_parameters(
+        &mut self,
+        request: MilestoneRequest,
+    ) -> Result<crate::RawProtocolParameters, Error> {
+        Ok(self
+            .inx
+            .read_protocol_parameters(proto::MilestoneRequest::from(request))
+            .await?
+            .into_inner()
+            .into())
     }
 
     /// Reads the past cone of a milestone specified by a [`MilestoneRequest`].

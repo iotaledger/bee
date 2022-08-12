@@ -1,9 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+mod common;
+
 use bee_ternary::*;
-use bee_test::ternary::*;
-use rand::prelude::*;
+use common::{fuzz, gen_buf_balanced, gen_buf_unbalanced};
+use rand::{thread_rng, Rng};
 
 fn get_generic<T: raw::RawEncodingBuf + Clone>() {
     println!("{}", std::any::type_name::<T>());

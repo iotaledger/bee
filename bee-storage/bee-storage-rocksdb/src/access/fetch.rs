@@ -63,14 +63,16 @@ impl Fetch<BlockId, Vec<BlockId>> for Storage {
         Ok(Some(
             self.inner
                 .prefix_iterator_cf(self.cf_handle(CF_BLOCK_ID_TO_BLOCK_ID)?, parent)
-                .map(|(key, _)| {
-                    let (_, child) = key.split_at(BlockId::LENGTH);
-                    // Unpacking from storage is fine.
-                    let child: [u8; BlockId::LENGTH] = child.try_into().unwrap();
-                    BlockId::from(child)
+                .map(|res| {
+                    res.map(|(key, _)| {
+                        let (_, child) = key.split_at(BlockId::LENGTH);
+                        // Unpacking from storage is fine.
+                        let child: [u8; BlockId::LENGTH] = child.try_into().unwrap();
+                        BlockId::from(child)
+                    })
                 })
                 .take(self.config.fetch_edge_limit)
-                .collect(),
+                .collect::<Result<_, _>>()?,
         ))
     }
 }
@@ -103,13 +105,15 @@ impl Fetch<Ed25519Address, Vec<OutputId>> for Storage {
         Ok(Some(
             self.inner
                 .prefix_iterator_cf(self.cf_handle(CF_ED25519_ADDRESS_TO_OUTPUT_ID)?, address)
-                .map(|(key, _)| {
-                    let (_, output_id) = key.split_at(Ed25519Address::LENGTH);
-                    // Unpacking from storage is fine.
-                    TryFrom::<[u8; OutputId::LENGTH]>::try_from(output_id.try_into().unwrap()).unwrap()
+                .map(|res| {
+                    res.map(|(key, _)| {
+                        let (_, output_id) = key.split_at(Ed25519Address::LENGTH);
+                        // Unpacking from storage is fine.
+                        TryFrom::<[u8; OutputId::LENGTH]>::try_from(output_id.try_into().unwrap()).unwrap()
+                    })
                 })
                 .take(self.config.fetch_output_id_limit)
-                .collect(),
+                .collect::<Result<_, _>>()?,
         ))
     }
 }
@@ -185,13 +189,15 @@ impl Fetch<MilestoneIndex, Vec<UnreferencedBlock>> for Storage {
                     self.cf_handle(CF_MILESTONE_INDEX_TO_UNREFERENCED_BLOCK)?,
                     index.pack_to_vec(),
                 )
-                .map(|(key, _)| {
-                    let (_, unreferenced_block) = key.split_at(std::mem::size_of::<MilestoneIndex>());
-                    // Unpacking from storage is fine.
-                    let unreferenced_block: [u8; BlockId::LENGTH] = unreferenced_block.try_into().unwrap();
-                    UnreferencedBlock::from(BlockId::from(unreferenced_block))
+                .map(|res| {
+                    res.map(|(key, _)| {
+                        let (_, unreferenced_block) = key.split_at(std::mem::size_of::<MilestoneIndex>());
+                        // Unpacking from storage is fine.
+                        let unreferenced_block: [u8; BlockId::LENGTH] = unreferenced_block.try_into().unwrap();
+                        UnreferencedBlock::from(BlockId::from(unreferenced_block))
+                    })
                 })
-                .collect(),
+                .collect::<Result<_, _>>()?,
         ))
     }
 }
@@ -201,13 +207,15 @@ impl Fetch<MilestoneIndex, Vec<Receipt>> for Storage {
         Ok(Some(
             self.inner
                 .prefix_iterator_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_RECEIPT)?, index.pack_to_vec())
-                .map(|(mut key, _)| {
-                    let (_, receipt) = key.split_at_mut(std::mem::size_of::<MilestoneIndex>());
-                    // Unpacking from storage is fine.
-                    #[allow(clippy::useless_asref)]
-                    Receipt::unpack_unverified(&mut receipt.as_ref(), &mut ()).unwrap()
+                .map(|res| {
+                    res.map(|(mut key, _)| {
+                        let (_, receipt) = key.split_at_mut(std::mem::size_of::<MilestoneIndex>());
+                        // Unpacking from storage is fine.
+                        #[allow(clippy::useless_asref)]
+                        Receipt::unpack_unverified(&mut receipt.as_ref(), &mut ()).unwrap()
+                    })
                 })
-                .collect(),
+                .collect::<Result<_, _>>()?,
         ))
     }
 }
@@ -217,13 +225,15 @@ impl Fetch<bool, Vec<TreasuryOutput>> for Storage {
         Ok(Some(
             self.inner
                 .prefix_iterator_cf(self.cf_handle(CF_SPENT_TO_TREASURY_OUTPUT)?, spent.pack_to_vec())
-                .map(|(mut key, _)| {
-                    let (_, output) = key.split_at_mut(std::mem::size_of::<bool>());
-                    // Unpacking from storage is fine.
-                    #[allow(clippy::useless_asref)]
-                    TreasuryOutput::unpack_unverified(&mut output.as_ref(), &mut ()).unwrap()
+                .map(|res| {
+                    res.map(|(mut key, _)| {
+                        let (_, output) = key.split_at_mut(std::mem::size_of::<bool>());
+                        // Unpacking from storage is fine.
+                        #[allow(clippy::useless_asref)]
+                        TreasuryOutput::unpack_unverified(&mut output.as_ref(), &mut ()).unwrap()
+                    })
                 })
-                .collect(),
+                .collect::<Result<_, _>>()?,
         ))
     }
 }

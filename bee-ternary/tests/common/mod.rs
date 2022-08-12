@@ -7,7 +7,7 @@
 use std::ops::Range;
 
 use bee_ternary::*;
-use rand::prelude::*;
+use rand::{thread_rng, Rng};
 
 /// Generates a random balanced i8 trit.
 pub fn gen_trit_balanced() -> i8 {

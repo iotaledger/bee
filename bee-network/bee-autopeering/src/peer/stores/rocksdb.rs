@@ -119,8 +119,8 @@ impl PeerStore for RocksDbPeerStore {
         Ok(self
             .db
             .iterator_cf(&cf, IteratorMode::Start)
-            .map(|(_, b)| ActivePeer::from_bytes(&b))
-            .collect::<Vec<_>>())
+            .map(|res| res.map(|(_, b)| ActivePeer::from_bytes(&b)))
+            .collect::<Result<Vec<_>, _>>())?
     }
 
     fn fetch_replacement(&self, peer_id: &PeerId) -> Result<Option<Peer>, Self::Error> {
@@ -135,8 +135,8 @@ impl PeerStore for RocksDbPeerStore {
         Ok(self
             .db
             .iterator_cf(&cf, IteratorMode::Start)
-            .map(|(_, bytes)| Peer::from_bytes(bytes))
-            .collect::<Vec<_>>())
+            .map(|res| res.map(|(_, bytes)| Peer::from_bytes(bytes)))
+            .collect::<Result<Vec<_>, _>>())?
     }
 
     fn delete(&self, _: &PeerId) -> Result<bool, Self::Error> {

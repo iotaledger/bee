@@ -23,6 +23,7 @@ use rocksdb::{DBIterator, IteratorMode};
 
 use crate::{
     column_families::*,
+    error::Error,
     storage::{Storage, StorageBackend},
 };
 
@@ -60,17 +61,10 @@ macro_rules! impl_iter {
             type Item = Result<($key, $value), <Storage as StorageBackend>::Error>;
 
             fn next(&mut self) -> Option<Self::Item> {
-                self.inner
-                    .next()
-                    .map(|(key, value)| Ok(Self::unpack_key_value(&key, &value)))
-
-                // inner.status()?;
-                //
-                // if inner.valid() {
-                //     Poll::Ready(item)
-                // } else {
-                //     Poll::Ready(None)
-                // }
+                self.inner.next().map(|res| {
+                    res.map(|(key, value)| Self::unpack_key_value(&key, &value))
+                        .map_err(Error::RocksDb)
+                })
             }
         }
     };
@@ -327,16 +321,9 @@ impl<'a> Iterator for StorageIterator<'a, BlockId, BlockMetadata> {
     type Item = Result<(BlockId, BlockMetadata), <Storage as StorageBackend>::Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.inner
-            .next()
-            .map(|(key, value)| Ok(Self::unpack_key_value(&key, &value)))
-
-        // inner.status()?;
-        //
-        // if inner.valid() {
-        //     Poll::Ready(item)
-        // } else {
-        //     Poll::Ready(None)
-        // }
+        self.inner.next().map(|res| {
+            res.map(|(key, value)| Self::unpack_key_value(&key, &value))
+                .map_err(Error::RocksDb)
+        })
     }
 }

@@ -17,16 +17,16 @@ all-features = true
 rustdoc-args = [ "--cfg", "doc_cfg" ]
 
 [dependencies]
-bee-block = { version = "1.0.0-beta.3", path = "../../bee-block", default-features = false }
+bee-block = { version = "1.0.0-beta.6", path = "../../bee-block", default-features = false }
 bee-ledger = { version = "0.7.0", path = "../../bee-ledger/bee-ledger", default-features = false }
 bee-storage = { version = "1.0.0-beta.1", path = "../bee-storage", default-features = false }
 bee-tangle = { version = "0.3.0", path = "../../bee-tangle", default-features = false }
 
 num_cpus = { version = "1.13.1", default-features = false }
 packable = { git = "https://github.com/pvdrz/common-rs", rev = "65db6f4a83742f43dae68ac004cadb0416df8929", default-features = false, features = [ "serde" ] }
-serde = { version = "1.0.137", default-features = false, features = [ "derive" ] }
+serde = { version = "1.0.143", default-features = false, features = [ "derive" ] }
 sled = { version = "0.34.7", default-features = false, features = [ "compression" ]}
-thiserror = { version = "1.0.31", default-features = false }
+thiserror = { version = "1.0.32", default-features = false }
 
 [dev-dependencies]
 bee-storage-test = { path = "../bee-storage-test", default-features = false }

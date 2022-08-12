@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Bump `bee-block` to `v1.0.0-beta.4`;
+
 ### Deprecated
 
 ### Removed
@@ -26,6 +28,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Moved base types to crate `bee-ledger-types`;
 
 -->
+
+## Unreleased - 2022-XX-XX
+
+### Changed
+
+- Updated dependencies;
 
 ## 0.8.0 - 2022-XX-XX
 
