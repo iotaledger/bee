@@ -103,6 +103,14 @@ impl NativeTokensBuilder {
                 .collect::<Result<Vec<_>, _>>()?,
         )
     }
+
+    /// Finishes the [`NativeTokensBuilder`] into a [`Vec<NativeToken>`].
+    pub fn finish_vec(self) -> Result<Vec<NativeToken>, Error> {
+        self.0
+            .into_iter()
+            .map(|(token_id, amount)| NativeToken::new(token_id, amount))
+            .collect::<Result<_, _>>()
+    }
 }
 
 impl From<NativeTokens> for NativeTokensBuilder {
