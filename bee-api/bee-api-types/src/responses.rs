@@ -1,6 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#[cfg(feature = "axum")]
 use axum::{
     body::BoxBody,
     http::StatusCode,
@@ -33,6 +34,7 @@ pub struct InfoResponse {
     pub features: Vec<String>,
 }
 
+#[cfg(feature = "axum")]
 impl IntoResponse for InfoResponse {
     fn into_response(self) -> Response<BoxBody> {
         Json(self).into_response()
@@ -155,6 +157,7 @@ pub struct TipsResponse {
     pub tips: Vec<String>,
 }
 
+#[cfg(feature = "axum")]
 impl IntoResponse for TipsResponse {
     fn into_response(self) -> Response<BoxBody> {
         Json(self).into_response()
@@ -169,6 +172,7 @@ pub struct SubmitBlockResponse {
     pub block_id: String,
 }
 
+#[cfg(feature = "axum")]
 impl IntoResponse for SubmitBlockResponse {
     fn into_response(self) -> Response<BoxBody> {
         (StatusCode::CREATED, Json(self)).into_response()
@@ -184,6 +188,7 @@ pub enum BlockResponse {
     Raw(Vec<u8>),
 }
 
+#[cfg(feature = "axum")]
 impl IntoResponse for BlockResponse {
     fn into_response(self) -> Response<BoxBody> {
         match self {
@@ -218,6 +223,7 @@ pub struct BlockMetadataResponse {
     pub should_reattach: Option<bool>,
 }
 
+#[cfg(feature = "axum")]
 impl IntoResponse for BlockMetadataResponse {
     fn into_response(self) -> Response<BoxBody> {
         Json(self).into_response()
@@ -232,6 +238,7 @@ pub struct OutputResponse {
     pub output: OutputDto,
 }
 
+#[cfg(feature = "axum")]
 impl IntoResponse for OutputResponse {
     fn into_response(self) -> Response<BoxBody> {
         Json(self).into_response()
@@ -264,6 +271,7 @@ pub struct OutputMetadataResponse {
     pub ledger_index: u32,
 }
 
+#[cfg(feature = "axum")]
 impl IntoResponse for OutputMetadataResponse {
     fn into_response(self) -> Response<BoxBody> {
         Json(self).into_response()
@@ -278,6 +286,7 @@ pub struct ReceiptsResponse {
     pub receipts: Vec<ReceiptDto>,
 }
 
+#[cfg(feature = "axum")]
 impl IntoResponse for ReceiptsResponse {
     fn into_response(self) -> Response<BoxBody> {
         Json(self).into_response()
@@ -293,6 +302,7 @@ pub struct TreasuryResponse {
     pub amount: String,
 }
 
+#[cfg(feature = "axum")]
 impl IntoResponse for TreasuryResponse {
     fn into_response(self) -> Response<BoxBody> {
         Json(self).into_response()
@@ -308,6 +318,7 @@ pub enum MilestoneResponse {
     Raw(Vec<u8>),
 }
 
+#[cfg(feature = "axum")]
 impl IntoResponse for MilestoneResponse {
     fn into_response(self) -> Response<BoxBody> {
         match self {
@@ -328,6 +339,7 @@ pub struct UtxoChangesResponse {
     pub consumed_outputs: Vec<String>,
 }
 
+#[cfg(feature = "axum")]
 impl IntoResponse for UtxoChangesResponse {
     fn into_response(self) -> Response<BoxBody> {
         Json(self).into_response()
@@ -339,6 +351,7 @@ impl IntoResponse for UtxoChangesResponse {
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct PeersResponse(pub Vec<PeerDto>);
 
+#[cfg(feature = "axum")]
 impl IntoResponse for PeersResponse {
     fn into_response(self) -> Response<BoxBody> {
         Json(self).into_response()
@@ -350,6 +363,7 @@ impl IntoResponse for PeersResponse {
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct AddPeerResponse(pub PeerDto);
 
+#[cfg(feature = "axum")]
 impl IntoResponse for AddPeerResponse {
     fn into_response(self) -> Response<BoxBody> {
         Json(self).into_response()
@@ -361,6 +375,7 @@ impl IntoResponse for AddPeerResponse {
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct PeerResponse(pub PeerDto);
 
+#[cfg(feature = "axum")]
 impl IntoResponse for PeerResponse {
     fn into_response(self) -> Response<BoxBody> {
         Json(self).into_response()
@@ -375,6 +390,7 @@ pub struct WhiteFlagResponse {
     pub merkle_tree_hash: String,
 }
 
+#[cfg(feature = "axum")]
 impl IntoResponse for WhiteFlagResponse {
     fn into_response(self) -> Response<BoxBody> {
         Json(self).into_response()

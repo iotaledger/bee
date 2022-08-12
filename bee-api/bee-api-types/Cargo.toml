@@ -21,10 +21,12 @@ bee-block = { version = "1.0.0-beta.4", path = "../../bee-block", default-featur
 bee-ledger-types = { version = "1.0.0-beta.3", path = "../../bee-ledger/bee-ledger-types", default-features = false }
 bee-protocol-types = { version = "1.0.0-beta.2", path = "../../bee-protocol/bee-protocol-types", default-features = false, optional = true }
 
-axum = { version = "0.5.15", default-features = false, features = [ "json" ] }
+axum = { version = "0.5.15", default-features = false, features = [ "json" ], optional =  true }
 serde = { version = "1.0.143", default-features = false, features = [ "derive" ] }
 thiserror = { version = "1.0.32", default-features = false }
 
 [features]
-default = [ "peer" ]
+default = [ "axum", "peer" ]
+# Implement `axum::response::IntoResponse` for response types.
+axum = [ "dep:axum" ]
 peer = [ "bee-protocol-types" ]
