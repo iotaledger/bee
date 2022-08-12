@@ -22,4 +22,4 @@ bee-ledger-types = { version = "1.0.0-beta.1", path = "../../bee-ledger/bee-ledg
 bee-storage = { version = "1.0.0-beta.1", path = "../bee-storage", default-features = false }
 bee-tangle = { version = "0.3.0", path = "../../bee-tangle", default-features = false, features = [ "rand" ] }
 
-packable = { git = "https://github.com/pvdrz/common-rs", rev = "65db6f4a83742f43dae68ac004cadb0416df8929", default-features = false, features = [ "serde" ] }
+packable = { git = "https://github.com/pvdrz/common-rs", rev = "b4c8ac0d59161754d45018d6794ee2bbfce10c25", default-features = false, features = [ "serde" ] }

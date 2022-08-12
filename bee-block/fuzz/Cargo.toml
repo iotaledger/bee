@@ -12,7 +12,7 @@ cargo-fuzz = true
 bee-block = { path = "..", default-features = false }
 
 libfuzzer-sys = { version = "0.4.3", default-features = false }
-packable = { git = "https://github.com/pvdrz/common-rs", rev = "65db6f4a83742f43dae68ac004cadb0416df8929", default-features = false }
+packable = { git = "https://github.com/pvdrz/common-rs", rev = "b4c8ac0d59161754d45018d6794ee2bbfce10c25", default-features = false }
 
 # Prevent this from interfering with workspaces
 [workspace]
