@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Updated dependencies;
+- Added the `"axum"` feature to gate the `axum` dependency, `IntoResponse` impls;
 
 ## 1.0.0-beta.4 - 2022-07-26
 
