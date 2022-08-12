@@ -291,7 +291,7 @@ mod inx {
 
         fn try_from(value: inx_bindings::proto::RawMilestone) -> Result<Self, Self::Error> {
             use packable::PackableExt;
-            let payload = crate::payload::Payload::unpack_verified(value.data, &mut ())
+            let payload = crate::payload::Payload::unpack_verified(value.data, &())
                 .map_err(|e| Self::Error::InvalidRawBytes(e.to_string()))?;
 
             match payload {

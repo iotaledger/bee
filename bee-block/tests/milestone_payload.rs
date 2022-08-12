@@ -22,23 +22,21 @@ fn kind() {
 
 #[test]
 fn new_valid() {
-    assert!(
-        MilestonePayload::new(
-            MilestoneEssence::new(
-                MilestoneIndex(0),
-                0,
-                rand_milestone_id(),
-                rand_parents(),
-                rand_merkle_root(),
-                rand_merkle_root(),
-                vec![],
-                MilestoneOptions::new(vec![]).unwrap(),
-            )
-            .unwrap(),
-            vec![Signature::from(Ed25519Signature::new([0; 32], [0; 64]))]
+    assert!(MilestonePayload::new(
+        MilestoneEssence::new(
+            MilestoneIndex(0),
+            0,
+            rand_milestone_id(),
+            rand_parents(),
+            rand_merkle_root(),
+            rand_merkle_root(),
+            vec![],
+            MilestoneOptions::new(vec![]).unwrap(),
         )
-        .is_ok()
-    );
+        .unwrap(),
+        vec![Signature::from(Ed25519Signature::new([0; 32], [0; 64]))]
+    )
+    .is_ok());
 }
 
 #[test]
@@ -133,7 +131,7 @@ fn pack_unpack_valid() {
     assert_eq!(payload.packed_len(), packed.len());
     assert_eq!(
         payload,
-        PackableExt::unpack_verified(&mut packed.as_slice(), &mut ()).unwrap()
+        PackableExt::unpack_verified(&mut packed.as_slice(), &()).unwrap()
     )
 }
 

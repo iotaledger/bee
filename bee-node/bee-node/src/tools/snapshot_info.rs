@@ -48,7 +48,7 @@ pub fn exec(tool: &SnapshotInfoTool) -> Result<(), SnapshotInfoError> {
     let mut unpacker = IoUnpacker::new(&mut reader);
 
     let header =
-        SnapshotHeader::unpack::<_, true>(&mut unpacker, &mut ()).map_err(|_| SnapshotInfoError::SnapshotUnpack)?;
+        SnapshotHeader::unpack::<_, true>(&mut unpacker, &()).map_err(|_| SnapshotInfoError::SnapshotUnpack)?;
 
     println!("Type:\t\t\t\t{:?}", header.kind());
     println!(
@@ -62,11 +62,10 @@ pub fn exec(tool: &SnapshotInfoTool) -> Result<(), SnapshotInfoError> {
 
     match header.kind() {
         SnapshotKind::Full => print_full_header(
-            FullSnapshotHeader::unpack::<_, true>(&mut unpacker, &mut ())
-                .map_err(|_| SnapshotInfoError::SnapshotUnpack)?,
+            FullSnapshotHeader::unpack::<_, true>(&mut unpacker, &()).map_err(|_| SnapshotInfoError::SnapshotUnpack)?,
         ),
         SnapshotKind::Delta => print_delta_header(
-            DeltaSnapshotHeader::unpack::<_, true>(&mut unpacker, &mut ())
+            DeltaSnapshotHeader::unpack::<_, true>(&mut unpacker, &())
                 .map_err(|_| SnapshotInfoError::SnapshotUnpack)?,
         ),
     };

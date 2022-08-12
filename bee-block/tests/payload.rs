@@ -69,7 +69,7 @@ fn transaction() {
     assert!(matches!(payload, Payload::Transaction(_)));
     assert_eq!(
         payload,
-        PackableExt::unpack_verified(&mut packed.as_slice(), &mut ()).unwrap()
+        PackableExt::unpack_verified(&mut packed.as_slice(), &()).unwrap()
     );
 }
 
@@ -99,7 +99,7 @@ fn milestone() {
     assert!(matches!(payload, Payload::Milestone(_)));
     assert_eq!(
         payload,
-        PackableExt::unpack_verified(&mut packed.as_slice(), &mut ()).unwrap()
+        PackableExt::unpack_verified(&mut packed.as_slice(), &()).unwrap()
     );
 }
 
@@ -130,6 +130,6 @@ fn treasury_transaction() {
     assert!(matches!(payload, Payload::TreasuryTransaction(_)));
     assert_eq!(
         payload,
-        PackableExt::unpack_verified(&mut packed.as_slice(), &mut ()).unwrap()
+        PackableExt::unpack_verified(&mut packed.as_slice(), &()).unwrap()
     );
 }

@@ -31,6 +31,6 @@ fn pack_unpack_valid() {
 
     assert_eq!(
         sig,
-        PackableExt::unpack_verified(&mut sig_packed.as_slice(), &mut ()).unwrap()
+        PackableExt::unpack_verified(&mut sig_packed.as_slice(), &()).unwrap()
     );
 }

@@ -318,7 +318,7 @@ mod inx {
         type Error = crate::error::inx::InxError;
 
         fn try_from(value: inx_bindings::proto::RawBlock) -> Result<Self, Self::Error> {
-            Self::unpack_verified(value.data, &mut ()).map_err(|e| Self::Error::InvalidRawBytes(e.to_string()))
+            Self::unpack_verified(value.data, &()).map_err(|e| Self::Error::InvalidRawBytes(e.to_string()))
         }
     }
 }
