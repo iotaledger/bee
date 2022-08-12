@@ -1,13 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#[cfg(feature = "axum")]
-use axum::{
-    body::BoxBody,
-    http::StatusCode,
-    response::{IntoResponse, Response},
-    Json,
-};
 use bee_block::{output::dto::OutputDto, payload::dto::MilestonePayloadDto, BlockDto};
 use serde::{Deserialize, Serialize};
 
@@ -32,13 +25,6 @@ pub struct InfoResponse {
     pub base_token: BaseTokenResponse,
     pub metrics: MetricsResponse,
     pub features: Vec<String>,
-}
-
-#[cfg(feature = "axum")]
-impl IntoResponse for InfoResponse {
-    fn into_response(self) -> Response<BoxBody> {
-        Json(self).into_response()
-    }
 }
 
 impl BodyInner for InfoResponse {}
@@ -157,26 +143,12 @@ pub struct TipsResponse {
     pub tips: Vec<String>,
 }
 
-#[cfg(feature = "axum")]
-impl IntoResponse for TipsResponse {
-    fn into_response(self) -> Response<BoxBody> {
-        Json(self).into_response()
-    }
-}
-
 /// Response of POST /api/core/v2/blocks.
 /// Returns the block identifier of the submitted block.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct SubmitBlockResponse {
     #[serde(rename = "blockId")]
     pub block_id: String,
-}
-
-#[cfg(feature = "axum")]
-impl IntoResponse for SubmitBlockResponse {
-    fn into_response(self) -> Response<BoxBody> {
-        (StatusCode::CREATED, Json(self)).into_response()
-    }
 }
 
 /// Response of GET /api/core/v2/blocks/{block_id}.
@@ -186,16 +158,6 @@ impl IntoResponse for SubmitBlockResponse {
 pub enum BlockResponse {
     Json(BlockDto),
     Raw(Vec<u8>),
-}
-
-#[cfg(feature = "axum")]
-impl IntoResponse for BlockResponse {
-    fn into_response(self) -> Response<BoxBody> {
-        match self {
-            BlockResponse::Json(dto) => Json(dto).into_response(),
-            BlockResponse::Raw(bytes) => bytes.into_response(),
-        }
-    }
 }
 
 /// Response of GET /api/core/v2/blocks/{block_id}/metadata.
@@ -223,26 +185,12 @@ pub struct BlockMetadataResponse {
     pub should_reattach: Option<bool>,
 }
 
-#[cfg(feature = "axum")]
-impl IntoResponse for BlockMetadataResponse {
-    fn into_response(self) -> Response<BoxBody> {
-        Json(self).into_response()
-    }
-}
-
 /// Response of GET /api/core/v2/outputs/{output_id}.
 /// Returns an output and its metadata.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct OutputResponse {
     pub metadata: OutputMetadataResponse,
     pub output: OutputDto,
-}
-
-#[cfg(feature = "axum")]
-impl IntoResponse for OutputResponse {
-    fn into_response(self) -> Response<BoxBody> {
-        Json(self).into_response()
-    }
 }
 
 /// Response of GET /api/core/v2/outputs/{output_id}/metadata.
@@ -271,26 +219,12 @@ pub struct OutputMetadataResponse {
     pub ledger_index: u32,
 }
 
-#[cfg(feature = "axum")]
-impl IntoResponse for OutputMetadataResponse {
-    fn into_response(self) -> Response<BoxBody> {
-        Json(self).into_response()
-    }
-}
-
 /// Response of:
 /// * GET /api/core/v2/receipts/{milestone_index}, returns all stored receipts for the given milestone index.
 /// * GET /api/core/v2/receipts, returns all stored receipts, independent of a milestone index.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct ReceiptsResponse {
     pub receipts: Vec<ReceiptDto>,
-}
-
-#[cfg(feature = "axum")]
-impl IntoResponse for ReceiptsResponse {
-    fn into_response(self) -> Response<BoxBody> {
-        Json(self).into_response()
-    }
 }
 
 /// Response of GET /api/core/v2/treasury.
@@ -302,13 +236,6 @@ pub struct TreasuryResponse {
     pub amount: String,
 }
 
-#[cfg(feature = "axum")]
-impl IntoResponse for TreasuryResponse {
-    fn into_response(self) -> Response<BoxBody> {
-        Json(self).into_response()
-    }
-}
-
 /// Response of GET /api/core/v2/milestone/{milestone_index}.
 /// Returns information about a milestone.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -316,16 +243,6 @@ impl IntoResponse for TreasuryResponse {
 pub enum MilestoneResponse {
     Json(MilestonePayloadDto),
     Raw(Vec<u8>),
-}
-
-#[cfg(feature = "axum")]
-impl IntoResponse for MilestoneResponse {
-    fn into_response(self) -> Response<BoxBody> {
-        match self {
-            MilestoneResponse::Json(dto) => Json(dto).into_response(),
-            MilestoneResponse::Raw(bytes) => bytes.into_response(),
-        }
-    }
 }
 
 /// Response of GET /api/core/v2/milestone/{milestone_index}/utxo-changes.
@@ -339,48 +256,20 @@ pub struct UtxoChangesResponse {
     pub consumed_outputs: Vec<String>,
 }
 
-#[cfg(feature = "axum")]
-impl IntoResponse for UtxoChangesResponse {
-    fn into_response(self) -> Response<BoxBody> {
-        Json(self).into_response()
-    }
-}
-
 /// Response of GET /api/core/v2/peers.
 /// Returns information about all peers of the node.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct PeersResponse(pub Vec<PeerDto>);
-
-#[cfg(feature = "axum")]
-impl IntoResponse for PeersResponse {
-    fn into_response(self) -> Response<BoxBody> {
-        Json(self).into_response()
-    }
-}
 
 /// Response of POST /api/core/v2/peers.
 /// Returns information about the added peer.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct AddPeerResponse(pub PeerDto);
 
-#[cfg(feature = "axum")]
-impl IntoResponse for AddPeerResponse {
-    fn into_response(self) -> Response<BoxBody> {
-        Json(self).into_response()
-    }
-}
-
 /// Response of GET /api/core/v2/peer/{peer_id}.
 /// Returns information about a specific peer of the node.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct PeerResponse(pub PeerDto);
-
-#[cfg(feature = "axum")]
-impl IntoResponse for PeerResponse {
-    fn into_response(self) -> Response<BoxBody> {
-        Json(self).into_response()
-    }
-}
 
 /// Response of GET /api/plugins/debug/whiteflag.
 /// Returns the computed merkle tree hash for the given white flag traversal.
@@ -390,16 +279,71 @@ pub struct WhiteFlagResponse {
     pub merkle_tree_hash: String,
 }
 
-#[cfg(feature = "axum")]
-impl IntoResponse for WhiteFlagResponse {
-    fn into_response(self) -> Response<BoxBody> {
-        Json(self).into_response()
-    }
-}
-
 /// Response of GET /api/routes.
 /// Returns the available API route groups of the node.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct RoutesResponse {
     pub routes: Vec<String>,
+}
+
+#[cfg(feature = "axum")]
+mod axum_response {
+    use axum::{
+        body::BoxBody,
+        http::StatusCode,
+        response::{IntoResponse, Response},
+        Json,
+    };
+
+    use super::*;
+
+    /// Macro to implement `IntoResponse` for simple cases which can just be wrapped in JSON.
+    macro_rules! impl_into_response {
+        ($($t:ty),*) => ($(
+            impl IntoResponse for $t {
+                fn into_response(self) -> Response<BoxBody> {
+                    Json(self).into_response()
+                }
+            }
+        )*)
+    }
+
+    impl_into_response!(
+        InfoResponse,
+        TipsResponse,
+        BlockMetadataResponse,
+        OutputResponse,
+        OutputMetadataResponse,
+        ReceiptsResponse,
+        TreasuryResponse,
+        UtxoChangesResponse,
+        AddPeerResponse,
+        PeersResponse,
+        PeerResponse,
+        WhiteFlagResponse
+    );
+
+    impl IntoResponse for SubmitBlockResponse {
+        fn into_response(self) -> Response<BoxBody> {
+            (StatusCode::CREATED, Json(self)).into_response()
+        }
+    }
+
+    impl IntoResponse for BlockResponse {
+        fn into_response(self) -> Response<BoxBody> {
+            match self {
+                BlockResponse::Json(dto) => Json(dto).into_response(),
+                BlockResponse::Raw(bytes) => bytes.into_response(),
+            }
+        }
+    }
+
+    impl IntoResponse for MilestoneResponse {
+        fn into_response(self) -> Response<BoxBody> {
+            match self {
+                MilestoneResponse::Json(dto) => Json(dto).into_response(),
+                MilestoneResponse::Raw(bytes) => bytes.into_response(),
+            }
+        }
+    }
 }
