@@ -9,7 +9,7 @@ use crate::{Error, Milestone, MilestoneRangeRequest, MilestoneRequest, NodeConfi
 /// An INX client connection.
 #[derive(Clone, Debug)]
 pub struct Inx {
-    inx: InxClient<inx::tonic::Channel>,
+    inx: InxClient<inx::tonic::transport::Channel>,
 }
 
 fn unpack_proto_msg<Proto, Bee>(msg: Result<Proto, tonic::Status>) -> Result<Bee, Error>
