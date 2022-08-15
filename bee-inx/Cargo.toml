@@ -1,6 +1,6 @@
 [package]
 name = "bee-inx"
-version = "1.0.0-beta.3"
+version = "1.0.0-beta.4"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "Rust bindings for IOTA node extensions (INX)"
@@ -14,7 +14,7 @@ homepage = "https://www.iota.org"
 bee-block = { version = "1.0.0-beta.6", path = "../bee-block", default-features = false, features = [ "inx", "std" ] }
 
 futures = { version = "0.3.21", default-features = false }
-inx = { version = "1.0.0-beta.4", default-features = false }
+inx = { version = "1.0.0-beta.5", default-features = false }
 thiserror = { version = "1.0.32", default-features = false }
 packable = { git = "https://github.com/pvdrz/common-rs", rev = "b4c8ac0d59161754d45018d6794ee2bbfce10c25", default-features = false }
 
