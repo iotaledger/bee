@@ -9,7 +9,7 @@ pub enum Error {
     #[error("gRPC status code: {0}")]
     StatusCode(#[from] tonic::Status),
     #[error(transparent)]
-    TonicError(#[from] tonic::Error),
+    TonicError(#[from] tonic::transport::Error),
     #[error(transparent)]
     InxError(#[from] bee_block::InxError),
 }
