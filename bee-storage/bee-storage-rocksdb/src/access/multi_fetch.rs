@@ -21,7 +21,7 @@ use crate::{
     storage::{Storage, StorageBackend},
 };
 
-pub struct MultiIter<'a, V: Packable, E> {
+pub struct MultiIter<'a, V, E> {
     iter: IntoIter<Result<Option<Vec<u8>>, rocksdb::Error>>,
     marker: PhantomData<(V, E)>,
     _guard: Option<RwLockReadGuard<'a, ()>>,
