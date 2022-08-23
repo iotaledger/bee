@@ -20,7 +20,7 @@ use packable::{Packable, PackableExt};
 use crate::{storage::Storage, trees::*};
 
 /// Multi-fetch iterator over an inner tree.
-pub struct TreeIter<'a, K, V: Packable, E> {
+pub struct TreeIter<'a, K, V, E> {
     tree: sled::Tree,
     keys: Iter<'a, K>,
     marker: PhantomData<(V, E)>,
@@ -42,7 +42,7 @@ impl<'a, K: Packable, V: Packable, E: From<sled::Error>> Iterator for TreeIter<'
 }
 
 /// Multi-fetch iterator over the database tree.
-pub struct DbIter<'a, K, V: Packable, E> {
+pub struct DbIter<'a, K, V, E> {
     db: &'a sled::Db,
     keys: Iter<'a, K>,
     marker: PhantomData<(V, E)>,
