@@ -19,7 +19,7 @@ rustdoc-args = [ "--cfg", "doc_cfg" ]
 [dependencies]
 bee-block = { version = "1.0.0-beta.6", path = "../../bee-block", default-features = false, features = [ "std" ] }
 
-packable = { git = "https://github.com/pvdrz/common-rs", rev = "b4c8ac0d59161754d45018d6794ee2bbfce10c25", default-features = false, features = [ "serde", "io" ] }
+packable = { git = "https://github.com/pvdrz/common-rs", rev = "7700d0fdc897b41751f4a3ddb2570f053f1df34a", default-features = false, features = [ "serde", "io" ] }
 thiserror = { version = "1.0.32", default-features = false }
 
 [features]

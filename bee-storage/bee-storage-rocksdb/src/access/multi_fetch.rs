@@ -24,7 +24,6 @@ use crate::{
 pub struct MultiIter<'a, V: Packable, E> {
     iter: IntoIter<Result<Option<Vec<u8>>, rocksdb::Error>>,
     marker: PhantomData<(V, E)>,
-    visitor: <V as Packable>::UnpackVisitor,
     _guard: Option<RwLockReadGuard<'a, ()>>,
 }
 
@@ -35,9 +34,7 @@ impl<'a, V: Packable, E: From<rocksdb::Error>> Iterator for MultiIter<'a, V, E> 
         Some(
             self.iter
                 .next()?
-                .map(|option| {
-                    option.map(|bytes| V::unpack_unverified(&mut bytes.as_slice(), &mut self.visitor).unwrap())
-                })
+                .map(|option| option.map(|bytes| V::unpack_unverified(&mut bytes.as_slice()).unwrap()))
                 .map_err(E::from),
         )
     }
@@ -57,7 +54,6 @@ macro_rules! impl_multi_fetch {
                         .multi_get_cf(keys.iter().map(|k| (cf, k.pack_to_vec())))
                         .into_iter(),
                     marker: PhantomData,
-                    visitor: (),
                     _guard: None,
                 })
             }
@@ -90,7 +86,6 @@ impl<'a> MultiFetch<'a, BlockId, BlockMetadata> for Storage {
                 .multi_get_cf(keys.iter().map(|k| (cf, k.pack_to_vec())))
                 .into_iter(),
             marker: PhantomData,
-            visitor: (),
             _guard: Some(self.locks.block_id_to_metadata.read()),
         })
     }

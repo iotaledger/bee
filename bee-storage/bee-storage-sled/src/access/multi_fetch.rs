@@ -23,7 +23,6 @@ use crate::{storage::Storage, trees::*};
 pub struct TreeIter<'a, K, V: Packable, E> {
     tree: sled::Tree,
     keys: Iter<'a, K>,
-    visitor: <V as Packable>::UnpackVisitor,
     marker: PhantomData<(V, E)>,
 }
 
@@ -36,7 +35,7 @@ impl<'a, K: Packable, V: Packable, E: From<sled::Error>> Iterator for TreeIter<'
         Some(
             self.tree
                 .get(key)
-                .map(|option| option.map(|bytes| V::unpack_unverified(&mut bytes.as_ref(), &mut self.visitor).unwrap()))
+                .map(|option| option.map(|bytes| V::unpack_unverified(&mut bytes.as_ref()).unwrap()))
                 .map_err(E::from),
         )
     }
@@ -46,7 +45,6 @@ impl<'a, K: Packable, V: Packable, E: From<sled::Error>> Iterator for TreeIter<'
 pub struct DbIter<'a, K, V: Packable, E> {
     db: &'a sled::Db,
     keys: Iter<'a, K>,
-    visitor: <V as Packable>::UnpackVisitor,
     marker: PhantomData<(V, E)>,
 }
 
@@ -59,7 +57,7 @@ impl<'a, K: Packable, V: Packable, E: From<sled::Error>> Iterator for DbIter<'a,
         Some(
             self.db
                 .get(key)
-                .map(|option| option.map(|bytes| V::unpack_unverified(&mut bytes.as_ref(), &mut self.visitor).unwrap()))
+                .map(|option| option.map(|bytes| V::unpack_unverified(&mut bytes.as_ref()).unwrap()))
                 .map_err(E::from),
         )
     }
@@ -72,7 +70,6 @@ impl<'a> MultiFetch<'a, u8, System> for Storage {
         Ok(DbIter {
             db: &self.inner,
             keys: keys.iter(),
-            visitor: (),
             marker: PhantomData,
         })
     }
@@ -87,7 +84,6 @@ macro_rules! impl_multi_fetch {
                 Ok(TreeIter {
                     tree: self.inner.open_tree($cf)?,
                     keys: keys.iter(),
-                    visitor: (),
                     marker: PhantomData,
                 })
             }
