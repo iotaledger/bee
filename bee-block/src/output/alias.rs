@@ -521,7 +521,6 @@ impl StateTransitionVerifier for AliasOutput {
             // Governance transition.
             if current_state.amount != next_state.amount
                 || current_state.native_tokens != next_state.native_tokens
-                || current_state.state_index != next_state.state_index
                 || current_state.state_metadata != next_state.state_metadata
                 || current_state.foundry_counter != next_state.foundry_counter
             {
