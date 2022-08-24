@@ -273,11 +273,9 @@ impl BasicOutput {
         inputs: &[(OutputId, &Output)],
         context: &mut ValidationContext,
     ) -> Result<(), ConflictReason> {
-        let locked_address = self
-            .unlock_conditions()
-            .locked_address(self.address(), context.milestone_timestamp);
-
-        locked_address.unlock(unlock, inputs, context)
+        self.unlock_conditions()
+            .locked_address(self.address(), context.milestone_timestamp)
+            .unlock(unlock, inputs, context)
     }
 
     /// Returns the address of the unlock conditions if the output is a simple deposit.

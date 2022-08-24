@@ -395,13 +395,7 @@ impl FoundryOutput {
         inputs: &[(OutputId, &Output)],
         context: &mut ValidationContext,
     ) -> Result<(), ConflictReason> {
-        let locked_address = Address::from(*self.alias_address());
-
-        let locked_address = self
-            .unlock_conditions()
-            .locked_address(&locked_address, context.milestone_timestamp);
-
-        locked_address.unlock(unlock, inputs, context)
+        Address::from(*self.alias_address()).unlock(unlock, inputs, context)
     }
 }
 
