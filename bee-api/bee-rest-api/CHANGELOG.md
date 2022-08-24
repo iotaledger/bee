@@ -11,22 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Bump `bee-block` to `v1.0.0-beta.4`;
-- Bump `bee-api-types` to `v1.0.0-beta.4`;
-
 ### Deprecated
 
 ### Removed
 
 ### Fixed
 
-### Security -->
-
-<!-- ## Unreleased - YYYY-MM-DD
+### Security
 
 ### Removed
-
-- Moved base types to crate `bee-api-types`;
 
 -->
 
@@ -35,6 +28,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Updated dependencies;
+
+### Removed
+
+- Moved base types to crate `bee-api-types`;
 
 ## 0.2.2 - 2022-03-07
 
