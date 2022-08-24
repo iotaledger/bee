@@ -19,11 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
-## Unreleased - YYYY-MM-DD
+## Unreleased - 2022-MM-DD
 
 ### Changed
 
-- Add Alias state transition constraint to unlock an Alias address;
+- Updated dependencies;
+- Restrict constraint to unlock an Alias address to Alias state transitions;
 
 ## 1.0.0-beta.6 - 2022-08-11
 
