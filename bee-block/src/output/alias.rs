@@ -443,6 +443,7 @@ impl AliasOutput {
                     self.governor_address().unlock(unlock, inputs, context)?;
                 } else {
                     self.state_controller_address().unlock(unlock, inputs, context)?;
+                    // Only a state transition can be used to consider the alias address for output unlocks and sender/issuer validations.
                     context
                         .unlocked_addresses
                         .insert(Address::from(AliasAddress::from(alias_id)));
