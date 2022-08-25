@@ -75,7 +75,7 @@ impl RegularTransactionEssenceBuilder {
             .try_into()
             .map_err(Error::InvalidInputCount)?;
 
-        verify_inputs::<true>(&inputs)?;
+        verify_inputs::<true>(&inputs, &())?;
 
         let outputs: BoxedSlicePrefix<Output, OutputCount> = self
             .outputs
@@ -83,11 +83,11 @@ impl RegularTransactionEssenceBuilder {
             .try_into()
             .map_err(Error::InvalidOutputCount)?;
 
-        verify_outputs::<true>(&outputs)?;
+        verify_outputs::<true>(&outputs, &())?;
 
         let payload = OptionalPayload::from(self.payload);
 
-        verify_payload::<true>(&payload)?;
+        verify_payload::<true>(&payload, &())?;
 
         Ok(RegularTransactionEssence {
             network_id: self.network_id,
@@ -156,7 +156,7 @@ impl RegularTransactionEssence {
     }
 }
 
-fn verify_inputs<const VERIFY: bool>(inputs: &[Input]) -> Result<(), Error> {
+fn verify_inputs<const VERIFY: bool>(inputs: &[Input], _: &()) -> Result<(), Error> {
     let mut seen_utxos = HashSet::new();
 
     for input in inputs.iter() {
@@ -173,7 +173,7 @@ fn verify_inputs<const VERIFY: bool>(inputs: &[Input]) -> Result<(), Error> {
     Ok(())
 }
 
-fn verify_outputs<const VERIFY: bool>(outputs: &[Output]) -> Result<(), Error> {
+fn verify_outputs<const VERIFY: bool>(outputs: &[Output], _: &()) -> Result<(), Error> {
     let mut amount_sum: u64 = 0;
     let mut native_tokens_count: u8 = 0;
 
@@ -207,7 +207,7 @@ fn verify_outputs<const VERIFY: bool>(outputs: &[Output]) -> Result<(), Error> {
     Ok(())
 }
 
-fn verify_payload<const VERIFY: bool>(payload: &OptionalPayload) -> Result<(), Error> {
+fn verify_payload<const VERIFY: bool>(payload: &OptionalPayload, _: &()) -> Result<(), Error> {
     match &payload.0 {
         Some(Payload::TaggedData(_)) | None => Ok(()),
         Some(payload) => Err(Error::InvalidPayloadKind(payload.kind())),

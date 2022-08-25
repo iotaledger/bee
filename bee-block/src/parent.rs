@@ -52,7 +52,7 @@ impl Parents {
     }
 }
 
-fn verify_parents<const VERIFY: bool>(parents: &[BlockId]) -> Result<(), Error> {
+fn verify_parents<const VERIFY: bool>(parents: &[BlockId], _: &()) -> Result<(), Error> {
     if VERIFY && !is_unique_sorted(parents.iter().map(AsRef::as_ref)) {
         Err(Error::ParentsNotUniqueSorted)
     } else {

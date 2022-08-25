@@ -88,7 +88,7 @@ impl MilestoneOptions {
 
         milestone_options.sort_by_key(MilestoneOption::kind);
         // Sort is obviously fine now but uniqueness still needs to be checked.
-        verify_unique_sorted::<true>(&milestone_options)?;
+        verify_unique_sorted::<true>(&milestone_options, &())?;
 
         Ok(Self(milestone_options))
     }
@@ -123,7 +123,7 @@ impl MilestoneOptions {
 }
 
 #[inline]
-fn verify_unique_sorted<const VERIFY: bool>(milestone_options: &[MilestoneOption]) -> Result<(), Error> {
+fn verify_unique_sorted<const VERIFY: bool>(milestone_options: &[MilestoneOption], _: &()) -> Result<(), Error> {
     if VERIFY && !is_unique_sorted(milestone_options.iter().map(MilestoneOption::kind)) {
         Err(Error::MilestoneOptionsNotUniqueSorted)
     } else {

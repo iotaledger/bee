@@ -142,7 +142,7 @@ impl MilestonePayload {
     }
 }
 
-fn verify_signatures<const VERIFY: bool>(signatures: &[Signature]) -> Result<(), Error> {
+fn verify_signatures<const VERIFY: bool>(signatures: &[Signature], _: &()) -> Result<(), Error> {
     if VERIFY
         && !is_unique_sorted(signatures.iter().map(|signature| {
             let Signature::Ed25519(signature) = signature;

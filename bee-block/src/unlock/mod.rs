@@ -82,7 +82,7 @@ impl Unlocks {
             .try_into()
             .map_err(Error::InvalidUnlockCount)?;
 
-        verify_unlocks::<true>(&unlocks)?;
+        verify_unlocks::<true>(&unlocks, &())?;
 
         Ok(Self(unlocks))
     }
@@ -98,7 +98,7 @@ impl Unlocks {
     }
 }
 
-fn verify_unlocks<const VERIFY: bool>(unlocks: &[Unlock]) -> Result<(), Error> {
+fn verify_unlocks<const VERIFY: bool>(unlocks: &[Unlock], _: &()) -> Result<(), Error> {
     let mut seen_signatures = HashSet::new();
 
     for (index, unlock) in (0u16..).zip(unlocks.iter()) {

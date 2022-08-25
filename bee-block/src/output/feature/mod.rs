@@ -112,7 +112,7 @@ impl Features {
 
         features.sort_by_key(Feature::kind);
         // Sort is obviously fine now but uniqueness still needs to be checked.
-        verify_unique_sorted::<true>(&features)?;
+        verify_unique_sorted::<true>(&features, &())?;
 
         Ok(Self(features))
     }
@@ -165,7 +165,7 @@ impl Features {
 }
 
 #[inline]
-fn verify_unique_sorted<const VERIFY: bool>(features: &[Feature]) -> Result<(), Error> {
+fn verify_unique_sorted<const VERIFY: bool>(features: &[Feature], _: &()) -> Result<(), Error> {
     if VERIFY && !is_unique_sorted(features.iter().map(Feature::kind)) {
         Err(Error::FeaturesNotUniqueSorted)
     } else {
