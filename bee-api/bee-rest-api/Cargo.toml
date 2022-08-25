@@ -30,19 +30,19 @@ bee-tangle = { version = "0.3.0", path = "../../bee-tangle", default-features = 
 async-trait = { version = "0.1.57", default-features = false }
 auth-helper = { version = "0.2.0", default-features = false }
 axum = { version = "0.5.15", default-features = false, features = [ "json", "headers", "original-uri" ] }
-bech32 = { version = "0.9.0", default-features = false }
+bech32 = { version = "0.9.1", default-features = false }
 base64 = { version = "0.13.0", default-features = false }
 digest = { version = "0.10.3", default-features = false }
-futures = { version = "0.3.21", default-features = false }
-iota-crypto = { version = "0.13.0", default-features = false, features = [ "blake2b" ] }
+futures = { version = "0.3.23", default-features = false }
+iota-crypto = { version = "0.14.0", default-features = false, features = [ "blake2b" ] }
 lazy_static = {version = "1.4.0", default-features = false }
 log = { version = "0.4.17", default-features = false }
 multiaddr = { version = "0.14.0", default-features = false }
 num_cpus = { version = "1.13.1", default-features = false }
 packable = { version = "0.6.0", default-features = false }
 regex = { version = "1.6.0", default-features = false }
-serde = { version = "1.0.143", default-features = false, features = [ "derive" ] }
-serde_json = { version = "1.0.83", default-features = false, features = [ "alloc" ] }
+serde = { version = "1.0.144", default-features = false, features = [ "derive" ] }
+serde_json = { version = "1.0.85", default-features = false, features = [ "alloc" ] }
 thiserror = { version = "1.0.32", default-features = false }
 tokio = { version = "1.20.1", default-features = false }
 
