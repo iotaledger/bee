@@ -39,7 +39,7 @@ lazy_static = {version = "1.4.0", default-features = false }
 log = { version = "0.4.17", default-features = false }
 multiaddr = { version = "0.14.0", default-features = false }
 num_cpus = { version = "1.13.1", default-features = false }
-packable = { git = "https://github.com/pvdrz/common-rs", rev = "7700d0fdc897b41751f4a3ddb2570f053f1df34a", default-features = false }
+packable = { version = "0.6.0", default-features = false }
 regex = { version = "1.6.0", default-features = false }
 serde = { version = "1.0.143", default-features = false, features = [ "derive" ] }
 serde_json = { version = "1.0.83", default-features = false, features = [ "alloc" ] }

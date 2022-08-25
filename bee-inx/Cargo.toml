@@ -16,7 +16,7 @@ bee-block = { version = "1.0.0-beta.6", path = "../bee-block", default-features 
 futures = { version = "0.3.21", default-features = false }
 inx = { version = "1.0.0-beta.5", default-features = false }
 thiserror = { version = "1.0.32", default-features = false }
-packable = { git = "https://github.com/pvdrz/common-rs", rev = "7700d0fdc897b41751f4a3ddb2570f053f1df34a", default-features = false }
+packable = { version = "0.6.0", default-features = false }
 
 [dev-dependencies]
 bee-block = { version = "1.0.0-beta.6", path = "../bee-block", default-features = false, features = [ "inx", "rand", "std" ] }

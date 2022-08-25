@@ -2738,8 +2738,9 @@ dependencies = [
 
 [[package]]
 name = "packable"
-version = "0.5.0"
-source = "git+https://github.com/pvdrz/common-rs?rev=7700d0fdc897b41751f4a3ddb2570f053f1df34a#7700d0fdc897b41751f4a3ddb2570f053f1df34a"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "99cc84ffcd67fdca76fc6580bcc707d1c3d04dd638003a2728051d0824583f73"
 dependencies = [
  "autocfg",
  "packable-derive",
@@ -2749,8 +2750,9 @@ dependencies = [
 
 [[package]]
 name = "packable-derive"
-version = "0.5.0"
-source = "git+https://github.com/pvdrz/common-rs?rev=7700d0fdc897b41751f4a3ddb2570f053f1df34a#7700d0fdc897b41751f4a3ddb2570f053f1df34a"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "239a02563b85f215d611c61a877ee9a1f9ed933608090e04258a06420f7380ed"
 dependencies = [
  "proc-macro-crate",
  "proc-macro-error",
@@ -3635,9 +3637,9 @@ checksum = "93f6841e709003d68bb2deee8c343572bf446003ec20a583e76f7b15cebf3711"
 
 [[package]]
 name = "serde"
-version = "1.0.143"
+version = "1.0.144"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "53e8e5d5b70924f74ff5c6d64d9a5acd91422117c60f48c4e07855238a254553"
+checksum = "0f747710de3dcd43b88c9168773254e809d8ddbdf9653b84e2554ab219f17860"
 dependencies = [
  "serde_derive",
 ]
@@ -3663,9 +3665,9 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.143"
+version = "1.0.144"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d3d8e8de557aee63c26b85b947f5e59b690d0454c753f3adeb5cd7835ab88391"
+checksum = "94ed3a816fb1d101812f83e789f888322c34e291f894f19590dc310963e87a00"
 dependencies = [
  "proc-macro2",
  "quote",

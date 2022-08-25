@@ -23,7 +23,7 @@ bee-storage = { version = "1.0.0-beta.1", path = "../bee-storage", default-featu
 bee-tangle = { version = "0.3.0", path = "../../bee-tangle", default-features = false }
 
 num_cpus = { version = "1.13.1", default-features = false }
-packable = { git = "https://github.com/pvdrz/common-rs", rev = "7700d0fdc897b41751f4a3ddb2570f053f1df34a", default-features = false, features = [ "serde" ] }
+packable = { version = "0.6.0", default-features = false, features = [ "serde" ] }
 serde = { version = "1.0.143", default-features = false, features = [ "derive" ] }
 sled = { version = "0.34.7", default-features = false, features = [ "compression" ]}
 thiserror = { version = "1.0.32", default-features = false }
