@@ -348,16 +348,15 @@ impl NftOutput {
         inputs: &[(OutputId, &Output)],
         context: &mut ValidationContext,
     ) -> Result<(), ConflictReason> {
-        let locked_address = self
-            .unlock_conditions()
-            .locked_address(self.address(), context.milestone_timestamp);
+        self.unlock_conditions()
+            .locked_address(self.address(), context.milestone_timestamp)
+            .unlock(unlock, inputs, context)?;
+
         let nft_id = if self.nft_id().is_null() {
             NftId::from(*output_id)
         } else {
             *self.nft_id()
         };
-
-        locked_address.unlock(unlock, inputs, context)?;
 
         context
             .unlocked_addresses

@@ -437,27 +437,23 @@ impl AliasOutput {
         };
         let next_state = context.output_chains.get(&ChainId::from(alias_id));
 
-        let locked_address = self.unlock_conditions().locked_address(
-            match next_state {
-                Some(Output::Alias(next_state)) => {
-                    if self.state_index() == next_state.state_index() {
-                        self.governor_address()
-                    } else {
-                        self.state_controller_address()
-                    }
+        match next_state {
+            Some(Output::Alias(next_state)) => {
+                if self.state_index() == next_state.state_index() {
+                    self.governor_address().unlock(unlock, inputs, context)?;
+                } else {
+                    self.state_controller_address().unlock(unlock, inputs, context)?;
+                    // Only a state transition can be used to consider the alias address for output unlocks and
+                    // sender/issuer validations.
+                    context
+                        .unlocked_addresses
+                        .insert(Address::from(AliasAddress::from(alias_id)));
                 }
-                None => self.governor_address(),
-                // The next state can only be an alias output since it is identified by an alias chain identifier.
-                Some(_) => unreachable!(),
-            },
-            context.milestone_timestamp,
-        );
-
-        locked_address.unlock(unlock, inputs, context)?;
-
-        context
-            .unlocked_addresses
-            .insert(Address::from(AliasAddress::from(alias_id)));
+            }
+            None => self.governor_address().unlock(unlock, inputs, context)?,
+            // The next state can only be an alias output since it is identified by an alias chain identifier.
+            Some(_) => unreachable!(),
+        };
 
         Ok(())
     }
@@ -527,7 +523,6 @@ impl StateTransitionVerifier for AliasOutput {
             // Governance transition.
             if current_state.amount != next_state.amount
                 || current_state.native_tokens != next_state.native_tokens
-                || current_state.state_index != next_state.state_index
                 || current_state.state_metadata != next_state.state_metadata
                 || current_state.foundry_counter != next_state.foundry_counter
             {
