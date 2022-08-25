@@ -22,9 +22,9 @@ impl<T: Packable> Raw<T> {
         self.data
     }
 
-    pub fn inner(self) -> Result<T, Error> {
-        let unpacked =
-            T::unpack_verified(self.data).map_err(|e| bee_block::InxError::InvalidRawBytes(format!("{:?}", e)))?;
+    pub fn inner(self, visitor: &T::UnpackVisitor) -> Result<T, Error> {
+        let unpacked = T::unpack_verified(self.data, visitor)
+            .map_err(|e| bee_block::InxError::InvalidRawBytes(format!("{:?}", e)))?;
         Ok(unpacked)
     }
 }
@@ -57,6 +57,6 @@ mod test {
             data: output.pack_to_vec(),
         };
         let raw: Raw<bee::output::Output> = proto.into();
-        assert_eq!(output, raw.inner().unwrap());
+        assert_eq!(output, raw.inner(&()).unwrap());
     }
 }

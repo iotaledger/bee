@@ -58,6 +58,7 @@ impl TransactionPayload {
 
 impl Packable for TransactionPayload {
     type UnpackError = Error;
+    type UnpackVisitor = ();
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         self.essence.pack(packer)?;
@@ -68,9 +69,10 @@ impl Packable for TransactionPayload {
 
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
+        visitor: &Self::UnpackVisitor,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let essence = TransactionEssence::unpack::<_, VERIFY>(unpacker)?;
-        let unlocks = Unlocks::unpack::<_, VERIFY>(unpacker)?;
+        let essence = TransactionEssence::unpack::<_, VERIFY>(unpacker, visitor)?;
+        let unlocks = Unlocks::unpack::<_, VERIFY>(unpacker, visitor)?;
 
         if VERIFY {
             verify_essence_unlocks(&essence, &unlocks).map_err(UnpackError::Packable)?;

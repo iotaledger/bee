@@ -53,7 +53,7 @@ fn import_solid_entry_points<U: Unpacker<Error = std::io::Error>, B: StorageBack
     for _ in 0..sep_count {
         Insert::<SolidEntryPoint, MilestoneIndex>::insert(
             storage,
-            &SolidEntryPoint::unpack::<_, true>(unpacker)?,
+            &SolidEntryPoint::unpack::<_, true>(unpacker, &())?,
             &index,
         )
         .map_err(|e| Error::Storage(Box::new(e)))?;
@@ -68,8 +68,8 @@ fn import_outputs<U: Unpacker<Error = std::io::Error>, B: StorageBackend>(
     output_count: u64,
 ) -> Result<(), Error> {
     for _ in 0..output_count {
-        let output_id = OutputId::unpack::<_, true>(unpacker)?;
-        let created_output = CreatedOutput::unpack::<_, true>(unpacker)?;
+        let output_id = OutputId::unpack::<_, true>(unpacker, &())?;
+        let created_output = CreatedOutput::unpack::<_, true>(unpacker, &())?;
 
         create_output(storage, &output_id, &created_output)?;
     }
@@ -83,7 +83,7 @@ fn import_milestone_diffs<U: Unpacker<Error = std::io::Error>, B: StorageBackend
     milestone_diff_count: u64,
 ) -> Result<(), Error> {
     for _ in 0..milestone_diff_count {
-        let diff = MilestoneDiff::unpack::<_, true>(unpacker)?;
+        let diff = MilestoneDiff::unpack::<_, true>(unpacker, &())?;
         let index = diff.milestone().essence().index();
         // Unwrap is fine because ledger index was inserted just before.
         let ledger_index = *storage::fetch_ledger_index(storage)?.unwrap();
@@ -144,11 +144,11 @@ fn import_full_snapshot<B: StorageBackend>(storage: &B, path: &Path, network_id:
     info!("Importing full snapshot file {}...", &path.to_string_lossy());
 
     let mut unpacker = IoUnpacker::new(snapshot_reader(path)?);
-    let header = SnapshotHeader::unpack::<_, true>(&mut unpacker)?;
+    let header = SnapshotHeader::unpack::<_, true>(&mut unpacker, &())?;
 
     check_header(&header, SnapshotKind::Full, network_id)?;
 
-    let full_header = FullSnapshotHeader::unpack::<_, true>(&mut unpacker)?;
+    let full_header = FullSnapshotHeader::unpack::<_, true>(&mut unpacker, &())?;
 
     if header.ledger_index() < header.sep_index() {
         return Err(Error::Snapshot(SnapshotError::LedgerSepIndexesInconsistency(
@@ -208,11 +208,11 @@ fn import_delta_snapshot<B: StorageBackend>(storage: &B, path: &Path, network_id
     info!("Importing delta snapshot file {}...", &path.to_string_lossy());
 
     let mut unpacker = IoUnpacker::new(snapshot_reader(path)?);
-    let header = SnapshotHeader::unpack::<_, true>(&mut unpacker)?;
+    let header = SnapshotHeader::unpack::<_, true>(&mut unpacker, &())?;
 
     check_header(&header, SnapshotKind::Delta, network_id)?;
 
-    let delta_header = DeltaSnapshotHeader::unpack::<_, true>(&mut unpacker)?;
+    let delta_header = DeltaSnapshotHeader::unpack::<_, true>(&mut unpacker, &())?;
 
     if header.sep_index() < header.ledger_index() {
         return Err(Error::Snapshot(SnapshotError::LedgerSepIndexesInconsistency(

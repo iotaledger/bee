@@ -2749,9 +2749,9 @@ dependencies = [
 
 [[package]]
 name = "packable"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ffe491a88c5c4c77f5e02c92901c011ec4368e4ea1b4aff5c1a4bdaf3a087354"
+checksum = "99cc84ffcd67fdca76fc6580bcc707d1c3d04dd638003a2728051d0824583f73"
 dependencies = [
  "autocfg",
  "packable-derive",
@@ -2761,9 +2761,9 @@ dependencies = [
 
 [[package]]
 name = "packable-derive"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "715f215a9cb02dd40282e4544148d0b3cb21010561e4588f0790ae9f1f61c041"
+checksum = "239a02563b85f215d611c61a877ee9a1f9ed933608090e04258a06420f7380ed"
 dependencies = [
  "proc-macro-crate",
  "proc-macro-error",
@@ -4038,9 +4038,9 @@ dependencies = [
 
 [[package]]
 name = "time"
-version = "0.3.13"
+version = "0.3.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db76ff9fa4b1458b3c7f077f3ff9887394058460d21e634355b273aaf11eea45"
+checksum = "3c3f9a28b618c3a6b9251b6908e9c99e04b9e5c02e6581ccbb67d59c34ef7f9b"
 dependencies = [
  "itoa 1.0.3",
  "libc",
@@ -4053,7 +4053,7 @@ version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "17c30f0091717eeeff0b556d830302d5563de8b72fd49127aa5899a06a369808"
 dependencies = [
- "time 0.3.13",
+ "time 0.3.14",
 ]
 
 [[package]]

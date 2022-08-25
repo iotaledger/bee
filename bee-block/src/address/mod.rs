@@ -71,7 +71,7 @@ impl Address {
         match bech32::decode(address.as_ref()) {
             Ok((hrp, data, _)) => {
                 let bytes = Vec::<u8>::from_base32(&data).map_err(|_| Error::InvalidAddress)?;
-                Self::unpack_verified(&mut bytes.as_slice())
+                Self::unpack_verified(&mut bytes.as_slice(), &())
                     .map_err(|_| Error::InvalidAddress)
                     .map(|address| (hrp, address))
             }

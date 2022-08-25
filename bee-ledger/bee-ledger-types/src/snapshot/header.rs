@@ -55,6 +55,7 @@ impl SnapshotHeader {
 
 impl Packable for SnapshotHeader {
     type UnpackError = Error;
+    type UnpackVisitor = ();
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         SNAPSHOT_VERSION.pack(packer)?;
@@ -69,8 +70,9 @@ impl Packable for SnapshotHeader {
 
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
+        visitor: &Self::UnpackVisitor,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let version = u8::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let version = u8::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
 
         if VERIFY && SNAPSHOT_VERSION != version {
             return Err(UnpackError::Packable(Error::UnsupportedVersion(
@@ -79,11 +81,11 @@ impl Packable for SnapshotHeader {
             )));
         }
 
-        let kind = SnapshotKind::unpack::<_, VERIFY>(unpacker)?;
-        let timestamp = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
-        let network_id = u64::unpack::<_, VERIFY>(unpacker).coerce()?;
-        let sep_index = MilestoneIndex::unpack::<_, VERIFY>(unpacker).coerce()?;
-        let ledger_index = MilestoneIndex::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let kind = SnapshotKind::unpack::<_, VERIFY>(unpacker, visitor)?;
+        let timestamp = u32::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
+        let network_id = u64::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
+        let sep_index = MilestoneIndex::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
+        let ledger_index = MilestoneIndex::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
 
         Ok(Self {
             kind,

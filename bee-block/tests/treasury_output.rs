@@ -40,7 +40,7 @@ fn packed_len() {
 #[test]
 fn pack_unpack_valid() {
     let output_1 = TreasuryOutput::new(1_000).unwrap();
-    let output_2 = TreasuryOutput::unpack_verified(&mut output_1.pack_to_vec().as_slice()).unwrap();
+    let output_2 = TreasuryOutput::unpack_verified(&mut output_1.pack_to_vec().as_slice(), &()).unwrap();
 
     assert_eq!(output_1, output_2);
 }
@@ -48,7 +48,10 @@ fn pack_unpack_valid() {
 #[test]
 fn pack_unpack_invalid() {
     assert!(matches!(
-        TreasuryOutput::unpack_verified(&mut vec![0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a].as_slice()),
+        TreasuryOutput::unpack_verified(
+            &mut vec![0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a].as_slice(),
+            &()
+        ),
         Err(UnpackError::Packable(Error::InvalidTreasuryOutputAmount(
             InvalidBoundedU64(3_038_287_259_199_220_266)
         )))

@@ -16,7 +16,7 @@ pub struct RawProtocolParameters {
 
 impl RawProtocolParameters {
     pub fn inner(self) -> Result<ProtocolParameters, Error> {
-        let unpacked = ProtocolParameters::unpack_verified(self.params)
+        let unpacked = ProtocolParameters::unpack_verified(self.params, &())
             .map_err(|e| bee_block::InxError::InvalidRawBytes(format!("{:?}", e)))?;
         Ok(unpacked)
     }
