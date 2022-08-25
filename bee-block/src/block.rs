@@ -154,12 +154,13 @@ impl Block {
     /// there are no trailing bytes in the sequence.
     pub fn unpack_strict<T: AsRef<[u8]>>(
         bytes: T,
+        visitor: &<Self as Packable>::UnpackVisitor,
     ) -> Result<Self, UnpackError<<Self as Packable>::UnpackError, UnexpectedEOF>> {
         let mut unpacker = CounterUnpacker::new(SliceUnpacker::new(bytes.as_ref()));
-        let block = Self::unpack::<_, true>(&mut unpacker)?;
+        let block = Self::unpack::<_, true>(&mut unpacker, visitor)?;
 
         // When parsing the block is complete, there should not be any trailing bytes left that were not parsed.
-        if u8::unpack::<_, true>(&mut unpacker).is_ok() {
+        if u8::unpack::<_, true>(&mut unpacker, visitor).is_ok() {
             return Err(UnpackError::Packable(Error::RemainingBytesAfterBlock));
         }
 
@@ -169,6 +170,7 @@ impl Block {
 
 impl Packable for Block {
     type UnpackError = Error;
+    type UnpackVisitor = ();
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         self.protocol_version.pack(packer)?;
@@ -181,10 +183,11 @@ impl Packable for Block {
 
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
+        visitor: &Self::UnpackVisitor,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let start_opt = unpacker.read_bytes();
 
-        let protocol_version = u8::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let protocol_version = u8::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
 
         if VERIFY && protocol_version != PROTOCOL_VERSION {
             return Err(UnpackError::Packable(Error::ProtocolVersionMismatch {
@@ -193,14 +196,14 @@ impl Packable for Block {
             }));
         }
 
-        let parents = Parents::unpack::<_, VERIFY>(unpacker)?;
-        let payload = OptionalPayload::unpack::<_, VERIFY>(unpacker)?;
+        let parents = Parents::unpack::<_, VERIFY>(unpacker, visitor)?;
+        let payload = OptionalPayload::unpack::<_, VERIFY>(unpacker, visitor)?;
 
         if VERIFY {
             verify_payload(payload.deref().as_ref()).map_err(UnpackError::Packable)?;
         }
 
-        let nonce = u64::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let nonce = u64::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
 
         let block = Self {
             protocol_version,
@@ -315,7 +318,7 @@ mod inx {
         type Error = crate::error::inx::InxError;
 
         fn try_from(value: inx_bindings::proto::RawBlock) -> Result<Self, Self::Error> {
-            Self::unpack_verified(value.data).map_err(|e| Self::Error::InvalidRawBytes(e.to_string()))
+            Self::unpack_verified(value.data, &()).map_err(|e| Self::Error::InvalidRawBytes(e.to_string()))
         }
     }
 }

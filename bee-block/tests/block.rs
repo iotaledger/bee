@@ -78,7 +78,8 @@ fn unpack_valid_no_remaining_bytes() {
                 121, 95, 90, 112, 109, 6, 166, 126, 145, 13, 62, 52, 68, 248, 135, 223, 119, 137, 13, 0, 0, 0, 0, 21,
                 205, 91, 7, 0, 0, 0, 0,
             ]
-            .as_slice()
+            .as_slice(),
+            &()
         )
         .is_ok()
     )
@@ -94,7 +95,8 @@ fn unpack_invalid_remaining_bytes() {
                 121, 95, 90, 112, 109, 6, 166, 126, 145, 13, 62, 52, 68, 248, 135, 223, 119, 137, 13, 0, 0, 0, 0, 21,
                 205, 91, 7, 0, 0, 0, 0, 42
             ]
-            .as_slice()
+            .as_slice(),
+            &()
         ),
         Err(UnpackError::Packable(Error::RemainingBytesAfterBlock))
     ))
@@ -109,7 +111,7 @@ fn pack_unpack_valid() {
     assert_eq!(packed_block.len(), block.packed_len());
     assert_eq!(
         block,
-        PackableExt::unpack_verified(&mut packed_block.as_slice()).unwrap()
+        PackableExt::unpack_verified(&mut packed_block.as_slice(), &()).unwrap()
     );
 }
 

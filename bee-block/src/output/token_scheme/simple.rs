@@ -66,6 +66,7 @@ impl SimpleTokenScheme {
 
 impl Packable for SimpleTokenScheme {
     type UnpackError = Error;
+    type UnpackVisitor = ();
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         self.minted_tokens.pack(packer)?;
@@ -77,10 +78,11 @@ impl Packable for SimpleTokenScheme {
 
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
+        visitor: &Self::UnpackVisitor,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let minted_tokens = U256::unpack::<_, VERIFY>(unpacker).coerce()?;
-        let melted_tokens = U256::unpack::<_, VERIFY>(unpacker).coerce()?;
-        let maximum_supply = U256::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let minted_tokens = U256::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
+        let melted_tokens = U256::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
+        let maximum_supply = U256::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
 
         if VERIFY {
             verify_supply(&minted_tokens, &melted_tokens, &maximum_supply).map_err(UnpackError::Packable)?;

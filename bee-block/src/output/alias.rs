@@ -543,6 +543,7 @@ impl StateTransitionVerifier for AliasOutput {
 
 impl Packable for AliasOutput {
     type UnpackError = Error;
+    type UnpackVisitor = ();
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         self.amount.pack(packer)?;
@@ -560,33 +561,35 @@ impl Packable for AliasOutput {
 
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
+        visitor: &Self::UnpackVisitor,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let amount = OutputAmount::unpack::<_, VERIFY>(unpacker).map_packable_err(Error::InvalidOutputAmount)?;
-        let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker)?;
-        let alias_id = AliasId::unpack::<_, VERIFY>(unpacker).coerce()?;
-        let state_index = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
-        let state_metadata = BoxedSlicePrefix::<u8, StateMetadataLength>::unpack::<_, VERIFY>(unpacker)
+        let amount =
+            OutputAmount::unpack::<_, VERIFY>(unpacker, visitor).map_packable_err(Error::InvalidOutputAmount)?;
+        let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker, visitor)?;
+        let alias_id = AliasId::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
+        let state_index = u32::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
+        let state_metadata = BoxedSlicePrefix::<u8, StateMetadataLength>::unpack::<_, VERIFY>(unpacker, visitor)
             .map_packable_err(|err| Error::InvalidStateMetadataLength(err.into_prefix_err().into()))?;
 
-        let foundry_counter = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let foundry_counter = u32::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
 
         if VERIFY {
             verify_index_counter(&alias_id, state_index, foundry_counter).map_err(UnpackError::Packable)?;
         }
 
-        let unlock_conditions = UnlockConditions::unpack::<_, VERIFY>(unpacker)?;
+        let unlock_conditions = UnlockConditions::unpack::<_, VERIFY>(unpacker, visitor)?;
 
         if VERIFY {
             verify_unlock_conditions(&unlock_conditions, &alias_id).map_err(UnpackError::Packable)?;
         }
 
-        let features = Features::unpack::<_, VERIFY>(unpacker)?;
+        let features = Features::unpack::<_, VERIFY>(unpacker, visitor)?;
 
         if VERIFY {
             verify_allowed_features(&features, AliasOutput::ALLOWED_FEATURES).map_err(UnpackError::Packable)?;
         }
 
-        let immutable_features = Features::unpack::<_, VERIFY>(unpacker)?;
+        let immutable_features = Features::unpack::<_, VERIFY>(unpacker, visitor)?;
 
         if VERIFY {
             verify_allowed_features(&immutable_features, AliasOutput::ALLOWED_IMMUTABLE_FEATURES)

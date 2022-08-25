@@ -532,6 +532,7 @@ impl StateTransitionVerifier for FoundryOutput {
 
 impl Packable for FoundryOutput {
     type UnpackError = Error;
+    type UnpackVisitor = ();
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         self.amount.pack(packer)?;
@@ -547,25 +548,27 @@ impl Packable for FoundryOutput {
 
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
+        visitor: &Self::UnpackVisitor,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let amount = OutputAmount::unpack::<_, VERIFY>(unpacker).map_packable_err(Error::InvalidOutputAmount)?;
-        let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker)?;
-        let serial_number = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
-        let token_scheme = TokenScheme::unpack::<_, VERIFY>(unpacker)?;
+        let amount =
+            OutputAmount::unpack::<_, VERIFY>(unpacker, visitor).map_packable_err(Error::InvalidOutputAmount)?;
+        let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker, visitor)?;
+        let serial_number = u32::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
+        let token_scheme = TokenScheme::unpack::<_, VERIFY>(unpacker, visitor)?;
 
-        let unlock_conditions = UnlockConditions::unpack::<_, VERIFY>(unpacker)?;
+        let unlock_conditions = UnlockConditions::unpack::<_, VERIFY>(unpacker, visitor)?;
 
         if VERIFY {
             verify_unlock_conditions(&unlock_conditions).map_err(UnpackError::Packable)?;
         }
 
-        let features = Features::unpack::<_, VERIFY>(unpacker)?;
+        let features = Features::unpack::<_, VERIFY>(unpacker, visitor)?;
 
         if VERIFY {
             verify_allowed_features(&features, FoundryOutput::ALLOWED_FEATURES).map_err(UnpackError::Packable)?;
         }
 
-        let immutable_features = Features::unpack::<_, VERIFY>(unpacker)?;
+        let immutable_features = Features::unpack::<_, VERIFY>(unpacker, visitor)?;
 
         if VERIFY {
             verify_allowed_features(&immutable_features, FoundryOutput::ALLOWED_IMMUTABLE_FEATURES)

@@ -124,7 +124,7 @@ fn pack_unpack_valid() {
     let packed = milestone_payload.pack_to_vec();
 
     assert_eq!(
-        MilestoneEssence::unpack_verified(&mut packed.as_slice()).unwrap(),
+        MilestoneEssence::unpack_verified(&mut packed.as_slice(), &()).unwrap(),
         milestone_payload,
     );
 }
