@@ -17,6 +17,6 @@ all-features = true
 rustdoc-args = [ "--cfg", "doc_cfg" ]
 
 [dependencies]
-packable = { version = "0.6.0", default-features = false, features = [ "serde" ] }
+packable = { version = "0.6.1", default-features = false, features = [ "serde" ] }
 serde = { version = "1.0.143", features = [ "derive" ], default-features = false }
 thiserror = { version = "1.0.32", default-features = false }

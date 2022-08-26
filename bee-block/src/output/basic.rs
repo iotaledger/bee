@@ -134,11 +134,11 @@ impl BasicOutputBuilder {
     pub fn finish(self) -> Result<BasicOutput, Error> {
         let unlock_conditions = UnlockConditions::new(self.unlock_conditions)?;
 
-        verify_unlock_conditions::<true>(&unlock_conditions)?;
+        verify_unlock_conditions::<true>(&unlock_conditions, &())?;
 
         let features = Features::new(self.features)?;
 
-        verify_features::<true>(&features)?;
+        verify_features::<true>(&features, &())?;
 
         let mut output = BasicOutput {
             amount: 1u64.try_into().map_err(Error::InvalidOutputAmount)?,
@@ -292,7 +292,7 @@ impl BasicOutput {
     }
 }
 
-fn verify_unlock_conditions<const VERIFY: bool>(unlock_conditions: &UnlockConditions) -> Result<(), Error> {
+fn verify_unlock_conditions<const VERIFY: bool>(unlock_conditions: &UnlockConditions, _: &()) -> Result<(), Error> {
     if VERIFY {
         if unlock_conditions.address().is_none() {
             Err(Error::MissingAddressUnlockCondition)
@@ -304,7 +304,7 @@ fn verify_unlock_conditions<const VERIFY: bool>(unlock_conditions: &UnlockCondit
     }
 }
 
-fn verify_features<const VERIFY: bool>(blocks: &Features) -> Result<(), Error> {
+fn verify_features<const VERIFY: bool>(blocks: &Features, _: &()) -> Result<(), Error> {
     if VERIFY {
         verify_allowed_features(blocks, BasicOutput::ALLOWED_FEATURES)
     } else {

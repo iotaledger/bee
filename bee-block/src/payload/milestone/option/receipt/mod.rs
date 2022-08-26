@@ -55,7 +55,7 @@ impl ReceiptMilestoneOption {
         let funds = VecPrefix::<MigratedFundsEntry, ReceiptFundsCount>::try_from(funds)
             .map_err(Error::InvalidReceiptFundsCount)?;
 
-        verify_funds::<true>(&funds)?;
+        verify_funds::<true>(&funds, &())?;
 
         Ok(Self {
             migrated_at,
@@ -98,7 +98,7 @@ impl ReceiptMilestoneOption {
     }
 }
 
-fn verify_funds<const VERIFY: bool>(funds: &[MigratedFundsEntry]) -> Result<(), Error> {
+fn verify_funds<const VERIFY: bool>(funds: &[MigratedFundsEntry], _: &()) -> Result<(), Error> {
     // Funds must be lexicographically sorted and unique in their serialised forms.
     if !is_unique_sorted(funds.iter().map(PackableExt::pack_to_vec)) {
         return Err(Error::ReceiptFundsNotUniqueSorted);
@@ -127,7 +127,7 @@ fn verify_funds<const VERIFY: bool>(funds: &[MigratedFundsEntry]) -> Result<(), 
     Ok(())
 }
 
-fn verify_transaction<const VERIFY: bool>(transaction: &Payload) -> Result<(), Error> {
+fn verify_transaction<const VERIFY: bool>(transaction: &Payload, _: &()) -> Result<(), Error> {
     if !matches!(transaction, Payload::TreasuryTransaction(_)) {
         Err(Error::InvalidPayloadKind(transaction.kind()))
     } else {

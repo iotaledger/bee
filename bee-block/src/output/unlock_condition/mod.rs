@@ -141,7 +141,7 @@ impl UnlockConditions {
 
         unlock_conditions.sort_by_key(UnlockCondition::kind);
         // Sort is obviously fine now but uniqueness still needs to be checked.
-        verify_unique_sorted::<true>(&unlock_conditions)?;
+        verify_unique_sorted::<true>(&unlock_conditions, &())?;
 
         Ok(Self(unlock_conditions))
     }
@@ -257,7 +257,7 @@ impl UnlockConditions {
 }
 
 #[inline]
-fn verify_unique_sorted<const VERIFY: bool>(unlock_conditions: &[UnlockCondition]) -> Result<(), Error> {
+fn verify_unique_sorted<const VERIFY: bool>(unlock_conditions: &[UnlockCondition], _: &()) -> Result<(), Error> {
     if VERIFY && !is_unique_sorted(unlock_conditions.iter().map(UnlockCondition::kind)) {
         Err(Error::UnlockConditionsNotUniqueSorted)
     } else {

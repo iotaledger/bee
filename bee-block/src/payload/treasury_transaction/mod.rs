@@ -52,7 +52,7 @@ impl TreasuryTransactionPayload {
     }
 }
 
-fn verify_input<const VERIFY: bool>(input: &Input) -> Result<(), Error> {
+fn verify_input<const VERIFY: bool>(input: &Input, _: &()) -> Result<(), Error> {
     if VERIFY && !matches!(input, Input::Treasury(_)) {
         Err(Error::InvalidInputKind(input.kind()))
     } else {
@@ -60,7 +60,7 @@ fn verify_input<const VERIFY: bool>(input: &Input) -> Result<(), Error> {
     }
 }
 
-fn verify_output<const VERIFY: bool>(output: &Output) -> Result<(), Error> {
+fn verify_output<const VERIFY: bool>(output: &Output, _: &()) -> Result<(), Error> {
     if VERIFY && !matches!(output, Output::Treasury(_)) {
         Err(Error::InvalidOutputKind(output.kind()))
     } else {

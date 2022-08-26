@@ -18,7 +18,7 @@ impl TimelockUnlockCondition {
     /// Creates a new [`TimelockUnlockCondition`].
     #[inline(always)]
     pub fn new(timestamp: u32) -> Result<Self, Error> {
-        verify_timestamp::<true>(&timestamp)?;
+        verify_timestamp::<true>(&timestamp, &())?;
 
         Ok(Self(timestamp))
     }
@@ -31,7 +31,7 @@ impl TimelockUnlockCondition {
 }
 
 #[inline]
-fn verify_timestamp<const VERIFY: bool>(timestamp: &u32) -> Result<(), Error> {
+fn verify_timestamp<const VERIFY: bool>(timestamp: &u32, _: &()) -> Result<(), Error> {
     if VERIFY && *timestamp == 0 {
         Err(Error::TimelockUnlockConditionZero)
     } else {
