@@ -22,4 +22,4 @@ bee-ledger-types = { version = "1.0.0-beta.4", path = "../../bee-ledger/bee-ledg
 bee-storage = { version = "1.0.0-beta.1", path = "../bee-storage", default-features = false }
 bee-tangle = { version = "0.3.0", path = "../../bee-tangle", default-features = false, features = [ "rand" ] }
 
-packable = { git = "https://github.com/thibault-martinez/common-rs", rev = "7f62d26eecaaf26ef52ec597ea7dc1ade5fcc949", default-features = false, features = [ "serde" ] }
+packable = { version = "0.6.1", default-features = false, features = [ "serde" ] }

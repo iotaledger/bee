@@ -23,7 +23,7 @@ bee-storage = { version = "1.0.0-beta.1", path = "../bee-storage", default-featu
 bee-tangle = { version = "0.3.0", path = "../../bee-tangle", default-features = false }
 
 num_cpus = { version = "1.13.1", default-features = false }
-packable = { git = "https://github.com/thibault-martinez/common-rs", rev = "7f62d26eecaaf26ef52ec597ea7dc1ade5fcc949", default-features = false, features = [ "serde" ] }
+packable = { version = "0.6.1", default-features = false, features = [ "serde" ] }
 parking_lot = { version = "0.12.1", default-features = false }
 rocksdb = { version = "0.19.0", default-features = false }
 serde = { version = "1.0.143", default-features = false, features = [ "derive" ] }

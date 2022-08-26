@@ -2750,7 +2750,8 @@ dependencies = [
 [[package]]
 name = "packable"
 version = "0.6.1"
-source = "git+https://github.com/thibault-martinez/common-rs?rev=7f62d26eecaaf26ef52ec597ea7dc1ade5fcc949#7f62d26eecaaf26ef52ec597ea7dc1ade5fcc949"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c4ab4403d49f4fe5ca6ca8d3dd3db64d1fd047d3aeb9fbee43a7b20791bcfe53"
 dependencies = [
  "autocfg",
  "packable-derive",
@@ -2761,7 +2762,8 @@ dependencies = [
 [[package]]
 name = "packable-derive"
 version = "0.6.1"
-source = "git+https://github.com/thibault-martinez/common-rs?rev=7f62d26eecaaf26ef52ec597ea7dc1ade5fcc949#7f62d26eecaaf26ef52ec597ea7dc1ade5fcc949"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6ffcf5c713b0a4dc013dedd903c76d17bcf15a99ea29fb4516d80ca9e57e8aae"
 dependencies = [
  "proc-macro-crate",
  "proc-macro-error",

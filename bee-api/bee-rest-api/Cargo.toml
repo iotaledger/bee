@@ -39,7 +39,7 @@ lazy_static = {version = "1.4.0", default-features = false }
 log = { version = "0.4.17", default-features = false }
 multiaddr = { version = "0.14.0", default-features = false }
 num_cpus = { version = "1.13.1", default-features = false }
-packable = { git = "https://github.com/thibault-martinez/common-rs", rev = "7f62d26eecaaf26ef52ec597ea7dc1ade5fcc949", default-features = false }
+packable = { version = "0.6.1", default-features = false }
 regex = { version = "1.6.0", default-features = false }
 serde = { version = "1.0.144", default-features = false, features = [ "derive" ] }
 serde_json = { version = "1.0.85", default-features = false, features = [ "alloc" ] }
