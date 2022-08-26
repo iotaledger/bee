@@ -99,31 +99,33 @@ impl Unlocks {
 }
 
 fn verify_unlocks<const VERIFY: bool>(unlocks: &[Unlock], _: &()) -> Result<(), Error> {
-    let mut seen_signatures = HashSet::new();
+    if VERIFY {
+        let mut seen_signatures = HashSet::new();
 
-    for (index, unlock) in (0u16..).zip(unlocks.iter()) {
-        match unlock {
-            Unlock::Signature(signature) => {
-                if !seen_signatures.insert(signature) {
-                    return Err(Error::DuplicateSignatureUnlock(index));
+        for (index, unlock) in (0u16..).zip(unlocks.iter()) {
+            match unlock {
+                Unlock::Signature(signature) => {
+                    if !seen_signatures.insert(signature) {
+                        return Err(Error::DuplicateSignatureUnlock(index));
+                    }
                 }
-            }
-            Unlock::Reference(reference) => {
-                if index == 0
-                    || reference.index() >= index
-                    || !matches!(unlocks[reference.index() as usize], Unlock::Signature(_))
-                {
-                    return Err(Error::InvalidUnlockReference(index));
+                Unlock::Reference(reference) => {
+                    if index == 0
+                        || reference.index() >= index
+                        || !matches!(unlocks[reference.index() as usize], Unlock::Signature(_))
+                    {
+                        return Err(Error::InvalidUnlockReference(index));
+                    }
                 }
-            }
-            Unlock::Alias(alias) => {
-                if index == 0 || alias.index() >= index {
-                    return Err(Error::InvalidUnlockAlias(index));
+                Unlock::Alias(alias) => {
+                    if index == 0 || alias.index() >= index {
+                        return Err(Error::InvalidUnlockAlias(index));
+                    }
                 }
-            }
-            Unlock::Nft(nft) => {
-                if index == 0 || nft.index() >= index {
-                    return Err(Error::InvalidUnlockNft(index));
+                Unlock::Nft(nft) => {
+                    if index == 0 || nft.index() >= index {
+                        return Err(Error::InvalidUnlockNft(index));
+                    }
                 }
             }
         }

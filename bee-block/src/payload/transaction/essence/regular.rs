@@ -160,20 +160,24 @@ impl RegularTransactionEssence {
 }
 
 fn verify_network_id<const VERIFY: bool>(_network_id: &u64, _visitor: &ProtocolParameters) -> Result<(), Error> {
+    if VERIFY {}
+
     Ok(())
 }
 
 fn verify_inputs<const VERIFY: bool>(inputs: &[Input]) -> Result<(), Error> {
-    let mut seen_utxos = HashSet::new();
+    if VERIFY {
+        let mut seen_utxos = HashSet::new();
 
-    for input in inputs.iter() {
-        match input {
-            Input::Utxo(utxo) => {
-                if !seen_utxos.insert(utxo) {
-                    return Err(Error::DuplicateUtxo(utxo.clone()));
+        for input in inputs.iter() {
+            match input {
+                Input::Utxo(utxo) => {
+                    if !seen_utxos.insert(utxo) {
+                        return Err(Error::DuplicateUtxo(utxo.clone()));
+                    }
                 }
+                _ => return Err(Error::InvalidInputKind(input.kind())),
             }
-            _ => return Err(Error::InvalidInputKind(input.kind())),
         }
     }
 
@@ -185,33 +189,35 @@ fn verify_inputs_packable<const VERIFY: bool>(inputs: &[Input], _visitor: &Proto
 }
 
 fn verify_outputs<const VERIFY: bool>(outputs: &[Output]) -> Result<(), Error> {
-    let mut amount_sum: u64 = 0;
-    let mut native_tokens_count: u8 = 0;
+    if VERIFY {
+        let mut amount_sum: u64 = 0;
+        let mut native_tokens_count: u8 = 0;
 
-    for output in outputs.iter() {
-        let (amount, native_tokens) = match output {
-            Output::Basic(output) => (output.amount(), output.native_tokens()),
-            Output::Alias(output) => (output.amount(), output.native_tokens()),
-            Output::Foundry(output) => (output.amount(), output.native_tokens()),
-            Output::Nft(output) => (output.amount(), output.native_tokens()),
-            _ => return Err(Error::InvalidOutputKind(output.kind())),
-        };
+        for output in outputs.iter() {
+            let (amount, native_tokens) = match output {
+                Output::Basic(output) => (output.amount(), output.native_tokens()),
+                Output::Alias(output) => (output.amount(), output.native_tokens()),
+                Output::Foundry(output) => (output.amount(), output.native_tokens()),
+                Output::Nft(output) => (output.amount(), output.native_tokens()),
+                _ => return Err(Error::InvalidOutputKind(output.kind())),
+            };
 
-        amount_sum = amount_sum
-            .checked_add(amount)
-            .ok_or(Error::InvalidTransactionAmountSum(amount_sum as u128 + amount as u128))?;
+            amount_sum = amount_sum
+                .checked_add(amount)
+                .ok_or(Error::InvalidTransactionAmountSum(amount_sum as u128 + amount as u128))?;
 
-        // Accumulated output balance must not exceed the total supply of tokens.
-        if amount_sum > TOKEN_SUPPLY {
-            return Err(Error::InvalidTransactionAmountSum(amount_sum as u128));
-        }
+            // Accumulated output balance must not exceed the total supply of tokens.
+            if amount_sum > TOKEN_SUPPLY {
+                return Err(Error::InvalidTransactionAmountSum(amount_sum as u128));
+            }
 
-        native_tokens_count = native_tokens_count.checked_add(native_tokens.len() as u8).ok_or(
-            Error::InvalidTransactionNativeTokensCount(native_tokens_count as u16 + native_tokens.len() as u16),
-        )?;
+            native_tokens_count = native_tokens_count.checked_add(native_tokens.len() as u8).ok_or(
+                Error::InvalidTransactionNativeTokensCount(native_tokens_count as u16 + native_tokens.len() as u16),
+            )?;
 
-        if native_tokens_count > NativeTokens::COUNT_MAX {
-            return Err(Error::InvalidTransactionNativeTokensCount(native_tokens_count as u16));
+            if native_tokens_count > NativeTokens::COUNT_MAX {
+                return Err(Error::InvalidTransactionNativeTokensCount(native_tokens_count as u16));
+            }
         }
     }
 
@@ -223,9 +229,13 @@ fn verify_outputs_packable<const VERIFY: bool>(outputs: &[Output], _visitor: &Pr
 }
 
 fn verify_payload<const VERIFY: bool>(payload: &OptionalPayload) -> Result<(), Error> {
-    match &payload.0 {
-        Some(Payload::TaggedData(_)) | None => Ok(()),
-        Some(payload) => Err(Error::InvalidPayloadKind(payload.kind())),
+    if VERIFY {
+        match &payload.0 {
+            Some(Payload::TaggedData(_)) | None => Ok(()),
+            Some(payload) => Err(Error::InvalidPayloadKind(payload.kind())),
+        }
+    } else {
+        Ok(())
     }
 }
 

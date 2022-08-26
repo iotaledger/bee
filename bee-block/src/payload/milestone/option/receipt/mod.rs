@@ -101,28 +101,30 @@ impl ReceiptMilestoneOption {
 }
 
 fn verify_funds<const VERIFY: bool>(funds: &[MigratedFundsEntry]) -> Result<(), Error> {
-    // Funds must be lexicographically sorted and unique in their serialised forms.
-    if !is_unique_sorted(funds.iter().map(PackableExt::pack_to_vec)) {
-        return Err(Error::ReceiptFundsNotUniqueSorted);
-    }
-
-    let mut tail_transaction_hashes = HashMap::with_capacity(funds.len());
-    let mut funds_sum: u64 = 0;
-
-    for (index, funds) in funds.iter().enumerate() {
-        if let Some(previous) = tail_transaction_hashes.insert(funds.tail_transaction_hash().as_ref(), index) {
-            return Err(Error::TailTransactionHashNotUnique {
-                previous,
-                current: index,
-            });
+    if VERIFY {
+        // Funds must be lexicographically sorted and unique in their serialised forms.
+        if !is_unique_sorted(funds.iter().map(PackableExt::pack_to_vec)) {
+            return Err(Error::ReceiptFundsNotUniqueSorted);
         }
 
-        funds_sum = funds_sum
-            .checked_add(funds.amount())
-            .ok_or_else(|| Error::InvalidReceiptFundsSum(funds_sum as u128 + funds.amount() as u128))?;
+        let mut tail_transaction_hashes = HashMap::with_capacity(funds.len());
+        let mut funds_sum: u64 = 0;
 
-        if funds_sum > TOKEN_SUPPLY {
-            return Err(Error::InvalidReceiptFundsSum(funds_sum as u128));
+        for (index, funds) in funds.iter().enumerate() {
+            if let Some(previous) = tail_transaction_hashes.insert(funds.tail_transaction_hash().as_ref(), index) {
+                return Err(Error::TailTransactionHashNotUnique {
+                    previous,
+                    current: index,
+                });
+            }
+
+            funds_sum = funds_sum
+                .checked_add(funds.amount())
+                .ok_or_else(|| Error::InvalidReceiptFundsSum(funds_sum as u128 + funds.amount() as u128))?;
+
+            if funds_sum > TOKEN_SUPPLY {
+                return Err(Error::InvalidReceiptFundsSum(funds_sum as u128));
+            }
         }
     }
 
@@ -137,7 +139,7 @@ fn verify_funds_packable<const VERIFY: bool>(
 }
 
 fn verify_transaction<const VERIFY: bool>(transaction: &Payload) -> Result<(), Error> {
-    if !matches!(transaction, Payload::TreasuryTransaction(_)) {
+    if VERIFY && !matches!(transaction, Payload::TreasuryTransaction(_)) {
         Err(Error::InvalidPayloadKind(transaction.kind()))
     } else {
         Ok(())
