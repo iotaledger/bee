@@ -159,8 +159,17 @@ impl RegularTransactionEssence {
     }
 }
 
-fn verify_network_id<const VERIFY: bool>(_network_id: &u64, _visitor: &ProtocolParameters) -> Result<(), Error> {
-    if VERIFY {}
+fn verify_network_id<const VERIFY: bool>(network_id: &u64, visitor: &ProtocolParameters) -> Result<(), Error> {
+    if VERIFY {
+        let expected = visitor.network_id();
+
+        if *network_id != expected {
+            return Err(Error::NetworkIdMismatch {
+                expected,
+                actual: *network_id,
+            });
+        }
+    }
 
     Ok(())
 }

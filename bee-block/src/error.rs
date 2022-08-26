@@ -107,6 +107,7 @@ pub enum Error {
     NativeTokensNotUniqueSorted,
     NativeTokensNullAmount,
     NativeTokensOverflow,
+    NetworkIdMismatch { expected: u64, actual: u64 },
     NonZeroStateIndexOrFoundryCounter,
     ParentsNotUniqueSorted,
     ProtocolVersionMismatch { expected: u8, actual: u8 },
@@ -283,6 +284,9 @@ impl fmt::Display for Error {
             Error::NativeTokensNotUniqueSorted => write!(f, "native tokens are not unique and/or sorted"),
             Error::NativeTokensNullAmount => write!(f, "native tokens null amount"),
             Error::NativeTokensOverflow => write!(f, "native tokens overflow"),
+            Error::NetworkIdMismatch { expected, actual } => {
+                write!(f, "network ID mismatch: expected {expected} but got {actual}")
+            }
             Error::NonZeroStateIndexOrFoundryCounter => {
                 write!(f, "non zero state index or foundry counter while alias ID is all zero")
             }
