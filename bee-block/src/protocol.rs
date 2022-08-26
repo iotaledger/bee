@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use alloc::string::String;
+use core::borrow::Borrow;
 
 use packable::{prefix::StringPrefix, Packable};
 
 use crate::{helper::network_name_to_id, output::RentStructure, Error};
 
 /// Defines the parameters of the protocol.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Packable)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Packable)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error)]
 pub struct ProtocolParameters {
@@ -28,6 +29,12 @@ pub struct ProtocolParameters {
     rent_structure: RentStructure,
     // TokenSupply defines the current token supply on the network.
     token_supply: u64,
+}
+
+impl Borrow<()> for ProtocolParameters {
+    fn borrow(&self) -> &() {
+        &()
+    }
 }
 
 impl ProtocolParameters {
