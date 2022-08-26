@@ -5,7 +5,7 @@ use alloc::string::String;
 
 use packable::{prefix::StringPrefix, Packable};
 
-use crate::{output::RentStructure, Error};
+use crate::{helper::network_name_to_id, output::RentStructure, Error};
 
 /// Defines the parameters of the protocol.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Packable)]
@@ -60,6 +60,11 @@ impl ProtocolParameters {
     /// Returns the network name of the [`ProtocolParameters`].
     pub fn network_name(&self) -> &str {
         &self.network_name
+    }
+
+    /// Returns the network ID of the [`ProtocolParameters`].
+    pub fn network_id(&self) -> u64 {
+        network_name_to_id(&self.network_name)
     }
 
     /// Returns the bech32 HRP of the [`ProtocolParameters`].

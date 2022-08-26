@@ -25,6 +25,8 @@ pub mod dto;
 pub mod address;
 /// A module that contains constants related to blocks.
 pub mod constant;
+/// A module that contains helper functions and types.
+pub mod helper;
 /// A module that provides types and syntactic validations of inputs.
 pub mod input;
 /// A module that provides types and syntactic validations of outputs.
