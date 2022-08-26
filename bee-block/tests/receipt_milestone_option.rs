@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+mod common;
+
 use core::str::FromStr;
 
 use bee_block::{
@@ -17,6 +19,7 @@ use bee_block::{
     rand::number::rand_number,
     Error,
 };
+use common::protocol_parameters;
 use packable::{bounded::TryIntoBoundedU16Error, PackableExt};
 
 const AMOUNT: u64 = 1_000_000;
@@ -185,7 +188,7 @@ fn pack_unpack_valid() {
     assert_eq!(packed_receipt.len(), receipt.packed_len());
     assert_eq!(
         receipt,
-        PackableExt::unpack_verified(&mut packed_receipt.as_slice(), &()).unwrap()
+        PackableExt::unpack_verified(&mut packed_receipt.as_slice(), &protocol_parameters()).unwrap()
     );
 }
 

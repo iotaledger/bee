@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+mod common;
+
 use bee_block::{
     constant::PROTOCOL_VERSION,
     parent::Parents,
@@ -20,6 +22,7 @@ use bee_pow::{
     },
     score::PoWScorer,
 };
+use common::protocol_parameters;
 use packable::{error::UnpackError, PackableExt};
 
 #[test]
@@ -79,7 +82,7 @@ fn unpack_valid_no_remaining_bytes() {
                 205, 91, 7, 0, 0, 0, 0,
             ]
             .as_slice(),
-            &()
+            &protocol_parameters()
         )
         .is_ok()
     )
@@ -96,7 +99,7 @@ fn unpack_invalid_remaining_bytes() {
                 205, 91, 7, 0, 0, 0, 0, 42
             ]
             .as_slice(),
-            &()
+            &protocol_parameters()
         ),
         Err(UnpackError::Packable(Error::RemainingBytesAfterBlock))
     ))
@@ -111,7 +114,7 @@ fn pack_unpack_valid() {
     assert_eq!(packed_block.len(), block.packed_len());
     assert_eq!(
         block,
-        PackableExt::unpack_verified(&mut packed_block.as_slice(), &()).unwrap()
+        PackableExt::unpack_verified(&mut packed_block.as_slice(), &protocol_parameters()).unwrap()
     );
 }
 

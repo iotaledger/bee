@@ -31,29 +31,23 @@ pub use self::{
     transaction::TransactionPayload,
     treasury_transaction::TreasuryTransactionPayload,
 };
-use crate::Error;
+use crate::{protocol::ProtocolParameters, Error};
 
 /// A generic payload that can represent different types defining block payloads.
-#[derive(Clone, Debug, Eq, PartialEq, Packable)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(
     feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
-#[packable(unpack_error = Error)]
-#[packable(tag_type = u32, with_error = Error::InvalidPayloadKind)]
 pub enum Payload {
     /// A transaction payload.
-    #[packable(tag = TransactionPayload::KIND)]
     Transaction(Box<TransactionPayload>),
     /// A milestone payload.
-    #[packable(tag = MilestonePayload::KIND)]
     Milestone(Box<MilestonePayload>),
     /// A treasury transaction payload.
-    #[packable(tag = TreasuryTransactionPayload::KIND)]
     TreasuryTransaction(Box<TreasuryTransactionPayload>),
     /// A tagged data payload.
-    #[packable(tag = TaggedDataPayload::KIND)]
     TaggedData(Box<TaggedDataPayload>),
 }
 
@@ -93,6 +87,39 @@ impl Payload {
     }
 }
 
+impl Packable for Payload {
+    type UnpackError = Error;
+    type UnpackVisitor = ProtocolParameters;
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        match self {
+            Payload::Transaction(transaction) => transaction.pack(packer),
+            Payload::Milestone(milestone) => milestone.pack(packer),
+            Payload::TreasuryTransaction(treasury_transaction) => treasury_transaction.pack(packer),
+            Payload::TaggedData(tagged_data) => tagged_data.pack(packer),
+        }?;
+
+        Ok(())
+    }
+
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+        visitor: &Self::UnpackVisitor,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        Ok(match u32::unpack::<_, VERIFY>(unpacker, &()).coerce()? {
+            TransactionPayload::KIND => {
+                Payload::from(TransactionPayload::unpack::<_, VERIFY>(unpacker, visitor).coerce()?)
+            }
+            MilestonePayload::KIND => Payload::from(MilestonePayload::unpack::<_, VERIFY>(unpacker, visitor).coerce()?),
+            TreasuryTransactionPayload::KIND => {
+                Payload::from(TreasuryTransactionPayload::unpack::<_, VERIFY>(unpacker, &()).coerce()?)
+            }
+            TaggedDataPayload::KIND => Payload::from(TaggedDataPayload::unpack::<_, VERIFY>(unpacker, &()).coerce()?),
+            k => return Err(Error::InvalidPayloadKind(k)).map_err(UnpackError::Packable),
+        })
+    }
+}
+
 /// Representation of an optional [`Payload`].
 /// Essentially an `Option<Payload>` with a different [`Packable`] implementation, to conform to specs.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -116,7 +143,7 @@ impl Deref for OptionalPayload {
 
 impl Packable for OptionalPayload {
     type UnpackError = Error;
-    type UnpackVisitor = ();
+    type UnpackVisitor = ProtocolParameters;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         match &self.0 {
@@ -129,7 +156,7 @@ impl Packable for OptionalPayload {
         unpacker: &mut U,
         visitor: &Self::UnpackVisitor,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let len = u32::unpack::<_, VERIFY>(unpacker, visitor).coerce()? as usize;
+        let len = u32::unpack::<_, VERIFY>(unpacker, &()).coerce()? as usize;
 
         if len > 0 {
             unpacker.ensure_bytes(len)?;

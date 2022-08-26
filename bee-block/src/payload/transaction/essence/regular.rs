@@ -11,6 +11,7 @@ use crate::{
     input::{Input, INPUT_COUNT_RANGE},
     output::{InputsCommitment, NativeTokens, Output, OUTPUT_COUNT_RANGE},
     payload::{OptionalPayload, Payload},
+    protocol::ProtocolParameters,
     Error,
 };
 
@@ -75,7 +76,7 @@ impl RegularTransactionEssenceBuilder {
             .try_into()
             .map_err(Error::InvalidInputCount)?;
 
-        verify_inputs::<true>(&inputs, &())?;
+        verify_inputs::<true>(&inputs)?;
 
         let outputs: BoxedSlicePrefix<Output, OutputCount> = self
             .outputs
@@ -83,11 +84,11 @@ impl RegularTransactionEssenceBuilder {
             .try_into()
             .map_err(Error::InvalidOutputCount)?;
 
-        verify_outputs::<true>(&outputs, &())?;
+        verify_outputs::<true>(&outputs)?;
 
         let payload = OptionalPayload::from(self.payload);
 
-        verify_payload::<true>(&payload, &())?;
+        verify_payload::<true>(&payload)?;
 
         Ok(RegularTransactionEssence {
             network_id: self.network_id,
@@ -106,18 +107,20 @@ pub(crate) type OutputCount = BoundedU16<{ *OUTPUT_COUNT_RANGE.start() }, { *OUT
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error)]
+#[packable(unpack_visitor = ProtocolParameters)]
 pub struct RegularTransactionEssence {
     /// The unique value denoting whether the block was meant for mainnet, testnet, or a private network.
+    #[packable(verify_with = verify_network_id)]
     network_id: u64,
-    #[packable(verify_with = verify_inputs)]
+    #[packable(verify_with = verify_inputs_packable)]
     #[packable(unpack_error_with = |e| e.unwrap_item_err_or_else(|p| Error::InvalidInputCount(p.into())))]
     inputs: BoxedSlicePrefix<Input, InputCount>,
     /// BLAKE2b-256 hash of the serialized outputs referenced in inputs by their OutputId.
     inputs_commitment: InputsCommitment,
-    #[packable(verify_with = verify_outputs)]
+    #[packable(verify_with = verify_outputs_packable)]
     #[packable(unpack_error_with = |e| e.unwrap_item_err_or_else(|p| Error::InvalidOutputCount(p.into())))]
     outputs: BoxedSlicePrefix<Output, OutputCount>,
-    #[packable(verify_with = verify_payload)]
+    #[packable(verify_with = verify_payload_packable)]
     payload: OptionalPayload,
 }
 
@@ -156,7 +159,11 @@ impl RegularTransactionEssence {
     }
 }
 
-fn verify_inputs<const VERIFY: bool>(inputs: &[Input], _: &()) -> Result<(), Error> {
+fn verify_network_id<const VERIFY: bool>(_network_id: &u64, _visitor: &ProtocolParameters) -> Result<(), Error> {
+    Ok(())
+}
+
+fn verify_inputs<const VERIFY: bool>(inputs: &[Input]) -> Result<(), Error> {
     let mut seen_utxos = HashSet::new();
 
     for input in inputs.iter() {
@@ -173,7 +180,11 @@ fn verify_inputs<const VERIFY: bool>(inputs: &[Input], _: &()) -> Result<(), Err
     Ok(())
 }
 
-fn verify_outputs<const VERIFY: bool>(outputs: &[Output], _: &()) -> Result<(), Error> {
+fn verify_inputs_packable<const VERIFY: bool>(inputs: &[Input], _visitor: &ProtocolParameters) -> Result<(), Error> {
+    verify_inputs::<VERIFY>(inputs)
+}
+
+fn verify_outputs<const VERIFY: bool>(outputs: &[Output]) -> Result<(), Error> {
     let mut amount_sum: u64 = 0;
     let mut native_tokens_count: u8 = 0;
 
@@ -207,11 +218,22 @@ fn verify_outputs<const VERIFY: bool>(outputs: &[Output], _: &()) -> Result<(), 
     Ok(())
 }
 
-fn verify_payload<const VERIFY: bool>(payload: &OptionalPayload, _: &()) -> Result<(), Error> {
+fn verify_outputs_packable<const VERIFY: bool>(outputs: &[Output], _visitor: &ProtocolParameters) -> Result<(), Error> {
+    verify_outputs::<VERIFY>(outputs)
+}
+
+fn verify_payload<const VERIFY: bool>(payload: &OptionalPayload) -> Result<(), Error> {
     match &payload.0 {
         Some(Payload::TaggedData(_)) | None => Ok(()),
         Some(payload) => Err(Error::InvalidPayloadKind(payload.kind())),
     }
+}
+
+fn verify_payload_packable<const VERIFY: bool>(
+    payload: &OptionalPayload,
+    _visitor: &ProtocolParameters,
+) -> Result<(), Error> {
+    verify_payload::<VERIFY>(payload)
 }
 
 #[cfg(feature = "dto")]

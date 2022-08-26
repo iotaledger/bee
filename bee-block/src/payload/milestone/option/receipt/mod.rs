@@ -19,6 +19,7 @@ use crate::{
     constant::TOKEN_SUPPLY,
     output::OUTPUT_COUNT_RANGE,
     payload::{milestone::MilestoneIndex, Payload, TreasuryTransactionPayload},
+    protocol::ProtocolParameters,
     Error,
 };
 
@@ -31,13 +32,14 @@ pub(crate) type ReceiptFundsCount =
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error)]
+#[packable(unpack_visitor = ProtocolParameters)]
 pub struct ReceiptMilestoneOption {
     migrated_at: MilestoneIndex,
     last: bool,
     #[packable(unpack_error_with = |e| e.unwrap_item_err_or_else(|p| Error::InvalidReceiptFundsCount(p.into())))]
-    #[packable(verify_with = verify_funds)]
+    #[packable(verify_with = verify_funds_packable)]
     funds: VecPrefix<MigratedFundsEntry, ReceiptFundsCount>,
-    #[packable(verify_with = verify_transaction)]
+    #[packable(verify_with = verify_transaction_packable)]
     transaction: Payload,
 }
 
@@ -55,7 +57,7 @@ impl ReceiptMilestoneOption {
         let funds = VecPrefix::<MigratedFundsEntry, ReceiptFundsCount>::try_from(funds)
             .map_err(Error::InvalidReceiptFundsCount)?;
 
-        verify_funds::<true>(&funds, &())?;
+        verify_funds::<true>(&funds)?;
 
         Ok(Self {
             migrated_at,
@@ -98,7 +100,7 @@ impl ReceiptMilestoneOption {
     }
 }
 
-fn verify_funds<const VERIFY: bool>(funds: &[MigratedFundsEntry], _: &()) -> Result<(), Error> {
+fn verify_funds<const VERIFY: bool>(funds: &[MigratedFundsEntry]) -> Result<(), Error> {
     // Funds must be lexicographically sorted and unique in their serialised forms.
     if !is_unique_sorted(funds.iter().map(PackableExt::pack_to_vec)) {
         return Err(Error::ReceiptFundsNotUniqueSorted);
@@ -127,12 +129,26 @@ fn verify_funds<const VERIFY: bool>(funds: &[MigratedFundsEntry], _: &()) -> Res
     Ok(())
 }
 
-fn verify_transaction<const VERIFY: bool>(transaction: &Payload, _: &()) -> Result<(), Error> {
+fn verify_funds_packable<const VERIFY: bool>(
+    funds: &[MigratedFundsEntry],
+    _visitor: &ProtocolParameters,
+) -> Result<(), Error> {
+    verify_funds::<VERIFY>(funds)
+}
+
+fn verify_transaction<const VERIFY: bool>(transaction: &Payload) -> Result<(), Error> {
     if !matches!(transaction, Payload::TreasuryTransaction(_)) {
         Err(Error::InvalidPayloadKind(transaction.kind()))
     } else {
         Ok(())
     }
+}
+
+fn verify_transaction_packable<const VERIFY: bool>(
+    transaction: &Payload,
+    _visitor: &ProtocolParameters,
+) -> Result<(), Error> {
+    verify_transaction::<VERIFY>(transaction)
 }
 
 #[cfg(feature = "dto")]

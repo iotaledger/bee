@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+mod common;
+
 use bee_block::{
     address::{Address, Ed25519Address},
     input::{Input, UtxoInput},
@@ -9,6 +11,7 @@ use bee_block::{
     rand::output::rand_inputs_commitment,
     Error,
 };
+use common::protocol_parameters;
 use packable::{error::UnpackError, PackableExt};
 
 const TRANSACTION_ID: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
@@ -43,7 +46,7 @@ fn essence_kind() {
 #[test]
 fn essence_unpack_invalid_kind() {
     assert!(matches!(
-        TransactionEssence::unpack_verified(&mut vec![2u8; 32].as_slice(), &()),
+        TransactionEssence::unpack_verified(&mut vec![2u8; 32].as_slice(), &protocol_parameters()),
         Err(UnpackError::Packable(Error::InvalidEssenceKind(2)))
     ));
 }

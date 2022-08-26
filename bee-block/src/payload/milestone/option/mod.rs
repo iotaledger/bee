@@ -18,7 +18,7 @@ pub use self::{
     parameters::ParametersMilestoneOption,
     receipt::{MigratedFundsEntry, ReceiptMilestoneOption, TailTransactionHash},
 };
-use crate::Error;
+use crate::{protocol::ProtocolParameters, Error};
 
 ///
 #[derive(Clone, Debug, Eq, PartialEq, From, Packable)]
@@ -29,6 +29,7 @@ use crate::Error;
 )]
 #[packable(unpack_error = Error)]
 #[packable(tag_type = u8, with_error = Error::InvalidMilestoneOptionKind)]
+#[packable(unpack_visitor = ProtocolParameters)]
 pub enum MilestoneOption {
     /// A receipt milestone option.
     #[packable(tag = ReceiptMilestoneOption::KIND)]
@@ -54,8 +55,9 @@ pub(crate) type MilestoneOptionCount = BoundedU8<0, { MilestoneOptions::COUNT_MA
 #[derive(Clone, Debug, Eq, PartialEq, Deref, Packable)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error, with = |e| e.unwrap_item_err_or_else(|p| Error::InvalidMilestoneOptionCount(p.into())))]
+#[packable(unpack_visitor = ProtocolParameters)]
 pub struct MilestoneOptions(
-    #[packable(verify_with = verify_unique_sorted)] BoxedSlicePrefix<MilestoneOption, MilestoneOptionCount>,
+    #[packable(verify_with = verify_unique_sorted_packable)] BoxedSlicePrefix<MilestoneOption, MilestoneOptionCount>,
 );
 
 impl TryFrom<Vec<MilestoneOption>> for MilestoneOptions {
@@ -88,7 +90,7 @@ impl MilestoneOptions {
 
         milestone_options.sort_by_key(MilestoneOption::kind);
         // Sort is obviously fine now but uniqueness still needs to be checked.
-        verify_unique_sorted::<true>(&milestone_options, &())?;
+        verify_unique_sorted::<true>(&milestone_options)?;
 
         Ok(Self(milestone_options))
     }
@@ -123,12 +125,20 @@ impl MilestoneOptions {
 }
 
 #[inline]
-fn verify_unique_sorted<const VERIFY: bool>(milestone_options: &[MilestoneOption], _: &()) -> Result<(), Error> {
+fn verify_unique_sorted<const VERIFY: bool>(milestone_options: &[MilestoneOption]) -> Result<(), Error> {
     if VERIFY && !is_unique_sorted(milestone_options.iter().map(MilestoneOption::kind)) {
         Err(Error::MilestoneOptionsNotUniqueSorted)
     } else {
         Ok(())
     }
+}
+
+#[inline]
+fn verify_unique_sorted_packable<const VERIFY: bool>(
+    milestone_options: &[MilestoneOption],
+    _visitor: &ProtocolParameters,
+) -> Result<(), Error> {
+    verify_unique_sorted::<VERIFY>(milestone_options)
 }
 
 #[cfg(feature = "dto")]

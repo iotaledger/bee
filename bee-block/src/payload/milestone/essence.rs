@@ -17,6 +17,7 @@ use crate::{
     constant::PROTOCOL_VERSION,
     parent::Parents,
     payload::milestone::{MerkleRoot, MilestoneId, MilestoneIndex, MilestoneOptions},
+    protocol::ProtocolParameters,
     Error,
 };
 
@@ -122,7 +123,7 @@ impl MilestoneEssence {
 
 impl Packable for MilestoneEssence {
     type UnpackError = Error;
-    type UnpackVisitor = ();
+    type UnpackVisitor = ProtocolParameters;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         self.index.pack(packer)?;
@@ -142,9 +143,9 @@ impl Packable for MilestoneEssence {
         unpacker: &mut U,
         visitor: &Self::UnpackVisitor,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let index = MilestoneIndex::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
-        let timestamp = u32::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
-        let protocol_version = u8::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
+        let index = MilestoneIndex::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
+        let timestamp = u32::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
+        let protocol_version = u8::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
 
         if VERIFY && protocol_version != PROTOCOL_VERSION {
             return Err(UnpackError::Packable(Error::ProtocolVersionMismatch {
@@ -153,12 +154,12 @@ impl Packable for MilestoneEssence {
             }));
         }
 
-        let previous_milestone_id = MilestoneId::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
-        let parents = Parents::unpack::<_, VERIFY>(unpacker, visitor)?;
-        let inclusion_merkle_root = MerkleRoot::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
-        let applied_merkle_root = MerkleRoot::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
+        let previous_milestone_id = MilestoneId::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
+        let parents = Parents::unpack::<_, VERIFY>(unpacker, &())?;
+        let inclusion_merkle_root = MerkleRoot::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
+        let applied_merkle_root = MerkleRoot::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
 
-        let metadata = BoxedSlicePrefix::<u8, MilestoneMetadataLength>::unpack::<_, VERIFY>(unpacker, visitor)
+        let metadata = BoxedSlicePrefix::<u8, MilestoneMetadataLength>::unpack::<_, VERIFY>(unpacker, &())
             .map_packable_err(|e| Error::InvalidMilestoneMetadataLength(e.into_prefix_err().into()))?;
 
         let options = MilestoneOptions::unpack::<_, VERIFY>(unpacker, visitor)?;

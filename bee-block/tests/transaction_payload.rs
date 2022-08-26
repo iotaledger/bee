@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+mod common;
+
 use bee_block::{
     address::{Address, Ed25519Address},
     input::{Input, UtxoInput},
@@ -11,6 +13,7 @@ use bee_block::{
     unlock::{ReferenceUnlock, SignatureUnlock, Unlock, Unlocks},
     Error,
 };
+use common::protocol_parameters;
 use packable::PackableExt;
 
 const TRANSACTION_ID: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
@@ -139,7 +142,7 @@ fn pack_unpack_valid() {
     assert_eq!(packed_tx_payload.len(), tx_payload.packed_len());
     assert_eq!(
         tx_payload,
-        PackableExt::unpack_verified(&mut packed_tx_payload.as_slice(), &()).unwrap()
+        PackableExt::unpack_verified(&mut packed_tx_payload.as_slice(), &protocol_parameters()).unwrap()
     );
 }
 

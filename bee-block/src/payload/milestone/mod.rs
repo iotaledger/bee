@@ -27,7 +27,7 @@ pub use self::{
     option::{MilestoneOption, MilestoneOptions, ParametersMilestoneOption, ReceiptMilestoneOption},
 };
 pub(crate) use self::{essence::MilestoneMetadataLength, option::BinaryParametersLength};
-use crate::{signature::Signature, Error};
+use crate::{protocol::ProtocolParameters, signature::Signature, Error};
 
 #[derive(Debug)]
 #[allow(missing_docs)]
@@ -53,9 +53,10 @@ pub(crate) type SignatureCount =
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error)]
+#[packable(unpack_visitor = ProtocolParameters)]
 pub struct MilestonePayload {
     essence: MilestoneEssence,
-    #[packable(verify_with = verify_signatures)]
+    #[packable(verify_with = verify_signatures_packable)]
     #[packable(unpack_error_with = |e| e.unwrap_item_err_or_else(|p| Error::MilestoneInvalidSignatureCount(p.into())))]
     signatures: VecPrefix<Signature, SignatureCount>,
 }
@@ -142,7 +143,7 @@ impl MilestonePayload {
     }
 }
 
-fn verify_signatures<const VERIFY: bool>(signatures: &[Signature], _: &()) -> Result<(), Error> {
+fn verify_signatures<const VERIFY: bool>(signatures: &[Signature]) -> Result<(), Error> {
     if VERIFY
         && !is_unique_sorted(signatures.iter().map(|signature| {
             let Signature::Ed25519(signature) = signature;
@@ -153,6 +154,13 @@ fn verify_signatures<const VERIFY: bool>(signatures: &[Signature], _: &()) -> Re
     } else {
         Ok(())
     }
+}
+
+fn verify_signatures_packable<const VERIFY: bool>(
+    signatures: &[Signature],
+    _visitor: &ProtocolParameters,
+) -> Result<(), Error> {
+    verify_signatures::<VERIFY>(signatures)
 }
 
 #[cfg(feature = "dto")]
@@ -283,21 +291,23 @@ pub mod dto {
 }
 
 #[cfg(feature = "inx")]
-mod inx {
+#[allow(missing_docs)]
+pub mod inx {
+    use packable::PackableExt;
+
     use super::*;
+    use crate::error::inx::InxError;
 
-    impl TryFrom<inx_bindings::proto::RawMilestone> for MilestonePayload {
-        type Error = crate::error::inx::InxError;
+    pub fn milestone_from_raw_milestone(
+        value: inx_bindings::proto::RawMilestone,
+        visitor: &ProtocolParameters,
+    ) -> Result<MilestonePayload, InxError> {
+        let payload = crate::payload::Payload::unpack_verified(value.data, visitor)
+            .map_err(|e| InxError::InvalidRawBytes(e.to_string()))?;
 
-        fn try_from(value: inx_bindings::proto::RawMilestone) -> Result<Self, Self::Error> {
-            use packable::PackableExt;
-            let payload = crate::payload::Payload::unpack_verified(value.data, &())
-                .map_err(|e| Self::Error::InvalidRawBytes(e.to_string()))?;
-
-            match payload {
-                crate::payload::Payload::Milestone(payload) => Ok(*payload),
-                _ => Err(crate::Error::InvalidPayloadKind(payload.kind()).into()),
-            }
+        match payload {
+            crate::payload::Payload::Milestone(payload) => Ok(*payload),
+            _ => Err(crate::Error::InvalidPayloadKind(payload.kind()).into()),
         }
     }
 }

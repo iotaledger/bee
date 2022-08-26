@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+mod common;
+
 use bee_block::{
     parent::Parents,
     payload::milestone::{MilestoneEssence, MilestoneIndex, MilestoneOptions, MilestonePayload},
@@ -13,6 +15,7 @@ use bee_block::{
     signature::{Ed25519Signature, Signature},
     Error,
 };
+use common::protocol_parameters;
 use packable::{bounded::TryIntoBoundedU8Error, PackableExt};
 
 #[test]
@@ -133,7 +136,7 @@ fn pack_unpack_valid() {
     assert_eq!(payload.packed_len(), packed.len());
     assert_eq!(
         payload,
-        PackableExt::unpack_verified(&mut packed.as_slice(), &()).unwrap()
+        PackableExt::unpack_verified(&mut packed.as_slice(), &protocol_parameters()).unwrap()
     )
 }
 

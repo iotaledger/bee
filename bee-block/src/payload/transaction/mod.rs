@@ -14,7 +14,7 @@ pub use self::{
     essence::{RegularTransactionEssence, RegularTransactionEssenceBuilder, TransactionEssence},
     transaction_id::TransactionId,
 };
-use crate::{unlock::Unlocks, Error};
+use crate::{protocol::ProtocolParameters, unlock::Unlocks, Error};
 
 /// A transaction to move funds.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -58,7 +58,7 @@ impl TransactionPayload {
 
 impl Packable for TransactionPayload {
     type UnpackError = Error;
-    type UnpackVisitor = ();
+    type UnpackVisitor = ProtocolParameters;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         self.essence.pack(packer)?;
@@ -72,7 +72,7 @@ impl Packable for TransactionPayload {
         visitor: &Self::UnpackVisitor,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let essence = TransactionEssence::unpack::<_, VERIFY>(unpacker, visitor)?;
-        let unlocks = Unlocks::unpack::<_, VERIFY>(unpacker, visitor)?;
+        let unlocks = Unlocks::unpack::<_, VERIFY>(unpacker, &())?;
 
         if VERIFY {
             verify_essence_unlocks(&essence, &unlocks).map_err(UnpackError::Packable)?;

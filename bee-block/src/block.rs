@@ -16,6 +16,7 @@ use crate::{
     constant::PROTOCOL_VERSION,
     parent::Parents,
     payload::{OptionalPayload, Payload},
+    protocol::ProtocolParameters,
     BlockId, Error,
 };
 
@@ -160,7 +161,7 @@ impl Block {
         let block = Self::unpack::<_, true>(&mut unpacker, visitor)?;
 
         // When parsing the block is complete, there should not be any trailing bytes left that were not parsed.
-        if u8::unpack::<_, true>(&mut unpacker, visitor).is_ok() {
+        if u8::unpack::<_, true>(&mut unpacker, &()).is_ok() {
             return Err(UnpackError::Packable(Error::RemainingBytesAfterBlock));
         }
 
@@ -170,7 +171,7 @@ impl Block {
 
 impl Packable for Block {
     type UnpackError = Error;
-    type UnpackVisitor = ();
+    type UnpackVisitor = ProtocolParameters;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         self.protocol_version.pack(packer)?;
@@ -187,7 +188,7 @@ impl Packable for Block {
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let start_opt = unpacker.read_bytes();
 
-        let protocol_version = u8::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
+        let protocol_version = u8::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
 
         if VERIFY && protocol_version != PROTOCOL_VERSION {
             return Err(UnpackError::Packable(Error::ProtocolVersionMismatch {
@@ -196,14 +197,14 @@ impl Packable for Block {
             }));
         }
 
-        let parents = Parents::unpack::<_, VERIFY>(unpacker, visitor)?;
+        let parents = Parents::unpack::<_, VERIFY>(unpacker, &())?;
         let payload = OptionalPayload::unpack::<_, VERIFY>(unpacker, visitor)?;
 
         if VERIFY {
             verify_payload(payload.deref().as_ref()).map_err(UnpackError::Packable)?;
         }
 
-        let nonce = u64::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
+        let nonce = u64::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
 
         let block = Self {
             protocol_version,
@@ -311,14 +312,15 @@ pub mod dto {
 }
 
 #[cfg(feature = "inx")]
-mod inx {
+#[allow(missing_docs)]
+pub mod inx {
     use super::*;
+    use crate::error::inx::InxError;
 
-    impl TryFrom<inx_bindings::proto::RawBlock> for Block {
-        type Error = crate::error::inx::InxError;
-
-        fn try_from(value: inx_bindings::proto::RawBlock) -> Result<Self, Self::Error> {
-            Self::unpack_verified(value.data, &()).map_err(|e| Self::Error::InvalidRawBytes(e.to_string()))
-        }
+    pub fn block_from_raw_block(
+        value: inx_bindings::proto::RawBlock,
+        visitor: &ProtocolParameters,
+    ) -> Result<Block, InxError> {
+        Block::unpack_verified(value.data, visitor).map_err(|e| InxError::InvalidRawBytes(e.to_string()))
     }
 }

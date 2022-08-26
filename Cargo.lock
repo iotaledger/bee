@@ -357,18 +357,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bee-inx"
-version = "1.0.0-beta.4"
-dependencies = [
- "bee-block",
- "futures",
- "inx",
- "packable",
- "thiserror",
- "tokio",
-]
-
-[[package]]
 name = "bee-ledger"
 version = "0.7.0"
 dependencies = [
@@ -2749,9 +2737,9 @@ dependencies = [
 
 [[package]]
 name = "packable"
-version = "0.6.1"
+version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c4ab4403d49f4fe5ca6ca8d3dd3db64d1fd047d3aeb9fbee43a7b20791bcfe53"
+checksum = "a7e6da5d02b6ba18afdb21b1813fa25b97ad997201aed5883a9ef9141024cfbf"
 dependencies = [
  "autocfg",
  "packable-derive",
@@ -2761,9 +2749,9 @@ dependencies = [
 
 [[package]]
 name = "packable-derive"
-version = "0.6.1"
+version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6ffcf5c713b0a4dc013dedd903c76d17bcf15a99ea29fb4516d80ca9e57e8aae"
+checksum = "00b336fd071ce4e492a7842a2c73fd742326468e0f6e6bb22d58b2dcb48565f8"
 dependencies = [
  "proc-macro-crate",
  "proc-macro-error",

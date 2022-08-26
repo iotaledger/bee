@@ -95,6 +95,22 @@ where
 
             let (tx, rx) = async_channel::unbounded();
 
+            // TODO: this is obviously wrong and just temporary
+            let protocol_parameters = bee_block::protocol::ProtocolParameters::new(
+                0,
+                String::from(""),
+                String::from(""),
+                0,
+                0,
+                bee_block::output::RentStructure::build()
+                    .byte_cost(0)
+                    .key_factor(0)
+                    .data_factor(0)
+                    .finish(),
+                0,
+            )
+            .unwrap();
+
             for _ in 0..16 {
                 let rx = rx.clone();
                 let propagator = propagator.clone();
@@ -108,6 +124,7 @@ where
                 let peer_manager = peer_manager.clone();
                 let bus = bus.clone();
                 let config = config.clone();
+                let protocol_parameters = protocol_parameters.clone();
 
                 tokio::spawn(async move {
                     'next_event: while let Ok(ProcessorWorkerEvent {
@@ -119,7 +136,7 @@ where
                     {
                         trace!("Processing received block...");
 
-                        let block = match Block::unpack_strict(&mut &block_packet.bytes[..], &()) {
+                        let block = match Block::unpack_strict(&mut &block_packet.bytes[..], &protocol_parameters) {
                             Ok(block) => block,
                             Err(e) => {
                                 notify_invalid_block(format!("Invalid block: {:?}.", e), &metrics, notifier);

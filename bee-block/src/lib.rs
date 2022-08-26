@@ -13,7 +13,6 @@ extern crate std;
 
 #[macro_use]
 mod r#macro;
-mod block;
 mod block_id;
 mod error;
 
@@ -23,6 +22,8 @@ pub mod dto;
 
 /// A module that provides types and syntactic validations of addresses.
 pub mod address;
+/// A module that provides types and syntactic validations of blocks.
+pub mod block;
 /// A module that contains constants related to blocks.
 pub mod constant;
 /// A module that contains helper functions and types.
