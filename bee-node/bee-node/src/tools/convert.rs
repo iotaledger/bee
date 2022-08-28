@@ -2,9 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_block::address::{Address, Ed25519Address};
-use crypto::{
-    hashes::{blake2b::Blake2b256, Digest}
-};
+use crypto::hashes::{blake2b::Blake2b256, Digest};
 use structopt::StructOpt;
 use thiserror::Error;
 
@@ -21,11 +19,11 @@ pub enum ConvertError {
 #[derive(Clone, Debug, StructOpt)]
 pub enum ConvertTool {
     /// convert Bech32 address to hex encoding
-    Bech32ToHex {  bech32: String },
-    /// convert hex encoding to Bech32 address 
-    HexToBech32 { hex: String},
+    Bech32ToHex { bech32: String },
+    /// convert hex encoding to Bech32 address
+    HexToBech32 { hex: String },
     /// convert a hex encoded public key to Bech32 address
-    HexPubkeyToBech32 { pubkey: String},
+    HexPubkeyToBech32 { pubkey: String },
 }
 
 pub fn exec(tool: &ConvertTool) -> Result<(), ConvertError> {
@@ -58,13 +56,15 @@ fn bech32_to_hex(bech32: &str) -> Result<String, ConvertError> {
 }
 
 /// Transforms a hex encoded address to a bech32 encoded address
-pub fn hex_to_bech32(hex: &str, bech32_hrp: &str) -> Result<String, ConvertError> {
-    let address: Ed25519Address = hex.parse::<Ed25519Address>().map_err(|_| ConvertError::InvalidAddress())?;
+fn hex_to_bech32(hex: &str, bech32_hrp: &str) -> Result<String, ConvertError> {
+    let address: Ed25519Address = hex
+        .parse::<Ed25519Address>()
+        .map_err(|_| ConvertError::InvalidAddress())?;
     Ok(Address::Ed25519(address).to_bech32(bech32_hrp))
 }
 
 /// Transforms a hex encoded public key to a bech32 encoded address
-pub fn hex_public_key_to_bech32_address(hex: &str, bech32_hrp: &str) -> Result<String, ConvertError> {
+fn hex_public_key_to_bech32_address(hex: &str, bech32_hrp: &str) -> Result<String, ConvertError> {
     let mut public_key = [0u8; Ed25519Address::LENGTH];
     hex::decode_to_slice(&hex, &mut public_key).map_err(|_| ConvertError::InvalidAddressLength())?;
 
@@ -75,26 +75,31 @@ pub fn hex_public_key_to_bech32_address(hex: &str, bech32_hrp: &str) -> Result<S
     Ok(Address::Ed25519(address).to_bech32(bech32_hrp))
 }
 
-
 #[cfg(test)]
 mod bech32tests {
     use crate::tools::convert::*;
     // spec: https://github.com/iotaledger/tips/blob/main/tips/TIP-0011/tip-0011.md
     #[test]
     fn bech32tohex() {
-        let bech32tohex = ConvertTool::Bech32ToHex{ bech32 : "iota1qrhacyfwlcnzkvzteumekfkrrwks98mpdm37cj4xx3drvmjvnep6xqgyzyx".to_string()};
+        let bech32tohex = ConvertTool::Bech32ToHex {
+            bech32: "iota1qrhacyfwlcnzkvzteumekfkrrwks98mpdm37cj4xx3drvmjvnep6xqgyzyx".to_string(),
+        };
         exec(&bech32tohex); // output: "0xefdc112efe262b304bcf379b26c31bad029f616ee3ec4aa6345a366e4c9e43a3"
     }
 
     #[test]
     fn hextobech32() {
-        let hextobech32 = ConvertTool::HexToBech32 { hex : "0xefdc112efe262b304bcf379b26c31bad029f616ee3ec4aa6345a366e4c9e43a3".to_string()};
+        let hextobech32 = ConvertTool::HexToBech32 {
+            hex: "0xefdc112efe262b304bcf379b26c31bad029f616ee3ec4aa6345a366e4c9e43a3".to_string(),
+        };
         exec(&hextobech32).unwrap(); // output: "iota1qrhacyfwlcnzkvzteumekfkrrwks98mpdm37cj4xx3drvmjvnep6xqgyzyx"
     }
 
     #[test]
     fn pubkeytohex() {
-        let pubkeytohex = ConvertTool::HexPubkeyToBech32 { pubkey : "6f1581709bb7b1ef030d210db18e3b0ba1c776fba65d8cdaad05415142d189f8".to_string()};
-        exec(&pubkeytohex);  // output: "iota1qrhacyfwlcnzkvzteumekfkrrwks98mpdm37cj4xx3drvmjvnep6xqgyzyx"
+        let pubkeytohex = ConvertTool::HexPubkeyToBech32 {
+            pubkey: "6f1581709bb7b1ef030d210db18e3b0ba1c776fba65d8cdaad05415142d189f8".to_string(),
+        };
+        exec(&pubkeytohex); // output: "iota1qrhacyfwlcnzkvzteumekfkrrwks98mpdm37cj4xx3drvmjvnep6xqgyzyx"
     }
 }

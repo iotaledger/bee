@@ -1,6 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+mod convert;
 mod ed25519;
 mod jwt_api;
 mod password;
@@ -9,7 +10,6 @@ mod rocksdb;
 #[cfg(feature = "sled")]
 mod sled;
 mod snapshot_info;
-mod convert;
 
 use structopt::StructOpt;
 use thiserror::Error;
