@@ -144,19 +144,6 @@ where
                             }
                         };
 
-                        if block.protocol_version() != PROTOCOL_VERSION {
-                            notify_invalid_block(
-                                format!(
-                                    "Incompatible protocol version {} != {}.",
-                                    block.protocol_version(),
-                                    PROTOCOL_VERSION
-                                ),
-                                &metrics,
-                                notifier,
-                            );
-                            continue;
-                        }
-
                         if let Some(Payload::Milestone(_)) = block.payload() {
                             if block.nonce() != 0 {
                                 notify_invalid_block(
