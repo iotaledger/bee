@@ -100,6 +100,25 @@ impl ProtocolParameters {
     }
 }
 
+/// Returns a [`ProtocolParameters`] for testing purposes.
+#[cfg(any(feature = "test", feature = "rand"))]
+pub fn protocol_parameters() -> ProtocolParameters {
+    ProtocolParameters::new(
+        2,
+        String::from("testnet"),
+        String::from("rms"),
+        1500,
+        15,
+        crate::output::RentStructure::build()
+            .byte_cost(500)
+            .key_factor(10)
+            .data_factor(1)
+            .finish(),
+        1_813_620_509_061_365,
+    )
+    .unwrap()
+}
+
 #[cfg(feature = "inx")]
 mod inx {
     use packable::PackableExt;

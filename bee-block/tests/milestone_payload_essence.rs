@@ -1,8 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod common;
-
 use bee_block::{
     input::TreasuryInput,
     output::TreasuryOutput,
@@ -13,6 +11,7 @@ use bee_block::{
         },
         TreasuryTransactionPayload,
     },
+    protocol::protocol_parameters,
     rand::{
         self,
         bytes::rand_bytes,
@@ -21,24 +20,21 @@ use bee_block::{
         parents::rand_parents,
     },
 };
-use common::protocol_parameters;
 use packable::PackableExt;
 
 #[test]
 fn new_valid() {
-    assert!(
-        MilestoneEssence::new(
-            MilestoneIndex(0),
-            0,
-            rand_milestone_id(),
-            rand_parents(),
-            rand_merkle_root(),
-            rand_merkle_root(),
-            vec![],
-            MilestoneOptions::new(vec![]).unwrap(),
-        )
-        .is_ok()
-    );
+    assert!(MilestoneEssence::new(
+        MilestoneIndex(0),
+        0,
+        rand_milestone_id(),
+        rand_parents(),
+        rand_merkle_root(),
+        rand_merkle_root(),
+        vec![],
+        MilestoneOptions::new(vec![]).unwrap(),
+    )
+    .is_ok());
 }
 
 #[test]

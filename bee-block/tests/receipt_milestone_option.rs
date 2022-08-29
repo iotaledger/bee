@@ -1,8 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod common;
-
 use core::str::FromStr;
 
 use bee_block::{
@@ -16,10 +14,10 @@ use bee_block::{
         },
         TreasuryTransactionPayload,
     },
+    protocol::protocol_parameters,
     rand::number::rand_number,
     Error,
 };
-use common::protocol_parameters;
 use packable::{bounded::TryIntoBoundedU16Error, PackableExt};
 
 const AMOUNT: u64 = 1_000_000;
@@ -40,14 +38,12 @@ fn new_valid() {
     let receipt = ReceiptMilestoneOption::new(
         MilestoneIndex::new(0),
         true,
-        vec![
-            MigratedFundsEntry::new(
-                TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-                Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-                AMOUNT,
-            )
-            .unwrap(),
-        ],
+        vec![MigratedFundsEntry::new(
+            TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
+            Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+            AMOUNT,
+        )
+        .unwrap()],
         TreasuryTransactionPayload::new(
             TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap()),
             TreasuryOutput::new(AMOUNT).unwrap(),
@@ -167,14 +163,12 @@ fn pack_unpack_valid() {
     let receipt = ReceiptMilestoneOption::new(
         MilestoneIndex::new(0),
         true,
-        vec![
-            MigratedFundsEntry::new(
-                TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-                Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-                AMOUNT,
-            )
-            .unwrap(),
-        ],
+        vec![MigratedFundsEntry::new(
+            TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
+            Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+            AMOUNT,
+        )
+        .unwrap()],
         TreasuryTransactionPayload::new(
             TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap()),
             TreasuryOutput::new(AMOUNT).unwrap(),
@@ -196,14 +190,12 @@ fn pack_unpack_valid() {
 fn getters() {
     let migrated_at = MilestoneIndex::new(rand_number());
     let last = true;
-    let funds = vec![
-        MigratedFundsEntry::new(
-            TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-            Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-            AMOUNT,
-        )
-        .unwrap(),
-    ];
+    let funds = vec![MigratedFundsEntry::new(
+        TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
+        Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+        AMOUNT,
+    )
+    .unwrap()];
     let transaction = TreasuryTransactionPayload::new(
         TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap()),
         TreasuryOutput::new(AMOUNT).unwrap(),

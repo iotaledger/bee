@@ -1,19 +1,17 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod common;
-
 use bee_block::{
     address::{Address, Ed25519Address},
     input::{Input, UtxoInput},
     output::{unlock_condition::AddressUnlockCondition, BasicOutput, Output},
     payload::transaction::{RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayload},
+    protocol::protocol_parameters,
     rand::output::rand_inputs_commitment,
     signature::{Ed25519Signature, Signature},
     unlock::{ReferenceUnlock, SignatureUnlock, Unlock, Unlocks},
     Error,
 };
-use common::protocol_parameters;
 use packable::PackableExt;
 
 const TRANSACTION_ID: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";

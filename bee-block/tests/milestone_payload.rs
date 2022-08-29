@@ -1,11 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod common;
-
 use bee_block::{
     parent::Parents,
     payload::milestone::{MilestoneEssence, MilestoneIndex, MilestoneOptions, MilestonePayload},
+    protocol::protocol_parameters,
     rand::{
         block::rand_block_ids,
         milestone::{rand_merkle_root, rand_milestone_id, rand_milestone_index},
@@ -15,7 +14,6 @@ use bee_block::{
     signature::{Ed25519Signature, Signature},
     Error,
 };
-use common::protocol_parameters;
 use packable::{bounded::TryIntoBoundedU8Error, PackableExt};
 
 #[test]
@@ -25,23 +23,21 @@ fn kind() {
 
 #[test]
 fn new_valid() {
-    assert!(
-        MilestonePayload::new(
-            MilestoneEssence::new(
-                MilestoneIndex(0),
-                0,
-                rand_milestone_id(),
-                rand_parents(),
-                rand_merkle_root(),
-                rand_merkle_root(),
-                vec![],
-                MilestoneOptions::new(vec![]).unwrap(),
-            )
-            .unwrap(),
-            vec![Signature::from(Ed25519Signature::new([0; 32], [0; 64]))]
+    assert!(MilestonePayload::new(
+        MilestoneEssence::new(
+            MilestoneIndex(0),
+            0,
+            rand_milestone_id(),
+            rand_parents(),
+            rand_merkle_root(),
+            rand_merkle_root(),
+            vec![],
+            MilestoneOptions::new(vec![]).unwrap(),
         )
-        .is_ok()
-    );
+        .unwrap(),
+        vec![Signature::from(Ed25519Signature::new([0; 32], [0; 64]))]
+    )
+    .is_ok());
 }
 
 #[test]

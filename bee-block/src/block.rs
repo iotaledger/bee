@@ -13,7 +13,6 @@ use packable::{
 };
 
 use crate::{
-    constant::PROTOCOL_VERSION,
     parent::Parents,
     payload::{OptionalPayload, Payload},
     protocol::ProtocolParameters,
@@ -26,12 +25,10 @@ use crate::{
 pub struct BlockBuilder<P: NonceProvider = Miner> {
     parents: Parents,
     payload: Option<Payload>,
-    nonce_provider: Option<(P, f64)>,
+    nonce_provider: Option<P>,
 }
 
 impl<P: NonceProvider> BlockBuilder<P> {
-    /// Default score used for PoW if none is provided.
-    pub const DEFAULT_POW_SCORE: f64 = 1500f64;
     const DEFAULT_NONCE: u64 = 0;
 
     /// Creates a new [`BlockBuilder`].
@@ -53,17 +50,17 @@ impl<P: NonceProvider> BlockBuilder<P> {
 
     /// Adds a nonce provider to a [`BlockBuilder`].
     #[inline(always)]
-    pub fn with_nonce_provider(mut self, nonce_provider: P, target_score: f64) -> Self {
-        self.nonce_provider = Some((nonce_provider, target_score));
+    pub fn with_nonce_provider(mut self, nonce_provider: P) -> Self {
+        self.nonce_provider = Some(nonce_provider);
         self
     }
 
     /// Finishes the [`BlockBuilder`] into a [`Block`].
-    pub fn finish(self) -> Result<Block, Error> {
+    pub fn finish(self, protocol_parameters: &ProtocolParameters) -> Result<Block, Error> {
         verify_payload(self.payload.as_ref())?;
 
         let mut block = Block {
-            protocol_version: PROTOCOL_VERSION,
+            protocol_version: protocol_parameters.protocol_version(),
             parents: self.parents,
             payload: self.payload.into(),
             nonce: 0,
@@ -75,14 +72,12 @@ impl<P: NonceProvider> BlockBuilder<P> {
             return Err(Error::InvalidBlockLength(block_bytes.len()));
         }
 
-        let (nonce_provider, target_score) = self
-            .nonce_provider
-            .unwrap_or((P::Builder::new().finish(), Self::DEFAULT_POW_SCORE));
+        let nonce_provider = self.nonce_provider.unwrap_or(P::Builder::new().finish());
 
         block.nonce = nonce_provider
             .nonce(
                 &block_bytes[..block_bytes.len() - core::mem::size_of::<u64>()],
-                target_score,
+                protocol_parameters.min_pow_score() as f64,
             )
             .unwrap_or(Self::DEFAULT_NONCE);
 

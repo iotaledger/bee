@@ -1,8 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod common;
-
 use core::str::FromStr;
 
 use bee_block::{
@@ -14,6 +12,7 @@ use bee_block::{
         transaction::{RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayload},
         Payload, TaggedDataPayload, TreasuryTransactionPayload,
     },
+    protocol::protocol_parameters,
     rand::{
         bytes::rand_bytes,
         milestone::{rand_merkle_root, rand_milestone_id},
@@ -23,7 +22,6 @@ use bee_block::{
     signature::{Ed25519Signature, Signature},
     unlock::{ReferenceUnlock, SignatureUnlock, Unlock, Unlocks},
 };
-use common::protocol_parameters;
 use packable::PackableExt;
 
 const TRANSACTION_ID: &str = "0x24a1f46bdb6b2bf38f1c59f73cdd4ae5b418804bb231d76d06fbf246498d5883";
