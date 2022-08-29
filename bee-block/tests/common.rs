@@ -5,17 +5,17 @@ use bee_block::{output::RentStructure, protocol::ProtocolParameters};
 
 pub fn protocol_parameters() -> ProtocolParameters {
     ProtocolParameters::new(
-        0,
-        String::from(""),
-        String::from(""),
-        0,
-        0,
+        2,
+        String::from("testnet"),
+        String::from("rms"),
+        1500,
+        15,
         RentStructure::build()
-            .byte_cost(0)
-            .key_factor(0)
-            .data_factor(0)
+            .byte_cost(500)
+            .key_factor(10)
+            .data_factor(1)
             .finish(),
-        0,
+        1_813_620_509,
     )
     .unwrap()
 }

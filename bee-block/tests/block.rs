@@ -32,7 +32,7 @@ fn pow_default_provider() {
     let block_bytes = block.pack_to_vec();
     let score = PoWScorer::new().score(&block_bytes);
 
-    assert!(score >= 4000f64);
+    assert!(score >= BlockBuilder::<Miner>::DEFAULT_POW_SCORE);
 }
 
 #[test]
