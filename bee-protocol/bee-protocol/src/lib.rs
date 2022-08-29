@@ -79,7 +79,6 @@ where
         })
         .with_worker_cfg::<HasherWorker>(config.clone())
         .with_worker_cfg::<ProcessorWorker>(ProcessorWorkerConfig {
-            network_id: network_id.1,
             minimum_pow_score: config.minimum_pow_score,
             rent: config.rent.clone(),
         })

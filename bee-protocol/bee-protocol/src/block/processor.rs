@@ -5,7 +5,6 @@ use std::{any::TypeId, convert::Infallible, time::Instant};
 
 use async_trait::async_trait;
 use bee_block::{
-    constant::PROTOCOL_VERSION,
     output::RentStructure,
     payload::{transaction::TransactionEssence, Payload},
     Block, BlockId,
@@ -44,7 +43,6 @@ pub(crate) struct ProcessorWorker {
 
 #[derive(Clone)]
 pub(crate) struct ProcessorWorkerConfig {
-    pub(crate) network_id: u64,
     pub(crate) minimum_pow_score: f64,
     pub(crate) rent: RentStructure,
 }
@@ -164,19 +162,6 @@ where
 
                         if let Some(Payload::Transaction(transaction)) = block.payload() {
                             let TransactionEssence::Regular(essence) = transaction.essence();
-
-                            if essence.network_id() != config.network_id {
-                                notify_invalid_block(
-                                    format!(
-                                        "Incompatible network ID {} != {}.",
-                                        essence.network_id(),
-                                        config.network_id
-                                    ),
-                                    &metrics,
-                                    notifier,
-                                );
-                                continue 'next_event;
-                            }
 
                             for (i, output) in essence.outputs().iter().enumerate() {
                                 if let Err(error) = output.verify_storage_deposit(&config.rent) {
