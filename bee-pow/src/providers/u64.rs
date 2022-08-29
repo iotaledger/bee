@@ -19,7 +19,7 @@ impl NonceProvider for u64 {
     type Builder = u64;
     type Error = std::convert::Infallible;
 
-    fn nonce(&self, _: &[u8], _: f64) -> Result<u64, Self::Error> {
+    fn nonce(&self, _: &[u8], _: u32) -> Result<u64, Self::Error> {
         Ok(*self)
     }
 }
