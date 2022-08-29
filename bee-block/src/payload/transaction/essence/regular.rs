@@ -7,7 +7,6 @@ use hashbrown::HashSet;
 use packable::{bounded::BoundedU16, prefix::BoxedSlicePrefix, Packable};
 
 use crate::{
-    constant::TOKEN_SUPPLY,
     input::{Input, INPUT_COUNT_RANGE},
     output::{InputsCommitment, NativeTokens, Output, OUTPUT_COUNT_RANGE},
     payload::{OptionalPayload, Payload},
@@ -84,7 +83,8 @@ impl RegularTransactionEssenceBuilder {
             .try_into()
             .map_err(Error::InvalidOutputCount)?;
 
-        verify_outputs::<true>(&outputs)?;
+        // TODO: obviously wrong, needs to be replaced.
+        verify_outputs::<true>(&outputs, &ProtocolParameters::default())?;
 
         let payload = OptionalPayload::from(self.payload);
 
@@ -117,7 +117,7 @@ pub struct RegularTransactionEssence {
     inputs: BoxedSlicePrefix<Input, InputCount>,
     /// BLAKE2b-256 hash of the serialized outputs referenced in inputs by their OutputId.
     inputs_commitment: InputsCommitment,
-    #[packable(verify_with = verify_outputs_packable)]
+    #[packable(verify_with = verify_outputs)]
     #[packable(unpack_error_with = |e| e.unwrap_item_err_or_else(|p| Error::InvalidOutputCount(p.into())))]
     outputs: BoxedSlicePrefix<Output, OutputCount>,
     #[packable(verify_with = verify_payload_packable)]
@@ -197,7 +197,7 @@ fn verify_inputs_packable<const VERIFY: bool>(inputs: &[Input], _visitor: &Proto
     verify_inputs::<VERIFY>(inputs)
 }
 
-fn verify_outputs<const VERIFY: bool>(outputs: &[Output]) -> Result<(), Error> {
+fn verify_outputs<const VERIFY: bool>(outputs: &[Output], visitor: &ProtocolParameters) -> Result<(), Error> {
     if VERIFY {
         let mut amount_sum: u64 = 0;
         let mut native_tokens_count: u8 = 0;
@@ -216,7 +216,7 @@ fn verify_outputs<const VERIFY: bool>(outputs: &[Output]) -> Result<(), Error> {
                 .ok_or(Error::InvalidTransactionAmountSum(amount_sum as u128 + amount as u128))?;
 
             // Accumulated output balance must not exceed the total supply of tokens.
-            if amount_sum > TOKEN_SUPPLY {
+            if amount_sum > visitor.token_supply() {
                 return Err(Error::InvalidTransactionAmountSum(amount_sum as u128));
             }
 
@@ -231,10 +231,6 @@ fn verify_outputs<const VERIFY: bool>(outputs: &[Output]) -> Result<(), Error> {
     }
 
     Ok(())
-}
-
-fn verify_outputs_packable<const VERIFY: bool>(outputs: &[Output], _visitor: &ProtocolParameters) -> Result<(), Error> {
-    verify_outputs::<VERIFY>(outputs)
 }
 
 fn verify_payload<const VERIFY: bool>(payload: &OptionalPayload) -> Result<(), Error> {
