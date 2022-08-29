@@ -4,11 +4,7 @@
 use std::{any::TypeId, convert::Infallible, time::Instant};
 
 use async_trait::async_trait;
-use bee_block::{
-    output::RentStructure,
-    payload::{transaction::TransactionEssence, Payload},
-    Block, BlockId,
-};
+use bee_block::{payload::Payload, Block, BlockId};
 use bee_gossip::PeerId;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{block_metadata::BlockMetadata, Tangle, TangleWorker};
@@ -44,7 +40,6 @@ pub(crate) struct ProcessorWorker {
 #[derive(Clone)]
 pub(crate) struct ProcessorWorkerConfig {
     pub(crate) minimum_pow_score: f64,
-    pub(crate) rent: RentStructure,
 }
 
 #[async_trait]
@@ -158,21 +153,6 @@ where
                                 notifier,
                             );
                             continue;
-                        }
-
-                        if let Some(Payload::Transaction(transaction)) = block.payload() {
-                            let TransactionEssence::Regular(essence) = transaction.essence();
-
-                            for (i, output) in essence.outputs().iter().enumerate() {
-                                if let Err(error) = output.verify_storage_deposit(&config.rent) {
-                                    notify_invalid_block(
-                                        format!("Invalid output i={i}: {}", error),
-                                        &metrics,
-                                        notifier,
-                                    );
-                                    continue 'next_event;
-                                }
-                            }
                         }
 
                         let block_id = block.id();

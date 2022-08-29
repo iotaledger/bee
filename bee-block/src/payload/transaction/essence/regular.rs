@@ -227,6 +227,8 @@ fn verify_outputs<const VERIFY: bool>(outputs: &[Output], visitor: &ProtocolPara
             if native_tokens_count > NativeTokens::COUNT_MAX {
                 return Err(Error::InvalidTransactionNativeTokensCount(native_tokens_count as u16));
             }
+
+            output.verify_storage_deposit(visitor.rent_structure())?;
         }
     }
 

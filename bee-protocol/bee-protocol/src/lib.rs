@@ -80,7 +80,6 @@ where
         .with_worker_cfg::<HasherWorker>(config.clone())
         .with_worker_cfg::<ProcessorWorker>(ProcessorWorkerConfig {
             minimum_pow_score: config.minimum_pow_score,
-            rent: config.rent.clone(),
         })
         .with_worker::<BlockResponderWorker>()
         .with_worker::<MilestoneResponderWorker>()
