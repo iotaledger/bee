@@ -29,15 +29,15 @@ pub enum ConvertTool {
 pub fn exec(tool: &ConvertTool) -> Result<(), ConvertError> {
     match tool {
         ConvertTool::Bech32ToHex { bech32 } => {
-            let hex = bech32_to_hex(&bech32.as_str()).unwrap();
+            let hex = bech32_to_hex(bech32.as_str()).unwrap();
             println!("Your Hex encoded address is:\t{:?}", hex);
         }
         ConvertTool::HexToBech32 { hex } => {
-            let bech32 = hex_to_bech32(&hex.as_str(), BECH32_HRP).unwrap();
+            let bech32 = hex_to_bech32(hex.as_str(), BECH32_HRP).unwrap();
             println!("Your Bech32 address is:\t{:?}", bech32);
         }
         ConvertTool::HexPubkeyToBech32 { pubkey } => {
-            let bech32 = hex_public_key_to_bech32_address(&pubkey.as_str(), BECH32_HRP).unwrap();
+            let bech32 = hex_public_key_to_bech32_address(pubkey.as_str(), BECH32_HRP).unwrap();
             println!("Your Bech32 address is:\t{:?}", bech32);
         }
     }
