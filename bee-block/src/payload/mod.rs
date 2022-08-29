@@ -93,10 +93,22 @@ impl Packable for Payload {
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         match self {
-            Payload::Transaction(transaction) => transaction.pack(packer),
-            Payload::Milestone(milestone) => milestone.pack(packer),
-            Payload::TreasuryTransaction(treasury_transaction) => treasury_transaction.pack(packer),
-            Payload::TaggedData(tagged_data) => tagged_data.pack(packer),
+            Payload::Transaction(transaction) => {
+                TransactionPayload::KIND.pack(packer)?;
+                transaction.pack(packer)
+            }
+            Payload::Milestone(milestone) => {
+                MilestonePayload::KIND.pack(packer)?;
+                milestone.pack(packer)
+            }
+            Payload::TreasuryTransaction(treasury_transaction) => {
+                TreasuryTransactionPayload::KIND.pack(packer)?;
+                treasury_transaction.pack(packer)
+            }
+            Payload::TaggedData(tagged_data) => {
+                TaggedDataPayload::KIND.pack(packer)?;
+                tagged_data.pack(packer)
+            }
         }?;
 
         Ok(())
