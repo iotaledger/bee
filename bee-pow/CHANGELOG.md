@@ -21,8 +21,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased - 2022-XX-XX
 
+## 1.0.0-beta.1 - 2022-08-29
+
 ### Changed
 
+- Type of `target_score` parameter of `NonceProvider::nonce` from `f64` to `u32` to better match TIP32;
 - Updated dependencies;
 
 ### Fixed
