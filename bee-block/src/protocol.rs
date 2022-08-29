@@ -14,7 +14,7 @@ use crate::{helper::network_name_to_id, output::RentStructure, Error};
 #[packable(unpack_error = Error)]
 pub struct ProtocolParameters {
     // The version of the protocol running.
-    version: u8,
+    protocol_version: u8,
     // The human friendly name of the network.
     #[packable(unpack_error_with = |err| Error::InvalidNetworkName(err.into_item_err()))]
     network_name: StringPrefix<u8>,
@@ -40,7 +40,7 @@ impl Borrow<()> for ProtocolParameters {
 impl ProtocolParameters {
     /// Creates a new [`ProtocolParameters`].
     pub fn new(
-        version: u8,
+        protocol_version: u8,
         network_name: String,
         bech32_hrp: String,
         min_pow_score: u32,
@@ -49,7 +49,7 @@ impl ProtocolParameters {
         token_supply: u64,
     ) -> Result<ProtocolParameters, Error> {
         Ok(ProtocolParameters {
-            version,
+            protocol_version,
             network_name: <StringPrefix<u8>>::try_from(network_name).map_err(Error::InvalidStringPrefix)?,
             bech32_hrp: <StringPrefix<u8>>::try_from(bech32_hrp).map_err(Error::InvalidStringPrefix)?,
             min_pow_score,
@@ -59,9 +59,9 @@ impl ProtocolParameters {
         })
     }
 
-    /// Returns the version of the [`ProtocolParameters`].
-    pub fn version(&self) -> u8 {
-        self.version
+    /// Returns the protocol version of the [`ProtocolParameters`].
+    pub fn protocol_version(&self) -> u8 {
+        self.protocol_version
     }
 
     /// Returns the network name of the [`ProtocolParameters`].

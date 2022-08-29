@@ -220,7 +220,7 @@ impl fmt::Display for Error {
             }
             Error::InvalidPayloadKind(k) => write!(f, "invalid payload kind: {}", k),
             Error::InvalidPayloadLength { expected, actual } => {
-                write!(f, "invalid payload length: expected {}, got {}", expected, actual)
+                write!(f, "invalid payload length: expected {} but got {}", expected, actual)
             }
             Error::InvalidReceiptFundsCount(count) => write!(f, "invalid receipt funds count: {}", count),
             Error::InvalidReceiptFundsSum(sum) => write!(f, "invalid receipt amount sum: {sum}"),
@@ -294,7 +294,7 @@ impl fmt::Display for Error {
                 write!(f, "parents are not unique and/or sorted")
             }
             Error::ProtocolVersionMismatch { expected, actual } => {
-                write!(f, "protocol version mismatch: expected {expected}, got {actual}")
+                write!(f, "protocol version mismatch: expected {expected} but got {actual}")
             }
             Error::ReceiptFundsNotUniqueSorted => {
                 write!(f, "receipt funds are not unique and/or sorted")
@@ -311,7 +311,7 @@ impl fmt::Display for Error {
             Error::SignaturePublicKeyMismatch { expected, actual } => {
                 write!(
                     f,
-                    "signature public key mismatch: expected {0}, got {1}",
+                    "signature public key mismatch: expected {0} but got {1}",
                     expected, actual
                 )
             }

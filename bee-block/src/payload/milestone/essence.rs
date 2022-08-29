@@ -147,9 +147,9 @@ impl Packable for MilestoneEssence {
         let timestamp = u32::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
         let protocol_version = u8::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
 
-        if VERIFY && protocol_version != PROTOCOL_VERSION {
+        if VERIFY && protocol_version != visitor.protocol_version() {
             return Err(UnpackError::Packable(Error::ProtocolVersionMismatch {
-                expected: PROTOCOL_VERSION,
+                expected: visitor.protocol_version(),
                 actual: protocol_version,
             }));
         }
