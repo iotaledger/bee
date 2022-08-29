@@ -30,7 +30,7 @@ pub struct BlockBuilder<P: NonceProvider = Miner> {
 }
 
 impl<P: NonceProvider> BlockBuilder<P> {
-    const DEFAULT_POW_SCORE: f64 = 4000f64;
+    const DEFAULT_POW_SCORE: f64 = 1500f64;
     const DEFAULT_NONCE: u64 = 0;
 
     /// Creates a new [`BlockBuilder`].
