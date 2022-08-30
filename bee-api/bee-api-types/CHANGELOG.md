@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 1.0.0-beta.7 - 2022-08-30
+
+### Changed
+
+- `ProtocolResponse::min_pow_score` from `f64` to `u32`;
+
 ## 1.0.0-beta.6 - 2022-08-30
 
 ### Changed
