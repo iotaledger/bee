@@ -1,6 +1,6 @@
 [package]
 name = "bee-api-types"
-version = "1.0.0-beta.6"
+version = "1.0.0-beta.7"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "Common types required by nodes and clients APIs like bodies, errors, responses and DTOs."
