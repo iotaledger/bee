@@ -33,5 +33,5 @@ pub trait NonceProvider: Sized {
     }
 
     /// Provides a nonce given bytes and a target score.
-    fn nonce(&self, bytes: &[u8], target_score: f64) -> Result<u64, Self::Error>;
+    fn nonce(&self, bytes: &[u8], target_score: u32) -> Result<u64, Self::Error>;
 }
