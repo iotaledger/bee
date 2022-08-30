@@ -23,7 +23,7 @@ pub fn rand_block_ids(len: usize) -> Vec<BlockId> {
 pub fn rand_block_with_parents(parents: Parents) -> Block {
     BlockBuilder::<u64>::new(parents)
         .with_payload(rand_payload_for_block())
-        .with_nonce_provider(rand_number(), 0f64)
+        .with_nonce_provider(rand_number(), 0)
         .finish()
         .unwrap()
 }

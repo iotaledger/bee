@@ -19,12 +19,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
-## Unreleased - 2022-MM-DD
+## 1.0.0-beta.7 - 2022-08-30
 
 ### Changed
 
 - Updated dependencies (including `packable`);
 - Restrict constraint to unlock an Alias address to Alias state transitions;
+- Use new packable version with `Packable::UnpackVisitor`;
 
 ## 1.0.0-beta.6 - 2022-08-11
 

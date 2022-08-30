@@ -25,11 +25,11 @@ use crate::{
 pub struct BlockBuilder<P: NonceProvider = Miner> {
     parents: Parents,
     payload: Option<Payload>,
-    nonce_provider: Option<(P, f64)>,
+    nonce_provider: Option<(P, u32)>,
 }
 
 impl<P: NonceProvider> BlockBuilder<P> {
-    const DEFAULT_POW_SCORE: f64 = 4000f64;
+    const DEFAULT_POW_SCORE: u32 = 4000;
     const DEFAULT_NONCE: u64 = 0;
 
     /// Creates a new [`BlockBuilder`].
@@ -51,7 +51,7 @@ impl<P: NonceProvider> BlockBuilder<P> {
 
     /// Adds a nonce provider to a [`BlockBuilder`].
     #[inline(always)]
-    pub fn with_nonce_provider(mut self, nonce_provider: P, target_score: f64) -> Self {
+    pub fn with_nonce_provider(mut self, nonce_provider: P, target_score: u32) -> Self {
         self.nonce_provider = Some((nonce_provider, target_score));
         self
     }
@@ -299,7 +299,7 @@ pub mod dto {
                     .nonce
                     .parse::<u64>()
                     .map_err(|_| DtoError::InvalidField("nonce"))?,
-                0f64,
+                0,
             );
             if let Some(p) = value.payload.as_ref() {
                 builder = builder.with_payload(p.try_into()?);
