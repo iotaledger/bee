@@ -126,7 +126,7 @@ impl EventHandler {
     }
     /// Fetch a slice of bytes of a determined length.
     ///
-    /// The future returned by this method will be ready until there are enough bytes to fullfill
+    /// The future returned by this method will be ready until there are enough bytes to fulfill
     /// the request.
     async fn fetch_bytes(&mut self, len: usize) -> &[u8] {
         // We need to be sure that we have enough bytes in the buffer.

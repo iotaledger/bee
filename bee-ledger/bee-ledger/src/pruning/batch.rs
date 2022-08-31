@@ -251,7 +251,7 @@ pub fn prune_unconfirmed_data<S: StorageBackend>(
                     // To make occurring this scenario sufficiently unlikely, we only prune a block with
                     // the flag indicating "not referenced", if all its approvers are also flagged as "not referenced".
                     // In other words: If we find at least one confirmed approver, then we know the flag wasn't set
-                    // appropriatedly for the current block due to THE bug, and that we cannot prune it.
+                    // appropriately for the current block due to THE bug, and that we cannot prune it.
                     // ---
                     let unconf_approvers = Fetch::<BlockId, Vec<BlockId>>::fetch(storage, unconf_block_id)
                         .map_err(|e| Error::Storage(Box::new(e)))?
