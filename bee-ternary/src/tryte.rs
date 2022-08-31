@@ -123,7 +123,8 @@ impl TryFrom<i8> for Tryte {
     }
 }
 
-/// A buffer of [`Tryte`]s. Analagous to [`Vec`].
+/// A buffer of [`Tryte`]s.
+/// Analogous to [`Vec`].
 #[derive(Default)]
 pub struct TryteBuf {
     inner: Vec<Tryte>,

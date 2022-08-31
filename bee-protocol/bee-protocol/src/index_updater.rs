@@ -72,7 +72,7 @@ async fn process<B: StorageBackend>(tangle: &Tangle<B>, milestone: MilestoneMeta
         // Update the past cone of this milestone by setting its milestone index, and return them.
         let roots = update_past_cone(tangle, parents, index).await;
 
-        // Note: For tip-selection only the most recent tangle is relevent. That means that during synchronization we do
+        // Note: For tip-selection only the most recent tangle is relevant. That means that during synchronization we do
         // not need to update xMRSI values or tip scores before (LATEST_MILESTONE_INDEX - BELOW_MAX_DEPTH).
         if index > tangle.get_latest_milestone_index() - tangle.config().below_max_depth() {
             update_future_cone(tangle, roots);
@@ -159,7 +159,7 @@ fn update_future_cone<B: StorageBackend>(tangle: &Tangle<B>, roots: HashSet<Bloc
                                     return false;
                                 }
 
-                                // If the childs OMRSI and YMRSI was previously inherited from the current parent,
+                                // If the children OMRSI and YMRSI was previously inherited from the current parent,
                                 // update it.
                                 child_metadata.update_omrsi_and_ymrsi(|child_omrsi, child_ymrsi| {
                                     if child_omrsi.id() == parent_id {

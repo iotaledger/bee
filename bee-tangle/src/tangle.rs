@@ -152,7 +152,7 @@ impl<B: StorageBackend> Tangle<B> {
         self.latest_milestone_index.load(Ordering::Relaxed).into()
     }
 
-    /// Update the index of the lastest milestone.
+    /// Update the index of the latest milestone.
     pub fn update_latest_milestone_index(&self, new_index: MilestoneIndex) {
         // TODO: `fetch_max`? Swap and ensure the old is smaller?
         self.latest_milestone_index.store(*new_index, Ordering::Relaxed);
