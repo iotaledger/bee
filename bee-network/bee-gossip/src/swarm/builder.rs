@@ -11,15 +11,11 @@ use libp2p::{
 };
 
 use super::{behaviour::SwarmBehaviour, error::Error};
-use crate::service::event::InternalEventSender;
 
 const MAX_CONNECTIONS_PER_PEER: u32 = 1;
 const DEFAULT_CONNECTION_TIMEOUT_SECS: u64 = 10;
 
-pub fn build_swarm(
-    local_keys: &identity::Keypair,
-    internal_sender: InternalEventSender,
-) -> Result<Swarm<SwarmBehaviour>, Error> {
+pub fn build_swarm(local_keys: &identity::Keypair) -> Result<Swarm<SwarmBehaviour>, Error> {
     let local_pk = local_keys.public();
     let local_id = local_pk.to_peer_id();
 
@@ -52,7 +48,7 @@ pub fn build_swarm(
             .boxed()
     };
 
-    let behaviour = SwarmBehaviour::new(local_pk, internal_sender);
+    let behaviour = SwarmBehaviour::new(local_pk);
     let limits = ConnectionLimits::default().with_max_established_per_peer(Some(MAX_CONNECTIONS_PER_PEER));
 
     let swarm = SwarmBuilder::new(transport, behaviour, local_id)
