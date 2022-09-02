@@ -106,7 +106,7 @@ async fn network_host_processor(
 
     // Try binding to the configured bind address.
     info!("Binding to: {}", bind_multiaddr);
-    let _listener_id = Swarm::listen_on(&mut swarm, bind_multiaddr).map_err(|_| crate::Error::BindingAddressFailed)?;
+    let _listener_id = Swarm::listen_on(&mut swarm, bind_multiaddr)?;
 
     // Enter command/event loop.
     loop {

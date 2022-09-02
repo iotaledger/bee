@@ -9,7 +9,7 @@ use crate::standalone::init;
 #[tokio::test]
 #[serial_test::serial]
 async fn initialize() {
-    let config = get_in_memory_network_config(1337);
+    let config = get_in_memory_network_config(1339);
     let config_bind_multiaddr = config.bind_multiaddr().clone();
 
     let keys = get_constant_keys();
