@@ -31,18 +31,18 @@ impl SwarmBehaviour {
 }
 
 pub enum SwarmBehaviourEvent {
-    Identify(IdentifyEvent),
-    Gossip(IotaGossipEvent),
+    Identify(Box<IdentifyEvent>),
+    Gossip(Box<IotaGossipEvent>),
 }
 
 impl From<IdentifyEvent> for SwarmBehaviourEvent {
     fn from(event: IdentifyEvent) -> Self {
-        SwarmBehaviourEvent::Identify(event)
+        SwarmBehaviourEvent::Identify(Box::new(event))
     }
 }
 
 impl From<IotaGossipEvent> for SwarmBehaviourEvent {
     fn from(event: IotaGossipEvent) -> Self {
-        SwarmBehaviourEvent::Gossip(event)
+        SwarmBehaviourEvent::Gossip(Box::new(event))
     }
 }

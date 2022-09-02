@@ -164,10 +164,10 @@ async fn process_swarm_event(
             debug!("Swarm event: being dialed from {}.", send_back_addr);
         }
         SwarmEvent::Behaviour(SwarmBehaviourEvent::Identify(identify_event)) => {
-            handle_identify_event(identify_event, internal_event_sender);
+            handle_identify_event(*identify_event, internal_event_sender);
         }
         SwarmEvent::Behaviour(SwarmBehaviourEvent::Gossip(gossip_event)) => {
-            handle_gossip_event(gossip_event, internal_event_sender);
+            handle_gossip_event(*gossip_event, internal_event_sender);
         }
         _ => {}
     }
