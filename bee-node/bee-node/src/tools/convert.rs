@@ -20,7 +20,7 @@ pub enum ConvertError {
 pub enum ConvertTool {
     /// Converts a Bech32 address to a hex encoded one.
     Bech32ToHex { bech32: String },
-    /// convert hex encoding to Bech32 address
+    /// Converts a hex encoded address to a Bech32 one.
     HexToBech32 { hex: String },
     /// Converts a hex encoded public key to a Bech32 address.
     HexPubkeyToBech32 { pubkey: String },
