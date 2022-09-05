@@ -18,7 +18,7 @@ pub enum ConvertError {
 
 #[derive(Clone, Debug, StructOpt)]
 pub enum ConvertTool {
-    /// convert Bech32 address to hex encoding
+    /// Converts a Bech32 address to a hex encoded one.
     Bech32ToHex { bech32: String },
     /// convert hex encoding to Bech32 address
     HexToBech32 { hex: String },
