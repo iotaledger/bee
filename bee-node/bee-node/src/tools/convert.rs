@@ -105,10 +105,9 @@ mod bech32tests {
             bech32: "iota1qrhacyfwlcnzkvzteumekfkrrwks98mpdm37cj4xx3drvmjvnep6xqgyzyx".to_string(),
         };
         // output: "0xefdc112efe262b304bcf379b26c31bad029f616ee3ec4aa6345a366e4c9e43a3";
-        match exec(&bech32_to_hex) {
-            Err(e) => println!("{:?}", e),
-            _ => (),
-        };
+        if let Err(e) = exec(&bech32_to_hex) {
+            println!("{:?}", e)
+        }
     }
 
     #[test]
@@ -118,10 +117,9 @@ mod bech32tests {
             hrp: "iota".to_string(),
         };
         // output: "iota1qrhacyfwlcnzkvzteumekfkrrwks98mpdm37cj4xx3drvmjvnep6xqgyzyx";
-        match exec(&hex_to_bech32) {
-            Err(e) => println!("{:?}", e),
-            _ => (),
-        };
+        if let Err(e) = exec(&hex_to_bech32) {
+            println!("{:?}", e)
+        }
     }
 
     #[test]
@@ -131,9 +129,8 @@ mod bech32tests {
             hrp: "iota".to_string(),
         };
         // output:  "iota1qrhacyfwlcnzkvzteumekfkrrwks98mpdm37cj4xx3drvmjvnep6xqgyzyx";
-        match exec(&public_key_to_hex) {
-            Err(e) => println!("{:?}", e),
-            _ => (),
-        };
+        if let Err(e) = exec(&public_key_to_hex) {
+            println!("{:?}", e)
+        }
     }
 }
