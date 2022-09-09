@@ -32,7 +32,7 @@ impl From<MilestoneInfo> for proto::MilestoneInfo {
     fn from(value: MilestoneInfo) -> Self {
         Self {
             milestone_id: value.milestone_id.map(Into::into),
-            milestone_index: value.milestone_index.into(),
+            milestone_index: value.milestone_index.0,
             milestone_timestamp: value.milestone_timestamp,
         }
     }

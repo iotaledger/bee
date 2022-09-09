@@ -87,7 +87,7 @@ impl TryFrom<LedgerUpdate> for proto::ledger_update::Marker {
         };
         if let LedgerUpdate::Begin(marker) | LedgerUpdate::End(marker) = value {
             Ok(Self {
-                milestone_index: marker.milestone_index.into(),
+                milestone_index: marker.milestone_index.0,
                 marker_type: marker_type.into(),
                 consumed_count: marker.consumed_count as _,
                 created_count: marker.created_count as _,
@@ -144,7 +144,7 @@ impl From<LedgerOutput> for proto::LedgerOutput {
         Self {
             output_id: Some(value.output_id.into()),
             block_id: Some(value.block_id.into()),
-            milestone_index_booked: value.milestone_index_booked.into(),
+            milestone_index_booked: value.milestone_index_booked.0,
             milestone_timestamp_booked: value.milestone_timestamp_booked,
             output: Some(value.output.into()),
         }
@@ -169,7 +169,7 @@ impl From<LedgerSpent> for proto::LedgerSpent {
         Self {
             output: Some(value.output.into()),
             transaction_id_spent: Some(value.transaction_id_spent.into()),
-            milestone_index_spent: value.milestone_index_spent.into(),
+            milestone_index_spent: value.milestone_index_spent.0,
             milestone_timestamp_spent: value.milestone_timestamp_spent,
         }
     }
@@ -189,7 +189,7 @@ impl TryFrom<proto::UnspentOutput> for UnspentOutput {
 impl From<UnspentOutput> for proto::UnspentOutput {
     fn from(value: UnspentOutput) -> Self {
         Self {
-            ledger_index: value.ledger_index.into(),
+            ledger_index: value.ledger_index.0,
             output: Some(value.output.into()),
         }
     }

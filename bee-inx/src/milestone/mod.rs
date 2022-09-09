@@ -6,6 +6,7 @@ use bee_block as bee;
 mod info;
 
 use inx::proto;
+use packable::PackableExt;
 
 pub use self::info::MilestoneInfo;
 use crate::{maybe_missing, RawProtocolParameters};
@@ -34,7 +35,17 @@ impl From<Milestone> for proto::Milestone {
     fn from(value: Milestone) -> Self {
         Self {
             milestone_info: Some(value.milestone_info.into()),
-            milestone: value.milestone.map(Into::into),
+            milestone: value.milestone.map(BeeMilestonePayload).map(Into::into),
+        }
+    }
+}
+
+struct BeeMilestonePayload(bee::payload::MilestonePayload);
+
+impl From<BeeMilestonePayload> for proto::RawMilestone {
+    fn from(BeeMilestonePayload(value): BeeMilestonePayload) -> Self {
+        Self {
+            data: bee::payload::Payload::from(value).pack_to_vec(),
         }
     }
 }

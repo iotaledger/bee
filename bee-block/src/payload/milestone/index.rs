@@ -11,12 +11,6 @@ use derive_more::{Deref, From};
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MilestoneIndex(pub u32);
 
-impl From<MilestoneIndex> for u32 {
-    fn from(value: MilestoneIndex) -> Self {
-        value.0
-    }
-}
-
 impl MilestoneIndex {
     /// Creates a new `MilestoneIndex`.
     pub fn new(value: u32) -> Self {

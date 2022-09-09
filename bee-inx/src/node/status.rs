@@ -60,10 +60,10 @@ impl From<NodeStatus> for proto::NodeStatus {
             latest_milestone: Some(value.latest_milestone.into()),
             confirmed_milestone: Some(value.confirmed_milestone.into()),
             current_protocol_parameters: Some(value.current_protocol_parameters.into()),
-            tangle_pruning_index: value.tangle_pruning_index.into(),
-            milestones_pruning_index: value.milestones_pruning_index.into(),
-            ledger_pruning_index: value.ledger_pruning_index.into(),
-            ledger_index: value.ledger_index.into(),
+            tangle_pruning_index: value.tangle_pruning_index.0,
+            milestones_pruning_index: value.milestones_pruning_index.0,
+            ledger_pruning_index: value.ledger_pruning_index.0,
+            ledger_index: value.ledger_index.0,
         }
     }
 }

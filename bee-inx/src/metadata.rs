@@ -35,6 +35,30 @@ impl From<LedgerInclusionState> for proto::block_metadata::LedgerInclusionState 
     }
 }
 
+struct BeeConflictReason(bee::semantic::ConflictReason);
+
+impl From<BeeConflictReason> for proto::block_metadata::ConflictReason {
+    fn from(BeeConflictReason(value): BeeConflictReason) -> Self {
+        use bee::semantic::ConflictReason;
+        match value {
+            ConflictReason::None => Self::None,
+            ConflictReason::InputUtxoAlreadySpent => Self::InputAlreadySpent,
+            ConflictReason::InputUtxoAlreadySpentInThisMilestone => Self::InputAlreadySpentInThisMilestone,
+            ConflictReason::InputUtxoNotFound => Self::InputNotFound,
+            ConflictReason::CreatedConsumedAmountMismatch => Self::InputOutputSumMismatch,
+            ConflictReason::InvalidSignature => Self::InvalidSignature,
+            ConflictReason::TimelockNotExpired => Self::TimelockNotExpired,
+            ConflictReason::InvalidNativeTokens => Self::InvalidNativeTokens,
+            ConflictReason::StorageDepositReturnUnfulfilled => Self::ReturnAmountNotFulfilled,
+            ConflictReason::InvalidUnlock => Self::InvalidInputUnlock,
+            ConflictReason::InputsCommitmentsMismatch => Self::InvalidInputsCommitment,
+            ConflictReason::UnverifiedSender => Self::InvalidSender,
+            ConflictReason::InvalidChainStateTransition => Self::InvalidChainStateTransition,
+            ConflictReason::SemanticValidationFailed => Self::SemanticValidationFailed,
+        }
+    }
+}
+
 /// The metadata for a block with a given [`BlockId`](bee::BlockId).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct BlockMetadata {
@@ -100,7 +124,8 @@ impl From<BlockMetadata> for proto::BlockMetadata {
             milestone_index: value.milestone_index,
             ledger_inclusion_state: proto::block_metadata::LedgerInclusionState::from(value.ledger_inclusion_state)
                 .into(),
-            conflict_reason: proto::block_metadata::ConflictReason::from(value.conflict_reason).into(),
+            conflict_reason: proto::block_metadata::ConflictReason::from(BeeConflictReason(value.conflict_reason))
+                .into(),
             white_flag_index: value.white_flag_index,
         }
     }

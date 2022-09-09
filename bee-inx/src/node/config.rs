@@ -65,8 +65,8 @@ impl From<MilestoneKeyRange> for proto::MilestoneKeyRange {
     fn from(value: MilestoneKeyRange) -> Self {
         Self {
             public_key: value.public_key.into_vec(),
-            start_index: value.start_index.into(),
-            end_index: value.end_index.into(),
+            start_index: value.start_index.0,
+            end_index: value.end_index.0,
         }
     }
 }
