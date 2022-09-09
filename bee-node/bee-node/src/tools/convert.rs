@@ -101,13 +101,13 @@ mod bech32tests {
     // spec: https://github.com/iotaledger/tips/blob/main/tips/TIP-0011/tip-0011.md
     #[test]
     fn bech32_to_hex() {
-        let bech32_to_hex = ConvertTool::Bech32ToHex { 
-            bech32: "iota1qrhacyfwlcnzkvzteumekfkrrwks98mpdm37cj4xx3drvmjvnep6xqgyzyx".to_string()
+        let bech32_to_hex = ConvertTool::Bech32ToHex {
+            bech32: "iota1qrhacyfwlcnzkvzteumekfkrrwks98mpdm37cj4xx3drvmjvnep6xqgyzyx".to_string(),
         };
         // output: "0xefdc112efe262b304bcf379b26c31bad029f616ee3ec4aa6345a366e4c9e43a3";
-        match exec(&bech32_to_hex){
+        match exec(&bech32_to_hex) {
             Err(e) => println!("{:?}", e),
-            _ => ()
+            _ => (),
         };
     }
 
@@ -118,9 +118,9 @@ mod bech32tests {
             hrp: "iota".to_string(),
         };
         // output: "iota1qrhacyfwlcnzkvzteumekfkrrwks98mpdm37cj4xx3drvmjvnep6xqgyzyx";
-        match exec(&hex_to_bech32){
+        match exec(&hex_to_bech32) {
             Err(e) => println!("{:?}", e),
-            _ => ()
+            _ => (),
         };
     }
 
@@ -131,9 +131,9 @@ mod bech32tests {
             hrp: "iota".to_string(),
         };
         // output:  "iota1qrhacyfwlcnzkvzteumekfkrrwks98mpdm37cj4xx3drvmjvnep6xqgyzyx";
-        match exec(&public_key_to_hex){
+        match exec(&public_key_to_hex) {
             Err(e) => println!("{:?}", e),
-            _ => ()
+            _ => (),
         };
     }
 }
