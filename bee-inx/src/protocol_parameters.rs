@@ -30,3 +30,12 @@ impl From<proto::RawProtocolParameters> for RawProtocolParameters {
         }
     }
 }
+
+impl From<RawProtocolParameters> for proto::RawProtocolParameters {
+    fn from(value: RawProtocolParameters) -> Self {
+        Self {
+            protocol_version: value.protocol_version as _,
+            params: value.params,
+        }
+    }
+}

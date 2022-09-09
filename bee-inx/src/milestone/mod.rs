@@ -30,6 +30,15 @@ impl TryFrom<proto::Milestone> for Milestone {
     }
 }
 
+impl From<Milestone> for proto::Milestone {
+    fn from(value: Milestone) -> Self {
+        Self {
+            milestone_info: Some(value.milestone_info.into()),
+            milestone: value.milestone.map(Into::into),
+        }
+    }
+}
+
 /// The [`Milestone`] type.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MilestoneAndProtocolParameters {
@@ -45,5 +54,14 @@ impl TryFrom<proto::MilestoneAndProtocolParameters> for MilestoneAndProtocolPara
             milestone: maybe_missing!(value.milestone).try_into()?,
             current_protocol_parameters: maybe_missing!(value.current_protocol_parameters).into(),
         })
+    }
+}
+
+impl From<MilestoneAndProtocolParameters> for proto::MilestoneAndProtocolParameters {
+    fn from(value: MilestoneAndProtocolParameters) -> Self {
+        Self {
+            milestone: Some(value.milestone.into()),
+            current_protocol_parameters: Some(value.current_protocol_parameters.into()),
+        }
     }
 }

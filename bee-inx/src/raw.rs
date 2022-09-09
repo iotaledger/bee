@@ -44,6 +44,24 @@ impl From<proto::RawOutput> for Raw<bee::output::Output> {
     }
 }
 
+impl From<Raw<bee::output::Output>> for proto::RawOutput {
+    fn from(value: Raw<bee::output::Output>) -> Self {
+        Self { data: value.data }
+    }
+}
+
+impl From<proto::RawBlock> for Raw<bee::Block> {
+    fn from(value: proto::RawBlock) -> Self {
+        value.data.into()
+    }
+}
+
+impl From<Raw<bee::Block>> for proto::RawBlock {
+    fn from(value: Raw<bee::Block>) -> Self {
+        Self { data: value.data }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use bee::rand::output::rand_output;

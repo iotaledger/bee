@@ -25,6 +25,15 @@ impl TryFrom<proto::TreasuryOutput> for TreasuryOutput {
     }
 }
 
+impl From<TreasuryOutput> for proto::TreasuryOutput {
+    fn from(value: TreasuryOutput) -> Self {
+        Self {
+            milestone_id: Some(value.milestone_id.into()),
+            amount: value.amount,
+        }
+    }
+}
+
 /// Represents an update to the treasury.
 #[allow(missing_docs)]
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -43,5 +52,15 @@ impl TryFrom<proto::TreasuryUpdate> for TreasuryUpdate {
             created: maybe_missing!(value.created).try_into()?,
             consumed: maybe_missing!(value.consumed).try_into()?,
         })
+    }
+}
+
+impl From<TreasuryUpdate> for proto::TreasuryUpdate {
+    fn from(value: TreasuryUpdate) -> Self {
+        Self {
+            milestone_index: value.milestone_index,
+            created: Some(value.created.into()),
+            consumed: Some(value.consumed.into()),
+        }
     }
 }

@@ -1,6 +1,7 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee::payload::milestone::MilestoneIndex;
 use bee_block as bee;
 use inx::proto;
 
@@ -10,7 +11,7 @@ pub struct MilestoneInfo {
     /// The [`MilestoneId`](bee::payload::milestone::MilestoneId) of the milestone.
     pub milestone_id: Option<bee::payload::milestone::MilestoneId>,
     /// The milestone index.
-    pub milestone_index: u32,
+    pub milestone_index: MilestoneIndex,
     /// The timestamp of the milestone.
     pub milestone_timestamp: u32,
 }
@@ -21,8 +22,18 @@ impl TryFrom<proto::MilestoneInfo> for MilestoneInfo {
     fn try_from(value: proto::MilestoneInfo) -> Result<Self, Self::Error> {
         Ok(MilestoneInfo {
             milestone_id: value.milestone_id.map(TryInto::try_into).transpose()?,
-            milestone_index: value.milestone_index,
+            milestone_index: value.milestone_index.into(),
             milestone_timestamp: value.milestone_timestamp,
         })
+    }
+}
+
+impl From<MilestoneInfo> for proto::MilestoneInfo {
+    fn from(value: MilestoneInfo) -> Self {
+        Self {
+            milestone_id: value.milestone_id.map(Into::into),
+            milestone_index: value.milestone_index.into(),
+            milestone_timestamp: value.milestone_timestamp,
+        }
     }
 }

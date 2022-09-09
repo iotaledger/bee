@@ -375,24 +375,43 @@ mod inx {
 
     impl From<inx_bindings::proto::block_metadata::ConflictReason> for ConflictReason {
         fn from(value: inx_bindings::proto::block_metadata::ConflictReason) -> Self {
-            use inx_bindings::proto::block_metadata::ConflictReason as InxConflictReason;
+            use inx_bindings::proto::block_metadata::ConflictReason::*;
             match value {
-                InxConflictReason::None => ConflictReason::None,
-                InxConflictReason::InputAlreadySpent => ConflictReason::InputUtxoAlreadySpent,
-                InxConflictReason::InputAlreadySpentInThisMilestone => {
-                    ConflictReason::InputUtxoAlreadySpentInThisMilestone
-                }
-                InxConflictReason::InputNotFound => ConflictReason::InputUtxoNotFound,
-                InxConflictReason::InputOutputSumMismatch => ConflictReason::CreatedConsumedAmountMismatch,
-                InxConflictReason::InvalidSignature => ConflictReason::InvalidSignature,
-                InxConflictReason::TimelockNotExpired => ConflictReason::TimelockNotExpired,
-                InxConflictReason::InvalidNativeTokens => ConflictReason::InvalidNativeTokens,
-                InxConflictReason::ReturnAmountNotFulfilled => ConflictReason::StorageDepositReturnUnfulfilled,
-                InxConflictReason::InvalidInputUnlock => ConflictReason::InvalidUnlock,
-                InxConflictReason::InvalidInputsCommitment => ConflictReason::InputsCommitmentsMismatch,
-                InxConflictReason::InvalidSender => ConflictReason::UnverifiedSender,
-                InxConflictReason::InvalidChainStateTransition => ConflictReason::InvalidChainStateTransition,
-                InxConflictReason::SemanticValidationFailed => ConflictReason::SemanticValidationFailed,
+                None => ConflictReason::None,
+                InputAlreadySpent => ConflictReason::InputUtxoAlreadySpent,
+                InputAlreadySpentInThisMilestone => ConflictReason::InputUtxoAlreadySpentInThisMilestone,
+                InputNotFound => ConflictReason::InputUtxoNotFound,
+                InputOutputSumMismatch => ConflictReason::CreatedConsumedAmountMismatch,
+                InvalidSignature => ConflictReason::InvalidSignature,
+                TimelockNotExpired => ConflictReason::TimelockNotExpired,
+                InvalidNativeTokens => ConflictReason::InvalidNativeTokens,
+                ReturnAmountNotFulfilled => ConflictReason::StorageDepositReturnUnfulfilled,
+                InvalidInputUnlock => ConflictReason::InvalidUnlock,
+                InvalidInputsCommitment => ConflictReason::InputsCommitmentsMismatch,
+                InvalidSender => ConflictReason::UnverifiedSender,
+                InvalidChainStateTransition => ConflictReason::InvalidChainStateTransition,
+                SemanticValidationFailed => ConflictReason::SemanticValidationFailed,
+            }
+        }
+    }
+
+    impl From<ConflictReason> for inx_bindings::proto::block_metadata::ConflictReason {
+        fn from(value: ConflictReason) -> Self {
+            match value {
+                ConflictReason::None => Self::None,
+                ConflictReason::InputUtxoAlreadySpent => Self::InputAlreadySpent,
+                ConflictReason::InputUtxoAlreadySpentInThisMilestone => Self::InputAlreadySpentInThisMilestone,
+                ConflictReason::InputUtxoNotFound => Self::InputNotFound,
+                ConflictReason::CreatedConsumedAmountMismatch => Self::InputOutputSumMismatch,
+                ConflictReason::InvalidSignature => Self::InvalidSignature,
+                ConflictReason::TimelockNotExpired => Self::TimelockNotExpired,
+                ConflictReason::InvalidNativeTokens => Self::InvalidNativeTokens,
+                ConflictReason::StorageDepositReturnUnfulfilled => Self::ReturnAmountNotFulfilled,
+                ConflictReason::InvalidUnlock => Self::InvalidInputUnlock,
+                ConflictReason::InputsCommitmentsMismatch => Self::InvalidInputsCommitment,
+                ConflictReason::UnverifiedSender => Self::InvalidSender,
+                ConflictReason::InvalidChainStateTransition => Self::InvalidChainStateTransition,
+                ConflictReason::SemanticValidationFailed => Self::SemanticValidationFailed,
             }
         }
     }
