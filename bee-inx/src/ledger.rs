@@ -145,7 +145,7 @@ impl From<LedgerOutput> for proto::LedgerOutput {
             output_id: Some(value.output_id.into()),
             block_id: Some(value.block_id.into()),
             milestone_index_booked: value.milestone_index_booked.into(),
-            milestone_timestamp_booked: value.milestone_timestamp_booked.into(),
+            milestone_timestamp_booked: value.milestone_timestamp_booked,
             output: Some(value.output.into()),
         }
     }
