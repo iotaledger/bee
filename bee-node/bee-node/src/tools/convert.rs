@@ -118,28 +118,34 @@ mod bech32tests {
     #[test]
     fn test_hex_to_bech32() {
         let hex_address = "0xefdc112efe262b304bcf379b26c31bad029f616ee3ec4aa6345a366e4c9e43a3".to_string();
-        let bech32_address = hex_to_bech32(&hex_address, HRP).unwrap();
+        let bech32_address = hex_to_bech32(&hex_address, &HRP).unwrap();
 
         assert_eq!(
             &bech32_address,
             "iota1qrhacyfwlcnzkvzteumekfkrrwks98mpdm37cj4xx3drvmjvnep6xqgyzyx"
         );
 
-        let bech32_to_hex = ConvertTool::Bech32ToHex { bech32: bech32_address };
-        exec(&bech32_to_hex).unwrap();
+        let hex_to_bech32 = ConvertTool::HexToBech32 {
+            hex: hex_address,
+            hrp: HRP.to_string(),
+        };
+        exec(&hex_to_bech32).unwrap();
     }
 
     #[test]
-    fn test_public_key_to_hex() {
+    fn test_public_key_to_bech32() {
         let public_key = "6f1581709bb7b1ef030d210db18e3b0ba1c776fba65d8cdaad05415142d189f8".to_string();
-        let bech32_address = hex_public_key_to_bech32_address(&public_key, HRP).unwrap();
+        let bech32_address = hex_public_key_to_bech32_address(&public_key, &HRP).unwrap();
 
         assert_eq!(
             &bech32_address,
             "iota1qrhacyfwlcnzkvzteumekfkrrwks98mpdm37cj4xx3drvmjvnep6xqgyzyx"
         );
 
-        let bech32_to_hex = ConvertTool::Bech32ToHex { bech32: bech32_address };
-        exec(&bech32_to_hex).unwrap();
+        let public_key_to_bech32 = ConvertTool::HexPubkeyToBech32 {
+            pubkey: public_key,
+            hrp: HRP.to_string(),
+        };
+        exec(&public_key_to_bech32).unwrap();
     }
 }
