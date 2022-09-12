@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use axum::{extract::Extension, routing::get, Router};
-use bee_block::{constant::TOKEN_SUPPLY, protocol::ProtocolParameters};
+use bee_block::protocol::ProtocolParameters;
 
 use crate::{
     routes::health,
@@ -80,7 +80,7 @@ async fn info<B: StorageBackend>(Extension(args): Extension<ApiArgsFullNode<B>>)
                 v_byte_factor_key: args.protocol_config.rent().v_byte_factor_key,
                 v_byte_factor_data: args.protocol_config.rent().v_byte_factor_data,
             },
-            token_supply: TOKEN_SUPPLY.to_string(),
+            token_supply: protocol_parameters.token_supply().to_string(),
         },
         pending_protocol_parameters: Vec::new(),
         base_token: BaseTokenResponse {

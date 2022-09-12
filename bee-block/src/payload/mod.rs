@@ -124,7 +124,7 @@ impl Packable for Payload {
             }
             MilestonePayload::KIND => Payload::from(MilestonePayload::unpack::<_, VERIFY>(unpacker, visitor).coerce()?),
             TreasuryTransactionPayload::KIND => {
-                Payload::from(TreasuryTransactionPayload::unpack::<_, VERIFY>(unpacker, &()).coerce()?)
+                Payload::from(TreasuryTransactionPayload::unpack::<_, VERIFY>(unpacker, visitor).coerce()?)
             }
             TaggedDataPayload::KIND => Payload::from(TaggedDataPayload::unpack::<_, VERIFY>(unpacker, &()).coerce()?),
             k => return Err(Error::InvalidPayloadKind(k)).map_err(UnpackError::Packable),

@@ -6,12 +6,14 @@
 use crate::{
     input::{Input, TreasuryInput},
     output::{Output, TreasuryOutput},
+    protocol::ProtocolParameters,
     Error,
 };
 
 /// [`TreasuryTransactionPayload`] represents a transaction which moves funds from the treasury.
 #[derive(Clone, Debug, Eq, PartialEq, packable::Packable)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[packable(unpack_visitor = ProtocolParameters)]
 pub struct TreasuryTransactionPayload {
     #[packable(verify_with = verify_input)]
     input: Input,
@@ -52,7 +54,7 @@ impl TreasuryTransactionPayload {
     }
 }
 
-fn verify_input<const VERIFY: bool>(input: &Input, _: &()) -> Result<(), Error> {
+fn verify_input<const VERIFY: bool>(input: &Input, _: &ProtocolParameters) -> Result<(), Error> {
     if VERIFY && !matches!(input, Input::Treasury(_)) {
         Err(Error::InvalidInputKind(input.kind()))
     } else {
@@ -60,7 +62,7 @@ fn verify_input<const VERIFY: bool>(input: &Input, _: &()) -> Result<(), Error> 
     }
 }
 
-fn verify_output<const VERIFY: bool>(output: &Output, _: &()) -> Result<(), Error> {
+fn verify_output<const VERIFY: bool>(output: &Output, _: &ProtocolParameters) -> Result<(), Error> {
     if VERIFY && !matches!(output, Output::Treasury(_)) {
         Err(Error::InvalidOutputKind(output.kind()))
     } else {

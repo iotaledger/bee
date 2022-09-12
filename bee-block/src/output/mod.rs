@@ -26,7 +26,12 @@ pub mod unlock_condition;
 use core::ops::RangeInclusive;
 
 use derive_more::From;
-use packable::{bounded::BoundedU64, PackableExt};
+use packable::{
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    unpacker::Unpacker,
+    Packable, PackableExt,
+};
 
 pub(crate) use self::{
     alias::StateMetadataLength,
@@ -56,7 +61,7 @@ pub use self::{
     treasury::TreasuryOutput,
     unlock_condition::{UnlockCondition, UnlockConditions},
 };
-use crate::{address::Address, constant::TOKEN_SUPPLY, semantic::ValidationContext, Error};
+use crate::{address::Address, protocol::ProtocolParameters, semantic::ValidationContext, Error};
 
 /// The maximum number of outputs of a transaction.
 pub const OUTPUT_COUNT_MAX: u16 = 128;
@@ -67,45 +72,35 @@ pub const OUTPUT_INDEX_MAX: u16 = OUTPUT_COUNT_MAX - 1; // 127
 /// The range of valid indices of outputs of a transaction .
 pub const OUTPUT_INDEX_RANGE: RangeInclusive<u16> = 0..=OUTPUT_INDEX_MAX; // [0..127]
 
-/// Type representing an output amount.
-pub type OutputAmount = BoundedU64<{ *Output::AMOUNT_RANGE.start() }, { *Output::AMOUNT_RANGE.end() }>;
-
 #[derive(Clone)]
 pub(crate) enum OutputBuilderAmount {
-    Amount(OutputAmount),
+    Amount(u64),
     MinimumStorageDeposit(RentStructure),
 }
 
 /// A generic output that can represent different types defining the deposit of funds.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From, packable::Packable)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From)]
 #[cfg_attr(
     feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
-#[packable(unpack_error = Error)]
-#[packable(tag_type = u8, with_error = Error::InvalidOutputKind)]
 pub enum Output {
     /// A treasury output.
-    #[packable(tag = TreasuryOutput::KIND)]
     Treasury(TreasuryOutput),
     /// A basic output.
-    #[packable(tag = BasicOutput::KIND)]
     Basic(BasicOutput),
     /// An alias output.
-    #[packable(tag = AliasOutput::KIND)]
     Alias(AliasOutput),
     /// A foundry output.
-    #[packable(tag = FoundryOutput::KIND)]
     Foundry(FoundryOutput),
     /// An NFT output.
-    #[packable(tag = NftOutput::KIND)]
     Nft(NftOutput),
 }
 
 impl Output {
-    /// Valid amounts for an [`Output`].
-    pub const AMOUNT_RANGE: RangeInclusive<u64> = 1..=TOKEN_SUPPLY;
+    /// Minimum amount for an output.
+    pub const AMOUNT_MIN: u64 = 1;
 
     /// Return the output kind of an [`Output`].
     pub fn kind(&self) -> u8 {
@@ -259,9 +254,66 @@ impl Output {
     }
 }
 
+impl Packable for Output {
+    type UnpackError = Error;
+    type UnpackVisitor = ProtocolParameters;
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        match self {
+            Output::Treasury(output) => {
+                TreasuryOutput::KIND.pack(packer)?;
+                output.pack(packer)
+            }
+            Output::Basic(output) => {
+                BasicOutput::KIND.pack(packer)?;
+                output.pack(packer)
+            }
+            Output::Alias(output) => {
+                AliasOutput::KIND.pack(packer)?;
+                output.pack(packer)
+            }
+            Output::Foundry(output) => {
+                FoundryOutput::KIND.pack(packer)?;
+                output.pack(packer)
+            }
+            Output::Nft(output) => {
+                NftOutput::KIND.pack(packer)?;
+                output.pack(packer)
+            }
+        }?;
+
+        Ok(())
+    }
+
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+        visitor: &Self::UnpackVisitor,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        Ok(match u8::unpack::<_, VERIFY>(unpacker, &()).coerce()? {
+            TreasuryOutput::KIND => Output::from(TreasuryOutput::unpack::<_, VERIFY>(unpacker, &()).coerce()?),
+            BasicOutput::KIND => Output::from(BasicOutput::unpack::<_, VERIFY>(unpacker, &()).coerce()?),
+            AliasOutput::KIND => Output::from(AliasOutput::unpack::<_, VERIFY>(unpacker, visitor).coerce()?),
+            FoundryOutput::KIND => Output::from(FoundryOutput::unpack::<_, VERIFY>(unpacker, visitor).coerce()?),
+            NftOutput::KIND => Output::from(NftOutput::unpack::<_, VERIFY>(unpacker, visitor).coerce()?),
+            k => return Err(Error::InvalidOutputKind(k)).map_err(UnpackError::Packable),
+        })
+    }
+}
+
 impl Rent for Output {
     fn weighted_bytes(&self, rent_structure: &RentStructure) -> u64 {
         self.packed_len() as u64 * rent_structure.v_byte_factor_data as u64
+    }
+}
+
+pub(crate) fn verify_output_amount<const VERIFY: bool>(
+    amount: u64,
+    protocol_parameters: &ProtocolParameters,
+) -> Result<(), Error> {
+    if VERIFY && (amount < Output::AMOUNT_MIN || amount > protocol_parameters.token_supply()) {
+        Err(Error::InvalidOutputAmount(amount))
+    } else {
+        Ok(())
     }
 }
 
@@ -421,14 +473,15 @@ pub mod dto {
 }
 
 #[cfg(feature = "inx")]
-mod inx {
+#[allow(missing_docs)]
+pub mod inx {
     use super::*;
+    use crate::{error::inx::InxError, protocol::ProtocolParameters};
 
-    impl TryFrom<inx_bindings::proto::RawOutput> for Output {
-        type Error = crate::error::inx::InxError;
-
-        fn try_from(value: inx_bindings::proto::RawOutput) -> Result<Self, Self::Error> {
-            Self::unpack_verified(value.data, &()).map_err(|e| Self::Error::InvalidRawBytes(e.to_string()))
-        }
+    pub fn try_from_raw_output_for_output(
+        value: inx_bindings::proto::RawOutput,
+        protocol_parameters: &ProtocolParameters,
+    ) -> Result<Output, InxError> {
+        Output::unpack_verified(value.data, protocol_parameters).map_err(|e| InxError::InvalidRawBytes(e.to_string()))
     }
 }

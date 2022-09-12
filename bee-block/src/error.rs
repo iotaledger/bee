@@ -12,8 +12,8 @@ use crate::{
     input::UtxoInput,
     output::{
         feature::FeatureCount, unlock_condition::UnlockConditionCount, AliasId, MetadataFeatureLength,
-        NativeTokenCount, NftId, OutputAmount, OutputIndex, StateMetadataLength, StorageDepositAmount,
-        TagFeatureLength, TreasuryOutputAmount,
+        NativeTokenCount, NftId, OutputIndex, StateMetadataLength, StorageDepositAmount, TagFeatureLength,
+        TreasuryOutputAmount,
     },
     parent::ParentCount,
     payload::{
@@ -67,7 +67,7 @@ pub enum Error {
     InvalidNativeTokenCount(<NativeTokenCount as TryFrom<usize>>::Error),
     InvalidNetworkName(FromUtf8Error),
     InvalidNftIndex(<UnlockIndex as TryFrom<u16>>::Error),
-    InvalidOutputAmount(<OutputAmount as TryFrom<u64>>::Error),
+    InvalidOutputAmount(u64),
     InvalidOutputCount(<OutputCount as TryFrom<usize>>::Error),
     InvalidOutputKind(u8),
     InvalidParentCount(<ParentCount as TryFrom<usize>>::Error),

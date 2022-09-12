@@ -3,7 +3,6 @@
 
 use bee_block::{
     address::{Address, Ed25519Address},
-    constant::TOKEN_SUPPLY,
     input::{Input, TreasuryInput, UtxoInput},
     output::{unlock_condition::AddressUnlockCondition, BasicOutput, Output, TreasuryOutput},
     payload::{
@@ -282,12 +281,13 @@ fn build_invalid_output_kind() {
 
 #[test]
 fn build_invalid_accumulated_output() {
+    let protocol_parameters = protocol_parameters();
     let transaction_id = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
     let input = Input::Utxo(UtxoInput::new(transaction_id, 0).unwrap());
 
     let bytes1: [u8; 32] = prefix_hex::decode(ED25519_ADDRESS_1).unwrap();
     let address1 = Address::from(Ed25519Address::new(bytes1));
-    let amount1 = TOKEN_SUPPLY - 1_000_000;
+    let amount1 = protocol_parameters.token_supply() - 1_000_000;
     let output1 = Output::Basic(
         BasicOutput::build_with_amount(amount1)
             .unwrap()
@@ -310,7 +310,7 @@ fn build_invalid_accumulated_output() {
     let essence = RegularTransactionEssence::builder(rand_inputs_commitment())
         .add_input(input)
         .with_outputs(vec![output1, output2])
-        .finish(&protocol_parameters());
+        .finish(&protocol_parameters);
 
     assert!(matches!(essence, Err(Error::InvalidTransactionAmountSum(_))));
 }

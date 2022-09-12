@@ -1,12 +1,15 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_block::rand::{
-    block::rand_block_id,
-    milestone::{rand_milestone_id, rand_milestone_index},
-    number::rand_number,
-    output::{rand_output, rand_output_id, rand_treasury_output},
-    transaction::rand_transaction_id,
+use bee_block::{
+    protocol::ProtocolParameters,
+    rand::{
+        block::rand_block_id,
+        milestone::{rand_milestone_id, rand_milestone_index},
+        number::rand_number,
+        output::{rand_output, rand_output_id, rand_treasury_output},
+        transaction::rand_transaction_id,
+    },
 };
 
 use crate::{ConsumedOutput, CreatedOutput, TreasuryOutput, Unspent};
@@ -27,6 +30,11 @@ pub fn rand_consumed_output() -> ConsumedOutput {
 }
 
 /// Generates a random [`CreatedOutput`].
-pub fn rand_created_output() -> CreatedOutput {
-    CreatedOutput::new(rand_block_id(), rand_milestone_index(), rand_number(), rand_output())
+pub fn rand_created_output(protocol_parameters: &ProtocolParameters) -> CreatedOutput {
+    CreatedOutput::new(
+        rand_block_id(),
+        rand_milestone_index(),
+        rand_number(),
+        rand_output(protocol_parameters),
+    )
 }

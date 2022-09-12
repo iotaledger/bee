@@ -15,9 +15,10 @@ use crate::{
     output::{
         feature::{verify_allowed_features, Feature, FeatureFlags, Features},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        ChainId, NativeToken, NativeTokens, NftId, Output, OutputAmount, OutputBuilderAmount, OutputId, Rent,
+        verify_output_amount, ChainId, NativeToken, NativeTokens, NftId, Output, OutputBuilderAmount, OutputId, Rent,
         RentStructure, StateTransitionError, StateTransitionVerifier,
     },
+    protocol::ProtocolParameters,
     semantic::{ConflictReason, ValidationContext},
     unlock::Unlock,
     Error,
@@ -38,10 +39,7 @@ pub struct NftOutputBuilder {
 impl NftOutputBuilder {
     /// Creates an [`NftOutputBuilder`] with a provided amount.
     pub fn new_with_amount(amount: u64, nft_id: NftId) -> Result<NftOutputBuilder, Error> {
-        Self::new(
-            OutputBuilderAmount::Amount(amount.try_into().map_err(Error::InvalidOutputAmount)?),
-            nft_id,
-        )
+        Self::new(OutputBuilderAmount::Amount(amount), nft_id)
     }
 
     /// Creates an [`NftOutputBuilder`] with a provided rent structure.
@@ -67,7 +65,7 @@ impl NftOutputBuilder {
     /// Sets the amount to the provided value.
     #[inline(always)]
     pub fn with_amount(mut self, amount: u64) -> Result<Self, Error> {
-        self.amount = OutputBuilderAmount::Amount(amount.try_into().map_err(Error::InvalidOutputAmount)?);
+        self.amount = OutputBuilderAmount::Amount(amount);
         Ok(self)
     }
 
@@ -191,7 +189,7 @@ impl NftOutputBuilder {
         verify_allowed_features(&immutable_features, NftOutput::ALLOWED_IMMUTABLE_FEATURES)?;
 
         let mut output = NftOutput {
-            amount: 1u64.try_into().map_err(Error::InvalidOutputAmount)?,
+            amount: 1u64,
             native_tokens: NativeTokens::new(self.native_tokens)?,
             nft_id: self.nft_id,
             unlock_conditions,
@@ -201,10 +199,9 @@ impl NftOutputBuilder {
 
         output.amount = match self.amount {
             OutputBuilderAmount::Amount(amount) => amount,
-            OutputBuilderAmount::MinimumStorageDeposit(rent_structure) => Output::Nft(output.clone())
-                .rent_cost(&rent_structure)
-                .try_into()
-                .map_err(Error::InvalidOutputAmount)?,
+            OutputBuilderAmount::MinimumStorageDeposit(rent_structure) => {
+                Output::Nft(output.clone()).rent_cost(&rent_structure)
+            }
         };
 
         Ok(output)
@@ -234,7 +231,7 @@ impl From<&NftOutput> for NftOutputBuilder {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct NftOutput {
     // Amount of IOTA tokens held by the output.
-    amount: OutputAmount,
+    amount: u64,
     // Native tokens held by the output.
     native_tokens: NativeTokens,
     // Unique identifier of the NFT.
@@ -291,7 +288,7 @@ impl NftOutput {
     ///
     #[inline(always)]
     pub fn amount(&self) -> u64 {
-        self.amount.get()
+        self.amount
     }
 
     ///
@@ -400,7 +397,7 @@ impl StateTransitionVerifier for NftOutput {
 
 impl Packable for NftOutput {
     type UnpackError = Error;
-    type UnpackVisitor = ();
+    type UnpackVisitor = ProtocolParameters;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         self.amount.pack(packer)?;
@@ -417,23 +414,25 @@ impl Packable for NftOutput {
         unpacker: &mut U,
         visitor: &Self::UnpackVisitor,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let amount =
-            OutputAmount::unpack::<_, VERIFY>(unpacker, visitor).map_packable_err(Error::InvalidOutputAmount)?;
-        let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker, visitor)?;
-        let nft_id = NftId::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
-        let unlock_conditions = UnlockConditions::unpack::<_, VERIFY>(unpacker, visitor)?;
+        let amount = u64::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
+
+        verify_output_amount::<VERIFY>(amount, visitor).map_err(UnpackError::Packable)?;
+
+        let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker, &())?;
+        let nft_id = NftId::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
+        let unlock_conditions = UnlockConditions::unpack::<_, VERIFY>(unpacker, &())?;
 
         if VERIFY {
             verify_unlock_conditions(&unlock_conditions, &nft_id).map_err(UnpackError::Packable)?;
         }
 
-        let features = Features::unpack::<_, VERIFY>(unpacker, visitor)?;
+        let features = Features::unpack::<_, VERIFY>(unpacker, &())?;
 
         if VERIFY {
             verify_allowed_features(&features, NftOutput::ALLOWED_FEATURES).map_err(UnpackError::Packable)?;
         }
 
-        let immutable_features = Features::unpack::<_, VERIFY>(unpacker, visitor)?;
+        let immutable_features = Features::unpack::<_, VERIFY>(unpacker, &())?;
 
         if VERIFY {
             verify_allowed_features(&immutable_features, NftOutput::ALLOWED_IMMUTABLE_FEATURES)

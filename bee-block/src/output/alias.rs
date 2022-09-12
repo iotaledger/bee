@@ -17,9 +17,10 @@ use crate::{
     output::{
         feature::{verify_allowed_features, Feature, FeatureFlags, Features},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        AliasId, ChainId, NativeToken, NativeTokens, Output, OutputAmount, OutputBuilderAmount, OutputId, Rent,
+        verify_output_amount, AliasId, ChainId, NativeToken, NativeTokens, Output, OutputBuilderAmount, OutputId, Rent,
         RentStructure, StateTransitionError, StateTransitionVerifier,
     },
+    protocol::ProtocolParameters,
     semantic::{ConflictReason, ValidationContext},
     unlock::Unlock,
     Error,
@@ -43,10 +44,7 @@ pub struct AliasOutputBuilder {
 impl AliasOutputBuilder {
     /// Creates an [`AliasOutputBuilder`] with a provided amount.
     pub fn new_with_amount(amount: u64, alias_id: AliasId) -> Result<AliasOutputBuilder, Error> {
-        Self::new(
-            OutputBuilderAmount::Amount(amount.try_into().map_err(Error::InvalidOutputAmount)?),
-            alias_id,
-        )
+        Self::new(OutputBuilderAmount::Amount(amount), alias_id)
     }
 
     /// Creates an [`AliasOutputBuilder`] with a provided rent structure.
@@ -75,7 +73,7 @@ impl AliasOutputBuilder {
     /// Sets the amount to the provided value.
     #[inline(always)]
     pub fn with_amount(mut self, amount: u64) -> Result<Self, Error> {
-        self.amount = OutputBuilderAmount::Amount(amount.try_into().map_err(Error::InvalidOutputAmount)?);
+        self.amount = OutputBuilderAmount::Amount(amount);
         Ok(self)
     }
 
@@ -231,7 +229,7 @@ impl AliasOutputBuilder {
         verify_allowed_features(&immutable_features, AliasOutput::ALLOWED_IMMUTABLE_FEATURES)?;
 
         let mut output = AliasOutput {
-            amount: 1u64.try_into().map_err(Error::InvalidOutputAmount)?,
+            amount: 1,
             native_tokens: NativeTokens::new(self.native_tokens)?,
             alias_id: self.alias_id,
             state_index,
@@ -244,10 +242,9 @@ impl AliasOutputBuilder {
 
         output.amount = match self.amount {
             OutputBuilderAmount::Amount(amount) => amount,
-            OutputBuilderAmount::MinimumStorageDeposit(rent_structure) => Output::Alias(output.clone())
-                .rent_cost(&rent_structure)
-                .try_into()
-                .map_err(Error::InvalidOutputAmount)?,
+            OutputBuilderAmount::MinimumStorageDeposit(rent_structure) => {
+                Output::Alias(output.clone()).rent_cost(&rent_structure)
+            }
         };
 
         Ok(output)
@@ -282,7 +279,7 @@ pub(crate) type StateMetadataLength = BoundedU16<0, { AliasOutput::STATE_METADAT
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AliasOutput {
     // Amount of IOTA tokens held by the output.
-    amount: OutputAmount,
+    amount: u64,
     // Native tokens held by the output.
     native_tokens: NativeTokens,
     // Unique identifier of the alias.
@@ -345,7 +342,7 @@ impl AliasOutput {
     ///
     #[inline(always)]
     pub fn amount(&self) -> u64 {
-        self.amount.get()
+        self.amount
     }
 
     ///
@@ -545,7 +542,7 @@ impl StateTransitionVerifier for AliasOutput {
 
 impl Packable for AliasOutput {
     type UnpackError = Error;
-    type UnpackVisitor = ();
+    type UnpackVisitor = ProtocolParameters;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         self.amount.pack(packer)?;
@@ -565,33 +562,35 @@ impl Packable for AliasOutput {
         unpacker: &mut U,
         visitor: &Self::UnpackVisitor,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let amount =
-            OutputAmount::unpack::<_, VERIFY>(unpacker, visitor).map_packable_err(Error::InvalidOutputAmount)?;
-        let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker, visitor)?;
-        let alias_id = AliasId::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
-        let state_index = u32::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
-        let state_metadata = BoxedSlicePrefix::<u8, StateMetadataLength>::unpack::<_, VERIFY>(unpacker, visitor)
+        let amount = u64::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
+
+        verify_output_amount::<VERIFY>(amount, visitor).map_err(UnpackError::Packable)?;
+
+        let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker, &())?;
+        let alias_id = AliasId::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
+        let state_index = u32::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
+        let state_metadata = BoxedSlicePrefix::<u8, StateMetadataLength>::unpack::<_, VERIFY>(unpacker, &())
             .map_packable_err(|err| Error::InvalidStateMetadataLength(err.into_prefix_err().into()))?;
 
-        let foundry_counter = u32::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
+        let foundry_counter = u32::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
 
         if VERIFY {
             verify_index_counter(&alias_id, state_index, foundry_counter).map_err(UnpackError::Packable)?;
         }
 
-        let unlock_conditions = UnlockConditions::unpack::<_, VERIFY>(unpacker, visitor)?;
+        let unlock_conditions = UnlockConditions::unpack::<_, VERIFY>(unpacker, &())?;
 
         if VERIFY {
             verify_unlock_conditions(&unlock_conditions, &alias_id).map_err(UnpackError::Packable)?;
         }
 
-        let features = Features::unpack::<_, VERIFY>(unpacker, visitor)?;
+        let features = Features::unpack::<_, VERIFY>(unpacker, &())?;
 
         if VERIFY {
             verify_allowed_features(&features, AliasOutput::ALLOWED_FEATURES).map_err(UnpackError::Packable)?;
         }
 
-        let immutable_features = Features::unpack::<_, VERIFY>(unpacker, visitor)?;
+        let immutable_features = Features::unpack::<_, VERIFY>(unpacker, &())?;
 
         if VERIFY {
             verify_allowed_features(&immutable_features, AliasOutput::ALLOWED_IMMUTABLE_FEATURES)

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_block::{
-    constant::TOKEN_SUPPLY,
     payload::milestone::{MilestoneIndex, ReceiptMilestoneOption},
+    protocol::ProtocolParameters,
 };
 
 use crate::{error::Error, TreasuryOutput};
@@ -32,7 +32,11 @@ impl Receipt {
     }
 
     /// Semantically validates the `Receipt`.
-    pub fn validate(&self, consumed_treasury_output: &TreasuryOutput) -> Result<(), Error> {
+    pub fn validate(
+        &self,
+        consumed_treasury_output: &TreasuryOutput,
+        protocol_parameters: &ProtocolParameters,
+    ) -> Result<(), Error> {
         let mut migrated_amount: u64 = 0;
         let transaction = self.inner().transaction();
 
@@ -42,7 +46,7 @@ impl Receipt {
                 .ok_or_else(|| Error::MigratedFundsAmountOverflow(migrated_amount as u128 + funds.amount() as u128))?;
         }
 
-        if migrated_amount > TOKEN_SUPPLY {
+        if migrated_amount > protocol_parameters.token_supply() {
             return Err(Error::InvalidMigratedFundsAmount(migrated_amount));
         }
 

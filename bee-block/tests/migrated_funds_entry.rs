@@ -5,8 +5,8 @@ use core::str::FromStr;
 
 use bee_block::{
     address::{Address, Ed25519Address},
-    constant::TOKEN_SUPPLY,
     payload::milestone::option::MigratedFundsEntry,
+    protocol::protocol_parameters,
     rand::receipt::rand_tail_transaction_hash,
     Error,
 };
@@ -28,13 +28,15 @@ fn new_valid() {
 
 #[test]
 fn new_invalid_amount() {
+    let protocol_parameters = protocol_parameters();
+
     assert!(matches!(
         MigratedFundsEntry::new(
             rand_tail_transaction_hash(),
             Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-            TOKEN_SUPPLY + 1
+            protocol_parameters.token_supply() + 1
         ),
-        Err(Error::InvalidMigratedFundsEntryAmount(InvalidBoundedU64(n))) if n == TOKEN_SUPPLY + 1
+        Err(Error::InvalidMigratedFundsEntryAmount(InvalidBoundedU64(n))) if n == protocol_parameters.token_supply() + 1
     ));
 }
 

@@ -10,7 +10,7 @@ use crate::{
     output::{
         feature::{verify_allowed_features, Feature, FeatureFlags, Features},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        NativeToken, NativeTokens, Output, OutputAmount, OutputBuilderAmount, OutputId, Rent, RentStructure,
+        NativeToken, NativeTokens, Output, OutputBuilderAmount, OutputId, Rent, RentStructure,
     },
     semantic::{ConflictReason, ValidationContext},
     unlock::Unlock,
@@ -31,9 +31,7 @@ impl BasicOutputBuilder {
     /// Creates a [`BasicOutputBuilder`] with a provided amount.
     #[inline(always)]
     pub fn new_with_amount(amount: u64) -> Result<Self, Error> {
-        Self::new(OutputBuilderAmount::Amount(
-            amount.try_into().map_err(Error::InvalidOutputAmount)?,
-        ))
+        Self::new(OutputBuilderAmount::Amount(amount))
     }
 
     /// Creates an [`BasicOutputBuilder`] with a provided rent structure.
@@ -55,7 +53,7 @@ impl BasicOutputBuilder {
     /// Sets the amount to the provided value.
     #[inline(always)]
     pub fn with_amount(mut self, amount: u64) -> Result<Self, Error> {
-        self.amount = OutputBuilderAmount::Amount(amount.try_into().map_err(Error::InvalidOutputAmount)?);
+        self.amount = OutputBuilderAmount::Amount(amount);
         Ok(self)
     }
 
@@ -141,7 +139,7 @@ impl BasicOutputBuilder {
         verify_features::<true>(&features, &())?;
 
         let mut output = BasicOutput {
-            amount: 1u64.try_into().map_err(Error::InvalidOutputAmount)?,
+            amount: 1u64,
             native_tokens: NativeTokens::new(self.native_tokens)?,
             unlock_conditions,
             features,
@@ -149,10 +147,9 @@ impl BasicOutputBuilder {
 
         output.amount = match self.amount {
             OutputBuilderAmount::Amount(amount) => amount,
-            OutputBuilderAmount::MinimumStorageDeposit(rent_structure) => Output::Basic(output.clone())
-                .rent_cost(&rent_structure)
-                .try_into()
-                .map_err(Error::InvalidOutputAmount)?,
+            OutputBuilderAmount::MinimumStorageDeposit(rent_structure) => {
+                Output::Basic(output.clone()).rent_cost(&rent_structure)
+            }
         };
 
         Ok(output)
@@ -181,8 +178,8 @@ impl From<&BasicOutput> for BasicOutputBuilder {
 #[packable(unpack_error = Error)]
 pub struct BasicOutput {
     // Amount of IOTA tokens held by the output.
-    #[packable(unpack_error_with = Error::InvalidOutputAmount)]
-    amount: OutputAmount,
+    // #[packable(unpack_error_with = Error::InvalidOutputAmount)]
+    amount: u64,
     // Native tokens held by the output.
     native_tokens: NativeTokens,
     #[packable(verify_with = verify_unlock_conditions)]
@@ -234,7 +231,7 @@ impl BasicOutput {
     ///
     #[inline(always)]
     pub fn amount(&self) -> u64 {
-        self.amount.get()
+        self.amount
     }
 
     ///

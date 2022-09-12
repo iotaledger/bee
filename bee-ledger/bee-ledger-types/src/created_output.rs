@@ -3,13 +3,14 @@
 
 use core::ops::Deref;
 
-use bee_block::{output::Output, payload::milestone::MilestoneIndex, BlockId};
+use bee_block::{output::Output, payload::milestone::MilestoneIndex, protocol::ProtocolParameters, BlockId};
 
 use crate::error::Error;
 
 /// Represents a newly created output.
 #[derive(Clone, Debug, Eq, PartialEq, packable::Packable)]
 #[packable(unpack_error = Error)]
+#[packable(unpack_visitor = ProtocolParameters)]
 pub struct CreatedOutput {
     block_id: BlockId,
     milestone_index: MilestoneIndex,

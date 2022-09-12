@@ -11,6 +11,7 @@ use bee_block::{
         transaction::TransactionId,
         Payload,
     },
+    protocol::ProtocolParameters,
     semantic::ConflictReason,
     BlockId,
 };
@@ -57,10 +58,11 @@ pub(crate) fn migration_from_milestone(
     milestone_id: MilestoneId,
     receipt: &ReceiptMilestoneOption,
     consumed_treasury: TreasuryOutput,
+    protocol_parameters: &ProtocolParameters,
 ) -> Result<Migration, Error> {
     let receipt = Receipt::new(receipt.clone(), milestone_index);
 
-    receipt.validate(&consumed_treasury)?;
+    receipt.validate(&consumed_treasury, protocol_parameters)?;
 
     let created_treasury = TreasuryOutput::new(receipt.inner().transaction().output().clone(), milestone_id);
 
@@ -74,6 +76,7 @@ async fn confirm<N: Node>(
     block_id: BlockId,
     ledger_index: &mut LedgerIndex,
     receipt_migrated_at: &mut MilestoneIndex,
+    protocol_parameters: &ProtocolParameters,
 ) -> Result<(), Error>
 where
     N::Backend: StorageBackend,
@@ -158,6 +161,7 @@ where
             milestone_id,
             receipt,
             storage::fetch_unspent_treasury_output(storage)?,
+            protocol_parameters,
         )?)
     } else {
         None
@@ -265,13 +269,17 @@ where
     }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
+        // TODO: this is obviously wrong but can't be done properly until the snapshot PR is merged.
+        // The node can't work properly with this.
+        // @thibault-martinez.
+        let protocol_parameters = ProtocolParameters::default();
         let (snapshot_config, pruning_config) = config;
         let (tx, rx) = mpsc::unbounded_channel();
         let tangle = node.resource::<Tangle<N::Backend>>();
         let storage = node.storage();
         let bus = node.bus();
 
-        validate_ledger_state(&*storage)?;
+        validate_ledger_state(&*storage, &protocol_parameters)?;
 
         let bmd = tangle.config().below_max_depth();
 
@@ -319,6 +327,7 @@ where
                             block_id,
                             &mut ledger_index,
                             &mut receipt_migrated_at,
+                            &protocol_parameters,
                         )
                         .await
                         {

@@ -14,6 +14,7 @@ use crate::{
         InputsCommitment, NftId, NftOutput, Output, OutputId, SimpleTokenScheme, TokenScheme, TreasuryOutput,
         OUTPUT_INDEX_RANGE,
     },
+    protocol::ProtocolParameters,
     rand::{
         address::rand_alias_address,
         bytes::rand_bytes_array,
@@ -41,15 +42,17 @@ pub fn rand_treasury_output() -> TreasuryOutput {
 }
 
 /// Generates a random [`BasicOutput`](BasicOutput).
-pub fn rand_basic_output() -> BasicOutput {
+pub fn rand_basic_output(protocol_parameters: &ProtocolParameters) -> BasicOutput {
     let features = rand_allowed_features(BasicOutput::ALLOWED_FEATURES);
     // TODO: Add `NativeTokens`
-    BasicOutput::build_with_amount(rand_number_range(Output::AMOUNT_RANGE))
-        .unwrap()
-        .with_features(features)
-        .add_unlock_condition(rand_address_unlock_condition().into())
-        .finish()
-        .unwrap()
+    BasicOutput::build_with_amount(rand_number_range(
+        Output::AMOUNT_MIN..protocol_parameters.token_supply(),
+    ))
+    .unwrap()
+    .with_features(features)
+    .add_unlock_condition(rand_address_unlock_condition().into())
+    .finish()
+    .unwrap()
 }
 
 /// Generates a random [`AliasId`](AliasId).
@@ -58,19 +61,22 @@ pub fn rand_alias_id() -> AliasId {
 }
 
 /// Generates a random [`AliasOutput`](AliasOutput).
-pub fn rand_alias_output() -> AliasOutput {
+pub fn rand_alias_output(protocol_parameters: &ProtocolParameters) -> AliasOutput {
     let features = rand_allowed_features(AliasOutput::ALLOWED_FEATURES);
 
     // We need to make sure that `AliasId` and `Address` don't match.
     let alias_id = rand_alias_id();
 
-    AliasOutput::build_with_amount(rand_number_range(Output::AMOUNT_RANGE), alias_id)
-        .unwrap()
-        .with_features(features)
-        .add_unlock_condition(rand_state_controller_address_unlock_condition_different_from(&alias_id).into())
-        .add_unlock_condition(rand_governor_address_unlock_condition_different_from(&alias_id).into())
-        .finish()
-        .unwrap()
+    AliasOutput::build_with_amount(
+        rand_number_range(Output::AMOUNT_MIN..protocol_parameters.token_supply()),
+        alias_id,
+    )
+    .unwrap()
+    .with_features(features)
+    .add_unlock_condition(rand_state_controller_address_unlock_condition_different_from(&alias_id).into())
+    .add_unlock_condition(rand_governor_address_unlock_condition_different_from(&alias_id).into())
+    .finish()
+    .unwrap()
 }
 
 /// Generates a random [`TokenScheme`].
@@ -83,11 +89,11 @@ pub fn rand_token_scheme() -> TokenScheme {
 }
 
 /// Generates a random [`FoundryOutput`](FoundryOutput).
-pub fn rand_foundry_output() -> FoundryOutput {
+pub fn rand_foundry_output(protocol_parameters: &ProtocolParameters) -> FoundryOutput {
     let features = rand_allowed_features(FoundryOutput::ALLOWED_FEATURES);
 
     FoundryOutput::build_with_amount(
-        rand_number_range(Output::AMOUNT_RANGE),
+        rand_number_range(Output::AMOUNT_MIN..protocol_parameters.token_supply()),
         rand_number(),
         rand_token_scheme(),
     )
@@ -99,18 +105,21 @@ pub fn rand_foundry_output() -> FoundryOutput {
 }
 
 /// Generates a random [`NftOutput`](NftOutput).
-pub fn rand_nft_output() -> NftOutput {
+pub fn rand_nft_output(protocol_parameters: &ProtocolParameters) -> NftOutput {
     let features = rand_allowed_features(NftOutput::ALLOWED_FEATURES);
 
     // We need to make sure that `NftId` and `Address` don't match.
     let nft_id = NftId::from(rand_bytes_array());
 
-    NftOutput::build_with_amount(rand_number_range(Output::AMOUNT_RANGE), nft_id)
-        .unwrap()
-        .with_features(features)
-        .add_unlock_condition(rand_address_unlock_condition_different_from(&nft_id).into())
-        .finish()
-        .unwrap()
+    NftOutput::build_with_amount(
+        rand_number_range(Output::AMOUNT_MIN..protocol_parameters.token_supply()),
+        nft_id,
+    )
+    .unwrap()
+    .with_features(features)
+    .add_unlock_condition(rand_address_unlock_condition_different_from(&nft_id).into())
+    .finish()
+    .unwrap()
 }
 
 /// Generates a random [`InputsCommitment`].
@@ -119,13 +128,13 @@ pub fn rand_inputs_commitment() -> InputsCommitment {
 }
 
 /// Generates a random [`Output`].
-pub fn rand_output() -> Output {
+pub fn rand_output(protocol_parameters: &ProtocolParameters) -> Output {
     match rand_number::<u64>() % 5 {
         0 => rand_treasury_output().into(),
-        1 => rand_basic_output().into(),
-        2 => rand_alias_output().into(),
-        3 => rand_foundry_output().into(),
-        4 => rand_nft_output().into(),
+        1 => rand_basic_output(protocol_parameters).into(),
+        2 => rand_alias_output(protocol_parameters).into(),
+        3 => rand_foundry_output(protocol_parameters).into(),
+        4 => rand_nft_output(protocol_parameters).into(),
         _ => unreachable!(),
     }
 }
