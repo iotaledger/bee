@@ -83,7 +83,7 @@ impl RegularTransactionEssenceBuilder {
             .try_into()
             .map_err(Error::InvalidOutputCount)?;
 
-        verify_outputs::<true>(&outputs, &protocol_parameters)?;
+        verify_outputs::<true>(&outputs, protocol_parameters)?;
 
         let payload = OptionalPayload::from(self.payload);
 
