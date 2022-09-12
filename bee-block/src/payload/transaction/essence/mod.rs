@@ -45,9 +45,11 @@ impl TransactionEssence {
 pub mod dto {
     use serde::{Deserialize, Serialize};
 
-    pub use super::regular::dto::RegularTransactionEssenceDto;
+    pub use super::regular::dto::{
+        try_from_regular_transaction_essence_dto_for_regular_transaction_essence, RegularTransactionEssenceDto,
+    };
     use super::*;
-    use crate::error::dto::DtoError;
+    use crate::{error::dto::DtoError, protocol::ProtocolParameters};
 
     /// Describes all the different essence types.
     #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -64,13 +66,14 @@ pub mod dto {
         }
     }
 
-    impl TryFrom<&TransactionEssenceDto> for TransactionEssence {
-        type Error = DtoError;
-
-        fn try_from(value: &TransactionEssenceDto) -> Result<Self, Self::Error> {
-            match value {
-                TransactionEssenceDto::Regular(r) => Ok(TransactionEssence::Regular(r.try_into()?)),
-            }
+    pub fn try_from_transaction_essence_dto_for_transaction_essence(
+        value: &TransactionEssenceDto,
+        protocol_parameters: &ProtocolParameters,
+    ) -> Result<TransactionEssence, DtoError> {
+        match value {
+            TransactionEssenceDto::Regular(r) => Ok(TransactionEssence::Regular(
+                try_from_regular_transaction_essence_dto_for_regular_transaction_essence(r, protocol_parameters)?,
+            )),
         }
     }
 }

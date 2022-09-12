@@ -11,6 +11,7 @@ use bee_block::{
         transaction::{RegularTransactionEssence, TransactionId},
         Payload,
     },
+    protocol::protocol_parameters,
     rand::{
         bytes::rand_bytes_array,
         output::rand_inputs_commitment,
@@ -31,9 +32,9 @@ fn kind() {
 
 #[test]
 fn build_valid() {
-    let txid = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
-    let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
-    let input2 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
+    let transaction_id = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
+    let input1 = Input::Utxo(UtxoInput::new(transaction_id, 0).unwrap());
+    let input2 = Input::Utxo(UtxoInput::new(transaction_id, 1).unwrap());
     let bytes: [u8; 32] = prefix_hex::decode(ED25519_ADDRESS_1).unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
@@ -48,16 +49,16 @@ fn build_valid() {
     let essence = RegularTransactionEssence::builder(0, rand_inputs_commitment())
         .with_inputs(vec![input1, input2])
         .add_output(output)
-        .finish();
+        .finish(&protocol_parameters());
 
     assert!(essence.is_ok());
 }
 
 #[test]
 fn build_valid_with_payload() {
-    let txid = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
-    let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
-    let input2 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
+    let transaction_id = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
+    let input1 = Input::Utxo(UtxoInput::new(transaction_id, 0).unwrap());
+    let input2 = Input::Utxo(UtxoInput::new(transaction_id, 1).unwrap());
     let bytes: [u8; 32] = prefix_hex::decode(ED25519_ADDRESS_1).unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
@@ -74,16 +75,16 @@ fn build_valid_with_payload() {
         .with_inputs(vec![input1, input2])
         .add_output(output)
         .with_payload(payload)
-        .finish();
+        .finish(&protocol_parameters());
 
     assert!(essence.is_ok());
 }
 
 #[test]
 fn build_valid_add_inputs_outputs() {
-    let txid = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
-    let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
-    let input2 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
+    let transaction_id = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
+    let input1 = Input::Utxo(UtxoInput::new(transaction_id, 0).unwrap());
+    let input2 = Input::Utxo(UtxoInput::new(transaction_id, 1).unwrap());
     let bytes: [u8; 32] = prefix_hex::decode(ED25519_ADDRESS_1).unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
@@ -98,16 +99,16 @@ fn build_valid_add_inputs_outputs() {
     let essence = RegularTransactionEssence::builder(0, rand_inputs_commitment())
         .with_inputs(vec![input1, input2])
         .add_output(output)
-        .finish();
+        .finish(&protocol_parameters());
 
     assert!(essence.is_ok());
 }
 
 #[test]
 fn build_invalid_payload_kind() {
-    let txid = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
-    let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
-    let input2 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
+    let transaction_id = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
+    let input1 = Input::Utxo(UtxoInput::new(transaction_id, 0).unwrap());
+    let input2 = Input::Utxo(UtxoInput::new(transaction_id, 1).unwrap());
     let bytes: [u8; 32] = prefix_hex::decode(ED25519_ADDRESS_1).unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
@@ -124,7 +125,7 @@ fn build_invalid_payload_kind() {
         .with_inputs(vec![input1, input2])
         .add_output(output)
         .with_payload(payload.into())
-        .finish();
+        .finish(&protocol_parameters());
 
     assert!(matches!(essence, Err(Error::InvalidPayloadKind(4))));
 }
@@ -144,7 +145,7 @@ fn build_invalid_input_count_low() {
 
     let essence = RegularTransactionEssence::builder(0, rand_inputs_commitment())
         .add_output(output)
-        .finish();
+        .finish(&protocol_parameters());
 
     assert!(matches!(
         essence,
@@ -154,8 +155,8 @@ fn build_invalid_input_count_low() {
 
 #[test]
 fn build_invalid_input_count_high() {
-    let txid = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
-    let input = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
+    let transaction_id = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
+    let input = Input::Utxo(UtxoInput::new(transaction_id, 0).unwrap());
     let bytes: [u8; 32] = prefix_hex::decode(ED25519_ADDRESS_1).unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
@@ -170,7 +171,7 @@ fn build_invalid_input_count_high() {
     let essence = RegularTransactionEssence::builder(0, rand_inputs_commitment())
         .with_inputs(vec![input; 129])
         .add_output(output)
-        .finish();
+        .finish(&protocol_parameters());
 
     assert!(matches!(
         essence,
@@ -180,12 +181,12 @@ fn build_invalid_input_count_high() {
 
 #[test]
 fn build_invalid_output_count_low() {
-    let txid = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
-    let input = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
+    let transaction_id = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
+    let input = Input::Utxo(UtxoInput::new(transaction_id, 0).unwrap());
 
     let essence = RegularTransactionEssence::builder(0, rand_inputs_commitment())
         .add_input(input)
-        .finish();
+        .finish(&protocol_parameters());
 
     assert!(matches!(
         essence,
@@ -195,8 +196,8 @@ fn build_invalid_output_count_low() {
 
 #[test]
 fn build_invalid_output_count_high() {
-    let txid = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
-    let input = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
+    let transaction_id = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
+    let input = Input::Utxo(UtxoInput::new(transaction_id, 0).unwrap());
     let bytes: [u8; 32] = prefix_hex::decode(ED25519_ADDRESS_1).unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
@@ -211,7 +212,7 @@ fn build_invalid_output_count_high() {
     let essence = RegularTransactionEssence::builder(0, rand_inputs_commitment())
         .add_input(input)
         .with_outputs(vec![output; 129])
-        .finish();
+        .finish(&protocol_parameters());
 
     assert!(matches!(
         essence,
@@ -221,8 +222,8 @@ fn build_invalid_output_count_high() {
 
 #[test]
 fn build_invalid_duplicate_utxo() {
-    let txid = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
-    let input = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
+    let transaction_id = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
+    let input = Input::Utxo(UtxoInput::new(transaction_id, 0).unwrap());
     let bytes: [u8; 32] = prefix_hex::decode(ED25519_ADDRESS_1).unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
@@ -237,7 +238,7 @@ fn build_invalid_duplicate_utxo() {
     let essence = RegularTransactionEssence::builder(0, rand_inputs_commitment())
         .with_inputs(vec![input; 2])
         .add_output(output)
-        .finish();
+        .finish(&protocol_parameters());
 
     assert!(matches!(essence, Err(Error::DuplicateUtxo(_))));
 }
@@ -259,30 +260,30 @@ fn build_invalid_input_kind() {
     let essence = RegularTransactionEssence::builder(0, rand_inputs_commitment())
         .add_input(input)
         .add_output(output)
-        .finish();
+        .finish(&protocol_parameters());
 
     assert!(matches!(essence, Err(Error::InvalidInputKind(1))));
 }
 
 #[test]
 fn build_invalid_output_kind() {
-    let txid = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
-    let input = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
+    let transaction_id = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
+    let input = Input::Utxo(UtxoInput::new(transaction_id, 0).unwrap());
     let amount = 1_000_000;
     let output = Output::Treasury(TreasuryOutput::new(amount).unwrap());
 
     let essence = RegularTransactionEssence::builder(0, rand_inputs_commitment())
         .add_input(input)
         .add_output(output)
-        .finish();
+        .finish(&protocol_parameters());
 
     assert!(matches!(essence, Err(Error::InvalidOutputKind(2))));
 }
 
 #[test]
 fn build_invalid_accumulated_output() {
-    let txid = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
-    let input = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
+    let transaction_id = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
+    let input = Input::Utxo(UtxoInput::new(transaction_id, 0).unwrap());
 
     let bytes1: [u8; 32] = prefix_hex::decode(ED25519_ADDRESS_1).unwrap();
     let address1 = Address::from(Ed25519Address::new(bytes1));
@@ -309,16 +310,16 @@ fn build_invalid_accumulated_output() {
     let essence = RegularTransactionEssence::builder(0, rand_inputs_commitment())
         .add_input(input)
         .with_outputs(vec![output1, output2])
-        .finish();
+        .finish(&protocol_parameters());
 
     assert!(matches!(essence, Err(Error::InvalidTransactionAmountSum(_))));
 }
 
 #[test]
 fn getters() {
-    let txid = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
-    let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
-    let input2 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
+    let transaction_id = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
+    let input1 = Input::Utxo(UtxoInput::new(transaction_id, 0).unwrap());
+    let input2 = Input::Utxo(UtxoInput::new(transaction_id, 1).unwrap());
     let bytes: [u8; 32] = prefix_hex::decode(ED25519_ADDRESS_1).unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
@@ -335,7 +336,7 @@ fn getters() {
         .with_inputs(vec![input1, input2])
         .with_outputs(outputs.clone())
         .with_payload(payload.clone())
-        .finish()
+        .finish(&protocol_parameters())
         .unwrap();
 
     assert_eq!(essence.outputs(), outputs.as_slice());
