@@ -6,11 +6,12 @@ accepted = [
     "BSD-3-Clause",
     "CC0-1.0",
     "CDDL-1.0",
+    "EPL-1.0",
     "ISC",
     "MIT",
     "MPL-2.0",
     "OpenSSL",
-    "EPL-1.0",
+    "Unicode-DFS-2016"
 ]
 
 workarounds = [

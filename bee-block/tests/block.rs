@@ -36,7 +36,7 @@ fn pow_default_provider() {
 #[test]
 fn pow_provider() {
     let block = BlockBuilder::new(rand_parents())
-        .with_nonce_provider(MinerBuilder::new().with_num_workers(num_cpus::get()).finish(), 10000f64)
+        .with_nonce_provider(MinerBuilder::new().with_num_workers(num_cpus::get()).finish(), 10000)
         .finish()
         .unwrap();
 
@@ -49,7 +49,7 @@ fn pow_provider() {
 #[test]
 fn invalid_length() {
     let res = BlockBuilder::new(Parents::new(rand_block_ids(2)).unwrap())
-        .with_nonce_provider(42, 10000f64)
+        .with_nonce_provider(42, 10000)
         .with_payload(
             TaggedDataPayload::new(vec![42], vec![0u8; Block::LENGTH_MAX])
                 .unwrap()
@@ -122,7 +122,7 @@ fn getters() {
 
     let block = BlockBuilder::new(parents.clone())
         .with_payload(payload.clone())
-        .with_nonce_provider(nonce, 10000f64)
+        .with_nonce_provider(nonce, 10000)
         .finish()
         .unwrap();
 

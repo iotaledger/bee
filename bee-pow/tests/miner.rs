@@ -15,7 +15,7 @@ fn miner_provide() {
     let miner = MinerBuilder::new().with_num_workers(4).finish();
     let mut bytes = rand_bytes(256);
 
-    let nonce = miner.nonce(&bytes[0..248], 4000f64).unwrap();
+    let nonce = miner.nonce(&bytes[0..248], 4000).unwrap();
     bytes[248..].copy_from_slice(&nonce.to_le_bytes());
 
     assert!(PoWScorer::new().score(&bytes) >= 4000f64);
@@ -46,7 +46,7 @@ fn miner_abort() {
 
     let now = std::time::Instant::now();
 
-    let handle = std::thread::spawn(move || miner.nonce(&bytes[0..248], 100000f64).unwrap());
+    let handle = std::thread::spawn(move || miner.nonce(&bytes[0..248], 100000).unwrap());
 
     std::thread::sleep(std::time::Duration::from_secs(1));
 

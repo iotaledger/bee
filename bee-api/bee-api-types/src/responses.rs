@@ -69,7 +69,7 @@ pub struct ConfirmedMilestoneResponse {
 
 /// Returned in [`InfoResponse`].
 /// Protocol information about the node.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ProtocolResponse {
     pub version: u8,
     #[serde(rename = "networkName")]
@@ -77,7 +77,7 @@ pub struct ProtocolResponse {
     #[serde(rename = "bech32Hrp")]
     pub bech32_hrp: String,
     #[serde(rename = "minPowScore")]
-    pub min_pow_score: f64,
+    pub min_pow_score: u32,
     #[serde(rename = "rentStructure")]
     pub rent_structure: RentStructureResponse,
     #[serde(rename = "tokenSupply")]

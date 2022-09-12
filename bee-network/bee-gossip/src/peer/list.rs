@@ -307,7 +307,7 @@ impl PeerList {
         // - Deny dialing an already connected peer.
         // - Deny dialing a local address.
         // - Deny dialing a banned address.
-        // - Deny dialing more than configured unkown peers.
+        // - Deny dialing more than configured unknown peers.
         // - Deny dialing more than configured discovered peers.
         if peer_id == &self.local_id {
             Err(Error::PeerIsLocal(*peer_id))

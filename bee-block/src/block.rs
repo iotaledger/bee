@@ -296,7 +296,7 @@ pub mod dto {
                     .nonce
                     .parse::<u64>()
                     .map_err(|_| DtoError::InvalidField("nonce"))?,
-                0f64,
+                0,
             );
             if let Some(p) = value.payload.as_ref() {
                 builder = builder.with_payload(p.try_into()?);
