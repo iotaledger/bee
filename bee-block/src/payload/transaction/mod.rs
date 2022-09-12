@@ -129,6 +129,7 @@ pub mod dto {
         protocol_parameters: &ProtocolParameters,
     ) -> Result<TransactionPayload, DtoError> {
         let mut unlocks = Vec::new();
+
         for b in &value.unlocks {
             unlocks.push(b.try_into()?);
         }

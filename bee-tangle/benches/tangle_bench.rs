@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_block::{
+    protocol::protocol_parameters,
     rand::{block::rand_block, number::rand_number},
     semantic::ConflictReason,
     Block, BlockId,
@@ -15,7 +16,7 @@ use criterion::*;
 use rand::seq::SliceRandom;
 
 fn random_input() -> (Block, BlockId, BlockMetadata) {
-    let block = rand_block();
+    let block = rand_block(&protocol_parameters());
     let id = block.id();
 
     (block, id, rand_block_metadata())

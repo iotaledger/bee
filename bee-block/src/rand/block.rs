@@ -3,7 +3,7 @@
 
 use crate::{
     parent::Parents,
-    protocol::protocol_parameters,
+    protocol::ProtocolParameters,
     rand::{bytes::rand_bytes_array, number::rand_number, parents::rand_parents, payload::rand_payload_for_block},
     Block, BlockBuilder, BlockId,
 };
@@ -21,15 +21,15 @@ pub fn rand_block_ids(len: usize) -> Vec<BlockId> {
 }
 
 /// Generates a random block with given parents.
-pub fn rand_block_with_parents(parents: Parents) -> Block {
+pub fn rand_block_with_parents(parents: Parents, protocol_parameters: &ProtocolParameters) -> Block {
     BlockBuilder::<u64>::new(parents)
         .with_payload(rand_payload_for_block())
         .with_nonce_provider(rand_number())
-        .finish(&protocol_parameters())
+        .finish(protocol_parameters)
         .unwrap()
 }
 
 /// Generates a random block.
-pub fn rand_block() -> Block {
-    rand_block_with_parents(rand_parents())
+pub fn rand_block(protocol_parameters: &ProtocolParameters) -> Block {
+    rand_block_with_parents(rand_parents(), protocol_parameters)
 }
