@@ -122,8 +122,6 @@ fn verify_funds<const VERIFY: bool>(funds: &[MigratedFundsEntry], visitor: &Prot
                 .checked_add(funds.amount())
                 .ok_or_else(|| Error::InvalidReceiptFundsSum(funds_sum as u128 + funds.amount() as u128))?;
 
-            println!("{funds_sum} {}", visitor.token_supply());
-
             if funds_sum > visitor.token_supply() {
                 return Err(Error::InvalidReceiptFundsSum(funds_sum as u128));
             }

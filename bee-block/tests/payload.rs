@@ -47,7 +47,7 @@ fn transaction() {
             .unwrap(),
     );
     let essence = TransactionEssence::Regular(
-        RegularTransactionEssence::builder(0, rand_inputs_commitment())
+        RegularTransactionEssence::builder(rand_inputs_commitment())
             .with_inputs(vec![input1, input2])
             .add_output(output)
             .finish(&protocol_parameters)
