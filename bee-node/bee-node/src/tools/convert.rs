@@ -110,7 +110,7 @@ mod bech32tests {
             &hex_encoded_address,
             "0xefdc112efe262b304bcf379b26c31bad029f616ee3ec4aa6345a366e4c9e43a3"
         );
-    
+
         let bech32_to_hex = ConvertTool::Bech32ToHex { bech32: bech32_address };
         exec(&bech32_to_hex).unwrap();
     }
@@ -124,7 +124,7 @@ mod bech32tests {
             &bech32_address,
             "iota1qrhacyfwlcnzkvzteumekfkrrwks98mpdm37cj4xx3drvmjvnep6xqgyzyx"
         );
-    
+
         let bech32_to_hex = ConvertTool::Bech32ToHex { bech32: bech32_address };
         exec(&bech32_to_hex).unwrap();
     }
@@ -138,7 +138,7 @@ mod bech32tests {
             &bech32_address,
             "iota1qrhacyfwlcnzkvzteumekfkrrwks98mpdm37cj4xx3drvmjvnep6xqgyzyx"
         );
-    
+
         let bech32_to_hex = ConvertTool::Bech32ToHex { bech32: bech32_address };
         exec(&bech32_to_hex).unwrap();
     }
