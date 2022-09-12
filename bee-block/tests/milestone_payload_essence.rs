@@ -16,7 +16,7 @@ use bee_block::{
         self,
         bytes::rand_bytes,
         milestone::{rand_merkle_root, rand_milestone_id, rand_milestone_index},
-        number::{rand_number, rand_number_range},
+        number::rand_number_range,
         parents::rand_parents,
     },
 };
@@ -41,6 +41,7 @@ fn new_valid() {
 
 #[test]
 fn getters() {
+    let protocol_parameters = protocol_parameters();
     let index = rand::milestone::rand_milestone_index();
     let timestamp = rand::number::rand_number::<u32>();
     let previous_milestone_id = rand_milestone_id();
@@ -48,7 +49,6 @@ fn getters() {
     let inclusion_merkle_root = rand_merkle_root();
     let applied_merkle_root = rand_merkle_root();
     let target_milestone_index = rand_milestone_index();
-    let protocol_version = rand_number();
     let binary_parameters =
         rand_bytes(rand_number_range(ParametersMilestoneOption::BINARY_PARAMETERS_LENGTH_RANGE) as usize);
     let receipt = ReceiptMilestoneOption::new(
@@ -60,13 +60,18 @@ fn getters() {
             TreasuryOutput::new(1_000_000).unwrap(),
         )
         .unwrap(),
+        &protocol_parameters,
     )
     .unwrap();
     let options = MilestoneOptions::new(vec![
         MilestoneOption::Receipt(receipt.clone()),
         MilestoneOption::Parameters(
-            ParametersMilestoneOption::new(target_milestone_index, protocol_version, binary_parameters.clone())
-                .unwrap(),
+            ParametersMilestoneOption::new(
+                target_milestone_index,
+                protocol_parameters.protocol_version(),
+                binary_parameters.clone(),
+            )
+            .unwrap(),
         ),
     ])
     .unwrap();
@@ -99,7 +104,7 @@ fn getters() {
     );
     assert_eq!(
         milestone_payload.options().parameters().unwrap().protocol_version(),
-        protocol_version
+        protocol_parameters.protocol_version()
     );
     assert_eq!(
         milestone_payload.options().parameters().unwrap().binary_parameters(),

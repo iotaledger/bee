@@ -243,7 +243,11 @@ pub mod dto {
     use serde::{Deserialize, Serialize};
 
     use super::*;
-    use crate::{error::dto::DtoError, payload::dto::PayloadDto, protocol::ProtocolParameters};
+    use crate::{
+        error::dto::DtoError,
+        payload::dto::{try_from_payload_dto_payload, PayloadDto},
+        protocol::ProtocolParameters,
+    };
 
     /// The block object that nodes gossip around in the network.
     #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -298,7 +302,7 @@ pub mod dto {
                 .map_err(|_| DtoError::InvalidField("nonce"))?,
         );
         if let Some(p) = value.payload.as_ref() {
-            builder = builder.with_payload(p.try_into()?);
+            builder = builder.with_payload(try_from_payload_dto_payload(p, protocol_parameters)?);
         }
 
         Ok(builder.finish(protocol_parameters)?)

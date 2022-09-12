@@ -51,6 +51,7 @@ fn new_valid() {
             TreasuryOutput::new(AMOUNT).unwrap(),
         )
         .unwrap(),
+        &protocol_parameters(),
     );
 
     assert!(receipt.is_ok());
@@ -67,6 +68,7 @@ fn new_invalid_receipt_funds_count_low() {
             TreasuryOutput::new(AMOUNT).unwrap(),
         )
         .unwrap(),
+        &protocol_parameters(),
     );
 
     assert!(matches!(
@@ -95,6 +97,7 @@ fn new_invalid_receipt_funds_count_high() {
             TreasuryOutput::new(AMOUNT).unwrap(),
         )
         .unwrap(),
+        &protocol_parameters(),
     );
 
     assert!(matches!(
@@ -132,6 +135,7 @@ fn new_invalid_transaction_outputs_not_sorted() {
             TreasuryOutput::new(AMOUNT).unwrap(),
         )
         .unwrap(),
+        &protocol_parameters(),
     );
 
     assert!(matches!(receipt, Err(Error::ReceiptFundsNotUniqueSorted)));
@@ -155,6 +159,7 @@ fn new_invalid_tail_transaction_hashes_not_unique() {
             TreasuryOutput::new(AMOUNT).unwrap(),
         )
         .unwrap(),
+        &protocol_parameters(),
     );
 
     assert!(matches!(receipt, Err(Error::ReceiptFundsNotUniqueSorted)));
@@ -178,6 +183,7 @@ fn pack_unpack_valid() {
             TreasuryOutput::new(AMOUNT).unwrap(),
         )
         .unwrap(),
+        &protocol_parameters(),
     )
     .unwrap();
 
@@ -208,7 +214,14 @@ fn getters() {
     )
     .unwrap();
 
-    let receipt = ReceiptMilestoneOption::new(migrated_at, last, funds.clone(), transaction.clone()).unwrap();
+    let receipt = ReceiptMilestoneOption::new(
+        migrated_at,
+        last,
+        funds.clone(),
+        transaction.clone(),
+        &protocol_parameters(),
+    )
+    .unwrap();
 
     assert_eq!(receipt.migrated_at(), migrated_at);
     assert_eq!(receipt.last(), last);

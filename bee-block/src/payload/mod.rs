@@ -218,8 +218,10 @@ pub mod dto {
 
     use super::*;
     pub use super::{
-        milestone::dto::MilestonePayloadDto, tagged_data::dto::TaggedDataPayloadDto,
-        transaction::dto::TransactionPayloadDto, treasury_transaction::dto::TreasuryTransactionPayloadDto,
+        milestone::dto::{try_from_milestone_payload_dto_for_milestone_payload, MilestonePayloadDto},
+        tagged_data::dto::TaggedDataPayloadDto,
+        transaction::dto::TransactionPayloadDto,
+        treasury_transaction::dto::TreasuryTransactionPayloadDto,
     };
     use crate::error::dto::DtoError;
 
@@ -246,17 +248,18 @@ pub mod dto {
         }
     }
 
-    impl TryFrom<&PayloadDto> for Payload {
-        type Error = DtoError;
-        fn try_from(value: &PayloadDto) -> Result<Self, Self::Error> {
-            Ok(match value {
-                PayloadDto::Transaction(p) => Payload::Transaction(Box::new(TransactionPayload::try_from(p.as_ref())?)),
-                PayloadDto::Milestone(p) => Payload::Milestone(Box::new(MilestonePayload::try_from(p.as_ref())?)),
-                PayloadDto::TreasuryTransaction(p) => {
-                    Payload::TreasuryTransaction(Box::new(TreasuryTransactionPayload::try_from(p.as_ref())?))
-                }
-                PayloadDto::TaggedData(p) => Payload::TaggedData(Box::new(TaggedDataPayload::try_from(p.as_ref())?)),
-            })
-        }
+    pub fn try_from_payload_dto_payload(
+        value: &PayloadDto,
+        protocol_parameters: &ProtocolParameters,
+    ) -> Result<Payload, DtoError> {
+        Ok(match value {
+            PayloadDto::Transaction(p) => Payload::from(TransactionPayload::try_from(p.as_ref())?),
+            PayloadDto::Milestone(p) => Payload::from(try_from_milestone_payload_dto_for_milestone_payload(
+                p.as_ref(),
+                protocol_parameters,
+            )?),
+            PayloadDto::TreasuryTransaction(p) => Payload::from(TreasuryTransactionPayload::try_from(p.as_ref())?),
+            PayloadDto::TaggedData(p) => Payload::from(TaggedDataPayload::try_from(p.as_ref())?),
+        })
     }
 }

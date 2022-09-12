@@ -52,12 +52,12 @@ impl ReceiptMilestoneOption {
         last: bool,
         funds: Vec<MigratedFundsEntry>,
         transaction: TreasuryTransactionPayload,
+        protocol_parameters: &ProtocolParameters,
     ) -> Result<Self, Error> {
         let funds = VecPrefix::<MigratedFundsEntry, ReceiptFundsCount>::try_from(funds)
             .map_err(Error::InvalidReceiptFundsCount)?;
 
-        // TODO: obviously wrong, needs to be replaced.
-        verify_funds::<true>(&funds, &ProtocolParameters::default())?;
+        verify_funds::<true>(&funds, protocol_parameters)?;
 
         Ok(Self {
             migrated_at,
@@ -122,6 +122,8 @@ fn verify_funds<const VERIFY: bool>(funds: &[MigratedFundsEntry], visitor: &Prot
                 .checked_add(funds.amount())
                 .ok_or_else(|| Error::InvalidReceiptFundsSum(funds_sum as u128 + funds.amount() as u128))?;
 
+            println!("{funds_sum} {}", visitor.token_supply());
+
             if funds_sum > visitor.token_supply() {
                 return Err(Error::InvalidReceiptFundsSum(funds_sum as u128));
             }
@@ -156,6 +158,7 @@ pub mod dto {
     use crate::{
         error::dto::DtoError,
         payload::dto::{PayloadDto, TreasuryTransactionPayloadDto},
+        protocol::ProtocolParameters,
     };
 
     ///
@@ -185,20 +188,20 @@ pub mod dto {
         }
     }
 
-    impl TryFrom<&ReceiptMilestoneOptionDto> for ReceiptMilestoneOption {
-        type Error = DtoError;
-
-        fn try_from(value: &ReceiptMilestoneOptionDto) -> Result<Self, Self::Error> {
-            Ok(ReceiptMilestoneOption::new(
-                MilestoneIndex(value.migrated_at),
-                value.last,
-                value.funds.iter().map(TryInto::try_into).collect::<Result<_, _>>()?,
-                if let PayloadDto::TreasuryTransaction(ref transaction) = value.transaction {
-                    (transaction.as_ref()).try_into()?
-                } else {
-                    return Err(DtoError::InvalidField("transaction"));
-                },
-            )?)
-        }
+    pub fn try_from_receipt_milestone_option_dto_for_receipt_milestone_option(
+        value: &ReceiptMilestoneOptionDto,
+        protocol_parameters: &ProtocolParameters,
+    ) -> Result<ReceiptMilestoneOption, DtoError> {
+        Ok(ReceiptMilestoneOption::new(
+            MilestoneIndex(value.migrated_at),
+            value.last,
+            value.funds.iter().map(TryInto::try_into).collect::<Result<_, _>>()?,
+            if let PayloadDto::TreasuryTransaction(ref transaction) = value.transaction {
+                (transaction.as_ref()).try_into()?
+            } else {
+                return Err(DtoError::InvalidField("transaction"));
+            },
+            protocol_parameters,
+        )?)
     }
 }

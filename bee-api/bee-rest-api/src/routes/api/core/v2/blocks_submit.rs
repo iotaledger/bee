@@ -5,7 +5,10 @@ use axum::{body::Bytes, extract::Extension, http::header::HeaderMap, routing::po
 use bee_block::{
     constant::PROTOCOL_VERSION,
     parent::Parents,
-    payload::{dto::PayloadDto, Payload},
+    payload::{
+        dto::{try_from_payload_dto_payload, PayloadDto},
+        Payload,
+    },
     protocol::ProtocolParameters,
     Block, BlockBuilder, BlockId,
 };
@@ -49,6 +52,11 @@ pub(crate) async fn submit_block_json<B: StorageBackend>(
     value: Value,
     args: ApiArgsFullNode<B>,
 ) -> Result<SubmitBlockResponse, ApiError> {
+    // TODO: this is obviously wrong but can't be done properly until the snapshot PR is merged.
+    // The node can't work properly with this.
+    // @thibault-martinez.
+    let protocol_parameters = ProtocolParameters::default();
+
     let protocol_version_json = &value["protocolVersion"];
     let parents_json = &value["parents"];
     let payload_json = &value["payload"];
@@ -99,7 +107,10 @@ pub(crate) async fn submit_block_json<B: StorageBackend>(
     } else {
         let payload_dto = serde_json::from_value::<PayloadDto>(payload_json.clone())
             .map_err(|e| ApiError::DependencyError(DependencyError::SerdeJsonError(e)))?;
-        Some(Payload::try_from(&payload_dto).map_err(|e| ApiError::DependencyError(DependencyError::InvalidDto(e)))?)
+        Some(
+            try_from_payload_dto_payload(&payload_dto, &protocol_parameters)
+                .map_err(|e| ApiError::DependencyError(DependencyError::InvalidDto(e)))?,
+        )
     };
 
     let nonce = if nonce_json.is_null() {

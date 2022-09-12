@@ -45,7 +45,7 @@ fn pow_provider() {
     let block_bytes = block.pack_to_vec();
     let score = PoWScorer::new().score(&block_bytes);
 
-    assert!(score >= 10000f64);
+    assert!(score >= protocol_parameters().min_pow_score() as f64);
 }
 
 #[test]
