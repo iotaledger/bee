@@ -10,8 +10,9 @@ use crate::{
     output::{
         feature::{verify_allowed_features, Feature, FeatureFlags, Features},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        NativeToken, NativeTokens, Output, OutputBuilderAmount, OutputId, Rent, RentStructure,
+        verify_output_amount, NativeToken, NativeTokens, Output, OutputBuilderAmount, OutputId, Rent, RentStructure,
     },
+    protocol::ProtocolParameters,
     semantic::{ConflictReason, ValidationContext},
     unlock::Unlock,
     Error,
@@ -132,11 +133,11 @@ impl BasicOutputBuilder {
     pub fn finish(self) -> Result<BasicOutput, Error> {
         let unlock_conditions = UnlockConditions::new(self.unlock_conditions)?;
 
-        verify_unlock_conditions::<true>(&unlock_conditions, &())?;
+        verify_unlock_conditions::<true>(&unlock_conditions)?;
 
         let features = Features::new(self.features)?;
 
-        verify_features::<true>(&features, &())?;
+        verify_features::<true>(&features)?;
 
         let mut output = BasicOutput {
             amount: 1u64,
@@ -176,15 +177,16 @@ impl From<&BasicOutput> for BasicOutputBuilder {
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Packable)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error)]
+#[packable(unpack_visitor = ProtocolParameters)]
 pub struct BasicOutput {
     // Amount of IOTA tokens held by the output.
-    // #[packable(unpack_error_with = Error::InvalidOutputAmount)]
+    #[packable(verify_with = verify_output_amount)]
     amount: u64,
     // Native tokens held by the output.
     native_tokens: NativeTokens,
-    #[packable(verify_with = verify_unlock_conditions)]
+    #[packable(verify_with = verify_unlock_conditions_packable)]
     unlock_conditions: UnlockConditions,
-    #[packable(verify_with = verify_features)]
+    #[packable(verify_with = verify_features_packable)]
     features: Features,
 }
 
@@ -289,7 +291,7 @@ impl BasicOutput {
     }
 }
 
-fn verify_unlock_conditions<const VERIFY: bool>(unlock_conditions: &UnlockConditions, _: &()) -> Result<(), Error> {
+fn verify_unlock_conditions<const VERIFY: bool>(unlock_conditions: &UnlockConditions) -> Result<(), Error> {
     if VERIFY {
         if unlock_conditions.address().is_none() {
             Err(Error::MissingAddressUnlockCondition)
@@ -301,12 +303,23 @@ fn verify_unlock_conditions<const VERIFY: bool>(unlock_conditions: &UnlockCondit
     }
 }
 
-fn verify_features<const VERIFY: bool>(blocks: &Features, _: &()) -> Result<(), Error> {
+fn verify_unlock_conditions_packable<const VERIFY: bool>(
+    unlock_conditions: &UnlockConditions,
+    _: &ProtocolParameters,
+) -> Result<(), Error> {
+    verify_unlock_conditions::<VERIFY>(unlock_conditions)
+}
+
+fn verify_features<const VERIFY: bool>(blocks: &Features) -> Result<(), Error> {
     if VERIFY {
         verify_allowed_features(blocks, BasicOutput::ALLOWED_FEATURES)
     } else {
         Ok(())
     }
+}
+
+fn verify_features_packable<const VERIFY: bool>(blocks: &Features, _: &ProtocolParameters) -> Result<(), Error> {
+    verify_features::<VERIFY>(blocks)
 }
 
 #[cfg(feature = "dto")]

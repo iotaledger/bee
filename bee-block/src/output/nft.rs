@@ -416,7 +416,7 @@ impl Packable for NftOutput {
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let amount = u64::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
 
-        verify_output_amount::<VERIFY>(amount, visitor).map_err(UnpackError::Packable)?;
+        verify_output_amount::<VERIFY>(&amount, visitor).map_err(UnpackError::Packable)?;
 
         let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker, &())?;
         let nft_id = NftId::unpack::<_, VERIFY>(unpacker, &()).coerce()?;

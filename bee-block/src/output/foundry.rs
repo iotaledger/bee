@@ -548,7 +548,7 @@ impl Packable for FoundryOutput {
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let amount = u64::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
 
-        verify_output_amount::<VERIFY>(amount, visitor).map_err(UnpackError::Packable)?;
+        verify_output_amount::<VERIFY>(&amount, visitor).map_err(UnpackError::Packable)?;
 
         let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker, &())?;
         let serial_number = u32::unpack::<_, VERIFY>(unpacker, &()).coerce()?;

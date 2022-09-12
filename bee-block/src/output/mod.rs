@@ -291,7 +291,7 @@ impl Packable for Output {
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         Ok(match u8::unpack::<_, VERIFY>(unpacker, &()).coerce()? {
             TreasuryOutput::KIND => Output::from(TreasuryOutput::unpack::<_, VERIFY>(unpacker, &()).coerce()?),
-            BasicOutput::KIND => Output::from(BasicOutput::unpack::<_, VERIFY>(unpacker, &()).coerce()?),
+            BasicOutput::KIND => Output::from(BasicOutput::unpack::<_, VERIFY>(unpacker, visitor).coerce()?),
             AliasOutput::KIND => Output::from(AliasOutput::unpack::<_, VERIFY>(unpacker, visitor).coerce()?),
             FoundryOutput::KIND => Output::from(FoundryOutput::unpack::<_, VERIFY>(unpacker, visitor).coerce()?),
             NftOutput::KIND => Output::from(NftOutput::unpack::<_, VERIFY>(unpacker, visitor).coerce()?),
@@ -307,11 +307,11 @@ impl Rent for Output {
 }
 
 pub(crate) fn verify_output_amount<const VERIFY: bool>(
-    amount: u64,
+    amount: &u64,
     protocol_parameters: &ProtocolParameters,
 ) -> Result<(), Error> {
-    if VERIFY && (amount < Output::AMOUNT_MIN || amount > protocol_parameters.token_supply()) {
-        Err(Error::InvalidOutputAmount(amount))
+    if VERIFY && (*amount < Output::AMOUNT_MIN || *amount > protocol_parameters.token_supply()) {
+        Err(Error::InvalidOutputAmount(*amount))
     } else {
         Ok(())
     }
