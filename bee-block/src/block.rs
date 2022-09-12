@@ -72,7 +72,7 @@ impl<P: NonceProvider> BlockBuilder<P> {
             return Err(Error::InvalidBlockLength(block_bytes.len()));
         }
 
-        let nonce_provider = self.nonce_provider.unwrap_or(P::Builder::new().finish());
+        let nonce_provider = self.nonce_provider.unwrap_or_else(|| P::Builder::new().finish());
 
         block.nonce = nonce_provider
             .nonce(
