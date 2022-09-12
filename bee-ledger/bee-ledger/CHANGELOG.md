@@ -19,16 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
-## Unreleased - 2022-XX-XX
-
-### Changed
-
-- Updated dependencies (including `packable`);
-
-### Removed
-
-- Moved base types to crate `bee-ledger-types`;
-
 ## 0.8.0 - 2022-XX-XX
 
 ### Added
@@ -37,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Updated dependencies (including `packable`);
 - Complete refactoring of White Flag with Tokenization and Smart Contracts layouts;
 - `BalanceDiff` is now an `u64` tuple struct;
 - `Balance` is now an `u64` tuple struct;
@@ -48,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Balance`, `BalanceDiff` and `BalanceDiffs`;
 - `Error::InvalidLedgerDustState`;
 - Pruning of `PaddedIndex`;
+- Moved base types to crate `bee-ledger-types`;
 
 ## 0.7.0 - 2022-XX-XX
 
