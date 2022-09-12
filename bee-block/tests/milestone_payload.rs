@@ -34,6 +34,7 @@ fn new_valid() {
                 rand_merkle_root(),
                 vec![],
                 MilestoneOptions::new(vec![]).unwrap(),
+                &protocol_parameters()
             )
             .unwrap(),
             vec![Signature::from(Ed25519Signature::new([0; 32], [0; 64]))]
@@ -55,6 +56,7 @@ fn new_invalid_no_signature() {
                 rand_merkle_root(),
                 vec![],
                 MilestoneOptions::new(vec![]).unwrap(),
+                &protocol_parameters()
             )
             .unwrap(),
             vec![]
@@ -76,6 +78,7 @@ fn new_invalid_too_many_signatures() {
                 rand_merkle_root(),
                 vec![],
                 MilestoneOptions::new(vec![]).unwrap(),
+                &protocol_parameters()
             )
             .unwrap(),
             vec![Signature::from(Ed25519Signature::new([0; 32], [0; 64])); 300]
@@ -98,6 +101,7 @@ fn packed_len() {
             rand_merkle_root(),
             vec![0x2a, 0x2a, 0x2a, 0x2a, 0x2a],
             MilestoneOptions::new(vec![]).unwrap(),
+            &protocol_parameters(),
         )
         .unwrap(),
         vec![
@@ -123,6 +127,7 @@ fn pack_unpack_valid() {
             rand_merkle_root(),
             vec![],
             MilestoneOptions::new(vec![]).unwrap(),
+            &protocol_parameters(),
         )
         .unwrap(),
         vec![Signature::from(Ed25519Signature::new([0; 32], [0; 64]))],
@@ -149,6 +154,7 @@ fn getters() {
         rand_merkle_root(),
         vec![],
         MilestoneOptions::new(vec![]).unwrap(),
+        &protocol_parameters(),
     )
     .unwrap();
     let signatures = vec![Signature::from(Ed25519Signature::new([0; 32], [0; 64]))];

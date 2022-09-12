@@ -77,6 +77,7 @@ fn transaction() {
 
 #[test]
 fn milestone() {
+    let protocol_parameters = protocol_parameters();
     let payload: Payload = MilestonePayload::new(
         MilestoneEssence::new(
             MilestoneIndex(0),
@@ -87,6 +88,7 @@ fn milestone() {
             rand_merkle_root(),
             vec![],
             MilestoneOptions::new(vec![]).unwrap(),
+            &protocol_parameters,
         )
         .unwrap(),
         vec![Signature::from(Ed25519Signature::new([0; 32], [0; 64]))],
@@ -101,7 +103,7 @@ fn milestone() {
     assert!(matches!(payload, Payload::Milestone(_)));
     assert_eq!(
         payload,
-        PackableExt::unpack_verified(&mut packed.as_slice(), &protocol_parameters()).unwrap()
+        PackableExt::unpack_verified(&mut packed.as_slice(), &protocol_parameters).unwrap()
     );
 }
 

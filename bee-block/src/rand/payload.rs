@@ -8,6 +8,7 @@ use crate::{
         treasury_transaction::TreasuryTransactionPayload,
         Payload,
     },
+    protocol::ProtocolParameters,
     rand::{
         bytes::{rand_bytes, rand_bytes_array},
         input::rand_treasury_input,
@@ -34,7 +35,7 @@ pub fn rand_treasury_transaction_payload() -> TreasuryTransactionPayload {
 }
 
 /// Generates a random milestone payload.
-pub fn rand_milestone_payload() -> MilestonePayload {
+pub fn rand_milestone_payload(protocol_parameters: &ProtocolParameters) -> MilestonePayload {
     let essence = MilestoneEssence::new(
         rand_milestone_index(),
         rand_number(),
@@ -44,6 +45,7 @@ pub fn rand_milestone_payload() -> MilestonePayload {
         rand_merkle_root(),
         rand_bytes(32),
         MilestoneOptions::new(vec![]).unwrap(),
+        protocol_parameters,
     )
     .unwrap();
     let signatures = vec![Signature::from(Ed25519Signature::new(

@@ -3,6 +3,7 @@
 
 use bee_block::{
     payload::milestone::{MilestoneId, MilestonePayload},
+    protocol::protocol_parameters,
     rand::{milestone::rand_milestone_id, payload::rand_milestone_payload},
 };
 use bee_storage::{
@@ -39,7 +40,7 @@ impl<T> StorageBackend for T where
 }
 
 pub fn milestone_id_to_milestone_payload_access<B: StorageBackend>(storage: &B) {
-    let (id, payload) = (rand_milestone_id(), rand_milestone_payload());
+    let (id, payload) = (rand_milestone_id(), rand_milestone_payload(&protocol_parameters()));
 
     assert!(!Exist::<MilestoneId, MilestonePayload>::exist(storage, &id).unwrap());
     assert!(
@@ -87,7 +88,7 @@ pub fn milestone_id_to_milestone_payload_access<B: StorageBackend>(storage: &B) 
     let mut payloads = Vec::new();
 
     for _ in 0..10 {
-        let (id, payload) = (rand_milestone_id(), rand_milestone_payload());
+        let (id, payload) = (rand_milestone_id(), rand_milestone_payload(&protocol_parameters()));
         Insert::<MilestoneId, MilestonePayload>::insert(storage, &id, &payload).unwrap();
         Batch::<MilestoneId, MilestonePayload>::batch_delete(storage, &mut batch, &id).unwrap();
         ids.push(id);
@@ -95,7 +96,7 @@ pub fn milestone_id_to_milestone_payload_access<B: StorageBackend>(storage: &B) 
     }
 
     for _ in 0..10 {
-        let (id, payload) = (rand_milestone_id(), rand_milestone_payload());
+        let (id, payload) = (rand_milestone_id(), rand_milestone_payload(&protocol_parameters()));
         Batch::<MilestoneId, MilestonePayload>::batch_insert(storage, &mut batch, &id, &payload).unwrap();
         ids.push(id);
         payloads.push((id, Some(payload)));

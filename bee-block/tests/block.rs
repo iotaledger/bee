@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_block::{
-    constant::PROTOCOL_VERSION,
     parent::Parents,
     payload::{Payload, TaggedDataPayload},
     protocol::protocol_parameters,
@@ -122,6 +121,7 @@ fn pack_unpack_valid() {
 
 #[test]
 fn getters() {
+    let protocol_parameters = protocol_parameters();
     let parents = rand_parents();
     let payload: Payload = rand_tagged_data_payload().into();
     let nonce: u64 = rand_number();
@@ -129,10 +129,10 @@ fn getters() {
     let block = BlockBuilder::new(parents.clone())
         .with_payload(payload.clone())
         .with_nonce_provider(nonce)
-        .finish(&protocol_parameters())
+        .finish(&protocol_parameters)
         .unwrap();
 
-    assert_eq!(block.protocol_version(), PROTOCOL_VERSION);
+    assert_eq!(block.protocol_version(), protocol_parameters.protocol_version());
     assert_eq!(*block.parents(), parents);
     assert_eq!(*block.payload().as_ref().unwrap(), &payload);
     assert_eq!(block.nonce(), nonce);

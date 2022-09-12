@@ -173,8 +173,8 @@ pub mod dto {
     use self::option::dto::{try_from_milestone_option_dto_for_milestone_option, MilestoneOptionDto};
     use super::*;
     use crate::{
-        constant::PROTOCOL_VERSION, error::dto::DtoError, parent::Parents, payload::milestone::MilestoneIndex,
-        signature::dto::SignatureDto, BlockId,
+        error::dto::DtoError, parent::Parents, payload::milestone::MilestoneIndex, signature::dto::SignatureDto,
+        BlockId,
     };
 
     /// The payload type to define a milestone.
@@ -222,9 +222,9 @@ pub mod dto {
         value: &MilestonePayloadDto,
         protocol_parameters: &ProtocolParameters,
     ) -> Result<MilestonePayload, DtoError> {
-        if value.protocol_version != PROTOCOL_VERSION {
+        if value.protocol_version != protocol_parameters.protocol_version() {
             return Err(Error::ProtocolVersionMismatch {
-                expected: PROTOCOL_VERSION,
+                expected: protocol_parameters.protocol_version(),
                 actual: value.protocol_version,
             }
             .into());
@@ -232,12 +232,9 @@ pub mod dto {
 
         let essence = {
             let index = value.index;
-
             let timestamp = value.timestamp;
-
             let previous_milestone_id = MilestoneId::from_str(&value.previous_milestone_id)
                 .map_err(|_| DtoError::InvalidField("lastMilestoneId"))?;
-
             let mut parent_ids = Vec::new();
 
             for block_id in &value.parents {
@@ -250,10 +247,8 @@ pub mod dto {
 
             let inclusion_merkle_root = MerkleRoot::from_str(&value.inclusion_merkle_root)
                 .map_err(|_| DtoError::InvalidField("inclusionMerkleRoot"))?;
-
             let applied_merkle_root = MerkleRoot::from_str(&value.applied_merkle_root)
                 .map_err(|_| DtoError::InvalidField("appliedMerkleRoot"))?;
-
             let options = MilestoneOptions::try_from(
                 value
                     .options
@@ -261,7 +256,6 @@ pub mod dto {
                     .map(|o| try_from_milestone_option_dto_for_milestone_option(o, protocol_parameters))
                     .collect::<Result<Vec<_>, _>>()?,
             )?;
-
             let metadata = if !value.metadata.is_empty() {
                 prefix_hex::decode(&value.metadata).map_err(|_| DtoError::InvalidField("metadata"))?
             } else {
@@ -277,6 +271,7 @@ pub mod dto {
                 applied_merkle_root,
                 metadata,
                 options,
+                protocol_parameters,
             )?
         };
 

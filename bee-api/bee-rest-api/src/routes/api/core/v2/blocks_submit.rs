@@ -3,7 +3,6 @@
 
 use axum::{body::Bytes, extract::Extension, http::header::HeaderMap, routing::post, Router};
 use bee_block::{
-    constant::PROTOCOL_VERSION,
     parent::Parents,
     payload::{
         dto::{try_from_payload_dto_payload, PayloadDto},
@@ -71,7 +70,7 @@ pub(crate) async fn submit_block_json<B: StorageBackend>(
         ))?)
         .map_err(|_| ApiError::BadRequest("invalid protocol version: expected an unsigned integer < 256"))?;
 
-        if parsed_protocol_version != PROTOCOL_VERSION {
+        if parsed_protocol_version != protocol_parameters.protocol_version() {
             return Err(ApiError::BadRequest("invalid protocol version"));
         }
     }

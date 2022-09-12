@@ -34,6 +34,7 @@ fn new_valid() {
             rand_merkle_root(),
             vec![],
             MilestoneOptions::new(vec![]).unwrap(),
+            &protocol_parameters()
         )
         .is_ok()
     );
@@ -85,6 +86,7 @@ fn getters() {
         applied_merkle_root,
         vec![],
         options,
+        &protocol_parameters,
     )
     .unwrap();
 
@@ -115,6 +117,7 @@ fn getters() {
 
 #[test]
 fn pack_unpack_valid() {
+    let protocol_parameters = protocol_parameters();
     let milestone_payload = MilestoneEssence::new(
         MilestoneIndex(0),
         0,
@@ -124,13 +127,14 @@ fn pack_unpack_valid() {
         rand_merkle_root(),
         vec![],
         MilestoneOptions::new(vec![]).unwrap(),
+        &protocol_parameters,
     )
     .unwrap();
 
     let packed = milestone_payload.pack_to_vec();
 
     assert_eq!(
-        MilestoneEssence::unpack_verified(&mut packed.as_slice(), &protocol_parameters()).unwrap(),
+        MilestoneEssence::unpack_verified(&mut packed.as_slice(), &protocol_parameters).unwrap(),
         milestone_payload,
     );
 }

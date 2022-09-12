@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use axum::{extract::Extension, routing::get, Router};
-use bee_block::constant::{PROTOCOL_VERSION, TOKEN_SUPPLY};
+use bee_block::{constant::TOKEN_SUPPLY, protocol::ProtocolParameters};
 
 use crate::{
     routes::health,
@@ -19,6 +19,11 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
 }
 
 async fn info<B: StorageBackend>(Extension(args): Extension<ApiArgsFullNode<B>>) -> InfoResponse {
+    // TODO: this is obviously wrong but can't be done properly until the snapshot PR is merged.
+    // The node can't work properly with this.
+    // @thibault-martinez.
+    let protocol_parameters = ProtocolParameters::default();
+
     let (latest_milestone_index, latest_milestone_metadata) = {
         let latest_milestone_index = args.tangle.get_latest_milestone_index();
         (
@@ -64,9 +69,9 @@ async fn info<B: StorageBackend>(Extension(args): Extension<ApiArgsFullNode<B>>)
             },
             pruning_index: *args.tangle.get_pruning_index(),
         },
-        supported_protocol_versions: vec![PROTOCOL_VERSION],
+        supported_protocol_versions: vec![protocol_parameters.protocol_version()],
         protocol: ProtocolResponse {
-            version: PROTOCOL_VERSION,
+            version: protocol_parameters.protocol_version(),
             network_name: args.network_name.clone(),
             bech32_hrp: args.bech32_hrp.clone(),
             min_pow_score: args.protocol_config.minimum_pow_score() as u32,

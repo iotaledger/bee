@@ -14,7 +14,6 @@ use packable::{
 };
 
 use crate::{
-    constant::PROTOCOL_VERSION,
     parent::Parents,
     payload::milestone::{MerkleRoot, MilestoneId, MilestoneIndex, MilestoneOptions},
     protocol::ProtocolParameters,
@@ -51,6 +50,7 @@ impl MilestoneEssence {
         applied_merkle_root: MerkleRoot,
         metadata: Vec<u8>,
         options: MilestoneOptions,
+        protocol_parameters: &ProtocolParameters,
     ) -> Result<Self, Error> {
         let metadata = metadata
             .into_boxed_slice()
@@ -60,7 +60,7 @@ impl MilestoneEssence {
         Ok(Self {
             index,
             timestamp,
-            protocol_version: PROTOCOL_VERSION,
+            protocol_version: protocol_parameters.protocol_version(),
             previous_milestone_id,
             parents,
             inclusion_merkle_root,
