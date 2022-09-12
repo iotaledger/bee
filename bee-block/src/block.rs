@@ -77,7 +77,7 @@ impl<P: NonceProvider> BlockBuilder<P> {
         block.nonce = nonce_provider
             .nonce(
                 &block_bytes[..block_bytes.len() - core::mem::size_of::<u64>()],
-                protocol_parameters.min_pow_score() as f64,
+                protocol_parameters.min_pow_score(),
             )
             .unwrap_or(Self::DEFAULT_NONCE);
 
@@ -243,7 +243,7 @@ pub mod dto {
     use serde::{Deserialize, Serialize};
 
     use super::*;
-    use crate::{error::dto::DtoError, payload::dto::PayloadDto};
+    use crate::{error::dto::DtoError, payload::dto::PayloadDto, protocol::ProtocolParameters};
 
     /// The block object that nodes gossip around in the network.
     #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -271,39 +271,37 @@ pub mod dto {
         }
     }
 
-    impl TryFrom<&BlockDto> for Block {
-        type Error = DtoError;
-
-        fn try_from(value: &BlockDto) -> Result<Self, Self::Error> {
-            if value.protocol_version != PROTOCOL_VERSION {
-                return Err(Error::ProtocolVersionMismatch {
-                    expected: PROTOCOL_VERSION,
-                    actual: value.protocol_version,
-                }
-                .into());
+    pub fn try_from_block_dto_for_block(
+        value: &BlockDto,
+        protocol_parameters: &ProtocolParameters,
+    ) -> Result<Block, DtoError> {
+        if value.protocol_version != protocol_parameters.protocol_version() {
+            return Err(Error::ProtocolVersionMismatch {
+                expected: protocol_parameters.protocol_version(),
+                actual: value.protocol_version,
             }
-
-            let parents = Parents::new(
-                value
-                    .parents
-                    .iter()
-                    .map(|m| m.parse::<BlockId>().map_err(|_| DtoError::InvalidField("parents")))
-                    .collect::<Result<Vec<BlockId>, DtoError>>()?,
-            )?;
-
-            let mut builder = BlockBuilder::new(parents).with_nonce_provider(
-                value
-                    .nonce
-                    .parse::<u64>()
-                    .map_err(|_| DtoError::InvalidField("nonce"))?,
-                0,
-            );
-            if let Some(p) = value.payload.as_ref() {
-                builder = builder.with_payload(p.try_into()?);
-            }
-
-            Ok(builder.finish()?)
+            .into());
         }
+
+        let parents = Parents::new(
+            value
+                .parents
+                .iter()
+                .map(|m| m.parse::<BlockId>().map_err(|_| DtoError::InvalidField("parents")))
+                .collect::<Result<Vec<BlockId>, DtoError>>()?,
+        )?;
+
+        let mut builder = BlockBuilder::new(parents).with_nonce_provider(
+            value
+                .nonce
+                .parse::<u64>()
+                .map_err(|_| DtoError::InvalidField("nonce"))?,
+        );
+        if let Some(p) = value.payload.as_ref() {
+            builder = builder.with_payload(p.try_into()?);
+        }
+
+        Ok(builder.finish(protocol_parameters)?)
     }
 }
 

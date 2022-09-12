@@ -23,21 +23,23 @@ fn kind() {
 
 #[test]
 fn new_valid() {
-    assert!(MilestonePayload::new(
-        MilestoneEssence::new(
-            MilestoneIndex(0),
-            0,
-            rand_milestone_id(),
-            rand_parents(),
-            rand_merkle_root(),
-            rand_merkle_root(),
-            vec![],
-            MilestoneOptions::new(vec![]).unwrap(),
+    assert!(
+        MilestonePayload::new(
+            MilestoneEssence::new(
+                MilestoneIndex(0),
+                0,
+                rand_milestone_id(),
+                rand_parents(),
+                rand_merkle_root(),
+                rand_merkle_root(),
+                vec![],
+                MilestoneOptions::new(vec![]).unwrap(),
+            )
+            .unwrap(),
+            vec![Signature::from(Ed25519Signature::new([0; 32], [0; 64]))]
         )
-        .unwrap(),
-        vec![Signature::from(Ed25519Signature::new([0; 32], [0; 64]))]
-    )
-    .is_ok());
+        .is_ok()
+    );
 }
 
 #[test]

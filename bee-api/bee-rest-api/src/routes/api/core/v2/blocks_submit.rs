@@ -6,6 +6,7 @@ use bee_block::{
     constant::PROTOCOL_VERSION,
     parent::Parents,
     payload::{dto::PayloadDto, Payload},
+    protocol::ProtocolParameters,
     Block, BlockBuilder, BlockId,
 };
 use bee_pow::providers::{miner::MinerBuilder, NonceProviderBuilder};
@@ -127,16 +128,21 @@ pub(crate) fn build_block<B: StorageBackend>(
     nonce: Option<u64>,
     args: ApiArgsFullNode<B>,
 ) -> Result<Block, ApiError> {
+    // TODO: this is obviously wrong but can't be done properly until the snapshot PR is merged.
+    // The node can't work properly with this.
+    // @thibault-martinez.
+    let protocol_parameters = ProtocolParameters::default();
+
     let block = if let Some(nonce) = nonce {
         let mut builder = BlockBuilder::new(
             Parents::new(parents).map_err(|e| ApiError::DependencyError(DependencyError::InvalidBlock(e)))?,
         )
-        .with_nonce_provider(nonce, 0);
+        .with_nonce_provider(nonce);
         if let Some(payload) = payload {
             builder = builder.with_payload(payload)
         }
         builder
-            .finish()
+            .finish(&protocol_parameters)
             .map_err(|e| ApiError::DependencyError(DependencyError::InvalidBlock(e)))?
     } else {
         if !args.rest_api_config.feature_proof_of_work() {
@@ -147,15 +153,12 @@ pub(crate) fn build_block<B: StorageBackend>(
         let mut builder = BlockBuilder::new(
             Parents::new(parents).map_err(|e| ApiError::DependencyError(DependencyError::InvalidBlock(e)))?,
         )
-        .with_nonce_provider(
-            MinerBuilder::new().with_num_workers(num_cpus::get()).finish(),
-            args.protocol_config.minimum_pow_score() as u32,
-        );
+        .with_nonce_provider(MinerBuilder::new().with_num_workers(num_cpus::get()).finish());
         if let Some(payload) = payload {
             builder = builder.with_payload(payload)
         }
         builder
-            .finish()
+            .finish(&protocol_parameters)
             .map_err(|e| ApiError::DependencyError(DependencyError::InvalidBlock(e)))?
     };
     Ok(block)
