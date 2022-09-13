@@ -31,6 +31,7 @@ pub struct ProtocolParameters {
     token_supply: u64,
 }
 
+// This implementation is required to make [`ProtocolParameters`] a [`Packable`] visitor.
 impl Borrow<()> for ProtocolParameters {
     fn borrow(&self) -> &() {
         &()

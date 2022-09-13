@@ -135,9 +135,7 @@ where
                             // PANIC: funds are already syntactically verified as part of the receipt validation.
                             .unwrap()
                             .add_unlock_condition(AddressUnlockCondition::new(*fund.address()).into())
-                            .finish(protocol_parameters)
-                            // PANIC: these parameters are certified fine.
-                            .unwrap(),
+                            .finish(protocol_parameters)?,
                     ),
                 ),
             );

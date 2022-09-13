@@ -234,7 +234,7 @@ pub mod dto {
             let index = value.index;
             let timestamp = value.timestamp;
             let previous_milestone_id = MilestoneId::from_str(&value.previous_milestone_id)
-                .map_err(|_| DtoError::InvalidField("lastMilestoneId"))?;
+                .map_err(|_| DtoError::InvalidField("previousMilestoneId"))?;
             let mut parent_ids = Vec::new();
 
             for block_id in &value.parents {
