@@ -1,45 +1,43 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::ops::RangeInclusive;
-
-use packable::{bounded::BoundedU64, Packable};
+use packable::Packable;
 
 use crate::{
-    address::Address, constant::TOKEN_SUPPLY, payload::milestone::option::receipt::TailTransactionHash, Error,
+    address::Address, payload::milestone::option::receipt::TailTransactionHash, protocol::ProtocolParameters, Error,
 };
-
-const MIGRATED_FUNDS_ENTRY_AMOUNT_MIN: u64 = 1_000_000;
-
-pub(crate) type MigratedFundsAmount =
-    BoundedU64<{ *MigratedFundsEntry::AMOUNT_RANGE.start() }, { *MigratedFundsEntry::AMOUNT_RANGE.end() }>;
 
 /// Describes funds which were migrated from a legacy network.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[packable(unpack_visitor = ProtocolParameters)]
 pub struct MigratedFundsEntry {
     tail_transaction_hash: TailTransactionHash,
     // The target address of the migrated funds.
     address: Address,
     // The migrated amount.
-    #[packable(unpack_error_with = Error::InvalidMigratedFundsEntryAmount)]
-    amount: MigratedFundsAmount,
+    #[packable(verify_with = verify_amount)]
+    amount: u64,
 }
 
 impl MigratedFundsEntry {
     /// Range of valid amounts for a [`MigratedFundsEntry`].
-    pub const AMOUNT_RANGE: RangeInclusive<u64> = MIGRATED_FUNDS_ENTRY_AMOUNT_MIN..=TOKEN_SUPPLY;
+    pub const AMOUNT_MIN: u64 = 1_000_000;
 
     /// Creates a new [`MigratedFundsEntry`].
-    pub fn new(tail_transaction_hash: TailTransactionHash, address: Address, amount: u64) -> Result<Self, Error> {
-        amount
-            .try_into()
-            .map(|amount| Self {
-                tail_transaction_hash,
-                address,
-                amount,
-            })
-            .map_err(Error::InvalidMigratedFundsEntryAmount)
+    pub fn new(
+        tail_transaction_hash: TailTransactionHash,
+        address: Address,
+        amount: u64,
+        protocol_parameters: &ProtocolParameters,
+    ) -> Result<Self, Error> {
+        verify_amount::<true>(&amount, protocol_parameters)?;
+
+        Ok(Self {
+            tail_transaction_hash,
+            address,
+            amount,
+        })
     }
 
     #[inline(always)]
@@ -57,7 +55,15 @@ impl MigratedFundsEntry {
     /// Returns the amount of a [`MigratedFundsEntry`].
     #[inline(always)]
     pub fn amount(&self) -> u64 {
-        self.amount.get()
+        self.amount
+    }
+}
+
+fn verify_amount<const VERIFY: bool>(amount: &u64, protocol_parameters: &ProtocolParameters) -> Result<(), Error> {
+    if VERIFY && (*amount < MigratedFundsEntry::AMOUNT_MIN || *amount > protocol_parameters.token_supply()) {
+        Err(Error::InvalidMigratedFundsEntryAmount(*amount))
+    } else {
+        Ok(())
     }
 }
 
@@ -87,17 +93,17 @@ pub mod dto {
         }
     }
 
-    impl TryFrom<&MigratedFundsEntryDto> for MigratedFundsEntry {
-        type Error = DtoError;
-
-        fn try_from(value: &MigratedFundsEntryDto) -> Result<Self, Self::Error> {
-            let tail_transaction_hash = prefix_hex::decode(&value.tail_transaction_hash)
-                .map_err(|_| DtoError::InvalidField("tailTransactionHash"))?;
-            Ok(MigratedFundsEntry::new(
-                TailTransactionHash::new(tail_transaction_hash)?,
-                (&value.address).try_into()?,
-                value.deposit,
-            )?)
-        }
+    pub fn try_from_migrated_funds_entry_dto_for_migrated_funds_entry(
+        value: &MigratedFundsEntryDto,
+        protocol_parameters: &ProtocolParameters,
+    ) -> Result<MigratedFundsEntry, DtoError> {
+        let tail_transaction_hash = prefix_hex::decode(&value.tail_transaction_hash)
+            .map_err(|_| DtoError::InvalidField("tailTransactionHash"))?;
+        Ok(MigratedFundsEntry::new(
+            TailTransactionHash::new(tail_transaction_hash)?,
+            (&value.address).try_into()?,
+            value.deposit,
+            protocol_parameters,
+        )?)
     }
 }

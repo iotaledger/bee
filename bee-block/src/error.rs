@@ -16,8 +16,8 @@ use crate::{
     },
     parent::ParentCount,
     payload::{
-        milestone::BinaryParametersLength, InputCount, MigratedFundsAmount, MilestoneMetadataLength,
-        MilestoneOptionCount, OutputCount, ReceiptFundsCount, SignatureCount, TagLength, TaggedDataLength,
+        milestone::BinaryParametersLength, InputCount, MilestoneMetadataLength, MilestoneOptionCount, OutputCount,
+        ReceiptFundsCount, SignatureCount, TagLength, TaggedDataLength,
     },
     unlock::{UnlockCount, UnlockIndex},
 };
@@ -62,7 +62,7 @@ pub enum Error {
     InvalidMilestoneMetadataLength(<MilestoneMetadataLength as TryFrom<usize>>::Error),
     InvalidMilestoneOptionCount(<MilestoneOptionCount as TryFrom<usize>>::Error),
     InvalidMilestoneOptionKind(u8),
-    InvalidMigratedFundsEntryAmount(<MigratedFundsAmount as TryFrom<u64>>::Error),
+    InvalidMigratedFundsEntryAmount(u64),
     InvalidNativeTokenCount(<NativeTokenCount as TryFrom<usize>>::Error),
     InvalidNetworkName(FromUtf8Error),
     InvalidNftIndex(<UnlockIndex as TryFrom<u16>>::Error),

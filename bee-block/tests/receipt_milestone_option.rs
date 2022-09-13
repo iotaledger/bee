@@ -44,6 +44,7 @@ fn new_valid() {
                 TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
                 Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
                 AMOUNT,
+                &protocol_parameters,
             )
             .unwrap(),
         ],
@@ -91,6 +92,7 @@ fn new_invalid_receipt_funds_count_high() {
                     TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
                     Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
                     AMOUNT,
+                    &protocol_parameters,
                 )
                 .unwrap()
             })
@@ -120,12 +122,14 @@ fn new_invalid_transaction_outputs_not_sorted() {
             TailTransactionHash::new(new_tail_transaction_hash).unwrap(),
             Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
             AMOUNT,
+            &protocol_parameters,
         )
         .unwrap(),
         MigratedFundsEntry::new(
             TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
             Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
             AMOUNT,
+            &protocol_parameters,
         )
         .unwrap(),
     ];
@@ -152,6 +156,7 @@ fn new_invalid_tail_transaction_hashes_not_unique() {
         TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
         Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
         AMOUNT,
+        &protocol_parameters,
     )
     .unwrap();
 
@@ -181,6 +186,7 @@ fn pack_unpack_valid() {
                 TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
                 Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
                 AMOUNT,
+                &protocol_parameters,
             )
             .unwrap(),
         ],
@@ -212,6 +218,7 @@ fn getters() {
             TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
             Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
             AMOUNT,
+            &protocol_parameters,
         )
         .unwrap(),
     ];

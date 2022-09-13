@@ -10,10 +10,7 @@ use derive_more::{Deref, From};
 use iterator_sorted::is_unique_sorted;
 use packable::{bounded::BoundedU8, prefix::BoxedSlicePrefix, Packable};
 
-pub(crate) use self::{
-    parameters::BinaryParametersLength,
-    receipt::{MigratedFundsAmount, ReceiptFundsCount},
-};
+pub(crate) use self::{parameters::BinaryParametersLength, receipt::ReceiptFundsCount};
 pub use self::{
     parameters::ParametersMilestoneOption,
     receipt::{MigratedFundsEntry, ReceiptMilestoneOption, TailTransactionHash},

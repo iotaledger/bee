@@ -16,7 +16,7 @@ use core::{fmt::Debug, ops::RangeInclusive};
 
 use crypto::{signatures::ed25519, Error as CryptoError};
 use iterator_sorted::is_unique_sorted;
-pub(crate) use option::{MigratedFundsAmount, MilestoneOptionCount, ReceiptFundsCount};
+pub(crate) use option::{MilestoneOptionCount, ReceiptFundsCount};
 use packable::{bounded::BoundedU8, prefix::VecPrefix, Packable};
 
 pub use self::{

@@ -13,7 +13,6 @@ use hashbrown::HashMap;
 use iterator_sorted::is_unique_sorted;
 use packable::{bounded::BoundedU16, prefix::VecPrefix, Packable, PackableExt};
 
-pub(crate) use self::migrated_funds_entry::MigratedFundsAmount;
 pub use self::{migrated_funds_entry::MigratedFundsEntry, tail_transaction_hash::TailTransactionHash};
 use crate::{
     output::OUTPUT_COUNT_RANGE,
@@ -151,7 +150,9 @@ fn verify_transaction_packable<const VERIFY: bool>(
 pub mod dto {
     use serde::{Deserialize, Serialize};
 
-    pub use super::migrated_funds_entry::dto::MigratedFundsEntryDto;
+    pub use super::migrated_funds_entry::dto::{
+        try_from_migrated_funds_entry_dto_for_migrated_funds_entry, MigratedFundsEntryDto,
+    };
     use super::*;
     use crate::{
         error::dto::DtoError,
@@ -196,7 +197,11 @@ pub mod dto {
         Ok(ReceiptMilestoneOption::new(
             MilestoneIndex(value.migrated_at),
             value.last,
-            value.funds.iter().map(TryInto::try_into).collect::<Result<_, _>>()?,
+            value
+                .funds
+                .iter()
+                .map(|f| try_from_migrated_funds_entry_dto_for_migrated_funds_entry(f, protocol_parameters))
+                .collect::<Result<_, _>>()?,
             if let PayloadDto::TreasuryTransaction(ref transaction) = value.transaction {
                 try_from_treasury_transaction_payload_dto_for_treasury_transaction_payload(
                     transaction.as_ref(),
