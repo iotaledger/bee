@@ -118,7 +118,7 @@ mod bech32tests {
     #[test]
     fn test_hex_to_bech32() {
         let hex_address = "0xefdc112efe262b304bcf379b26c31bad029f616ee3ec4aa6345a366e4c9e43a3".to_string();
-        let bech32_address = hex_to_bech32(&hex_address, &HRP).unwrap();
+        let bech32_address = hex_to_bech32(&hex_address, HRP).unwrap();
 
         assert_eq!(
             &bech32_address,
@@ -135,7 +135,7 @@ mod bech32tests {
     #[test]
     fn test_public_key_to_bech32() {
         let public_key = "6f1581709bb7b1ef030d210db18e3b0ba1c776fba65d8cdaad05415142d189f8".to_string();
-        let bech32_address = hex_public_key_to_bech32_address(&public_key, &HRP).unwrap();
+        let bech32_address = hex_public_key_to_bech32_address(&public_key, HRP).unwrap();
 
         assert_eq!(
             &bech32_address,
