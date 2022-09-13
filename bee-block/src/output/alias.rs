@@ -204,7 +204,7 @@ impl AliasOutputBuilder {
     }
 
     ///
-    pub fn finish(self) -> Result<AliasOutput, Error> {
+    pub fn finish(self, _protocol_parameters: &ProtocolParameters) -> Result<AliasOutput, Error> {
         let state_index = self.state_index.unwrap_or(0);
         let foundry_counter = self.foundry_counter.unwrap_or(0);
 
@@ -251,8 +251,8 @@ impl AliasOutputBuilder {
     }
 
     /// Finishes the [`AliasOutputBuilder`] into an [`Output`].
-    pub fn finish_output(self) -> Result<Output, Error> {
-        Ok(Output::Alias(self.finish()?))
+    pub fn finish_output(self, protocol_parameters: &ProtocolParameters) -> Result<Output, Error> {
+        Ok(Output::Alias(self.finish(protocol_parameters)?))
     }
 }
 
@@ -312,15 +312,23 @@ impl AliasOutput {
 
     /// Creates a new [`AliasOutput`] with a provided amount.
     #[inline(always)]
-    pub fn new_with_amount(amount: u64, alias_id: AliasId) -> Result<Self, Error> {
-        AliasOutputBuilder::new_with_amount(amount, alias_id)?.finish()
+    pub fn new_with_amount(
+        amount: u64,
+        alias_id: AliasId,
+        protocol_parameters: &ProtocolParameters,
+    ) -> Result<Self, Error> {
+        AliasOutputBuilder::new_with_amount(amount, alias_id)?.finish(protocol_parameters)
     }
 
     /// Creates a new [`AliasOutput`] with a provided rent structure.
     /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
-    pub fn new_with_minimum_storage_deposit(rent_structure: RentStructure, alias_id: AliasId) -> Result<Self, Error> {
-        AliasOutputBuilder::new_with_minimum_storage_deposit(rent_structure, alias_id)?.finish()
+    pub fn new_with_minimum_storage_deposit(
+        alias_id: AliasId,
+        protocol_parameters: &ProtocolParameters,
+    ) -> Result<Self, Error> {
+        AliasOutputBuilder::new_with_minimum_storage_deposit(protocol_parameters.rent_structure().clone(), alias_id)?
+            .finish(protocol_parameters)
     }
 
     /// Creates a new [`AliasOutputBuilder`] with a provided amount.
@@ -708,46 +716,45 @@ pub mod dto {
         }
     }
 
-    impl TryFrom<&AliasOutputDto> for AliasOutput {
-        type Error = DtoError;
+    pub fn try_from_alias_output_dto_for_alias_output(
+        value: &AliasOutputDto,
+        protocol_parameters: &ProtocolParameters,
+    ) -> Result<AliasOutput, DtoError> {
+        let mut builder = AliasOutputBuilder::new_with_amount(
+            value
+                .amount
+                .parse::<u64>()
+                .map_err(|_| DtoError::InvalidField("amount"))?,
+            (&value.alias_id).try_into()?,
+        )?;
 
-        fn try_from(value: &AliasOutputDto) -> Result<Self, Self::Error> {
-            let mut builder = AliasOutputBuilder::new_with_amount(
-                value
-                    .amount
-                    .parse::<u64>()
-                    .map_err(|_| DtoError::InvalidField("amount"))?,
-                (&value.alias_id).try_into()?,
-            )?;
+        builder = builder.with_state_index(value.state_index);
 
-            builder = builder.with_state_index(value.state_index);
-
-            if !value.state_metadata.is_empty() {
-                builder = builder.with_state_metadata(
-                    prefix_hex::decode(&value.state_metadata).map_err(|_| DtoError::InvalidField("state_metadata"))?,
-                );
-            }
-
-            builder = builder.with_foundry_counter(value.foundry_counter);
-
-            for t in &value.native_tokens {
-                builder = builder.add_native_token(t.try_into()?);
-            }
-
-            for b in &value.unlock_conditions {
-                builder = builder.add_unlock_condition(b.try_into()?);
-            }
-
-            for b in &value.features {
-                builder = builder.add_feature(b.try_into()?);
-            }
-
-            for b in &value.immutable_features {
-                builder = builder.add_immutable_feature(b.try_into()?);
-            }
-
-            Ok(builder.finish()?)
+        if !value.state_metadata.is_empty() {
+            builder = builder.with_state_metadata(
+                prefix_hex::decode(&value.state_metadata).map_err(|_| DtoError::InvalidField("state_metadata"))?,
+            );
         }
+
+        builder = builder.with_foundry_counter(value.foundry_counter);
+
+        for t in &value.native_tokens {
+            builder = builder.add_native_token(t.try_into()?);
+        }
+
+        for b in &value.unlock_conditions {
+            builder = builder.add_unlock_condition(b.try_into()?);
+        }
+
+        for b in &value.features {
+            builder = builder.add_feature(b.try_into()?);
+        }
+
+        for b in &value.immutable_features {
+            builder = builder.add_immutable_feature(b.try_into()?);
+        }
+
+        Ok(builder.finish(protocol_parameters)?)
     }
 
     impl AliasOutput {
@@ -762,6 +769,7 @@ pub mod dto {
             unlock_conditions: Vec<UnlockConditionDto>,
             features: Option<Vec<FeatureDto>>,
             immutable_features: Option<Vec<FeatureDto>>,
+            protocol_parameters: &ProtocolParameters,
         ) -> Result<AliasOutput, DtoError> {
             let alias_id = AliasId::try_from(alias_id)?;
 
@@ -817,7 +825,7 @@ pub mod dto {
                 builder = builder.with_immutable_features(immutable_features);
             }
 
-            Ok(builder.finish()?)
+            Ok(builder.finish(protocol_parameters)?)
         }
     }
 }

@@ -17,6 +17,7 @@ const ED25519_ADDRESS: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4
 
 #[test]
 fn essence_kind() {
+    let protocol_parameters = protocol_parameters();
     let transaction_id = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
     let input1 = Input::Utxo(UtxoInput::new(transaction_id, 0).unwrap());
     let input2 = Input::Utxo(UtxoInput::new(transaction_id, 1).unwrap());
@@ -27,14 +28,14 @@ fn essence_kind() {
         BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
-            .finish()
+            .finish(&protocol_parameters)
             .unwrap(),
     );
     let essence = TransactionEssence::Regular(
         RegularTransactionEssence::builder(rand_inputs_commitment())
             .with_inputs(vec![input1, input2])
             .add_output(output)
-            .finish(&protocol_parameters())
+            .finish(&protocol_parameters)
             .unwrap(),
     );
 

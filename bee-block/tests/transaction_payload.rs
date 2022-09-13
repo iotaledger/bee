@@ -27,6 +27,7 @@ fn kind() {
 // Validate that attempting to construct a `TransactionPayload` with too few unlocks is an error.
 #[test]
 fn builder_no_essence_too_few_unlocks() {
+    let protocol_parameters = protocol_parameters();
     // Construct a transaction essence with two inputs and one output.
     let transaction_id = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
     let input1 = Input::Utxo(UtxoInput::new(transaction_id, 0).unwrap());
@@ -38,14 +39,14 @@ fn builder_no_essence_too_few_unlocks() {
         BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
-            .finish()
+            .finish(&protocol_parameters)
             .unwrap(),
     );
     let essence = TransactionEssence::Regular(
         RegularTransactionEssence::builder(rand_inputs_commitment())
             .with_inputs(vec![input1, input2])
             .add_output(output)
-            .finish(&protocol_parameters())
+            .finish(&protocol_parameters)
             .unwrap(),
     );
 
@@ -65,6 +66,7 @@ fn builder_no_essence_too_few_unlocks() {
 // Validate that attempting to construct a `TransactionPayload` with too many unlocks is an error.
 #[test]
 fn builder_no_essence_too_many_unlocks() {
+    let protocol_parameters = protocol_parameters();
     // Construct a transaction essence with one input and one output.
     let transaction_id = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
     let input1 = Input::Utxo(UtxoInput::new(transaction_id, 0).unwrap());
@@ -75,14 +77,14 @@ fn builder_no_essence_too_many_unlocks() {
         BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
-            .finish()
+            .finish(&protocol_parameters)
             .unwrap(),
     );
     let essence = TransactionEssence::Regular(
         RegularTransactionEssence::builder(rand_inputs_commitment())
             .add_input(input1)
             .add_output(output)
-            .finish(&protocol_parameters())
+            .finish(&protocol_parameters)
             .unwrap(),
     );
 
@@ -116,7 +118,7 @@ fn pack_unpack_valid() {
         BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
-            .finish()
+            .finish(&protocol_parameters)
             .unwrap(),
     );
     let essence = TransactionEssence::Regular(
@@ -147,6 +149,7 @@ fn pack_unpack_valid() {
 
 #[test]
 fn getters() {
+    let protocol_parameters = protocol_parameters();
     // Construct a transaction essence with two inputs and one output.
     let transaction_id = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
     let input1 = Input::Utxo(UtxoInput::new(transaction_id, 0).unwrap());
@@ -158,14 +161,14 @@ fn getters() {
         BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
-            .finish()
+            .finish(&protocol_parameters)
             .unwrap(),
     );
     let essence = TransactionEssence::Regular(
         RegularTransactionEssence::builder(rand_inputs_commitment())
             .with_inputs(vec![input1, input2])
             .add_output(output)
-            .finish(&protocol_parameters())
+            .finish(&protocol_parameters)
             .unwrap(),
     );
 

@@ -51,7 +51,7 @@ pub fn rand_basic_output(protocol_parameters: &ProtocolParameters) -> BasicOutpu
     .unwrap()
     .with_features(features)
     .add_unlock_condition(rand_address_unlock_condition().into())
-    .finish()
+    .finish(protocol_parameters)
     .unwrap()
 }
 
@@ -75,7 +75,7 @@ pub fn rand_alias_output(protocol_parameters: &ProtocolParameters) -> AliasOutpu
     .with_features(features)
     .add_unlock_condition(rand_state_controller_address_unlock_condition_different_from(&alias_id).into())
     .add_unlock_condition(rand_governor_address_unlock_condition_different_from(&alias_id).into())
-    .finish()
+    .finish(protocol_parameters)
     .unwrap()
 }
 
@@ -100,7 +100,7 @@ pub fn rand_foundry_output(protocol_parameters: &ProtocolParameters) -> FoundryO
     .unwrap()
     .with_features(features)
     .add_unlock_condition(ImmutableAliasAddressUnlockCondition::new(rand_alias_address()).into())
-    .finish()
+    .finish(protocol_parameters)
     .unwrap()
 }
 
@@ -118,7 +118,7 @@ pub fn rand_nft_output(protocol_parameters: &ProtocolParameters) -> NftOutput {
     .unwrap()
     .with_features(features)
     .add_unlock_condition(rand_address_unlock_condition_different_from(&nft_id).into())
-    .finish()
+    .finish(protocol_parameters)
     .unwrap()
 }
 

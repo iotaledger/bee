@@ -216,8 +216,8 @@ impl Output {
     /// byte cost, given by [`RentStructure`].
     /// If there is a [`StorageDepositReturnUnlockCondition`](unlock_condition::StorageDepositReturnUnlockCondition),
     /// its amount is also checked.
-    pub fn verify_storage_deposit(&self, rent_structure: &RentStructure) -> Result<(), Error> {
-        let required_output_amount = self.rent_cost(rent_structure);
+    pub fn verify_storage_deposit(&self, protocol_parameters: &ProtocolParameters) -> Result<(), Error> {
+        let required_output_amount = self.rent_cost(protocol_parameters.rent_structure());
 
         if self.amount() < required_output_amount {
             return Err(Error::InsufficientStorageDepositAmount {
@@ -239,7 +239,7 @@ impl Output {
                 });
             }
 
-            let minimum_deposit = minimum_storage_deposit(rent_structure, return_condition.return_address());
+            let minimum_deposit = minimum_storage_deposit(return_condition.return_address(), protocol_parameters);
 
             // `Minimum Storage Deposit` ≤  `Return Amount`
             if return_condition.amount() < minimum_deposit {
@@ -319,14 +319,14 @@ pub(crate) fn verify_output_amount<const VERIFY: bool>(
 
 /// Computes the minimum amount that a storage deposit has to match to allow creating a return [`Output`] back to the
 /// sender [`Address`].
-fn minimum_storage_deposit(rent_structure: &RentStructure, address: &Address) -> u64 {
+fn minimum_storage_deposit(address: &Address, protocol_parameters: &ProtocolParameters) -> u64 {
     let address_condition = UnlockCondition::Address(AddressUnlockCondition::new(*address));
     // PANIC: This can never fail because the amount will always be within the valid range. Also, the actual value is
     // not important, we are only interested in the storage requirements of the type.
-    BasicOutputBuilder::new_with_minimum_storage_deposit(rent_structure.clone())
+    BasicOutputBuilder::new_with_minimum_storage_deposit(protocol_parameters.rent_structure().clone())
         .unwrap()
         .add_unlock_condition(address_condition)
-        .finish()
+        .finish(protocol_parameters)
         .unwrap()
         .amount()
 }
@@ -339,12 +339,12 @@ pub mod dto {
 
     use super::*;
     pub use super::{
-        alias::dto::AliasOutputDto,
+        alias::dto::{try_from_alias_output_dto_for_alias_output, AliasOutputDto},
         alias_id::dto::AliasIdDto,
-        basic::dto::BasicOutputDto,
-        foundry::dto::FoundryOutputDto,
+        basic::dto::{try_from_basic_output_dto_for_basic_output, BasicOutputDto},
+        foundry::dto::{try_from_foundry_output_dto_for_foundry_output, FoundryOutputDto},
         native_token::dto::NativeTokenDto,
-        nft::dto::NftOutputDto,
+        nft::dto::{try_from_nft_output_dto_for_nft_output, NftOutputDto},
         nft_id::dto::NftIdDto,
         token_id::dto::TokenIdDto,
         token_scheme::dto::{SimpleTokenSchemeDto, TokenSchemeDto},
@@ -380,18 +380,19 @@ pub mod dto {
         }
     }
 
-    impl TryFrom<&OutputDto> for Output {
-        type Error = DtoError;
-
-        fn try_from(value: &OutputDto) -> Result<Self, Self::Error> {
-            match value {
-                OutputDto::Treasury(o) => Ok(Output::Treasury(o.try_into()?)),
-                OutputDto::Basic(o) => Ok(Output::Basic(o.try_into()?)),
-                OutputDto::Alias(o) => Ok(Output::Alias(o.try_into()?)),
-                OutputDto::Foundry(o) => Ok(Output::Foundry(o.try_into()?)),
-                OutputDto::Nft(o) => Ok(Output::Nft(o.try_into()?)),
+    pub fn try_from_output_dto_for_output(
+        value: &OutputDto,
+        protocol_parameters: &ProtocolParameters,
+    ) -> Result<Output, DtoError> {
+        Ok(match value {
+            OutputDto::Treasury(o) => Output::Treasury(o.try_into()?),
+            OutputDto::Basic(o) => Output::Basic(try_from_basic_output_dto_for_basic_output(o, protocol_parameters)?),
+            OutputDto::Alias(o) => Output::Alias(try_from_alias_output_dto_for_alias_output(o, protocol_parameters)?),
+            OutputDto::Foundry(o) => {
+                Output::Foundry(try_from_foundry_output_dto_for_foundry_output(o, protocol_parameters)?)
             }
-        }
+            OutputDto::Nft(o) => Output::Nft(try_from_nft_output_dto_for_nft_output(o, protocol_parameters)?),
+        })
     }
 
     impl<'de> Deserialize<'de> for OutputDto {

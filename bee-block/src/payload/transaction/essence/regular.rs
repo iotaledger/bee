@@ -225,7 +225,7 @@ fn verify_outputs<const VERIFY: bool>(outputs: &[Output], visitor: &ProtocolPara
                 return Err(Error::InvalidTransactionNativeTokensCount(native_tokens_count as u16));
             }
 
-            output.verify_storage_deposit(visitor.rent_structure())?;
+            output.verify_storage_deposit(visitor)?;
         }
     }
 
@@ -258,7 +258,12 @@ pub mod dto {
     use serde::{Deserialize, Serialize};
 
     use super::*;
-    use crate::{error::dto::DtoError, input::dto::InputDto, output::dto::OutputDto, payload::dto::PayloadDto};
+    use crate::{
+        error::dto::DtoError,
+        input::dto::InputDto,
+        output::dto::{try_from_output_dto_for_output, OutputDto},
+        payload::dto::PayloadDto,
+    };
 
     /// Describes the essence data making up a transaction by defining its inputs and outputs and an optional payload.
     #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -304,7 +309,7 @@ pub mod dto {
         let outputs = value
             .outputs
             .iter()
-            .map(TryInto::try_into)
+            .map(|o| try_from_output_dto_for_output(o, protocol_parameters))
             .collect::<Result<Vec<Output>, DtoError>>()?;
 
         let mut builder = RegularTransactionEssence::builder(InputsCommitment::from_str(&value.inputs_commitment)?)

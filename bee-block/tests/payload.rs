@@ -43,7 +43,7 @@ fn transaction() {
         BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
-            .finish()
+            .finish(&protocol_parameters)
             .unwrap(),
     );
     let essence = TransactionEssence::Regular(

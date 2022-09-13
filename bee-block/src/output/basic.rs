@@ -130,7 +130,7 @@ impl BasicOutputBuilder {
     }
 
     ///
-    pub fn finish(self) -> Result<BasicOutput, Error> {
+    pub fn finish(self, _protocol_parameters: &ProtocolParameters) -> Result<BasicOutput, Error> {
         let unlock_conditions = UnlockConditions::new(self.unlock_conditions)?;
 
         verify_unlock_conditions::<true>(&unlock_conditions)?;
@@ -157,8 +157,8 @@ impl BasicOutputBuilder {
     }
 
     /// Finishes the [`BasicOutputBuilder`] into an [`Output`].
-    pub fn finish_output(self) -> Result<Output, Error> {
-        Ok(Output::Basic(self.finish()?))
+    pub fn finish_output(self, protocol_parameters: &ProtocolParameters) -> Result<Output, Error> {
+        Ok(Output::Basic(self.finish(protocol_parameters)?))
     }
 }
 
@@ -206,15 +206,16 @@ impl BasicOutput {
 
     /// Creates a new [`BasicOutput`] with a provided amount.
     #[inline(always)]
-    pub fn new_with_amount(amount: u64) -> Result<Self, Error> {
-        BasicOutputBuilder::new_with_amount(amount)?.finish()
+    pub fn new_with_amount(amount: u64, protocol_parameters: &ProtocolParameters) -> Result<Self, Error> {
+        BasicOutputBuilder::new_with_amount(amount)?.finish(protocol_parameters)
     }
 
     /// Creates a new [`BasicOutput`] with a provided rent structure.
     /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
-    pub fn new_with_minimum_storage_deposit(rent_structure: RentStructure) -> Result<Self, Error> {
-        BasicOutputBuilder::new_with_minimum_storage_deposit(rent_structure)?.finish()
+    pub fn new_with_minimum_storage_deposit(protocol_parameters: &ProtocolParameters) -> Result<Self, Error> {
+        BasicOutputBuilder::new_with_minimum_storage_deposit(protocol_parameters.rent_structure().clone())?
+            .finish(protocol_parameters)
     }
 
     /// Creates a new [`BasicOutputBuilder`] with a provided amount.
@@ -364,28 +365,26 @@ pub mod dto {
         }
     }
 
-    impl TryFrom<&BasicOutputDto> for BasicOutput {
-        type Error = DtoError;
+    pub fn try_from_basic_output_dto_for_basic_output(
+        value: &BasicOutputDto,
+        protocol_parameters: &ProtocolParameters,
+    ) -> Result<BasicOutput, DtoError> {
+        let mut builder =
+            BasicOutputBuilder::new_with_amount(value.amount.parse().map_err(|_| DtoError::InvalidField("amount"))?)?;
 
-        fn try_from(value: &BasicOutputDto) -> Result<Self, Self::Error> {
-            let mut builder = BasicOutputBuilder::new_with_amount(
-                value.amount.parse().map_err(|_| DtoError::InvalidField("amount"))?,
-            )?;
-
-            for t in &value.native_tokens {
-                builder = builder.add_native_token(t.try_into()?);
-            }
-
-            for b in &value.unlock_conditions {
-                builder = builder.add_unlock_condition(b.try_into()?);
-            }
-
-            for b in &value.features {
-                builder = builder.add_feature(b.try_into()?);
-            }
-
-            Ok(builder.finish()?)
+        for t in &value.native_tokens {
+            builder = builder.add_native_token(t.try_into()?);
         }
+
+        for b in &value.unlock_conditions {
+            builder = builder.add_unlock_condition(b.try_into()?);
+        }
+
+        for b in &value.features {
+            builder = builder.add_feature(b.try_into()?);
+        }
+
+        Ok(builder.finish(protocol_parameters)?)
     }
 
     impl BasicOutput {
@@ -394,6 +393,7 @@ pub mod dto {
             native_tokens: Option<Vec<NativeTokenDto>>,
             unlock_conditions: Vec<UnlockConditionDto>,
             features: Option<Vec<FeatureDto>>,
+            protocol_parameters: &ProtocolParameters,
         ) -> Result<BasicOutput, DtoError> {
             let mut builder = match amount {
                 OutputBuilderAmountDto::Amount(amount) => {
@@ -426,7 +426,7 @@ pub mod dto {
                 builder = builder.with_features(features);
             }
 
-            Ok(builder.finish()?)
+            Ok(builder.finish(protocol_parameters)?)
         }
     }
 }
