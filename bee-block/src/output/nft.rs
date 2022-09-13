@@ -430,7 +430,7 @@ impl Packable for NftOutput {
 
         let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker, &())?;
         let nft_id = NftId::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
-        let unlock_conditions = UnlockConditions::unpack::<_, VERIFY>(unpacker, &())?;
+        let unlock_conditions = UnlockConditions::unpack::<_, VERIFY>(unpacker, visitor)?;
 
         if VERIFY {
             verify_unlock_conditions(&unlock_conditions, &nft_id).map_err(UnpackError::Packable)?;
@@ -483,8 +483,11 @@ pub mod dto {
     use crate::{
         error::dto::DtoError,
         output::{
-            dto::OutputBuilderAmountDto, feature::dto::FeatureDto, native_token::dto::NativeTokenDto,
-            nft_id::dto::NftIdDto, unlock_condition::dto::UnlockConditionDto,
+            dto::OutputBuilderAmountDto,
+            feature::dto::FeatureDto,
+            native_token::dto::NativeTokenDto,
+            nft_id::dto::NftIdDto,
+            unlock_condition::dto::{try_from_unlock_condition_dto_for_unlock_condition, UnlockConditionDto},
         },
     };
 
@@ -539,8 +542,11 @@ pub mod dto {
             builder = builder.add_native_token(t.try_into()?);
         }
 
-        for b in &value.unlock_conditions {
-            builder = builder.add_unlock_condition(b.try_into()?);
+        for u in &value.unlock_conditions {
+            builder = builder.add_unlock_condition(try_from_unlock_condition_dto_for_unlock_condition(
+                u,
+                protocol_parameters,
+            )?);
         }
 
         for b in &value.features {
@@ -586,7 +592,7 @@ pub mod dto {
 
             let unlock_conditions = unlock_conditions
                 .iter()
-                .map(UnlockCondition::try_from)
+                .map(|u| try_from_unlock_condition_dto_for_unlock_condition(u, protocol_parameters))
                 .collect::<Result<Vec<UnlockCondition>, DtoError>>()?;
             builder = builder.with_unlock_conditions(unlock_conditions);
 

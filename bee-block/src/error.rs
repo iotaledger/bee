@@ -12,7 +12,7 @@ use crate::{
     input::UtxoInput,
     output::{
         feature::FeatureCount, unlock_condition::UnlockConditionCount, AliasId, MetadataFeatureLength,
-        NativeTokenCount, NftId, OutputIndex, StateMetadataLength, StorageDepositAmount, TagFeatureLength,
+        NativeTokenCount, NftId, OutputIndex, StateMetadataLength, TagFeatureLength,
     },
     parent::ParentCount,
     payload::{
@@ -41,7 +41,7 @@ pub enum Error {
     InvalidAddressKind(u8),
     InvalidAliasIndex(<UnlockIndex as TryFrom<u16>>::Error),
     InvalidControllerKind(u8),
-    InvalidStorageDepositAmount(<StorageDepositAmount as TryFrom<u64>>::Error),
+    InvalidStorageDepositAmount(u64),
     // The above is used by `Packable` to denote out-of-range values. The following denotes the actual amount.
     InsufficientStorageDepositAmount { amount: u64, required: u64 },
     StorageDepositReturnExceedsOutputAmount { deposit: u64, amount: u64 },

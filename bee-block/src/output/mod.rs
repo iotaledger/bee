@@ -38,7 +38,7 @@ pub(crate) use self::{
     feature::{MetadataFeatureLength, TagFeatureLength},
     native_token::NativeTokenCount,
     output_id::OutputIndex,
-    unlock_condition::{AddressUnlockCondition, StorageDepositAmount},
+    unlock_condition::AddressUnlockCondition,
 };
 pub use self::{
     alias::{AliasOutput, AliasOutputBuilder},

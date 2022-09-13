@@ -1,41 +1,30 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::ops::RangeInclusive;
-
-use packable::bounded::BoundedU64;
-
-use crate::{address::Address, constant::TOKEN_SUPPLY, Error};
-
-pub(crate) type StorageDepositAmount = BoundedU64<
-    { *StorageDepositReturnUnlockCondition::AMOUNT_RANGE.start() },
-    { *StorageDepositReturnUnlockCondition::AMOUNT_RANGE.end() },
->;
+use crate::{address::Address, output::verify_output_amount, protocol::ProtocolParameters, Error};
 
 /// Defines the amount of IOTAs used as storage deposit that have to be returned to the return [`Address`].
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, packable::Packable)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[packable(unpack_visitor = ProtocolParameters)]
 pub struct StorageDepositReturnUnlockCondition {
     // The [`Address`] to return the amount to.
     return_address: Address,
     // Amount of IOTA coins the consuming transaction should deposit to `return_address`.
-    #[packable(unpack_error_with = Error::InvalidStorageDepositAmount)]
-    amount: StorageDepositAmount,
+    #[packable(verify_with = verify_storage_deposit_return_amount)]
+    amount: u64,
 }
 
 impl StorageDepositReturnUnlockCondition {
     /// The [`UnlockCondition`](crate::output::UnlockCondition) kind of a [`StorageDepositReturnUnlockCondition`].
     pub const KIND: u8 = 1;
-    /// Valid amounts for a [`StorageDepositReturnUnlockCondition`].
-    pub const AMOUNT_RANGE: RangeInclusive<u64> = 1..=TOKEN_SUPPLY;
 
     /// Creates a new [`StorageDepositReturnUnlockCondition`].
     #[inline(always)]
-    pub fn new(return_address: Address, amount: u64) -> Result<Self, Error> {
-        Ok(Self {
-            return_address,
-            amount: amount.try_into().map_err(Error::InvalidStorageDepositAmount)?,
-        })
+    pub fn new(return_address: Address, amount: u64, protocol_parameters: &ProtocolParameters) -> Result<Self, Error> {
+        verify_storage_deposit_return_amount::<true>(&amount, protocol_parameters)?;
+
+        Ok(Self { return_address, amount })
     }
 
     /// Returns the return address.
@@ -47,8 +36,20 @@ impl StorageDepositReturnUnlockCondition {
     /// Returns the amount.
     #[inline(always)]
     pub fn amount(&self) -> u64 {
-        self.amount.get()
+        self.amount
     }
+}
+
+fn verify_storage_deposit_return_amount<const VERIFY: bool>(
+    amount: &u64,
+    protocol_parameters: &ProtocolParameters,
+) -> Result<(), Error> {
+    if VERIFY {
+        verify_output_amount::<VERIFY>(amount, protocol_parameters)
+            .map_err(|_| Error::InvalidStorageDepositAmount(*amount))?;
+    }
+
+    Ok(())
 }
 
 #[cfg(feature = "dto")]
