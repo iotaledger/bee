@@ -38,7 +38,6 @@ pub(crate) use self::{
     feature::{MetadataFeatureLength, TagFeatureLength},
     native_token::NativeTokenCount,
     output_id::OutputIndex,
-    treasury::TreasuryOutputAmount,
     unlock_condition::{AddressUnlockCondition, StorageDepositAmount},
 };
 pub use self::{
@@ -290,7 +289,7 @@ impl Packable for Output {
         visitor: &Self::UnpackVisitor,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         Ok(match u8::unpack::<_, VERIFY>(unpacker, &()).coerce()? {
-            TreasuryOutput::KIND => Output::from(TreasuryOutput::unpack::<_, VERIFY>(unpacker, &()).coerce()?),
+            TreasuryOutput::KIND => Output::from(TreasuryOutput::unpack::<_, VERIFY>(unpacker, visitor).coerce()?),
             BasicOutput::KIND => Output::from(BasicOutput::unpack::<_, VERIFY>(unpacker, visitor).coerce()?),
             AliasOutput::KIND => Output::from(AliasOutput::unpack::<_, VERIFY>(unpacker, visitor).coerce()?),
             FoundryOutput::KIND => Output::from(FoundryOutput::unpack::<_, VERIFY>(unpacker, visitor).coerce()?),
@@ -348,7 +347,7 @@ pub mod dto {
         nft_id::dto::NftIdDto,
         token_id::dto::TokenIdDto,
         token_scheme::dto::{SimpleTokenSchemeDto, TokenSchemeDto},
-        treasury::dto::TreasuryOutputDto,
+        treasury::dto::{try_from_treasury_output_dto_for_treasury_output, TreasuryOutputDto},
     };
     use crate::error::dto::DtoError;
 
@@ -385,7 +384,10 @@ pub mod dto {
         protocol_parameters: &ProtocolParameters,
     ) -> Result<Output, DtoError> {
         Ok(match value {
-            OutputDto::Treasury(o) => Output::Treasury(o.try_into()?),
+            OutputDto::Treasury(o) => Output::Treasury(try_from_treasury_output_dto_for_treasury_output(
+                o,
+                protocol_parameters,
+            )?),
             OutputDto::Basic(o) => Output::Basic(try_from_basic_output_dto_for_basic_output(o, protocol_parameters)?),
             OutputDto::Alias(o) => Output::Alias(try_from_alias_output_dto_for_alias_output(o, protocol_parameters)?),
             OutputDto::Foundry(o) => {

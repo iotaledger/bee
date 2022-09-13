@@ -120,9 +120,10 @@ fn tagged_data() {
 
 #[test]
 fn treasury_transaction() {
+    let protocol_parameters = protocol_parameters();
     let payload: Payload = TreasuryTransactionPayload::new(
         TreasuryInput::from_str(BLOCK_ID).unwrap(),
-        TreasuryOutput::new(1_000_000).unwrap(),
+        TreasuryOutput::new(1_000_000, &protocol_parameters).unwrap(),
     )
     .unwrap()
     .into();
@@ -134,6 +135,6 @@ fn treasury_transaction() {
     assert!(matches!(payload, Payload::TreasuryTransaction(_)));
     assert_eq!(
         payload,
-        PackableExt::unpack_verified(&mut packed.as_slice(), &protocol_parameters()).unwrap()
+        PackableExt::unpack_verified(&mut packed.as_slice(), &protocol_parameters).unwrap()
     );
 }

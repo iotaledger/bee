@@ -16,7 +16,7 @@ pub fn rand_receipt_milestone_option(protocol_parameters: &ProtocolParameters) -
         rand_milestone_index(),
         rand_bool(),
         vec![rand_migrated_funds_entry()],
-        rand_treasury_transaction_payload(),
+        rand_treasury_transaction_payload(protocol_parameters),
         protocol_parameters,
     )
     .unwrap()

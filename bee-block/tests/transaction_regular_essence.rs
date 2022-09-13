@@ -122,7 +122,7 @@ fn build_invalid_payload_kind() {
             .finish(&protocol_parameters)
             .unwrap(),
     );
-    let payload = rand_treasury_transaction_payload();
+    let payload = rand_treasury_transaction_payload(&protocol_parameters);
 
     let essence = RegularTransactionEssence::builder(rand_inputs_commitment())
         .with_inputs(vec![input1, input2])
@@ -280,7 +280,7 @@ fn build_invalid_output_kind() {
     let transaction_id = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
     let input = Input::Utxo(UtxoInput::new(transaction_id, 0).unwrap());
     let amount = 1_000_000;
-    let output = Output::Treasury(TreasuryOutput::new(amount).unwrap());
+    let output = Output::Treasury(TreasuryOutput::new(amount, &protocol_parameters).unwrap());
 
     let essence = RegularTransactionEssence::builder(rand_inputs_commitment())
         .add_input(input)

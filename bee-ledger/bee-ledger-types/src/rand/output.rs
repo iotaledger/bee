@@ -20,8 +20,8 @@ pub fn rand_unspent_output_id() -> Unspent {
 }
 
 /// Generates a random ledger [`TreasuryOutput`].
-pub fn rand_ledger_treasury_output() -> TreasuryOutput {
-    TreasuryOutput::new(rand_treasury_output(), rand_milestone_id())
+pub fn rand_ledger_treasury_output(protocol_parameters: &ProtocolParameters) -> TreasuryOutput {
+    TreasuryOutput::new(rand_treasury_output(protocol_parameters), rand_milestone_id())
 }
 
 /// Generates a random [`ConsumedOutput`].

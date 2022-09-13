@@ -79,7 +79,7 @@ pub mod dto {
     use crate::{
         error::dto::DtoError,
         input::dto::{InputDto, TreasuryInputDto},
-        output::dto::{OutputDto, TreasuryOutputDto},
+        output::dto::{try_from_treasury_output_dto_for_treasury_output, OutputDto, TreasuryOutputDto},
     };
 
     /// The payload type to define a treasury transaction.
@@ -101,22 +101,21 @@ pub mod dto {
         }
     }
 
-    impl TryFrom<&TreasuryTransactionPayloadDto> for TreasuryTransactionPayload {
-        type Error = DtoError;
-
-        fn try_from(value: &TreasuryTransactionPayloadDto) -> Result<Self, Self::Error> {
-            Ok(TreasuryTransactionPayload::new(
-                if let InputDto::Treasury(ref input) = value.input {
-                    input.try_into()?
-                } else {
-                    return Err(DtoError::InvalidField("input"));
-                },
-                if let OutputDto::Treasury(ref output) = value.output {
-                    output.try_into()?
-                } else {
-                    return Err(DtoError::InvalidField("output"));
-                },
-            )?)
-        }
+    pub fn try_from_treasury_transaction_payload_dto_for_treasury_transaction_payload(
+        value: &TreasuryTransactionPayloadDto,
+        protocol_parameters: &ProtocolParameters,
+    ) -> Result<TreasuryTransactionPayload, DtoError> {
+        Ok(TreasuryTransactionPayload::new(
+            if let InputDto::Treasury(ref input) = value.input {
+                input.try_into()?
+            } else {
+                return Err(DtoError::InvalidField("input"));
+            },
+            if let OutputDto::Treasury(ref output) = value.output {
+                try_from_treasury_output_dto_for_treasury_output(output, protocol_parameters)?
+            } else {
+                return Err(DtoError::InvalidField("output"));
+            },
+        )?)
     }
 }

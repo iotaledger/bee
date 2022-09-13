@@ -155,7 +155,10 @@ pub mod dto {
     use super::*;
     use crate::{
         error::dto::DtoError,
-        payload::dto::{PayloadDto, TreasuryTransactionPayloadDto},
+        payload::dto::{
+            try_from_treasury_transaction_payload_dto_for_treasury_transaction_payload, PayloadDto,
+            TreasuryTransactionPayloadDto,
+        },
         protocol::ProtocolParameters,
     };
 
@@ -195,7 +198,10 @@ pub mod dto {
             value.last,
             value.funds.iter().map(TryInto::try_into).collect::<Result<_, _>>()?,
             if let PayloadDto::TreasuryTransaction(ref transaction) = value.transaction {
-                (transaction.as_ref()).try_into()?
+                try_from_treasury_transaction_payload_dto_for_treasury_transaction_payload(
+                    transaction.as_ref(),
+                    protocol_parameters,
+                )?
             } else {
                 return Err(DtoError::InvalidField("transaction"));
             },

@@ -221,7 +221,9 @@ pub mod dto {
         milestone::dto::{try_from_milestone_payload_dto_for_milestone_payload, MilestonePayloadDto},
         tagged_data::dto::TaggedDataPayloadDto,
         transaction::dto::{try_from_transaction_payload_dto_for_transaction_payload, TransactionPayloadDto},
-        treasury_transaction::dto::TreasuryTransactionPayloadDto,
+        treasury_transaction::dto::{
+            try_from_treasury_transaction_payload_dto_for_treasury_transaction_payload, TreasuryTransactionPayloadDto,
+        },
     };
     use crate::error::dto::DtoError;
 
@@ -261,7 +263,12 @@ pub mod dto {
                 p.as_ref(),
                 protocol_parameters,
             )?),
-            PayloadDto::TreasuryTransaction(p) => Payload::from(TreasuryTransactionPayload::try_from(p.as_ref())?),
+            PayloadDto::TreasuryTransaction(p) => Payload::from(
+                try_from_treasury_transaction_payload_dto_for_treasury_transaction_payload(
+                    p.as_ref(),
+                    protocol_parameters,
+                )?,
+            ),
             PayloadDto::TaggedData(p) => Payload::from(TaggedDataPayload::try_from(p.as_ref())?),
         })
     }

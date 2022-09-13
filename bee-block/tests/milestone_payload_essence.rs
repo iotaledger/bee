@@ -58,7 +58,7 @@ fn getters() {
         vec![rand::receipt::rand_migrated_funds_entry()],
         TreasuryTransactionPayload::new(
             TreasuryInput::new(rand::milestone::rand_milestone_id()),
-            TreasuryOutput::new(1_000_000).unwrap(),
+            TreasuryOutput::new(1_000_000, &protocol_parameters).unwrap(),
         )
         .unwrap(),
         &protocol_parameters,

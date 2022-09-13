@@ -24,27 +24,29 @@ use packable::{error::UnpackError, PackableExt};
 
 #[test]
 fn pow_default_provider() {
+    let protocol_parameters = protocol_parameters();
     let block = BlockBuilder::<Miner>::new(rand_parents())
-        .finish(&protocol_parameters())
+        .finish(&protocol_parameters)
         .unwrap();
 
     let block_bytes = block.pack_to_vec();
     let score = PoWScorer::new().score(&block_bytes);
 
-    assert!(score >= protocol_parameters().min_pow_score() as f64);
+    assert!(score >= protocol_parameters.min_pow_score() as f64);
 }
 
 #[test]
 fn pow_provider() {
+    let protocol_parameters = protocol_parameters();
     let block = BlockBuilder::new(rand_parents())
         .with_nonce_provider(MinerBuilder::new().with_num_workers(num_cpus::get()).finish())
-        .finish(&protocol_parameters())
+        .finish(&protocol_parameters)
         .unwrap();
 
     let block_bytes = block.pack_to_vec();
     let score = PoWScorer::new().score(&block_bytes);
 
-    assert!(score >= protocol_parameters().min_pow_score() as f64);
+    assert!(score >= protocol_parameters.min_pow_score() as f64);
 }
 
 #[test]
@@ -63,9 +65,10 @@ fn invalid_length() {
 
 #[test]
 fn invalid_payload_kind() {
+    let protocol_parameters = protocol_parameters();
     let res = BlockBuilder::<Miner>::new(rand_parents())
-        .with_payload(rand_treasury_transaction_payload().into())
-        .finish(&protocol_parameters());
+        .with_payload(rand_treasury_transaction_payload(&protocol_parameters).into())
+        .finish(&protocol_parameters);
 
     assert!(matches!(res, Err(Error::InvalidPayloadKind(4))))
 }
@@ -107,15 +110,16 @@ fn unpack_invalid_remaining_bytes() {
 // Validate that a `unpack` ∘ `pack` round-trip results in the original block.
 #[test]
 fn pack_unpack_valid() {
+    let protocol_parameters = protocol_parameters();
     let block = BlockBuilder::<Miner>::new(rand_parents())
-        .finish(&protocol_parameters())
+        .finish(&protocol_parameters)
         .unwrap();
     let packed_block = block.pack_to_vec();
 
     assert_eq!(packed_block.len(), block.packed_len());
     assert_eq!(
         block,
-        PackableExt::unpack_verified(&mut packed_block.as_slice(), &protocol_parameters()).unwrap()
+        PackableExt::unpack_verified(&mut packed_block.as_slice(), &protocol_parameters).unwrap()
     );
 }
 

@@ -37,8 +37,12 @@ pub fn rand_output_id() -> OutputId {
 }
 
 /// Generates a random treasury output.
-pub fn rand_treasury_output() -> TreasuryOutput {
-    TreasuryOutput::new(rand_number_range(TreasuryOutput::AMOUNT_RANGE)).unwrap()
+pub fn rand_treasury_output(protocol_parameters: &ProtocolParameters) -> TreasuryOutput {
+    TreasuryOutput::new(
+        rand_number_range(0..protocol_parameters.token_supply()),
+        protocol_parameters,
+    )
+    .unwrap()
 }
 
 /// Generates a random [`BasicOutput`](BasicOutput).
@@ -130,7 +134,7 @@ pub fn rand_inputs_commitment() -> InputsCommitment {
 /// Generates a random [`Output`].
 pub fn rand_output(protocol_parameters: &ProtocolParameters) -> Output {
     match rand_number::<u64>() % 5 {
-        0 => rand_treasury_output().into(),
+        0 => rand_treasury_output(protocol_parameters).into(),
         1 => rand_basic_output(protocol_parameters).into(),
         2 => rand_alias_output(protocol_parameters).into(),
         3 => rand_foundry_output(protocol_parameters).into(),

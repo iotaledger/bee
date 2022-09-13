@@ -13,7 +13,6 @@ use crate::{
     output::{
         feature::FeatureCount, unlock_condition::UnlockConditionCount, AliasId, MetadataFeatureLength,
         NativeTokenCount, NftId, OutputIndex, StateMetadataLength, StorageDepositAmount, TagFeatureLength,
-        TreasuryOutputAmount,
     },
     parent::ParentCount,
     payload::{
@@ -86,7 +85,7 @@ pub enum Error {
     InvalidTokenSchemeKind(u8),
     InvalidTransactionAmountSum(u128),
     InvalidTransactionNativeTokensCount(u16),
-    InvalidTreasuryOutputAmount(<TreasuryOutputAmount as TryFrom<u64>>::Error),
+    InvalidTreasuryOutputAmount(u64),
     InvalidUnlockCount(<UnlockCount as TryFrom<usize>>::Error),
     InvalidUnlockKind(u8),
     InvalidUnlockReference(u16),
