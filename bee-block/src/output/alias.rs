@@ -204,7 +204,7 @@ impl AliasOutputBuilder {
     }
 
     ///
-    pub fn finish(self, _protocol_parameters: &ProtocolParameters) -> Result<AliasOutput, Error> {
+    pub fn finish(self, protocol_parameters: &ProtocolParameters) -> Result<AliasOutput, Error> {
         let state_index = self.state_index.unwrap_or(0);
         let foundry_counter = self.foundry_counter.unwrap_or(0);
 
@@ -246,6 +246,8 @@ impl AliasOutputBuilder {
                 Output::Alias(output.clone()).rent_cost(&rent_structure)
             }
         };
+
+        verify_output_amount::<true>(&output.amount, protocol_parameters)?;
 
         Ok(output)
     }

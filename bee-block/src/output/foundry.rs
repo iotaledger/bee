@@ -198,7 +198,7 @@ impl FoundryOutputBuilder {
     }
 
     ///
-    pub fn finish(self, _protocol_parameters: &ProtocolParameters) -> Result<FoundryOutput, Error> {
+    pub fn finish(self, protocol_parameters: &ProtocolParameters) -> Result<FoundryOutput, Error> {
         let unlock_conditions = UnlockConditions::new(self.unlock_conditions)?;
 
         verify_unlock_conditions(&unlock_conditions)?;
@@ -227,6 +227,8 @@ impl FoundryOutputBuilder {
                 Output::Foundry(output.clone()).rent_cost(&rent_structure)
             }
         };
+
+        verify_output_amount::<true>(&output.amount, protocol_parameters)?;
 
         Ok(output)
     }

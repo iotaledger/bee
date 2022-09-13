@@ -175,7 +175,7 @@ impl NftOutputBuilder {
     }
 
     ///
-    pub fn finish(self, _protocol_parameters: &ProtocolParameters) -> Result<NftOutput, Error> {
+    pub fn finish(self, protocol_parameters: &ProtocolParameters) -> Result<NftOutput, Error> {
         let unlock_conditions = UnlockConditions::new(self.unlock_conditions)?;
 
         verify_unlock_conditions(&unlock_conditions, &self.nft_id)?;
@@ -203,6 +203,8 @@ impl NftOutputBuilder {
                 Output::Nft(output.clone()).rent_cost(&rent_structure)
             }
         };
+
+        verify_output_amount::<true>(&output.amount, protocol_parameters)?;
 
         Ok(output)
     }

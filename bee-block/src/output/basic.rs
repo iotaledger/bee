@@ -130,7 +130,7 @@ impl BasicOutputBuilder {
     }
 
     ///
-    pub fn finish(self, _protocol_parameters: &ProtocolParameters) -> Result<BasicOutput, Error> {
+    pub fn finish(self, protocol_parameters: &ProtocolParameters) -> Result<BasicOutput, Error> {
         let unlock_conditions = UnlockConditions::new(self.unlock_conditions)?;
 
         verify_unlock_conditions::<true>(&unlock_conditions)?;
@@ -152,6 +152,8 @@ impl BasicOutputBuilder {
                 Output::Basic(output.clone()).rent_cost(&rent_structure)
             }
         };
+
+        verify_output_amount::<true>(&output.amount, protocol_parameters)?;
 
         Ok(output)
     }
