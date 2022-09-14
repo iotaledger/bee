@@ -28,13 +28,13 @@ fn new_valid() {
         MilestoneEssence::new(
             MilestoneIndex(0),
             0,
+            protocol_parameters().protocol_version(),
             rand_milestone_id(),
             rand_parents(),
             rand_merkle_root(),
             rand_merkle_root(),
             vec![],
             MilestoneOptions::new(vec![]).unwrap(),
-            &protocol_parameters()
         )
         .is_ok()
     );
@@ -82,13 +82,13 @@ fn getters() {
     let milestone_payload = MilestoneEssence::new(
         index,
         timestamp,
+        protocol_parameters.protocol_version(),
         previous_milestone_id,
         parents.clone(),
         inclusion_merkle_root,
         applied_merkle_root,
         vec![],
         options,
-        &protocol_parameters,
     )
     .unwrap();
 
@@ -123,13 +123,13 @@ fn pack_unpack_valid() {
     let milestone_payload = MilestoneEssence::new(
         MilestoneIndex(0),
         0,
+        protocol_parameters.protocol_version(),
         rand_milestone_id(),
         rand_parents(),
         rand_merkle_root(),
         rand_merkle_root(),
         vec![],
         MilestoneOptions::new(vec![]).unwrap(),
-        &protocol_parameters,
     )
     .unwrap();
 

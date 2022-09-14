@@ -55,3 +55,5 @@ pub use self::{
     block_id::BlockId,
     error::Error,
 };
+
+pub(crate) const PROTOCOL_VERSION: u8 = 2;

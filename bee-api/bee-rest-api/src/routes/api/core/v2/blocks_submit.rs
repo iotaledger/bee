@@ -152,7 +152,7 @@ pub(crate) fn build_block<B: StorageBackend>(
             builder = builder.with_payload(payload)
         }
         builder
-            .finish(&protocol_parameters)
+            .finish(protocol_parameters.min_pow_score())
             .map_err(|e| ApiError::DependencyError(DependencyError::InvalidBlock(e)))?
     } else {
         if !args.rest_api_config.feature_proof_of_work() {
@@ -168,7 +168,7 @@ pub(crate) fn build_block<B: StorageBackend>(
             builder = builder.with_payload(payload)
         }
         builder
-            .finish(&protocol_parameters)
+            .finish(protocol_parameters.min_pow_score())
             .map_err(|e| ApiError::DependencyError(DependencyError::InvalidBlock(e)))?
     };
     Ok(block)

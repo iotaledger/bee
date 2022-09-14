@@ -40,7 +40,7 @@ static A: CheckAlloc = CheckAlloc;
 fn main() {
     let block = BlockBuilder::new(rand_parents())
         .with_nonce_provider(MinerBuilder::new().with_num_workers(num_cpus::get()).finish())
-        .finish(&protocol_parameters())
+        .finish(protocol_parameters().min_pow_score())
         .unwrap();
 
     let block_bytes = block.pack_to_vec();

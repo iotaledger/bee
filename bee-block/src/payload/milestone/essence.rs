@@ -44,13 +44,13 @@ impl MilestoneEssence {
     pub fn new(
         index: MilestoneIndex,
         timestamp: u32,
+        protocol_version: u8,
         previous_milestone_id: MilestoneId,
         parents: Parents,
         inclusion_merkle_root: MerkleRoot,
         applied_merkle_root: MerkleRoot,
         metadata: Vec<u8>,
         options: MilestoneOptions,
-        protocol_parameters: &ProtocolParameters,
     ) -> Result<Self, Error> {
         let metadata = metadata
             .into_boxed_slice()
@@ -60,7 +60,7 @@ impl MilestoneEssence {
         Ok(Self {
             index,
             timestamp,
-            protocol_version: protocol_parameters.protocol_version(),
+            protocol_version,
             previous_milestone_id,
             parents,
             inclusion_merkle_root,

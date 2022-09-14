@@ -222,14 +222,6 @@ pub mod dto {
         value: &MilestonePayloadDto,
         protocol_parameters: &ProtocolParameters,
     ) -> Result<MilestonePayload, DtoError> {
-        if value.protocol_version != protocol_parameters.protocol_version() {
-            return Err(Error::ProtocolVersionMismatch {
-                expected: protocol_parameters.protocol_version(),
-                actual: value.protocol_version,
-            }
-            .into());
-        }
-
         let essence = {
             let index = value.index;
             let timestamp = value.timestamp;
@@ -265,13 +257,13 @@ pub mod dto {
             MilestoneEssence::new(
                 MilestoneIndex(index),
                 timestamp,
+                protocol_parameters.protocol_version(),
                 previous_milestone_id,
                 Parents::new(parent_ids)?,
                 inclusion_merkle_root,
                 applied_merkle_root,
                 metadata,
                 options,
-                protocol_parameters,
             )?
         };
 

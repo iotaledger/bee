@@ -82,13 +82,13 @@ fn milestone() {
         MilestoneEssence::new(
             MilestoneIndex(0),
             0,
+            protocol_parameters.protocol_version(),
             rand_milestone_id(),
             rand_parents(),
             rand_merkle_root(),
             rand_merkle_root(),
             vec![],
             MilestoneOptions::new(vec![]).unwrap(),
-            &protocol_parameters,
         )
         .unwrap(),
         vec![Signature::from(Ed25519Signature::new([0; 32], [0; 64]))],

@@ -24,29 +24,29 @@ use packable::{error::UnpackError, PackableExt};
 
 #[test]
 fn pow_default_provider() {
-    let protocol_parameters = protocol_parameters();
+    let min_pow_score = protocol_parameters().min_pow_score();
     let block = BlockBuilder::<Miner>::new(rand_parents())
-        .finish(&protocol_parameters)
+        .finish(min_pow_score)
         .unwrap();
 
     let block_bytes = block.pack_to_vec();
     let score = PoWScorer::new().score(&block_bytes);
 
-    assert!(score >= protocol_parameters.min_pow_score() as f64);
+    assert!(score >= min_pow_score as f64);
 }
 
 #[test]
 fn pow_provider() {
-    let protocol_parameters = protocol_parameters();
+    let min_pow_score = protocol_parameters().min_pow_score();
     let block = BlockBuilder::new(rand_parents())
         .with_nonce_provider(MinerBuilder::new().with_num_workers(num_cpus::get()).finish())
-        .finish(&protocol_parameters)
+        .finish(min_pow_score)
         .unwrap();
 
     let block_bytes = block.pack_to_vec();
     let score = PoWScorer::new().score(&block_bytes);
 
-    assert!(score >= protocol_parameters.min_pow_score() as f64);
+    assert!(score >= min_pow_score as f64);
 }
 
 #[test]
@@ -58,7 +58,7 @@ fn invalid_length() {
                 .unwrap()
                 .into(),
         )
-        .finish(&protocol_parameters());
+        .finish(protocol_parameters().min_pow_score());
 
     assert!(matches!(res, Err(Error::InvalidBlockLength(len)) if len == Block::LENGTH_MAX + 88));
 }
@@ -68,7 +68,7 @@ fn invalid_payload_kind() {
     let protocol_parameters = protocol_parameters();
     let res = BlockBuilder::<Miner>::new(rand_parents())
         .with_payload(rand_treasury_transaction_payload(protocol_parameters.token_supply()).into())
-        .finish(&protocol_parameters);
+        .finish(protocol_parameters.min_pow_score());
 
     assert!(matches!(res, Err(Error::InvalidPayloadKind(4))))
 }
@@ -112,7 +112,7 @@ fn unpack_invalid_remaining_bytes() {
 fn pack_unpack_valid() {
     let protocol_parameters = protocol_parameters();
     let block = BlockBuilder::<Miner>::new(rand_parents())
-        .finish(&protocol_parameters)
+        .finish(protocol_parameters.min_pow_score())
         .unwrap();
     let packed_block = block.pack_to_vec();
 
@@ -133,7 +133,7 @@ fn getters() {
     let block = BlockBuilder::new(parents.clone())
         .with_payload(payload.clone())
         .with_nonce_provider(nonce)
-        .finish(&protocol_parameters)
+        .finish(protocol_parameters.min_pow_score())
         .unwrap();
 
     assert_eq!(block.protocol_version(), protocol_parameters.protocol_version());

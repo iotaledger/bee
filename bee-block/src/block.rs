@@ -16,13 +16,14 @@ use crate::{
     parent::Parents,
     payload::{OptionalPayload, Payload},
     protocol::ProtocolParameters,
-    BlockId, Error,
+    BlockId, Error, PROTOCOL_VERSION,
 };
 
 /// A builder to build a [`Block`].
 #[derive(Clone)]
 #[must_use]
 pub struct BlockBuilder<P: NonceProvider = Miner> {
+    protocol_version: Option<u8>,
     parents: Parents,
     payload: Option<Payload>,
     nonce_provider: Option<P>,
@@ -35,10 +36,18 @@ impl<P: NonceProvider> BlockBuilder<P> {
     #[inline(always)]
     pub fn new(parents: Parents) -> Self {
         Self {
+            protocol_version: None,
             parents,
             payload: None,
             nonce_provider: None,
         }
+    }
+
+    /// Adds a protocol version to a [`BlockBuilder`].
+    #[inline(always)]
+    pub fn with_protocol_version(mut self, protocol_version: u8) -> Self {
+        self.protocol_version = Some(protocol_version);
+        self
     }
 
     /// Adds a payload to a [`BlockBuilder`].
@@ -56,11 +65,11 @@ impl<P: NonceProvider> BlockBuilder<P> {
     }
 
     /// Finishes the [`BlockBuilder`] into a [`Block`].
-    pub fn finish(self, protocol_parameters: &ProtocolParameters) -> Result<Block, Error> {
+    pub fn finish(self, min_pow_score: u32) -> Result<Block, Error> {
         verify_payload(self.payload.as_ref())?;
 
         let mut block = Block {
-            protocol_version: protocol_parameters.protocol_version(),
+            protocol_version: self.protocol_version.unwrap_or(PROTOCOL_VERSION),
             parents: self.parents,
             payload: self.payload.into(),
             nonce: 0,
@@ -77,7 +86,7 @@ impl<P: NonceProvider> BlockBuilder<P> {
         block.nonce = nonce_provider
             .nonce(
                 &block_bytes[..block_bytes.len() - core::mem::size_of::<u64>()],
-                protocol_parameters.min_pow_score(),
+                min_pow_score,
             )
             .unwrap_or(Self::DEFAULT_NONCE);
 
@@ -279,14 +288,6 @@ pub mod dto {
         value: &BlockDto,
         protocol_parameters: &ProtocolParameters,
     ) -> Result<Block, DtoError> {
-        if value.protocol_version != protocol_parameters.protocol_version() {
-            return Err(Error::ProtocolVersionMismatch {
-                expected: protocol_parameters.protocol_version(),
-                actual: value.protocol_version,
-            }
-            .into());
-        }
-
         let parents = Parents::new(
             value
                 .parents
@@ -295,17 +296,19 @@ pub mod dto {
                 .collect::<Result<Vec<BlockId>, DtoError>>()?,
         )?;
 
-        let mut builder = BlockBuilder::new(parents).with_nonce_provider(
-            value
-                .nonce
-                .parse::<u64>()
-                .map_err(|_| DtoError::InvalidField("nonce"))?,
-        );
+        let mut builder = BlockBuilder::new(parents)
+            .with_protocol_version(value.protocol_version)
+            .with_nonce_provider(
+                value
+                    .nonce
+                    .parse::<u64>()
+                    .map_err(|_| DtoError::InvalidField("nonce"))?,
+            );
         if let Some(p) = value.payload.as_ref() {
             builder = builder.with_payload(try_from_payload_dto_payload(p, protocol_parameters)?);
         }
 
-        Ok(builder.finish(protocol_parameters)?)
+        Ok(builder.finish(protocol_parameters.min_pow_score())?)
     }
 }
 

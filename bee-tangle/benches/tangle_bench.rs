@@ -16,7 +16,7 @@ use criterion::*;
 use rand::seq::SliceRandom;
 
 fn random_input() -> (Block, BlockId, BlockMetadata) {
-    let block = rand_block(&protocol_parameters());
+    let block = rand_block(protocol_parameters().min_pow_score());
     let id = block.id();
 
     (block, id, rand_block_metadata())
