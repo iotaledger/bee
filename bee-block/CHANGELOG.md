@@ -21,9 +21,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 1.0.0-beta.8 - 2022-XX-XX
 
+### Added
+
+- `helper` module with a `network_name_to_id` function;
+- `Error::NetworkIdMismatch`;
+
 ### Changed
 
 - Updated dependencies;
+- `block` module is now public;
+
+### Removed
+
+- `constant` module;
+- `OutputAmount`, `StorageDepositAmount`, `TreasuryOutputAmount` and `MigratedFundsAmount`;
 
 ## 1.0.0-beta.7 - 2022-08-30
 
