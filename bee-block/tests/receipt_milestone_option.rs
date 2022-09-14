@@ -35,7 +35,7 @@ fn kind() {
 
 #[test]
 fn new_valid() {
-    let protocol_parameters = protocol_parameters();
+    let token_supply = protocol_parameters().token_supply();
     let receipt = ReceiptMilestoneOption::new(
         MilestoneIndex::new(0),
         true,
@@ -44,16 +44,16 @@ fn new_valid() {
                 TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
                 Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
                 AMOUNT,
-                &protocol_parameters,
+                token_supply,
             )
             .unwrap(),
         ],
         TreasuryTransactionPayload::new(
             TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap()),
-            TreasuryOutput::new(AMOUNT, protocol_parameters.token_supply()).unwrap(),
+            TreasuryOutput::new(AMOUNT, token_supply).unwrap(),
         )
         .unwrap(),
-        protocol_parameters.token_supply(),
+        token_supply,
     );
 
     assert!(receipt.is_ok());
@@ -82,7 +82,7 @@ fn new_invalid_receipt_funds_count_low() {
 
 #[test]
 fn new_invalid_receipt_funds_count_high() {
-    let protocol_parameters = protocol_parameters();
+    let token_supply = protocol_parameters().token_supply();
     let receipt = ReceiptMilestoneOption::new(
         MilestoneIndex::new(0),
         false,
@@ -92,17 +92,17 @@ fn new_invalid_receipt_funds_count_high() {
                     TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
                     Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
                     AMOUNT,
-                    &protocol_parameters,
+                    token_supply,
                 )
                 .unwrap()
             })
             .collect(),
         TreasuryTransactionPayload::new(
             TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap()),
-            TreasuryOutput::new(AMOUNT, protocol_parameters.token_supply()).unwrap(),
+            TreasuryOutput::new(AMOUNT, token_supply).unwrap(),
         )
         .unwrap(),
-        protocol_parameters.token_supply(),
+        token_supply,
     );
 
     assert!(matches!(
@@ -113,7 +113,7 @@ fn new_invalid_receipt_funds_count_high() {
 
 #[test]
 fn new_invalid_transaction_outputs_not_sorted() {
-    let protocol_parameters = protocol_parameters();
+    let token_supply = protocol_parameters().token_supply();
     let mut new_tail_transaction_hash = TAIL_TRANSACTION_HASH_BYTES;
     new_tail_transaction_hash[0] = 223;
 
@@ -122,14 +122,14 @@ fn new_invalid_transaction_outputs_not_sorted() {
             TailTransactionHash::new(new_tail_transaction_hash).unwrap(),
             Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
             AMOUNT,
-            &protocol_parameters,
+            token_supply,
         )
         .unwrap(),
         MigratedFundsEntry::new(
             TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
             Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
             AMOUNT,
-            &protocol_parameters,
+            token_supply,
         )
         .unwrap(),
     ];
@@ -140,10 +140,10 @@ fn new_invalid_transaction_outputs_not_sorted() {
         migrated_funds,
         TreasuryTransactionPayload::new(
             TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap()),
-            TreasuryOutput::new(AMOUNT, protocol_parameters.token_supply()).unwrap(),
+            TreasuryOutput::new(AMOUNT, token_supply).unwrap(),
         )
         .unwrap(),
-        protocol_parameters.token_supply(),
+        token_supply,
     );
 
     assert!(matches!(receipt, Err(Error::ReceiptFundsNotUniqueSorted)));
@@ -151,12 +151,12 @@ fn new_invalid_transaction_outputs_not_sorted() {
 
 #[test]
 fn new_invalid_tail_transaction_hashes_not_unique() {
-    let protocol_parameters = protocol_parameters();
+    let token_supply = protocol_parameters().token_supply();
     let migrated_funds = MigratedFundsEntry::new(
         TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
         Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
         AMOUNT,
-        &protocol_parameters,
+        token_supply,
     )
     .unwrap();
 
@@ -166,10 +166,10 @@ fn new_invalid_tail_transaction_hashes_not_unique() {
         vec![migrated_funds; 2],
         TreasuryTransactionPayload::new(
             TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap()),
-            TreasuryOutput::new(AMOUNT, protocol_parameters.token_supply()).unwrap(),
+            TreasuryOutput::new(AMOUNT, token_supply).unwrap(),
         )
         .unwrap(),
-        protocol_parameters.token_supply(),
+        token_supply,
     );
 
     assert!(matches!(receipt, Err(Error::ReceiptFundsNotUniqueSorted)));
@@ -186,7 +186,7 @@ fn pack_unpack_valid() {
                 TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
                 Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
                 AMOUNT,
-                &protocol_parameters,
+                protocol_parameters.token_supply(),
             )
             .unwrap(),
         ],
@@ -210,7 +210,7 @@ fn pack_unpack_valid() {
 
 #[test]
 fn getters() {
-    let protocol_parameters = protocol_parameters();
+    let token_supply = protocol_parameters().token_supply();
     let migrated_at = MilestoneIndex::new(rand_number());
     let last = true;
     let funds = vec![
@@ -218,24 +218,18 @@ fn getters() {
             TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
             Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
             AMOUNT,
-            &protocol_parameters,
+            token_supply,
         )
         .unwrap(),
     ];
     let transaction = TreasuryTransactionPayload::new(
         TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap()),
-        TreasuryOutput::new(AMOUNT, protocol_parameters.token_supply()).unwrap(),
+        TreasuryOutput::new(AMOUNT, token_supply).unwrap(),
     )
     .unwrap();
 
-    let receipt = ReceiptMilestoneOption::new(
-        migrated_at,
-        last,
-        funds.clone(),
-        transaction.clone(),
-        protocol_parameters.token_supply(),
-    )
-    .unwrap();
+    let receipt =
+        ReceiptMilestoneOption::new(migrated_at, last, funds.clone(), transaction.clone(), token_supply).unwrap();
 
     assert_eq!(receipt.migrated_at(), migrated_at);
     assert_eq!(receipt.last(), last);

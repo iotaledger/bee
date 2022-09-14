@@ -110,7 +110,7 @@ fn import_milestone_diffs<U: Unpacker<Error = std::io::Error>, B: StorageBackend
                 diff.milestone().id(),
                 receipt,
                 TreasuryOutput::new(consumed_treasury.0, consumed_treasury.1),
-                protocol_parameters,
+                protocol_parameters.token_supply(),
             )?)
         } else {
             None

@@ -164,7 +164,6 @@ pub mod dto {
             try_from_treasury_transaction_payload_dto_for_treasury_transaction_payload, PayloadDto,
             TreasuryTransactionPayloadDto,
         },
-        protocol::ProtocolParameters,
     };
 
     ///
@@ -196,7 +195,7 @@ pub mod dto {
 
     pub fn try_from_receipt_milestone_option_dto_for_receipt_milestone_option(
         value: &ReceiptMilestoneOptionDto,
-        protocol_parameters: &ProtocolParameters,
+        token_supply: u64,
     ) -> Result<ReceiptMilestoneOption, DtoError> {
         Ok(ReceiptMilestoneOption::new(
             MilestoneIndex(value.migrated_at),
@@ -204,17 +203,17 @@ pub mod dto {
             value
                 .funds
                 .iter()
-                .map(|f| try_from_migrated_funds_entry_dto_for_migrated_funds_entry(f, protocol_parameters))
+                .map(|f| try_from_migrated_funds_entry_dto_for_migrated_funds_entry(f, token_supply))
                 .collect::<Result<_, _>>()?,
             if let PayloadDto::TreasuryTransaction(ref transaction) = value.transaction {
                 try_from_treasury_transaction_payload_dto_for_treasury_transaction_payload(
                     transaction.as_ref(),
-                    protocol_parameters.token_supply(),
+                    token_supply,
                 )?
             } else {
                 return Err(DtoError::InvalidField("transaction"));
             },
-            protocol_parameters.token_supply(),
+            token_supply,
         )?)
     }
 }

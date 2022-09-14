@@ -224,11 +224,11 @@ pub mod dto {
 
     pub fn try_from_milestone_option_dto_for_milestone_option(
         value: &MilestoneOptionDto,
-        protocol_parameters: &ProtocolParameters,
+        token_supply: u64,
     ) -> Result<MilestoneOption, DtoError> {
         Ok(match value {
             MilestoneOptionDto::Receipt(v) => MilestoneOption::Receipt(
-                try_from_receipt_milestone_option_dto_for_receipt_milestone_option(v, protocol_parameters)?,
+                try_from_receipt_milestone_option_dto_for_receipt_milestone_option(v, token_supply)?,
             ),
             MilestoneOptionDto::Parameters(v) => MilestoneOption::Parameters(v.try_into()?),
         })

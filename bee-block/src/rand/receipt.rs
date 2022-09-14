@@ -6,7 +6,6 @@ use bytemuck::cast_slice;
 
 use crate::{
     payload::milestone::option::{MigratedFundsEntry, TailTransactionHash},
-    protocol::ProtocolParameters,
     rand::{address::rand_address, number::rand_number_range, string::rand_string_charset},
 };
 
@@ -24,12 +23,12 @@ pub fn rand_tail_transaction_hash() -> TailTransactionHash {
 }
 
 /// Generates a random migrated funds entry.
-pub fn rand_migrated_funds_entry(protocol_parameters: &ProtocolParameters) -> MigratedFundsEntry {
+pub fn rand_migrated_funds_entry(token_supply: u64) -> MigratedFundsEntry {
     MigratedFundsEntry::new(
         rand_tail_transaction_hash(),
         rand_address(),
-        rand_number_range(MigratedFundsEntry::AMOUNT_MIN..protocol_parameters.token_supply()),
-        protocol_parameters,
+        rand_number_range(MigratedFundsEntry::AMOUNT_MIN..token_supply),
+        token_supply,
     )
     .unwrap()
 }

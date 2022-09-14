@@ -3,7 +3,6 @@
 
 use crate::{
     payload::milestone::ReceiptMilestoneOption,
-    protocol::ProtocolParameters,
     rand::{
         bool::rand_bool, milestone::rand_milestone_index, payload::rand_treasury_transaction_payload,
         receipt::rand_migrated_funds_entry,
@@ -11,13 +10,13 @@ use crate::{
 };
 
 /// Generates a random receipt milestone option.
-pub fn rand_receipt_milestone_option(protocol_parameters: &ProtocolParameters) -> ReceiptMilestoneOption {
+pub fn rand_receipt_milestone_option(token_supply: u64) -> ReceiptMilestoneOption {
     ReceiptMilestoneOption::new(
         rand_milestone_index(),
         rand_bool(),
-        vec![rand_migrated_funds_entry(protocol_parameters)],
-        rand_treasury_transaction_payload(protocol_parameters.token_supply()),
-        protocol_parameters.token_supply(),
+        vec![rand_migrated_funds_entry(token_supply)],
+        rand_treasury_transaction_payload(token_supply),
+        token_supply,
     )
     .unwrap()
 }

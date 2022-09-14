@@ -19,7 +19,7 @@ fn new_valid() {
     let tth = rand_tail_transaction_hash();
     let address = Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap());
     let amount = 42424242;
-    let mfe = MigratedFundsEntry::new(tth.clone(), address, amount, &protocol_parameters()).unwrap();
+    let mfe = MigratedFundsEntry::new(tth.clone(), address, amount, protocol_parameters().token_supply()).unwrap();
 
     assert_eq!(mfe.tail_transaction_hash(), &tth);
     assert_eq!(*mfe.address(), address);
@@ -28,17 +28,17 @@ fn new_valid() {
 
 #[test]
 fn new_invalid_amount() {
-    let protocol_parameters = protocol_parameters();
+    let token_supply = protocol_parameters().token_supply();
 
     assert!(matches!(
-            MigratedFundsEntry::new(
-                rand_tail_transaction_hash(),
-                Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-                protocol_parameters.token_supply() + 1,
-    &            protocol_parameters
-            ),
-            Err(Error::InvalidMigratedFundsEntryAmount(n)) if n == protocol_parameters.token_supply() + 1
-        ));
+        MigratedFundsEntry::new(
+            rand_tail_transaction_hash(),
+            Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+            token_supply + 1,
+          token_supply
+        ),
+        Err(Error::InvalidMigratedFundsEntryAmount(n)) if n == token_supply + 1
+    ));
 }
 
 #[test]
@@ -47,7 +47,7 @@ fn packed_len() {
         rand_tail_transaction_hash(),
         Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
         42424242,
-        &protocol_parameters(),
+        protocol_parameters().token_supply(),
     )
     .unwrap();
 
@@ -60,7 +60,13 @@ fn pack_unpack_valid() {
     let protocol_parameters = protocol_parameters();
     let address = Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap());
     let amount = 42424242;
-    let mfe_1 = MigratedFundsEntry::new(rand_tail_transaction_hash(), address, amount, &protocol_parameters).unwrap();
+    let mfe_1 = MigratedFundsEntry::new(
+        rand_tail_transaction_hash(),
+        address,
+        amount,
+        protocol_parameters.token_supply(),
+    )
+    .unwrap();
     let mfe_2 = MigratedFundsEntry::unpack_verified(&mut mfe_1.pack_to_vec().as_slice(), &protocol_parameters).unwrap();
 
     assert_eq!(mfe_1.tail_transaction_hash(), mfe_2.tail_transaction_hash());

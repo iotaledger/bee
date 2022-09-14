@@ -253,7 +253,7 @@ pub mod dto {
                 value
                     .options
                     .iter()
-                    .map(|o| try_from_milestone_option_dto_for_milestone_option(o, protocol_parameters))
+                    .map(|o| try_from_milestone_option_dto_for_milestone_option(o, protocol_parameters.token_supply()))
                     .collect::<Result<Vec<_>, _>>()?,
             )?;
             let metadata = if !value.metadata.is_empty() {

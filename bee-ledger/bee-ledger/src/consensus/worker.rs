@@ -58,11 +58,11 @@ pub(crate) fn migration_from_milestone(
     milestone_id: MilestoneId,
     receipt: &ReceiptMilestoneOption,
     consumed_treasury: TreasuryOutput,
-    protocol_parameters: &ProtocolParameters,
+    token_supply: u64,
 ) -> Result<Migration, Error> {
     let receipt = Receipt::new(receipt.clone(), milestone_index);
 
-    receipt.validate(&consumed_treasury, protocol_parameters)?;
+    receipt.validate(&consumed_treasury, token_supply)?;
 
     let created_treasury = TreasuryOutput::new(receipt.inner().transaction().output().clone(), milestone_id);
 
@@ -76,7 +76,7 @@ async fn confirm<N: Node>(
     block_id: BlockId,
     ledger_index: &mut LedgerIndex,
     receipt_migrated_at: &mut MilestoneIndex,
-    protocol_parameters: &ProtocolParameters,
+    token_supply: u64,
 ) -> Result<(), Error>
 where
     N::Backend: StorageBackend,
@@ -135,7 +135,7 @@ where
                             // PANIC: funds are already syntactically verified as part of the receipt validation.
                             .unwrap()
                             .add_unlock_condition(AddressUnlockCondition::new(*fund.address()).into())
-                            .finish(protocol_parameters.token_supply())?,
+                            .finish(token_supply)?,
                     ),
                 ),
             );
@@ -159,7 +159,7 @@ where
             milestone_id,
             receipt,
             storage::fetch_unspent_treasury_output(storage)?,
-            protocol_parameters,
+            token_supply,
         )?)
     } else {
         None
@@ -325,7 +325,7 @@ where
                             block_id,
                             &mut ledger_index,
                             &mut receipt_migrated_at,
-                            &protocol_parameters,
+                            protocol_parameters.token_supply(),
                         )
                         .await
                         {

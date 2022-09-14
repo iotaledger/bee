@@ -55,7 +55,9 @@ fn getters() {
     let receipt = ReceiptMilestoneOption::new(
         index,
         true,
-        vec![rand::receipt::rand_migrated_funds_entry(&protocol_parameters)],
+        vec![rand::receipt::rand_migrated_funds_entry(
+            protocol_parameters.token_supply(),
+        )],
         TreasuryTransactionPayload::new(
             TreasuryInput::new(rand::milestone::rand_milestone_id()),
             TreasuryOutput::new(1_000_000, protocol_parameters.token_supply()).unwrap(),

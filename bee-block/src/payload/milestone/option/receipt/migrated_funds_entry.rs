@@ -16,7 +16,7 @@ pub struct MigratedFundsEntry {
     // The target address of the migrated funds.
     address: Address,
     // The migrated amount.
-    #[packable(verify_with = verify_amount)]
+    #[packable(verify_with = verify_amount_packable)]
     amount: u64,
 }
 
@@ -29,9 +29,9 @@ impl MigratedFundsEntry {
         tail_transaction_hash: TailTransactionHash,
         address: Address,
         amount: u64,
-        protocol_parameters: &ProtocolParameters,
+        token_supply: u64,
     ) -> Result<Self, Error> {
-        verify_amount::<true>(&amount, protocol_parameters)?;
+        verify_amount::<true>(&amount, &token_supply)?;
 
         Ok(Self {
             tail_transaction_hash,
@@ -59,12 +59,19 @@ impl MigratedFundsEntry {
     }
 }
 
-fn verify_amount<const VERIFY: bool>(amount: &u64, protocol_parameters: &ProtocolParameters) -> Result<(), Error> {
-    if VERIFY && (*amount < MigratedFundsEntry::AMOUNT_MIN || *amount > protocol_parameters.token_supply()) {
+fn verify_amount<const VERIFY: bool>(amount: &u64, token_supply: &u64) -> Result<(), Error> {
+    if VERIFY && (*amount < MigratedFundsEntry::AMOUNT_MIN || amount > token_supply) {
         Err(Error::InvalidMigratedFundsEntryAmount(*amount))
     } else {
         Ok(())
     }
+}
+
+fn verify_amount_packable<const VERIFY: bool>(
+    amount: &u64,
+    protocol_parameters: &ProtocolParameters,
+) -> Result<(), Error> {
+    verify_amount::<VERIFY>(amount, &protocol_parameters.token_supply())
 }
 
 #[cfg(feature = "dto")]
@@ -95,7 +102,7 @@ pub mod dto {
 
     pub fn try_from_migrated_funds_entry_dto_for_migrated_funds_entry(
         value: &MigratedFundsEntryDto,
-        protocol_parameters: &ProtocolParameters,
+        token_supply: u64,
     ) -> Result<MigratedFundsEntry, DtoError> {
         let tail_transaction_hash = prefix_hex::decode(&value.tail_transaction_hash)
             .map_err(|_| DtoError::InvalidField("tailTransactionHash"))?;
@@ -103,7 +110,7 @@ pub mod dto {
             TailTransactionHash::new(tail_transaction_hash)?,
             (&value.address).try_into()?,
             value.deposit,
-            protocol_parameters,
+            token_supply,
         )?)
     }
 }
