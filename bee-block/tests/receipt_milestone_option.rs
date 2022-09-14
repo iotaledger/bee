@@ -50,7 +50,7 @@ fn new_valid() {
         ],
         TreasuryTransactionPayload::new(
             TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap()),
-            TreasuryOutput::new(AMOUNT, &protocol_parameters).unwrap(),
+            TreasuryOutput::new(AMOUNT, protocol_parameters.token_supply()).unwrap(),
         )
         .unwrap(),
         &protocol_parameters,
@@ -68,7 +68,7 @@ fn new_invalid_receipt_funds_count_low() {
         vec![],
         TreasuryTransactionPayload::new(
             TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap()),
-            TreasuryOutput::new(AMOUNT, &protocol_parameters).unwrap(),
+            TreasuryOutput::new(AMOUNT, protocol_parameters.token_supply()).unwrap(),
         )
         .unwrap(),
         &protocol_parameters,
@@ -99,7 +99,7 @@ fn new_invalid_receipt_funds_count_high() {
             .collect(),
         TreasuryTransactionPayload::new(
             TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap()),
-            TreasuryOutput::new(AMOUNT, &protocol_parameters).unwrap(),
+            TreasuryOutput::new(AMOUNT, protocol_parameters.token_supply()).unwrap(),
         )
         .unwrap(),
         &protocol_parameters,
@@ -140,7 +140,7 @@ fn new_invalid_transaction_outputs_not_sorted() {
         migrated_funds,
         TreasuryTransactionPayload::new(
             TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap()),
-            TreasuryOutput::new(AMOUNT, &protocol_parameters).unwrap(),
+            TreasuryOutput::new(AMOUNT, protocol_parameters.token_supply()).unwrap(),
         )
         .unwrap(),
         &protocol_parameters,
@@ -166,7 +166,7 @@ fn new_invalid_tail_transaction_hashes_not_unique() {
         vec![migrated_funds; 2],
         TreasuryTransactionPayload::new(
             TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap()),
-            TreasuryOutput::new(AMOUNT, &protocol_parameters).unwrap(),
+            TreasuryOutput::new(AMOUNT, protocol_parameters.token_supply()).unwrap(),
         )
         .unwrap(),
         &protocol_parameters,
@@ -192,7 +192,7 @@ fn pack_unpack_valid() {
         ],
         TreasuryTransactionPayload::new(
             TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap()),
-            TreasuryOutput::new(AMOUNT, &protocol_parameters).unwrap(),
+            TreasuryOutput::new(AMOUNT, protocol_parameters.token_supply()).unwrap(),
         )
         .unwrap(),
         &protocol_parameters,
@@ -224,7 +224,7 @@ fn getters() {
     ];
     let transaction = TreasuryTransactionPayload::new(
         TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap()),
-        TreasuryOutput::new(AMOUNT, &protocol_parameters).unwrap(),
+        TreasuryOutput::new(AMOUNT, protocol_parameters.token_supply()).unwrap(),
     )
     .unwrap();
 

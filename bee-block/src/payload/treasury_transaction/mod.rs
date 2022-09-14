@@ -103,7 +103,7 @@ pub mod dto {
 
     pub fn try_from_treasury_transaction_payload_dto_for_treasury_transaction_payload(
         value: &TreasuryTransactionPayloadDto,
-        protocol_parameters: &ProtocolParameters,
+        token_supply: u64,
     ) -> Result<TreasuryTransactionPayload, DtoError> {
         Ok(TreasuryTransactionPayload::new(
             if let InputDto::Treasury(ref input) = value.input {
@@ -112,7 +112,7 @@ pub mod dto {
                 return Err(DtoError::InvalidField("input"));
             },
             if let OutputDto::Treasury(ref output) = value.output {
-                try_from_treasury_output_dto_for_treasury_output(output, protocol_parameters)?
+                try_from_treasury_output_dto_for_treasury_output(output, token_supply)?
             } else {
                 return Err(DtoError::InvalidField("output"));
             },

@@ -10,7 +10,8 @@ use crate::{
     output::{
         feature::{verify_allowed_features, Feature, FeatureFlags, Features},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        verify_output_amount, NativeToken, NativeTokens, Output, OutputBuilderAmount, OutputId, Rent, RentStructure,
+        verify_output_amount, verify_output_amount_packable, NativeToken, NativeTokens, Output, OutputBuilderAmount,
+        OutputId, Rent, RentStructure,
     },
     protocol::ProtocolParameters,
     semantic::{ConflictReason, ValidationContext},
@@ -130,7 +131,7 @@ impl BasicOutputBuilder {
     }
 
     ///
-    pub fn finish(self, protocol_parameters: &ProtocolParameters) -> Result<BasicOutput, Error> {
+    pub fn finish(self, token_supply: u64) -> Result<BasicOutput, Error> {
         let unlock_conditions = UnlockConditions::new(self.unlock_conditions)?;
 
         verify_unlock_conditions::<true>(&unlock_conditions)?;
@@ -153,14 +154,14 @@ impl BasicOutputBuilder {
             }
         };
 
-        verify_output_amount::<true>(&output.amount, protocol_parameters)?;
+        verify_output_amount::<true>(&output.amount, &token_supply)?;
 
         Ok(output)
     }
 
     /// Finishes the [`BasicOutputBuilder`] into an [`Output`].
-    pub fn finish_output(self, protocol_parameters: &ProtocolParameters) -> Result<Output, Error> {
-        Ok(Output::Basic(self.finish(protocol_parameters)?))
+    pub fn finish_output(self, token_supply: u64) -> Result<Output, Error> {
+        Ok(Output::Basic(self.finish(token_supply)?))
     }
 }
 
@@ -182,7 +183,7 @@ impl From<&BasicOutput> for BasicOutputBuilder {
 #[packable(unpack_visitor = ProtocolParameters)]
 pub struct BasicOutput {
     // Amount of IOTA tokens held by the output.
-    #[packable(verify_with = verify_output_amount)]
+    #[packable(verify_with = verify_output_amount_packable)]
     amount: u64,
     // Native tokens held by the output.
     native_tokens: NativeTokens,
@@ -208,16 +209,15 @@ impl BasicOutput {
 
     /// Creates a new [`BasicOutput`] with a provided amount.
     #[inline(always)]
-    pub fn new_with_amount(amount: u64, protocol_parameters: &ProtocolParameters) -> Result<Self, Error> {
-        BasicOutputBuilder::new_with_amount(amount)?.finish(protocol_parameters)
+    pub fn new_with_amount(amount: u64, token_supply: u64) -> Result<Self, Error> {
+        BasicOutputBuilder::new_with_amount(amount)?.finish(token_supply)
     }
 
     /// Creates a new [`BasicOutput`] with a provided rent structure.
     /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
-    pub fn new_with_minimum_storage_deposit(protocol_parameters: &ProtocolParameters) -> Result<Self, Error> {
-        BasicOutputBuilder::new_with_minimum_storage_deposit(protocol_parameters.rent_structure().clone())?
-            .finish(protocol_parameters)
+    pub fn new_with_minimum_storage_deposit(rent_structure: RentStructure, token_supply: u64) -> Result<Self, Error> {
+        BasicOutputBuilder::new_with_minimum_storage_deposit(rent_structure)?.finish(token_supply)
     }
 
     /// Creates a new [`BasicOutputBuilder`] with a provided amount.
@@ -371,7 +371,7 @@ pub mod dto {
 
     pub fn try_from_basic_output_dto_for_basic_output(
         value: &BasicOutputDto,
-        protocol_parameters: &ProtocolParameters,
+        token_supply: u64,
     ) -> Result<BasicOutput, DtoError> {
         let mut builder =
             BasicOutputBuilder::new_with_amount(value.amount.parse().map_err(|_| DtoError::InvalidField("amount"))?)?;
@@ -381,17 +381,15 @@ pub mod dto {
         }
 
         for u in &value.unlock_conditions {
-            builder = builder.add_unlock_condition(try_from_unlock_condition_dto_for_unlock_condition(
-                u,
-                protocol_parameters,
-            )?);
+            builder =
+                builder.add_unlock_condition(try_from_unlock_condition_dto_for_unlock_condition(u, token_supply)?);
         }
 
         for b in &value.features {
             builder = builder.add_feature(b.try_into()?);
         }
 
-        Ok(builder.finish(protocol_parameters)?)
+        Ok(builder.finish(token_supply)?)
     }
 
     impl BasicOutput {
@@ -400,7 +398,7 @@ pub mod dto {
             native_tokens: Option<Vec<NativeTokenDto>>,
             unlock_conditions: Vec<UnlockConditionDto>,
             features: Option<Vec<FeatureDto>>,
-            protocol_parameters: &ProtocolParameters,
+            token_supply: u64,
         ) -> Result<BasicOutput, DtoError> {
             let mut builder = match amount {
                 OutputBuilderAmountDto::Amount(amount) => {
@@ -421,7 +419,7 @@ pub mod dto {
 
             let unlock_conditions = unlock_conditions
                 .iter()
-                .map(|u| try_from_unlock_condition_dto_for_unlock_condition(u, protocol_parameters))
+                .map(|u| try_from_unlock_condition_dto_for_unlock_condition(u, token_supply))
                 .collect::<Result<Vec<UnlockCondition>, DtoError>>()?;
             builder = builder.with_unlock_conditions(unlock_conditions);
 
@@ -433,7 +431,7 @@ pub mod dto {
                 builder = builder.with_features(features);
             }
 
-            Ok(builder.finish(protocol_parameters)?)
+            Ok(builder.finish(token_supply)?)
         }
     }
 }

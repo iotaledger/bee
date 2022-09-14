@@ -9,7 +9,7 @@ use crate::{protocol::ProtocolParameters, Error};
 #[packable(unpack_error = Error)]
 #[packable(unpack_visitor = ProtocolParameters)]
 pub struct TreasuryOutput {
-    #[packable(verify_with = verify_treasury_output_amount)]
+    #[packable(verify_with = verify_amount_packable)]
     amount: u64,
 }
 
@@ -18,8 +18,8 @@ impl TreasuryOutput {
     pub const KIND: u8 = 2;
 
     /// Creates a new [`TreasuryOutput`].
-    pub fn new(amount: u64, protocol_parameters: &ProtocolParameters) -> Result<Self, Error> {
-        verify_treasury_output_amount::<true>(&amount, protocol_parameters)?;
+    pub fn new(amount: u64, token_supply: u64) -> Result<Self, Error> {
+        verify_amount::<true>(&amount, &token_supply)?;
 
         Ok(Self { amount })
     }
@@ -31,15 +31,19 @@ impl TreasuryOutput {
     }
 }
 
-fn verify_treasury_output_amount<const VERIFY: bool>(
-    amount: &u64,
-    protocol_parameters: &ProtocolParameters,
-) -> Result<(), Error> {
-    if VERIFY && *amount > protocol_parameters.token_supply() {
+fn verify_amount<const VERIFY: bool>(amount: &u64, token_supply: &u64) -> Result<(), Error> {
+    if VERIFY && amount > token_supply {
         Err(Error::InvalidTreasuryOutputAmount(*amount))
     } else {
         Ok(())
     }
+}
+
+fn verify_amount_packable<const VERIFY: bool>(
+    amount: &u64,
+    protocol_parameters: &ProtocolParameters,
+) -> Result<(), Error> {
+    verify_amount::<VERIFY>(amount, &protocol_parameters.token_supply())
 }
 
 #[cfg(feature = "dto")]
@@ -69,14 +73,14 @@ pub mod dto {
 
     pub fn try_from_treasury_output_dto_for_treasury_output(
         value: &TreasuryOutputDto,
-        protocol_parameters: &ProtocolParameters,
+        token_supply: u64,
     ) -> Result<TreasuryOutput, DtoError> {
         Ok(TreasuryOutput::new(
             value
                 .amount
                 .parse::<u64>()
                 .map_err(|_| DtoError::InvalidField("amount"))?,
-            protocol_parameters,
+            token_supply,
         )?)
     }
 }

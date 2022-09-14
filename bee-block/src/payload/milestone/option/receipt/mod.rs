@@ -205,7 +205,7 @@ pub mod dto {
             if let PayloadDto::TreasuryTransaction(ref transaction) = value.transaction {
                 try_from_treasury_transaction_payload_dto_for_treasury_transaction_payload(
                     transaction.as_ref(),
-                    protocol_parameters,
+                    protocol_parameters.token_supply(),
                 )?
             } else {
                 return Err(DtoError::InvalidField("transaction"));

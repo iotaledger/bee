@@ -1,15 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_block::{
-    protocol::ProtocolParameters,
-    rand::{
-        block::rand_block_id,
-        milestone::{rand_milestone_id, rand_milestone_index},
-        number::rand_number,
-        output::{rand_output, rand_output_id, rand_treasury_output},
-        transaction::rand_transaction_id,
-    },
+use bee_block::rand::{
+    block::rand_block_id,
+    milestone::{rand_milestone_id, rand_milestone_index},
+    number::rand_number,
+    output::{rand_output, rand_output_id, rand_treasury_output},
+    transaction::rand_transaction_id,
 };
 
 use crate::{ConsumedOutput, CreatedOutput, TreasuryOutput, Unspent};
@@ -20,8 +17,8 @@ pub fn rand_unspent_output_id() -> Unspent {
 }
 
 /// Generates a random ledger [`TreasuryOutput`].
-pub fn rand_ledger_treasury_output(protocol_parameters: &ProtocolParameters) -> TreasuryOutput {
-    TreasuryOutput::new(rand_treasury_output(protocol_parameters), rand_milestone_id())
+pub fn rand_ledger_treasury_output(token_supply: u64) -> TreasuryOutput {
+    TreasuryOutput::new(rand_treasury_output(token_supply), rand_milestone_id())
 }
 
 /// Generates a random [`ConsumedOutput`].
@@ -30,11 +27,11 @@ pub fn rand_consumed_output() -> ConsumedOutput {
 }
 
 /// Generates a random [`CreatedOutput`].
-pub fn rand_created_output(protocol_parameters: &ProtocolParameters) -> CreatedOutput {
+pub fn rand_created_output(token_supply: u64) -> CreatedOutput {
     CreatedOutput::new(
         rand_block_id(),
         rand_milestone_index(),
         rand_number(),
-        rand_output(protocol_parameters),
+        rand_output(token_supply),
     )
 }

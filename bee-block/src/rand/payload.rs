@@ -30,8 +30,8 @@ pub fn rand_tagged_data_payload() -> TaggedDataPayload {
 }
 
 /// Generates a random treasury transaction payload.
-pub fn rand_treasury_transaction_payload(protocol_parameters: &ProtocolParameters) -> TreasuryTransactionPayload {
-    TreasuryTransactionPayload::new(rand_treasury_input(), rand_treasury_output(protocol_parameters)).unwrap()
+pub fn rand_treasury_transaction_payload(token_supply: u64) -> TreasuryTransactionPayload {
+    TreasuryTransactionPayload::new(rand_treasury_input(), rand_treasury_output(token_supply)).unwrap()
 }
 
 /// Generates a random milestone payload.

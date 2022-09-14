@@ -570,7 +570,7 @@ pub mod dto {
 
     pub fn try_from_unlock_condition_dto_for_unlock_condition(
         value: &UnlockConditionDto,
-        protocol_parameters: &ProtocolParameters,
+        token_supply: u64,
     ) -> Result<UnlockCondition, DtoError> {
         Ok(match value {
             UnlockConditionDto::Address(v) => UnlockCondition::Address(AddressUnlockCondition::new(
@@ -582,7 +582,7 @@ pub mod dto {
                 UnlockCondition::StorageDepositReturn(StorageDepositReturnUnlockCondition::new(
                     Address::try_from(&v.return_address)?,
                     v.amount.parse::<u64>().map_err(|_| DtoError::InvalidField("amount"))?,
-                    protocol_parameters,
+                    token_supply,
                 )?)
             }
             UnlockConditionDto::Timelock(v) => UnlockCondition::Timelock(

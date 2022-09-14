@@ -42,7 +42,7 @@ fn build_valid() {
         BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
-            .finish(&protocol_parameters)
+            .finish(protocol_parameters.token_supply())
             .unwrap(),
     );
 
@@ -67,7 +67,7 @@ fn build_valid_with_payload() {
         BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
-            .finish(&protocol_parameters)
+            .finish(protocol_parameters.token_supply())
             .unwrap(),
     );
     let payload = Payload::from(rand_tagged_data_payload());
@@ -94,7 +94,7 @@ fn build_valid_add_inputs_outputs() {
         BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
-            .finish(&protocol_parameters)
+            .finish(protocol_parameters.token_supply())
             .unwrap(),
     );
 
@@ -119,10 +119,10 @@ fn build_invalid_payload_kind() {
         BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
-            .finish(&protocol_parameters)
+            .finish(protocol_parameters.token_supply())
             .unwrap(),
     );
-    let payload = rand_treasury_transaction_payload(&protocol_parameters);
+    let payload = rand_treasury_transaction_payload(protocol_parameters.token_supply());
 
     let essence = RegularTransactionEssence::builder(rand_inputs_commitment())
         .with_inputs(vec![input1, input2])
@@ -143,7 +143,7 @@ fn build_invalid_input_count_low() {
         BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
-            .finish(&protocol_parameters)
+            .finish(protocol_parameters.token_supply())
             .unwrap(),
     );
 
@@ -169,7 +169,7 @@ fn build_invalid_input_count_high() {
         BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
-            .finish(&protocol_parameters)
+            .finish(protocol_parameters.token_supply())
             .unwrap(),
     );
 
@@ -212,7 +212,7 @@ fn build_invalid_output_count_high() {
         BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
-            .finish(&protocol_parameters)
+            .finish(protocol_parameters.token_supply())
             .unwrap(),
     );
 
@@ -239,7 +239,7 @@ fn build_invalid_duplicate_utxo() {
         BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
-            .finish(&protocol_parameters)
+            .finish(protocol_parameters.token_supply())
             .unwrap(),
     );
 
@@ -262,7 +262,7 @@ fn build_invalid_input_kind() {
         BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
-            .finish(&protocol_parameters)
+            .finish(protocol_parameters.token_supply())
             .unwrap(),
     );
 
@@ -280,7 +280,7 @@ fn build_invalid_output_kind() {
     let transaction_id = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
     let input = Input::Utxo(UtxoInput::new(transaction_id, 0).unwrap());
     let amount = 1_000_000;
-    let output = Output::Treasury(TreasuryOutput::new(amount, &protocol_parameters).unwrap());
+    let output = Output::Treasury(TreasuryOutput::new(amount, protocol_parameters.token_supply()).unwrap());
 
     let essence = RegularTransactionEssence::builder(rand_inputs_commitment())
         .add_input(input)
@@ -303,7 +303,7 @@ fn build_invalid_accumulated_output() {
         BasicOutput::build_with_amount(amount1)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address1).into())
-            .finish(&protocol_parameters)
+            .finish(protocol_parameters.token_supply())
             .unwrap(),
     );
 
@@ -314,7 +314,7 @@ fn build_invalid_accumulated_output() {
         BasicOutput::build_with_amount(amount2)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address2).into())
-            .finish(&protocol_parameters)
+            .finish(protocol_parameters.token_supply())
             .unwrap(),
     );
 
@@ -339,7 +339,7 @@ fn getters() {
         BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
-            .finish(&protocol_parameters)
+            .finish(protocol_parameters.token_supply())
             .unwrap(),
     )];
     let payload = Payload::from(rand_tagged_data_payload());

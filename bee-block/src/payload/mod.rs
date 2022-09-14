@@ -264,7 +264,7 @@ pub mod dto {
             PayloadDto::TreasuryTransaction(p) => Payload::from(
                 try_from_treasury_transaction_payload_dto_for_treasury_transaction_payload(
                     p.as_ref(),
-                    protocol_parameters,
+                    protocol_parameters.token_supply(),
                 )?,
             ),
             PayloadDto::TaggedData(p) => Payload::from(TaggedDataPayload::try_from(p.as_ref())?),

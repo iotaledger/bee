@@ -67,7 +67,7 @@ fn invalid_length() {
 fn invalid_payload_kind() {
     let protocol_parameters = protocol_parameters();
     let res = BlockBuilder::<Miner>::new(rand_parents())
-        .with_payload(rand_treasury_transaction_payload(&protocol_parameters).into())
+        .with_payload(rand_treasury_transaction_payload(protocol_parameters.token_supply()).into())
         .finish(&protocol_parameters);
 
     assert!(matches!(res, Err(Error::InvalidPayloadKind(4))))

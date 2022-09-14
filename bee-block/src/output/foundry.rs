@@ -198,7 +198,7 @@ impl FoundryOutputBuilder {
     }
 
     ///
-    pub fn finish(self, protocol_parameters: &ProtocolParameters) -> Result<FoundryOutput, Error> {
+    pub fn finish(self, token_supply: u64) -> Result<FoundryOutput, Error> {
         let unlock_conditions = UnlockConditions::new(self.unlock_conditions)?;
 
         verify_unlock_conditions(&unlock_conditions)?;
@@ -228,14 +228,14 @@ impl FoundryOutputBuilder {
             }
         };
 
-        verify_output_amount::<true>(&output.amount, protocol_parameters)?;
+        verify_output_amount::<true>(&output.amount, &token_supply)?;
 
         Ok(output)
     }
 
     /// Finishes the [`FoundryOutputBuilder`] into an [`Output`].
-    pub fn finish_output(self, protocol_parameters: &ProtocolParameters) -> Result<Output, Error> {
-        Ok(Output::Foundry(self.finish(protocol_parameters)?))
+    pub fn finish_output(self, token_supply: u64) -> Result<Output, Error> {
+        Ok(Output::Foundry(self.finish(token_supply)?))
     }
 }
 
@@ -285,9 +285,9 @@ impl FoundryOutput {
         amount: u64,
         serial_number: u32,
         token_scheme: TokenScheme,
-        protocol_parameters: &ProtocolParameters,
+        token_supply: u64,
     ) -> Result<Self, Error> {
-        FoundryOutputBuilder::new_with_amount(amount, serial_number, token_scheme)?.finish(protocol_parameters)
+        FoundryOutputBuilder::new_with_amount(amount, serial_number, token_scheme)?.finish(token_supply)
     }
 
     /// Creates a new [`FoundryOutput`] with a provided rent structure.
@@ -296,14 +296,11 @@ impl FoundryOutput {
     pub fn new_with_minimum_storage_deposit(
         serial_number: u32,
         token_scheme: TokenScheme,
-        protocol_parameters: &ProtocolParameters,
+        rent_structure: RentStructure,
+        token_supply: u64,
     ) -> Result<Self, Error> {
-        FoundryOutputBuilder::new_with_minimum_storage_deposit(
-            protocol_parameters.rent_structure().clone(),
-            serial_number,
-            token_scheme,
-        )?
-        .finish(protocol_parameters)
+        FoundryOutputBuilder::new_with_minimum_storage_deposit(rent_structure, serial_number, token_scheme)?
+            .finish(token_supply)
     }
 
     /// Creates a new [`FoundryOutputBuilder`] with a provided amount.
@@ -560,7 +557,7 @@ impl Packable for FoundryOutput {
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let amount = u64::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
 
-        verify_output_amount::<VERIFY>(&amount, visitor).map_err(UnpackError::Packable)?;
+        verify_output_amount::<VERIFY>(&amount, &visitor.token_supply()).map_err(UnpackError::Packable)?;
 
         let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker, &())?;
         let serial_number = u32::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
@@ -662,7 +659,7 @@ pub mod dto {
 
     pub fn try_from_foundry_output_dto_for_foundry_output(
         value: &FoundryOutputDto,
-        protocol_parameters: &ProtocolParameters,
+        token_supply: u64,
     ) -> Result<FoundryOutput, DtoError> {
         let mut builder = FoundryOutputBuilder::new_with_amount(
             value
@@ -678,10 +675,8 @@ pub mod dto {
         }
 
         for u in &value.unlock_conditions {
-            builder = builder.add_unlock_condition(try_from_unlock_condition_dto_for_unlock_condition(
-                u,
-                protocol_parameters,
-            )?);
+            builder =
+                builder.add_unlock_condition(try_from_unlock_condition_dto_for_unlock_condition(u, token_supply)?);
         }
 
         for b in &value.features {
@@ -692,7 +687,7 @@ pub mod dto {
             builder = builder.add_immutable_feature(b.try_into()?);
         }
 
-        Ok(builder.finish(protocol_parameters)?)
+        Ok(builder.finish(token_supply)?)
     }
 
     impl FoundryOutput {
@@ -705,7 +700,7 @@ pub mod dto {
             unlock_conditions: Vec<UnlockConditionDto>,
             features: Option<Vec<FeatureDto>>,
             immutable_features: Option<Vec<FeatureDto>>,
-            protocol_parameters: &ProtocolParameters,
+            token_supply: u64,
         ) -> Result<FoundryOutput, DtoError> {
             let token_scheme = TokenScheme::try_from(token_scheme)?;
 
@@ -730,7 +725,7 @@ pub mod dto {
 
             let unlock_conditions = unlock_conditions
                 .iter()
-                .map(|u| try_from_unlock_condition_dto_for_unlock_condition(u, protocol_parameters))
+                .map(|u| try_from_unlock_condition_dto_for_unlock_condition(u, token_supply))
                 .collect::<Result<Vec<UnlockCondition>, DtoError>>()?;
             builder = builder.with_unlock_conditions(unlock_conditions);
 
@@ -750,7 +745,7 @@ pub mod dto {
                 builder = builder.with_immutable_features(immutable_features);
             }
 
-            Ok(builder.finish(protocol_parameters)?)
+            Ok(builder.finish(token_supply)?)
         }
     }
 }

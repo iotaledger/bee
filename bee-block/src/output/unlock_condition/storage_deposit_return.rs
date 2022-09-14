@@ -11,7 +11,7 @@ pub struct StorageDepositReturnUnlockCondition {
     // The [`Address`] to return the amount to.
     return_address: Address,
     // Amount of IOTA coins the consuming transaction should deposit to `return_address`.
-    #[packable(verify_with = verify_storage_deposit_return_amount)]
+    #[packable(verify_with = verify_amount_packable)]
     amount: u64,
 }
 
@@ -21,8 +21,8 @@ impl StorageDepositReturnUnlockCondition {
 
     /// Creates a new [`StorageDepositReturnUnlockCondition`].
     #[inline(always)]
-    pub fn new(return_address: Address, amount: u64, protocol_parameters: &ProtocolParameters) -> Result<Self, Error> {
-        verify_storage_deposit_return_amount::<true>(&amount, protocol_parameters)?;
+    pub fn new(return_address: Address, amount: u64, token_supply: u64) -> Result<Self, Error> {
+        verify_amount::<true>(&amount, &token_supply)?;
 
         Ok(Self { return_address, amount })
     }
@@ -40,16 +40,20 @@ impl StorageDepositReturnUnlockCondition {
     }
 }
 
-fn verify_storage_deposit_return_amount<const VERIFY: bool>(
-    amount: &u64,
-    protocol_parameters: &ProtocolParameters,
-) -> Result<(), Error> {
+fn verify_amount<const VERIFY: bool>(amount: &u64, token_supply: &u64) -> Result<(), Error> {
     if VERIFY {
-        verify_output_amount::<VERIFY>(amount, protocol_parameters)
+        verify_output_amount::<VERIFY>(amount, token_supply)
             .map_err(|_| Error::InvalidStorageDepositAmount(*amount))?;
     }
 
     Ok(())
+}
+
+fn verify_amount_packable<const VERIFY: bool>(
+    amount: &u64,
+    protocol_parameters: &ProtocolParameters,
+) -> Result<(), Error> {
+    verify_amount::<VERIFY>(amount, &protocol_parameters.token_supply())
 }
 
 #[cfg(feature = "dto")]

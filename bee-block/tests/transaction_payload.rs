@@ -39,7 +39,7 @@ fn builder_no_essence_too_few_unlocks() {
         BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
-            .finish(&protocol_parameters)
+            .finish(protocol_parameters.token_supply())
             .unwrap(),
     );
     let essence = TransactionEssence::Regular(
@@ -77,7 +77,7 @@ fn builder_no_essence_too_many_unlocks() {
         BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
-            .finish(&protocol_parameters)
+            .finish(protocol_parameters.token_supply())
             .unwrap(),
     );
     let essence = TransactionEssence::Regular(
@@ -118,7 +118,7 @@ fn pack_unpack_valid() {
         BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
-            .finish(&protocol_parameters)
+            .finish(protocol_parameters.token_supply())
             .unwrap(),
     );
     let essence = TransactionEssence::Regular(
@@ -161,7 +161,7 @@ fn getters() {
         BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
-            .finish(&protocol_parameters)
+            .finish(protocol_parameters.token_supply())
             .unwrap(),
     );
     let essence = TransactionEssence::Regular(

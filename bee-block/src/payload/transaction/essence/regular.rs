@@ -225,7 +225,7 @@ fn verify_outputs<const VERIFY: bool>(outputs: &[Output], visitor: &ProtocolPara
                 return Err(Error::InvalidTransactionNativeTokensCount(native_tokens_count as u16));
             }
 
-            output.verify_storage_deposit(visitor)?;
+            output.verify_storage_deposit(visitor.rent_structure().clone(), visitor.token_supply())?;
         }
     }
 
@@ -309,7 +309,7 @@ pub mod dto {
         let outputs = value
             .outputs
             .iter()
-            .map(|o| try_from_output_dto_for_output(o, protocol_parameters))
+            .map(|o| try_from_output_dto_for_output(o, protocol_parameters.token_supply()))
             .collect::<Result<Vec<Output>, DtoError>>()?;
 
         let mut builder = RegularTransactionEssence::builder(InputsCommitment::from_str(&value.inputs_commitment)?)

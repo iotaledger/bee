@@ -37,8 +37,8 @@ impl<T> StorageBackend for T where
 }
 
 pub fn output_id_to_created_output_access<B: StorageBackend>(storage: &B) {
-    let protocol_parameters = protocol_parameters();
-    let (output_id, created_output) = (rand_output_id(), rand_created_output(&protocol_parameters));
+    let token_supply = protocol_parameters().token_supply();
+    let (output_id, created_output) = (rand_output_id(), rand_created_output(token_supply));
 
     assert!(!Exist::<OutputId, CreatedOutput>::exist(storage, &output_id).unwrap());
     assert!(
@@ -86,7 +86,7 @@ pub fn output_id_to_created_output_access<B: StorageBackend>(storage: &B) {
     let mut created_outputs = Vec::new();
 
     for _ in 0..10 {
-        let (output_id, created_output) = (rand_output_id(), rand_created_output(&protocol_parameters));
+        let (output_id, created_output) = (rand_output_id(), rand_created_output(token_supply));
         Insert::<OutputId, CreatedOutput>::insert(storage, &output_id, &created_output).unwrap();
         Batch::<OutputId, CreatedOutput>::batch_delete(storage, &mut batch, &output_id).unwrap();
         output_ids.push(output_id);
@@ -94,7 +94,7 @@ pub fn output_id_to_created_output_access<B: StorageBackend>(storage: &B) {
     }
 
     for _ in 0..10 {
-        let (output_id, created_output) = (rand_output_id(), rand_created_output(&protocol_parameters));
+        let (output_id, created_output) = (rand_output_id(), rand_created_output(token_supply));
         Batch::<OutputId, CreatedOutput>::batch_insert(storage, &mut batch, &output_id, &created_output).unwrap();
         output_ids.push(output_id);
         created_outputs.push((output_id, Some(created_output)));

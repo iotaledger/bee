@@ -18,7 +18,7 @@ fn kind() {
 #[test]
 fn new_valid() {
     let input = TreasuryInput::from_str(BLOCK_ID).unwrap();
-    let output = TreasuryOutput::new(1_000, &protocol_parameters()).unwrap();
+    let output = TreasuryOutput::new(1_000, protocol_parameters().token_supply()).unwrap();
     let transaction = TreasuryTransactionPayload::new(input, output.clone()).unwrap();
 
     assert_eq!(*transaction.input(), input);
@@ -29,7 +29,7 @@ fn new_valid() {
 fn packed_len() {
     let treasury_transaction = TreasuryTransactionPayload::new(
         TreasuryInput::from_str(BLOCK_ID).unwrap(),
-        TreasuryOutput::new(1_000, &protocol_parameters()).unwrap(),
+        TreasuryOutput::new(1_000, protocol_parameters().token_supply()).unwrap(),
     )
     .unwrap();
 
@@ -42,7 +42,7 @@ fn pack_unpack_valid() {
     let protocol_parameters = protocol_parameters();
     let transaction_1 = TreasuryTransactionPayload::new(
         TreasuryInput::from_str(BLOCK_ID).unwrap(),
-        TreasuryOutput::new(1_000, &protocol_parameters).unwrap(),
+        TreasuryOutput::new(1_000, protocol_parameters.token_supply()).unwrap(),
     )
     .unwrap();
     let transaction_2 =

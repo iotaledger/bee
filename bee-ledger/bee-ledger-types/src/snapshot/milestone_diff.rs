@@ -114,7 +114,7 @@ impl Packable for MilestoneDiff {
             let amount = u64::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
 
             Some((
-                TreasuryOutput::new(amount, visitor).map_err(UnpackError::from_packable)?,
+                TreasuryOutput::new(amount, visitor.token_supply()).map_err(UnpackError::from_packable)?,
                 milestone_id,
             ))
         } else {

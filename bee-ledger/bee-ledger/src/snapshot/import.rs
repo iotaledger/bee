@@ -175,7 +175,7 @@ fn import_full_snapshot<B: StorageBackend>(
     storage::insert_treasury_output(
         storage,
         &TreasuryOutput::new(
-            output::TreasuryOutput::new(full_header.treasury_output_amount(), protocol_parameters)?,
+            output::TreasuryOutput::new(full_header.treasury_output_amount(), protocol_parameters.token_supply())?,
             *full_header.treasury_output_milestone_id(),
         ),
     )?;
