@@ -35,7 +35,7 @@ pub struct ReceiptMilestoneOption {
     migrated_at: MilestoneIndex,
     last: bool,
     #[packable(unpack_error_with = |e| e.unwrap_item_err_or_else(|p| Error::InvalidReceiptFundsCount(p.into())))]
-    #[packable(verify_with = verify_funds)]
+    #[packable(verify_with = verify_funds_packable)]
     funds: VecPrefix<MigratedFundsEntry, ReceiptFundsCount>,
     #[packable(verify_with = verify_transaction_packable)]
     transaction: Payload,
@@ -51,12 +51,12 @@ impl ReceiptMilestoneOption {
         last: bool,
         funds: Vec<MigratedFundsEntry>,
         transaction: TreasuryTransactionPayload,
-        protocol_parameters: &ProtocolParameters,
+        token_supply: u64,
     ) -> Result<Self, Error> {
         let funds = VecPrefix::<MigratedFundsEntry, ReceiptFundsCount>::try_from(funds)
             .map_err(Error::InvalidReceiptFundsCount)?;
 
-        verify_funds::<true>(&funds, protocol_parameters)?;
+        verify_funds::<true>(&funds, &token_supply)?;
 
         Ok(Self {
             migrated_at,
@@ -99,7 +99,7 @@ impl ReceiptMilestoneOption {
     }
 }
 
-fn verify_funds<const VERIFY: bool>(funds: &[MigratedFundsEntry], visitor: &ProtocolParameters) -> Result<(), Error> {
+fn verify_funds<const VERIFY: bool>(funds: &[MigratedFundsEntry], token_supply: &u64) -> Result<(), Error> {
     if VERIFY {
         // Funds must be lexicographically sorted and unique in their serialised forms.
         if !is_unique_sorted(funds.iter().map(PackableExt::pack_to_vec)) {
@@ -121,13 +121,20 @@ fn verify_funds<const VERIFY: bool>(funds: &[MigratedFundsEntry], visitor: &Prot
                 .checked_add(funds.amount())
                 .ok_or_else(|| Error::InvalidReceiptFundsSum(funds_sum as u128 + funds.amount() as u128))?;
 
-            if funds_sum > visitor.token_supply() {
+            if funds_sum > *token_supply {
                 return Err(Error::InvalidReceiptFundsSum(funds_sum as u128));
             }
         }
     }
 
     Ok(())
+}
+
+fn verify_funds_packable<const VERIFY: bool>(
+    funds: &[MigratedFundsEntry],
+    protocol_parameters: &ProtocolParameters,
+) -> Result<(), Error> {
+    verify_funds::<VERIFY>(funds, &protocol_parameters.token_supply())
 }
 
 fn verify_transaction<const VERIFY: bool>(transaction: &Payload) -> Result<(), Error> {
@@ -138,10 +145,7 @@ fn verify_transaction<const VERIFY: bool>(transaction: &Payload) -> Result<(), E
     }
 }
 
-fn verify_transaction_packable<const VERIFY: bool>(
-    transaction: &Payload,
-    _visitor: &ProtocolParameters,
-) -> Result<(), Error> {
+fn verify_transaction_packable<const VERIFY: bool>(transaction: &Payload, _: &ProtocolParameters) -> Result<(), Error> {
     verify_transaction::<VERIFY>(transaction)
 }
 
@@ -210,7 +214,7 @@ pub mod dto {
             } else {
                 return Err(DtoError::InvalidField("transaction"));
             },
-            protocol_parameters,
+            protocol_parameters.token_supply(),
         )?)
     }
 }

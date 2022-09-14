@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_block::{output, protocol::ProtocolParameters};
+use bee_block::output;
 use bee_storage::access::AsIterator;
 
 use crate::{
@@ -13,7 +13,7 @@ use crate::{
 fn validate_ledger_unspent_state<B: StorageBackend>(
     storage: &B,
     treasury: u64,
-    protocol_parameters: &ProtocolParameters,
+    token_supply: u64,
 ) -> Result<(), Error> {
     let iterator = AsIterator::<Unspent, ()>::iter(storage).map_err(|e| Error::Storage(Box::new(e)))?;
     let mut supply: u64 = 0;
@@ -38,7 +38,7 @@ fn validate_ledger_unspent_state<B: StorageBackend>(
     if supply
         .checked_add(treasury)
         .ok_or(Error::LedgerStateOverflow(supply as u128 + treasury as u128))?
-        != protocol_parameters.token_supply()
+        != token_supply
     {
         Err(Error::InvalidLedgerUnspentState(supply))
     } else {
@@ -46,11 +46,8 @@ fn validate_ledger_unspent_state<B: StorageBackend>(
     }
 }
 
-pub(crate) fn validate_ledger_state<B: StorageBackend>(
-    storage: &B,
-    protocol_parameters: &ProtocolParameters,
-) -> Result<(), Error> {
+pub(crate) fn validate_ledger_state<B: StorageBackend>(storage: &B, token_supply: u64) -> Result<(), Error> {
     let treasury = storage::fetch_unspent_treasury_output(storage)?.inner().amount();
 
-    validate_ledger_unspent_state(storage, treasury, protocol_parameters)
+    validate_ledger_unspent_state(storage, treasury, token_supply)
 }

@@ -61,7 +61,7 @@ fn getters() {
             TreasuryOutput::new(1_000_000, protocol_parameters.token_supply()).unwrap(),
         )
         .unwrap(),
-        &protocol_parameters,
+        protocol_parameters.token_supply(),
     )
     .unwrap();
     let options = MilestoneOptions::new(vec![

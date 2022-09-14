@@ -53,7 +53,7 @@ fn new_valid() {
             TreasuryOutput::new(AMOUNT, protocol_parameters.token_supply()).unwrap(),
         )
         .unwrap(),
-        &protocol_parameters,
+        protocol_parameters.token_supply(),
     );
 
     assert!(receipt.is_ok());
@@ -71,7 +71,7 @@ fn new_invalid_receipt_funds_count_low() {
             TreasuryOutput::new(AMOUNT, protocol_parameters.token_supply()).unwrap(),
         )
         .unwrap(),
-        &protocol_parameters,
+        protocol_parameters.token_supply(),
     );
 
     assert!(matches!(
@@ -102,7 +102,7 @@ fn new_invalid_receipt_funds_count_high() {
             TreasuryOutput::new(AMOUNT, protocol_parameters.token_supply()).unwrap(),
         )
         .unwrap(),
-        &protocol_parameters,
+        protocol_parameters.token_supply(),
     );
 
     assert!(matches!(
@@ -143,7 +143,7 @@ fn new_invalid_transaction_outputs_not_sorted() {
             TreasuryOutput::new(AMOUNT, protocol_parameters.token_supply()).unwrap(),
         )
         .unwrap(),
-        &protocol_parameters,
+        protocol_parameters.token_supply(),
     );
 
     assert!(matches!(receipt, Err(Error::ReceiptFundsNotUniqueSorted)));
@@ -169,7 +169,7 @@ fn new_invalid_tail_transaction_hashes_not_unique() {
             TreasuryOutput::new(AMOUNT, protocol_parameters.token_supply()).unwrap(),
         )
         .unwrap(),
-        &protocol_parameters,
+        protocol_parameters.token_supply(),
     );
 
     assert!(matches!(receipt, Err(Error::ReceiptFundsNotUniqueSorted)));
@@ -195,7 +195,7 @@ fn pack_unpack_valid() {
             TreasuryOutput::new(AMOUNT, protocol_parameters.token_supply()).unwrap(),
         )
         .unwrap(),
-        &protocol_parameters,
+        protocol_parameters.token_supply(),
     )
     .unwrap();
 
@@ -233,7 +233,7 @@ fn getters() {
         last,
         funds.clone(),
         transaction.clone(),
-        &protocol_parameters,
+        protocol_parameters.token_supply(),
     )
     .unwrap();
 

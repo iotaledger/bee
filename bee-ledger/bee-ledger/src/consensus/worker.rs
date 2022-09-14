@@ -277,7 +277,7 @@ where
         let storage = node.storage();
         let bus = node.bus();
 
-        validate_ledger_state(&*storage, &protocol_parameters)?;
+        validate_ledger_state(&*storage, protocol_parameters.token_supply())?;
 
         let bmd = tangle.config().below_max_depth();
 
