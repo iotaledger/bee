@@ -42,7 +42,7 @@ pub use self::{
 pub(crate) use self::{
     block::{
         HasherWorker, HasherWorkerEvent, MilestonePayloadWorker, PayloadWorker, PayloadWorkerEvent, ProcessorWorker,
-        ProcessorWorkerConfig, TaggedDataPayloadWorker, TaggedDataPayloadWorkerEvent, TransactionPayloadWorker,
+        TaggedDataPayloadWorker, TaggedDataPayloadWorkerEvent, TransactionPayloadWorker,
         UnreferencedBlockInserterWorker, UnreferencedBlockInserterWorkerEvent,
     },
     broadcaster::{BroadcasterWorker, BroadcasterWorkerEvent},
@@ -78,9 +78,7 @@ where
             network_name: network_id.0,
         })
         .with_worker_cfg::<HasherWorker>(config.clone())
-        .with_worker_cfg::<ProcessorWorker>(ProcessorWorkerConfig {
-            minimum_pow_score: config.minimum_pow_score,
-        })
+        .with_worker::<ProcessorWorker>()
         .with_worker::<BlockResponderWorker>()
         .with_worker::<MilestoneResponderWorker>()
         .with_worker::<BlockRequesterWorker>()

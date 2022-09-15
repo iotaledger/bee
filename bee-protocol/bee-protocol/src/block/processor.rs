@@ -37,17 +37,12 @@ pub(crate) struct ProcessorWorker {
     pub(crate) tx: mpsc::UnboundedSender<ProcessorWorkerEvent>,
 }
 
-#[derive(Clone)]
-pub(crate) struct ProcessorWorkerConfig {
-    pub(crate) minimum_pow_score: f64,
-}
-
 #[async_trait]
 impl<N: Node> Worker<N> for ProcessorWorker
 where
     N::Backend: StorageBackend,
 {
-    type Config = ProcessorWorkerConfig;
+    type Config = ();
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
@@ -64,7 +59,7 @@ where
         .leak()
     }
 
-    async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
+    async fn start(node: &mut N, _: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
 
         let propagator = node.worker::<PropagatorWorker>().unwrap().tx.clone();
@@ -105,7 +100,6 @@ where
                 let metrics = metrics.clone();
                 let peer_manager = peer_manager.clone();
                 let bus = bus.clone();
-                let config = config.clone();
                 let protocol_parameters = protocol_parameters.clone();
 
                 tokio::spawn(async move {
@@ -135,9 +129,13 @@ where
                                 );
                                 continue;
                             }
-                        } else if pow_score < config.minimum_pow_score {
+                        } else if pow_score < protocol_parameters.min_pow_score() as f64 {
                             notify_invalid_block(
-                                format!("Insufficient pow score: {} < {}.", pow_score, config.minimum_pow_score),
+                                format!(
+                                    "Insufficient pow score: {} < {}.",
+                                    pow_score,
+                                    protocol_parameters.min_pow_score()
+                                ),
                                 &metrics,
                                 notifier,
                             );
