@@ -1,12 +1,18 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_block::{output::dto::OutputDto, payload::dto::MilestonePayloadDto, BlockDto};
+use bee_block::{
+    output::{dto::OutputDto, RentStructure, RentStructureBuilder},
+    payload::dto::MilestonePayloadDto,
+    protocol::ProtocolParameters,
+    BlockDto,
+};
 use serde::{Deserialize, Serialize};
 
 use crate::{
     body::BodyInner,
     dtos::{LedgerInclusionStateDto, PeerDto, ReceiptDto},
+    error::Error,
 };
 
 /// Response of GET /api/core/v2/info.
@@ -78,10 +84,31 @@ pub struct ProtocolResponse {
     pub bech32_hrp: String,
     #[serde(rename = "minPowScore")]
     pub min_pow_score: u32,
+    #[serde(rename = "belowMaxDepth")]
+    pub below_max_depth: u8,
     #[serde(rename = "rentStructure")]
     pub rent_structure: RentStructureResponse,
     #[serde(rename = "tokenSupply")]
     pub token_supply: String,
+}
+
+impl TryFrom<ProtocolResponse> for ProtocolParameters {
+    type Error = Error;
+
+    fn try_from(response: ProtocolResponse) -> Result<Self, Self::Error> {
+        Ok(ProtocolParameters::new(
+            response.version,
+            response.network_name,
+            response.bech32_hrp,
+            response.min_pow_score,
+            response.below_max_depth,
+            response.rent_structure.into(),
+            response
+                .token_supply
+                .parse()
+                .map_err(|_| Error::InvalidField("token_supply"))?,
+        )?)
+    }
 }
 
 /// Returned in [`InfoResponse`].
@@ -122,6 +149,16 @@ pub struct RentStructureResponse {
     pub v_byte_factor_key: u8,
     #[serde(rename = "vByteFactorData")]
     pub v_byte_factor_data: u8,
+}
+
+impl From<RentStructureResponse> for RentStructure {
+    fn from(response: RentStructureResponse) -> Self {
+        RentStructureBuilder::new()
+            .byte_cost(response.v_byte_cost)
+            .key_factor(response.v_byte_factor_key)
+            .data_factor(response.v_byte_factor_data)
+            .finish()
+    }
 }
 
 /// Returned in [`InfoResponse`].
