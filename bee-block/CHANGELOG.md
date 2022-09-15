@@ -38,8 +38,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Some DTO `TryFrom` have been changed to functions as they needed another parameters;
 - `Output`s amount is now simply an `u64`;
 - `OutputBuilder`s `finish` now takes a `token_supply: u64` parameter; 
-
-
 - Adapt the `rand` module to all these changes;
 
 ### Removed
