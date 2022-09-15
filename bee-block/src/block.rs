@@ -311,17 +311,3 @@ pub mod dto {
         Ok(builder.finish(protocol_parameters.min_pow_score())?)
     }
 }
-
-#[cfg(feature = "inx")]
-#[allow(missing_docs)]
-pub mod inx {
-    use super::*;
-    use crate::error::inx::InxError;
-
-    pub fn block_from_raw_block(
-        value: inx_bindings::proto::RawBlock,
-        visitor: &ProtocolParameters,
-    ) -> Result<Block, InxError> {
-        Block::unpack_verified(value.data, visitor).map_err(|e| InxError::InvalidRawBytes(e.to_string()))
-    }
-}

@@ -3,7 +3,7 @@ members = [
 	"bee-api/bee-api-types",
 	"bee-api/bee-rest-api",
 	"bee-block",
-	# "bee-inx",
+	"bee-inx",
 	"bee-ledger/bee-ledger",
 	"bee-ledger/bee-ledger-types",
 	"bee-network/bee-autopeering",

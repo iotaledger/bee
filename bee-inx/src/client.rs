@@ -76,7 +76,7 @@ impl Inx {
     pub async fn read_protocol_parameters(
         &mut self,
         request: MilestoneRequest,
-    ) -> Result<crate::RawProtocolParameters, Error> {
+    ) -> Result<crate::ProtocolParameters, Error> {
         Ok(self
             .inx
             .read_protocol_parameters(proto::MilestoneRequest::from(request))

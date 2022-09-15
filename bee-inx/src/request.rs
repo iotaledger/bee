@@ -26,9 +26,9 @@ impl From<MilestoneRequest> for proto::MilestoneRequest {
     }
 }
 
-impl From<u32> for MilestoneRequest {
-    fn from(value: u32) -> Self {
-        Self::MilestoneIndex(MilestoneIndex(value))
+impl<T: Into<u32>> From<T> for MilestoneRequest {
+    fn from(value: T) -> Self {
+        Self::MilestoneIndex(MilestoneIndex(value.into()))
     }
 }
 

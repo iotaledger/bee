@@ -17,7 +17,7 @@ async fn main() -> Result<(), Error> {
         println!("Fetch cone of milestone {milestone_index}");
 
         // Listen to blocks in the past cone of a milestone.
-        let mut cone_stream = inx.read_milestone_cone(milestone_index.into()).await?;
+        let mut cone_stream = inx.read_milestone_cone(milestone_index.0.into()).await?;
 
         // Keep track of the number of blocks.
         let mut count = 0usize;

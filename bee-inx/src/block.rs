@@ -35,6 +35,15 @@ impl TryFrom<proto::BlockWithMetadata> for BlockWithMetadata {
     }
 }
 
+impl From<BlockWithMetadata> for proto::BlockWithMetadata {
+    fn from(value: BlockWithMetadata) -> Self {
+        Self {
+            metadata: Some(value.metadata.into()),
+            block: Some(value.block.into()),
+        }
+    }
+}
+
 impl TryFrom<proto::Block> for Block {
     type Error = bee::InxError;
 
@@ -43,5 +52,14 @@ impl TryFrom<proto::Block> for Block {
             block_id: maybe_missing!(value.block_id).try_into()?,
             block: maybe_missing!(value.block).data.into(),
         })
+    }
+}
+
+impl From<Block> for proto::Block {
+    fn from(value: Block) -> Self {
+        Self {
+            block_id: Some(value.block_id.into()),
+            block: Some(value.block.into()),
+        }
     }
 }

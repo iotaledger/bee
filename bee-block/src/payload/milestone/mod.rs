@@ -282,18 +282,13 @@ pub mod inx {
     use packable::PackableExt;
 
     use super::*;
-    use crate::error::inx::InxError;
+    use crate::payload::Payload;
 
-    pub fn milestone_from_raw_milestone(
-        value: inx_bindings::proto::RawMilestone,
-        visitor: &ProtocolParameters,
-    ) -> Result<MilestonePayload, InxError> {
-        let payload = crate::payload::Payload::unpack_verified(value.data, visitor)
-            .map_err(|e| InxError::InvalidRawBytes(e.to_string()))?;
-
-        match payload {
-            crate::payload::Payload::Milestone(payload) => Ok(*payload),
-            _ => Err(crate::Error::InvalidPayloadKind(payload.kind()).into()),
+    impl From<MilestonePayload> for inx_bindings::proto::RawMilestone {
+        fn from(value: MilestonePayload) -> Self {
+            Self {
+                data: Payload::from(value).pack_to_vec(),
+            }
         }
     }
 }

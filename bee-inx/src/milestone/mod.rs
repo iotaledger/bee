@@ -8,7 +8,7 @@ mod info;
 use inx::proto;
 
 pub use self::info::MilestoneInfo;
-use crate::{maybe_missing, RawProtocolParameters};
+use crate::{maybe_missing, ProtocolParameters, Raw};
 
 /// The [`Milestone`] type.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -16,7 +16,7 @@ pub struct Milestone {
     /// Information about the milestone.
     pub milestone_info: MilestoneInfo,
     /// The raw bytes of the milestone.
-    pub milestone: Option<bee::payload::MilestonePayload>,
+    pub milestone: Raw<bee::payload::MilestonePayload>,
 }
 
 impl TryFrom<proto::Milestone> for Milestone {
@@ -25,8 +25,17 @@ impl TryFrom<proto::Milestone> for Milestone {
     fn try_from(value: proto::Milestone) -> Result<Self, Self::Error> {
         Ok(Self {
             milestone_info: maybe_missing!(value.milestone_info).try_into()?,
-            milestone: value.milestone.map(TryInto::try_into).transpose()?,
+            milestone: maybe_missing!(value.milestone).data.into(),
         })
+    }
+}
+
+impl From<Milestone> for proto::Milestone {
+    fn from(value: Milestone) -> Self {
+        Self {
+            milestone_info: Some(value.milestone_info.into()),
+            milestone: Some(value.milestone.into()),
+        }
     }
 }
 
@@ -34,7 +43,7 @@ impl TryFrom<proto::Milestone> for Milestone {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MilestoneAndProtocolParameters {
     pub milestone: Milestone,
-    pub current_protocol_parameters: RawProtocolParameters,
+    pub current_protocol_parameters: ProtocolParameters,
 }
 
 impl TryFrom<proto::MilestoneAndProtocolParameters> for MilestoneAndProtocolParameters {
@@ -45,5 +54,14 @@ impl TryFrom<proto::MilestoneAndProtocolParameters> for MilestoneAndProtocolPara
             milestone: maybe_missing!(value.milestone).try_into()?,
             current_protocol_parameters: maybe_missing!(value.current_protocol_parameters).into(),
         })
+    }
+}
+
+impl From<MilestoneAndProtocolParameters> for proto::MilestoneAndProtocolParameters {
+    fn from(value: MilestoneAndProtocolParameters) -> Self {
+        Self {
+            milestone: Some(value.milestone.into()),
+            current_protocol_parameters: Some(value.current_protocol_parameters.into()),
+        }
     }
 }

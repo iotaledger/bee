@@ -473,17 +473,3 @@ pub mod dto {
         }
     }
 }
-
-#[cfg(feature = "inx")]
-#[allow(missing_docs)]
-pub mod inx {
-    use super::*;
-    use crate::{error::inx::InxError, protocol::ProtocolParameters};
-
-    pub fn try_from_raw_output_for_output(
-        value: inx_bindings::proto::RawOutput,
-        protocol_parameters: &ProtocolParameters,
-    ) -> Result<Output, InxError> {
-        Output::unpack_verified(value.data, protocol_parameters).map_err(|e| InxError::InvalidRawBytes(e.to_string()))
-    }
-}

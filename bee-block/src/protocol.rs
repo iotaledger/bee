@@ -134,4 +134,13 @@ mod inx {
             Self::unpack_verified(value.params, &()).map_err(|e| InxError::InvalidRawBytes(format!("{:?}", e)))
         }
     }
+
+    impl From<ProtocolParameters> for inx_bindings::proto::RawProtocolParameters {
+        fn from(value: ProtocolParameters) -> Self {
+            Self {
+                protocol_version: value.protocol_version() as u32,
+                params: value.pack_to_vec(),
+            }
+        }
+    }
 }
