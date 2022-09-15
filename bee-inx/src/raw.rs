@@ -83,7 +83,7 @@ mod test {
 
     #[test]
     fn raw_output() {
-        let protocol_parameters = bee::protocol::ProtocolParameters::default();
+        let protocol_parameters = bee::protocol::protocol_parameters();
 
         let output = rand_output(protocol_parameters.token_supply());
 
