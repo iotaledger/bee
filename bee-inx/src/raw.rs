@@ -85,7 +85,7 @@ mod test {
     fn raw_output() {
         let protocol_parameters = bee::protocol::ProtocolParameters::default();
 
-        let output = rand_output(&protocol_parameters);
+        let output = rand_output(protocol_parameters.token_supply());
 
         let proto = proto::RawOutput {
             data: output.pack_to_vec(),
