@@ -88,21 +88,10 @@ where
 
             let (tx, rx) = async_channel::unbounded();
 
-            // TODO: this is obviously wrong and just temporary
-            let protocol_parameters = bee_block::protocol::ProtocolParameters::new(
-                0,
-                String::from(""),
-                String::from(""),
-                0,
-                0,
-                bee_block::output::RentStructure::build()
-                    .byte_cost(0)
-                    .key_factor(0)
-                    .data_factor(0)
-                    .finish(),
-                0,
-            )
-            .unwrap();
+            // TODO: this is obviously wrong but can't be done properly until the snapshot PR is merged.
+            // The node can't work properly with this.
+            // @thibault-martinez.
+            let protocol_parameters = bee_block::protocol::ProtocolParameters::default();
 
             for _ in 0..16 {
                 let rx = rx.clone();

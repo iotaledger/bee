@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Updated dependencies;
 - `block` module is now public;
+- Adapt the `rand` module to all these changes;
 
 ### Removed
 
