@@ -290,7 +290,9 @@ pub(crate) async fn import_snapshots<B: StorageBackend>(
     let full_exists = config.full_path().exists();
     let delta_exists = config.delta_path().map_or(false, Path::exists);
 
-    // TODO: this is obviously wrong and just temporary
+    // TODO: this is obviously wrong but can't be done properly until the snapshot PR is merged.
+    // The node can't work properly with this.
+    // @thibault-martinez.
     let protocol_parameters = ProtocolParameters::default();
 
     if !full_exists && delta_exists {

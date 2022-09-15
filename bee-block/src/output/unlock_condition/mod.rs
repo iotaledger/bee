@@ -381,8 +381,6 @@ mod test {
 #[cfg(feature = "dto")]
 #[allow(missing_docs)]
 pub mod dto {
-    // use core::fmt::Result;
-
     use serde::{Deserialize, Serialize, Serializer};
     use serde_json::Value;
 

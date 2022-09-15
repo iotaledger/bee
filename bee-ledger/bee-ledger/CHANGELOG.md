@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `CreatedOutput::milestone_index`, `CreatedOutput::milestone_timestamp` and their getters;
+- `token_supply` parameter to `validate_ledger_state` and `validate_ledger_unspent_state`;
 
 ### Changed
 
@@ -33,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Balance` is now an `u64` tuple struct;
 - Serialize and deserialize the ledger types using `packable` instead of `bee-common::packable`;
 - Dispatch `CreatedOutput` through `OutputCreated` event;
+- Adapt consensus to `bee-block`'s `Packable` visitor changes;
 
 ### Removed
 
