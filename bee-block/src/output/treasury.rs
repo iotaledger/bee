@@ -71,16 +71,15 @@ pub mod dto {
         }
     }
 
-    pub fn try_from_treasury_output_dto_for_treasury_output(
-        value: &TreasuryOutputDto,
-        token_supply: u64,
-    ) -> Result<TreasuryOutput, DtoError> {
-        Ok(TreasuryOutput::new(
-            value
-                .amount
-                .parse::<u64>()
-                .map_err(|_| DtoError::InvalidField("amount"))?,
-            token_supply,
-        )?)
+    impl TreasuryOutput {
+        pub fn try_from_dto(value: &TreasuryOutputDto, token_supply: u64) -> Result<TreasuryOutput, DtoError> {
+            Ok(TreasuryOutput::new(
+                value
+                    .amount
+                    .parse::<u64>()
+                    .map_err(|_| DtoError::InvalidField("amount"))?,
+                token_supply,
+            )?)
+        }
     }
 }

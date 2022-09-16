@@ -170,7 +170,7 @@ pub mod dto {
 
     use serde::{Deserialize, Serialize};
 
-    use self::option::dto::{try_from_milestone_option_dto_for_milestone_option, MilestoneOptionDto};
+    use self::option::dto::MilestoneOptionDto;
     use super::*;
     use crate::{
         error::dto::DtoError, parent::Parents, payload::milestone::MilestoneIndex, signature::dto::SignatureDto,
@@ -218,61 +218,63 @@ pub mod dto {
         }
     }
 
-    pub fn try_from_milestone_payload_dto_for_milestone_payload(
-        value: &MilestonePayloadDto,
-        protocol_parameters: &ProtocolParameters,
-    ) -> Result<MilestonePayload, DtoError> {
-        let essence = {
-            let index = value.index;
-            let timestamp = value.timestamp;
-            let previous_milestone_id = MilestoneId::from_str(&value.previous_milestone_id)
-                .map_err(|_| DtoError::InvalidField("previousMilestoneId"))?;
-            let mut parent_ids = Vec::new();
+    impl MilestonePayload {
+        pub fn try_from_dto(
+            value: &MilestonePayloadDto,
+            protocol_parameters: &ProtocolParameters,
+        ) -> Result<MilestonePayload, DtoError> {
+            let essence = {
+                let index = value.index;
+                let timestamp = value.timestamp;
+                let previous_milestone_id = MilestoneId::from_str(&value.previous_milestone_id)
+                    .map_err(|_| DtoError::InvalidField("previousMilestoneId"))?;
+                let mut parent_ids = Vec::new();
 
-            for block_id in &value.parents {
-                parent_ids.push(
-                    block_id
-                        .parse::<BlockId>()
-                        .map_err(|_| DtoError::InvalidField("parents"))?,
-                );
-            }
+                for block_id in &value.parents {
+                    parent_ids.push(
+                        block_id
+                            .parse::<BlockId>()
+                            .map_err(|_| DtoError::InvalidField("parents"))?,
+                    );
+                }
 
-            let inclusion_merkle_root = MerkleRoot::from_str(&value.inclusion_merkle_root)
-                .map_err(|_| DtoError::InvalidField("inclusionMerkleRoot"))?;
-            let applied_merkle_root = MerkleRoot::from_str(&value.applied_merkle_root)
-                .map_err(|_| DtoError::InvalidField("appliedMerkleRoot"))?;
-            let options = MilestoneOptions::try_from(
-                value
-                    .options
-                    .iter()
-                    .map(|o| try_from_milestone_option_dto_for_milestone_option(o, protocol_parameters.token_supply()))
-                    .collect::<Result<Vec<_>, _>>()?,
-            )?;
-            let metadata = if !value.metadata.is_empty() {
-                prefix_hex::decode(&value.metadata).map_err(|_| DtoError::InvalidField("metadata"))?
-            } else {
-                Vec::new()
+                let inclusion_merkle_root = MerkleRoot::from_str(&value.inclusion_merkle_root)
+                    .map_err(|_| DtoError::InvalidField("inclusionMerkleRoot"))?;
+                let applied_merkle_root = MerkleRoot::from_str(&value.applied_merkle_root)
+                    .map_err(|_| DtoError::InvalidField("appliedMerkleRoot"))?;
+                let options = MilestoneOptions::try_from(
+                    value
+                        .options
+                        .iter()
+                        .map(|o| MilestoneOption::try_from_dto(o, protocol_parameters.token_supply()))
+                        .collect::<Result<Vec<_>, _>>()?,
+                )?;
+                let metadata = if !value.metadata.is_empty() {
+                    prefix_hex::decode(&value.metadata).map_err(|_| DtoError::InvalidField("metadata"))?
+                } else {
+                    Vec::new()
+                };
+
+                MilestoneEssence::new(
+                    MilestoneIndex(index),
+                    timestamp,
+                    protocol_parameters.protocol_version(),
+                    previous_milestone_id,
+                    Parents::new(parent_ids)?,
+                    inclusion_merkle_root,
+                    applied_merkle_root,
+                    metadata,
+                    options,
+                )?
             };
 
-            MilestoneEssence::new(
-                MilestoneIndex(index),
-                timestamp,
-                protocol_parameters.protocol_version(),
-                previous_milestone_id,
-                Parents::new(parent_ids)?,
-                inclusion_merkle_root,
-                applied_merkle_root,
-                metadata,
-                options,
-            )?
-        };
+            let mut signatures = Vec::new();
+            for v in &value.signatures {
+                signatures.push(v.try_into().map_err(|_| DtoError::InvalidField("signatures"))?)
+            }
 
-        let mut signatures = Vec::new();
-        for v in &value.signatures {
-            signatures.push(v.try_into().map_err(|_| DtoError::InvalidField("signatures"))?)
+            Ok(MilestonePayload::new(essence, signatures)?)
         }
-
-        Ok(MilestonePayload::new(essence, signatures)?)
     }
 }
 

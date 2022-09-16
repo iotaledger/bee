@@ -154,16 +154,11 @@ fn verify_transaction_packable<const VERIFY: bool>(transaction: &Payload, _: &Pr
 pub mod dto {
     use serde::{Deserialize, Serialize};
 
-    pub use super::migrated_funds_entry::dto::{
-        try_from_migrated_funds_entry_dto_for_migrated_funds_entry, MigratedFundsEntryDto,
-    };
+    pub use super::migrated_funds_entry::dto::MigratedFundsEntryDto;
     use super::*;
     use crate::{
         error::dto::DtoError,
-        payload::dto::{
-            try_from_treasury_transaction_payload_dto_for_treasury_transaction_payload, PayloadDto,
-            TreasuryTransactionPayloadDto,
-        },
+        payload::dto::{PayloadDto, TreasuryTransactionPayloadDto},
     };
 
     ///
@@ -193,27 +188,26 @@ pub mod dto {
         }
     }
 
-    pub fn try_from_receipt_milestone_option_dto_for_receipt_milestone_option(
-        value: &ReceiptMilestoneOptionDto,
-        token_supply: u64,
-    ) -> Result<ReceiptMilestoneOption, DtoError> {
-        Ok(ReceiptMilestoneOption::new(
-            MilestoneIndex(value.migrated_at),
-            value.last,
-            value
-                .funds
-                .iter()
-                .map(|f| try_from_migrated_funds_entry_dto_for_migrated_funds_entry(f, token_supply))
-                .collect::<Result<_, _>>()?,
-            if let PayloadDto::TreasuryTransaction(ref transaction) = value.transaction {
-                try_from_treasury_transaction_payload_dto_for_treasury_transaction_payload(
-                    transaction.as_ref(),
-                    token_supply,
-                )?
-            } else {
-                return Err(DtoError::InvalidField("transaction"));
-            },
-            token_supply,
-        )?)
+    impl ReceiptMilestoneOption {
+        pub fn try_from_dto(
+            value: &ReceiptMilestoneOptionDto,
+            token_supply: u64,
+        ) -> Result<ReceiptMilestoneOption, DtoError> {
+            Ok(ReceiptMilestoneOption::new(
+                MilestoneIndex(value.migrated_at),
+                value.last,
+                value
+                    .funds
+                    .iter()
+                    .map(|f| MigratedFundsEntry::try_from_dto(f, token_supply))
+                    .collect::<Result<_, _>>()?,
+                if let PayloadDto::TreasuryTransaction(ref transaction) = value.transaction {
+                    TreasuryTransactionPayload::try_from_dto(transaction.as_ref(), token_supply)?
+                } else {
+                    return Err(DtoError::InvalidField("transaction"));
+                },
+                token_supply,
+            )?)
+        }
     }
 }

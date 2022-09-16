@@ -45,9 +45,7 @@ impl TransactionEssence {
 pub mod dto {
     use serde::{Deserialize, Serialize};
 
-    pub use super::regular::dto::{
-        try_from_regular_transaction_essence_dto_for_regular_transaction_essence, RegularTransactionEssenceDto,
-    };
+    pub use super::regular::dto::RegularTransactionEssenceDto;
     use super::*;
     use crate::{error::dto::DtoError, protocol::ProtocolParameters};
 
@@ -66,14 +64,16 @@ pub mod dto {
         }
     }
 
-    pub fn try_from_transaction_essence_dto_for_transaction_essence(
-        value: &TransactionEssenceDto,
-        protocol_parameters: &ProtocolParameters,
-    ) -> Result<TransactionEssence, DtoError> {
-        match value {
-            TransactionEssenceDto::Regular(r) => Ok(TransactionEssence::Regular(
-                try_from_regular_transaction_essence_dto_for_regular_transaction_essence(r, protocol_parameters)?,
-            )),
+    impl TransactionEssence {
+        pub fn try_from_dto(
+            value: &TransactionEssenceDto,
+            protocol_parameters: &ProtocolParameters,
+        ) -> Result<TransactionEssence, DtoError> {
+            match value {
+                TransactionEssenceDto::Regular(r) => Ok(TransactionEssence::Regular(
+                    RegularTransactionEssence::try_from_dto(r, protocol_parameters)?,
+                )),
+            }
         }
     }
 }

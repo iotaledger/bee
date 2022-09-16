@@ -144,10 +144,7 @@ pub mod dto {
     use serde::{Deserialize, Serialize, Serializer};
     use serde_json::Value;
 
-    pub use self::{
-        parameters::dto::ParametersMilestoneOptionDto,
-        receipt::dto::{try_from_receipt_milestone_option_dto_for_receipt_milestone_option, ReceiptMilestoneOptionDto},
-    };
+    pub use self::{parameters::dto::ParametersMilestoneOptionDto, receipt::dto::ReceiptMilestoneOptionDto};
     use super::*;
     use crate::error::dto::DtoError;
 
@@ -222,16 +219,15 @@ pub mod dto {
         }
     }
 
-    pub fn try_from_milestone_option_dto_for_milestone_option(
-        value: &MilestoneOptionDto,
-        token_supply: u64,
-    ) -> Result<MilestoneOption, DtoError> {
-        Ok(match value {
-            MilestoneOptionDto::Receipt(v) => MilestoneOption::Receipt(
-                try_from_receipt_milestone_option_dto_for_receipt_milestone_option(v, token_supply)?,
-            ),
-            MilestoneOptionDto::Parameters(v) => MilestoneOption::Parameters(v.try_into()?),
-        })
+    impl MilestoneOption {
+        pub fn try_from_dto(value: &MilestoneOptionDto, token_supply: u64) -> Result<MilestoneOption, DtoError> {
+            Ok(match value {
+                MilestoneOptionDto::Receipt(v) => {
+                    MilestoneOption::Receipt(ReceiptMilestoneOption::try_from_dto(v, token_supply)?)
+                }
+                MilestoneOptionDto::Parameters(v) => MilestoneOption::Parameters(v.try_into()?),
+            })
+        }
     }
 
     impl MilestoneOptionDto {

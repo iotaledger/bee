@@ -659,11 +659,8 @@ pub mod dto {
     use crate::{
         error::dto::DtoError,
         output::{
-            alias_id::dto::AliasIdDto,
-            dto::OutputBuilderAmountDto,
-            feature::dto::FeatureDto,
-            native_token::dto::NativeTokenDto,
-            unlock_condition::dto::{try_from_unlock_condition_dto_for_unlock_condition, UnlockConditionDto},
+            alias_id::dto::AliasIdDto, dto::OutputBuilderAmountDto, feature::dto::FeatureDto,
+            native_token::dto::NativeTokenDto, unlock_condition::dto::UnlockConditionDto,
         },
     };
 
@@ -717,51 +714,47 @@ pub mod dto {
         }
     }
 
-    pub fn try_from_alias_output_dto_for_alias_output(
-        value: &AliasOutputDto,
-        token_supply: u64,
-    ) -> Result<AliasOutput, DtoError> {
-        let mut builder = AliasOutputBuilder::new_with_amount(
-            value
-                .amount
-                .parse::<u64>()
-                .map_err(|_| DtoError::InvalidField("amount"))?,
-            (&value.alias_id).try_into()?,
-        )?;
-
-        builder = builder.with_state_index(value.state_index);
-
-        if !value.state_metadata.is_empty() {
-            builder = builder.with_state_metadata(
-                prefix_hex::decode(&value.state_metadata).map_err(|_| DtoError::InvalidField("state_metadata"))?,
-            );
-        }
-
-        builder = builder.with_foundry_counter(value.foundry_counter);
-
-        for t in &value.native_tokens {
-            builder = builder.add_native_token(t.try_into()?);
-        }
-
-        for u in &value.unlock_conditions {
-            builder =
-                builder.add_unlock_condition(try_from_unlock_condition_dto_for_unlock_condition(u, token_supply)?);
-        }
-
-        for b in &value.features {
-            builder = builder.add_feature(b.try_into()?);
-        }
-
-        for b in &value.immutable_features {
-            builder = builder.add_immutable_feature(b.try_into()?);
-        }
-
-        Ok(builder.finish(token_supply)?)
-    }
-
     impl AliasOutput {
+        pub fn try_from_dto(value: &AliasOutputDto, token_supply: u64) -> Result<AliasOutput, DtoError> {
+            let mut builder = AliasOutputBuilder::new_with_amount(
+                value
+                    .amount
+                    .parse::<u64>()
+                    .map_err(|_| DtoError::InvalidField("amount"))?,
+                (&value.alias_id).try_into()?,
+            )?;
+
+            builder = builder.with_state_index(value.state_index);
+
+            if !value.state_metadata.is_empty() {
+                builder = builder.with_state_metadata(
+                    prefix_hex::decode(&value.state_metadata).map_err(|_| DtoError::InvalidField("state_metadata"))?,
+                );
+            }
+
+            builder = builder.with_foundry_counter(value.foundry_counter);
+
+            for t in &value.native_tokens {
+                builder = builder.add_native_token(t.try_into()?);
+            }
+
+            for u in &value.unlock_conditions {
+                builder = builder.add_unlock_condition(UnlockCondition::try_from_dto(u, token_supply)?);
+            }
+
+            for b in &value.features {
+                builder = builder.add_feature(b.try_into()?);
+            }
+
+            for b in &value.immutable_features {
+                builder = builder.add_immutable_feature(b.try_into()?);
+            }
+
+            Ok(builder.finish(token_supply)?)
+        }
+
         #[allow(clippy::too_many_arguments)]
-        pub fn from_dtos(
+        pub fn try_from_dtos(
             amount: OutputBuilderAmountDto,
             native_tokens: Option<Vec<NativeTokenDto>>,
             alias_id: &AliasIdDto,
@@ -807,7 +800,7 @@ pub mod dto {
 
             let unlock_conditions = unlock_conditions
                 .iter()
-                .map(|u| try_from_unlock_condition_dto_for_unlock_condition(u, token_supply))
+                .map(|u| UnlockCondition::try_from_dto(u, token_supply))
                 .collect::<Result<Vec<UnlockCondition>, DtoError>>()?;
             builder = builder.with_unlock_conditions(unlock_conditions);
 

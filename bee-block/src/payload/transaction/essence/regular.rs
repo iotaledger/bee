@@ -258,12 +258,7 @@ pub mod dto {
     use serde::{Deserialize, Serialize};
 
     use super::*;
-    use crate::{
-        error::dto::DtoError,
-        input::dto::InputDto,
-        output::dto::{try_from_output_dto_for_output, OutputDto},
-        payload::dto::PayloadDto,
-    };
+    use crate::{error::dto::DtoError, input::dto::InputDto, output::dto::OutputDto, payload::dto::PayloadDto};
 
     /// Describes the essence data making up a transaction by defining its inputs and outputs and an optional payload.
     #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -297,34 +292,36 @@ pub mod dto {
         }
     }
 
-    pub fn try_from_regular_transaction_essence_dto_for_regular_transaction_essence(
-        value: &RegularTransactionEssenceDto,
-        protocol_parameters: &ProtocolParameters,
-    ) -> Result<RegularTransactionEssence, DtoError> {
-        let inputs = value
-            .inputs
-            .iter()
-            .map(TryInto::try_into)
-            .collect::<Result<Vec<Input>, DtoError>>()?;
-        let outputs = value
-            .outputs
-            .iter()
-            .map(|o| try_from_output_dto_for_output(o, protocol_parameters.token_supply()))
-            .collect::<Result<Vec<Output>, DtoError>>()?;
+    impl RegularTransactionEssence {
+        pub fn try_from_dto(
+            value: &RegularTransactionEssenceDto,
+            protocol_parameters: &ProtocolParameters,
+        ) -> Result<RegularTransactionEssence, DtoError> {
+            let inputs = value
+                .inputs
+                .iter()
+                .map(TryInto::try_into)
+                .collect::<Result<Vec<Input>, DtoError>>()?;
+            let outputs = value
+                .outputs
+                .iter()
+                .map(|o| Output::try_from_dto(o, protocol_parameters.token_supply()))
+                .collect::<Result<Vec<Output>, DtoError>>()?;
 
-        let mut builder = RegularTransactionEssence::builder(InputsCommitment::from_str(&value.inputs_commitment)?)
-            .with_inputs(inputs)
-            .with_outputs(outputs);
-        builder = if let Some(p) = &value.payload {
-            if let PayloadDto::TaggedData(i) = p {
-                builder.with_payload(Payload::TaggedData(Box::new((i.as_ref()).try_into()?)))
+            let mut builder = RegularTransactionEssence::builder(InputsCommitment::from_str(&value.inputs_commitment)?)
+                .with_inputs(inputs)
+                .with_outputs(outputs);
+            builder = if let Some(p) = &value.payload {
+                if let PayloadDto::TaggedData(i) = p {
+                    builder.with_payload(Payload::TaggedData(Box::new((i.as_ref()).try_into()?)))
+                } else {
+                    return Err(DtoError::InvalidField("payload"));
+                }
             } else {
-                return Err(DtoError::InvalidField("payload"));
-            }
-        } else {
-            builder
-        };
+                builder
+            };
 
-        builder.finish(protocol_parameters).map_err(Into::into)
+            builder.finish(protocol_parameters).map_err(Into::into)
+        }
     }
 }
