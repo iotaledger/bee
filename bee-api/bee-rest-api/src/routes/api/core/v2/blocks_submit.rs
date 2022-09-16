@@ -4,10 +4,7 @@
 use axum::{body::Bytes, extract::Extension, http::header::HeaderMap, routing::post, Router};
 use bee_block::{
     parent::Parents,
-    payload::{
-        dto::{try_from_payload_dto_payload, PayloadDto},
-        Payload,
-    },
+    payload::{dto::PayloadDto, Payload},
     protocol::ProtocolParameters,
     Block, BlockBuilder, BlockId,
 };
@@ -107,7 +104,7 @@ pub(crate) async fn submit_block_json<B: StorageBackend>(
         let payload_dto = serde_json::from_value::<PayloadDto>(payload_json.clone())
             .map_err(|e| ApiError::DependencyError(DependencyError::SerdeJsonError(e)))?;
         Some(
-            try_from_payload_dto_payload(&payload_dto, &protocol_parameters)
+            Payload::try_from_dto(&payload_dto, &protocol_parameters)
                 .map_err(|e| ApiError::DependencyError(DependencyError::InvalidDto(e)))?,
         )
     };

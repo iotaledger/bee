@@ -216,12 +216,8 @@ pub mod dto {
 
     use super::*;
     pub use super::{
-        milestone::dto::{try_from_milestone_payload_dto_for_milestone_payload, MilestonePayloadDto},
-        tagged_data::dto::TaggedDataPayloadDto,
-        transaction::dto::{try_from_transaction_payload_dto_for_transaction_payload, TransactionPayloadDto},
-        treasury_transaction::dto::{
-            try_from_treasury_transaction_payload_dto_for_treasury_transaction_payload, TreasuryTransactionPayloadDto,
-        },
+        milestone::dto::MilestonePayloadDto, tagged_data::dto::TaggedDataPayloadDto,
+        transaction::dto::TransactionPayloadDto, treasury_transaction::dto::TreasuryTransactionPayloadDto,
     };
     use crate::error::dto::DtoError;
 
@@ -248,26 +244,21 @@ pub mod dto {
         }
     }
 
-    pub fn try_from_payload_dto_payload(
-        value: &PayloadDto,
-        protocol_parameters: &ProtocolParameters,
-    ) -> Result<Payload, DtoError> {
-        Ok(match value {
-            PayloadDto::Transaction(p) => Payload::from(try_from_transaction_payload_dto_for_transaction_payload(
-                p.as_ref(),
-                protocol_parameters,
-            )?),
-            PayloadDto::Milestone(p) => Payload::from(try_from_milestone_payload_dto_for_milestone_payload(
-                p.as_ref(),
-                protocol_parameters,
-            )?),
-            PayloadDto::TreasuryTransaction(p) => Payload::from(
-                try_from_treasury_transaction_payload_dto_for_treasury_transaction_payload(
+    impl Payload {
+        pub fn try_from_dto(value: &PayloadDto, protocol_parameters: &ProtocolParameters) -> Result<Payload, DtoError> {
+            Ok(match value {
+                PayloadDto::Transaction(p) => {
+                    Payload::from(TransactionPayload::try_from_dto(p.as_ref(), protocol_parameters)?)
+                }
+                PayloadDto::Milestone(p) => {
+                    Payload::from(MilestonePayload::try_from_dto(p.as_ref(), protocol_parameters)?)
+                }
+                PayloadDto::TreasuryTransaction(p) => Payload::from(TreasuryTransactionPayload::try_from_dto(
                     p.as_ref(),
                     protocol_parameters.token_supply(),
-                )?,
-            ),
-            PayloadDto::TaggedData(p) => Payload::from(TaggedDataPayload::try_from(p.as_ref())?),
-        })
+                )?),
+                PayloadDto::TaggedData(p) => Payload::from(TaggedDataPayload::try_from(p.as_ref())?),
+            })
+        }
     }
 }

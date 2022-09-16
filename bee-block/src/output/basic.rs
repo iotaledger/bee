@@ -334,10 +334,8 @@ pub mod dto {
     use crate::{
         error::dto::DtoError,
         output::{
-            dto::OutputBuilderAmountDto,
-            feature::dto::FeatureDto,
-            native_token::dto::NativeTokenDto,
-            unlock_condition::dto::{try_from_unlock_condition_dto_for_unlock_condition, UnlockConditionDto},
+            dto::OutputBuilderAmountDto, feature::dto::FeatureDto, native_token::dto::NativeTokenDto,
+            unlock_condition::dto::UnlockConditionDto,
         },
     };
 
@@ -369,31 +367,28 @@ pub mod dto {
         }
     }
 
-    pub fn try_from_basic_output_dto_for_basic_output(
-        value: &BasicOutputDto,
-        token_supply: u64,
-    ) -> Result<BasicOutput, DtoError> {
-        let mut builder =
-            BasicOutputBuilder::new_with_amount(value.amount.parse().map_err(|_| DtoError::InvalidField("amount"))?)?;
-
-        for t in &value.native_tokens {
-            builder = builder.add_native_token(t.try_into()?);
-        }
-
-        for u in &value.unlock_conditions {
-            builder =
-                builder.add_unlock_condition(try_from_unlock_condition_dto_for_unlock_condition(u, token_supply)?);
-        }
-
-        for b in &value.features {
-            builder = builder.add_feature(b.try_into()?);
-        }
-
-        Ok(builder.finish(token_supply)?)
-    }
-
     impl BasicOutput {
-        pub fn from_dtos(
+        pub fn try_from_dto(value: &BasicOutputDto, token_supply: u64) -> Result<BasicOutput, DtoError> {
+            let mut builder = BasicOutputBuilder::new_with_amount(
+                value.amount.parse().map_err(|_| DtoError::InvalidField("amount"))?,
+            )?;
+
+            for t in &value.native_tokens {
+                builder = builder.add_native_token(t.try_into()?);
+            }
+
+            for u in &value.unlock_conditions {
+                builder = builder.add_unlock_condition(UnlockCondition::try_from_dto(u, token_supply)?);
+            }
+
+            for b in &value.features {
+                builder = builder.add_feature(b.try_into()?);
+            }
+
+            Ok(builder.finish(token_supply)?)
+        }
+
+        pub fn try_from_dtos(
             amount: OutputBuilderAmountDto,
             native_tokens: Option<Vec<NativeTokenDto>>,
             unlock_conditions: Vec<UnlockConditionDto>,
@@ -419,7 +414,7 @@ pub mod dto {
 
             let unlock_conditions = unlock_conditions
                 .iter()
-                .map(|u| try_from_unlock_condition_dto_for_unlock_condition(u, token_supply))
+                .map(|u| UnlockCondition::try_from_dto(u, token_supply))
                 .collect::<Result<Vec<UnlockCondition>, DtoError>>()?;
             builder = builder.with_unlock_conditions(unlock_conditions);
 

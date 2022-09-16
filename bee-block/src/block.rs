@@ -252,11 +252,7 @@ pub mod dto {
     use serde::{Deserialize, Serialize};
 
     use super::*;
-    use crate::{
-        error::dto::DtoError,
-        payload::dto::{try_from_payload_dto_payload, PayloadDto},
-        protocol::ProtocolParameters,
-    };
+    use crate::{error::dto::DtoError, payload::dto::PayloadDto, protocol::ProtocolParameters};
 
     /// The block object that nodes gossip around in the network.
     #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -284,30 +280,29 @@ pub mod dto {
         }
     }
 
-    pub fn try_from_block_dto_for_block(
-        value: &BlockDto,
-        protocol_parameters: &ProtocolParameters,
-    ) -> Result<Block, DtoError> {
-        let parents = Parents::new(
-            value
-                .parents
-                .iter()
-                .map(|m| m.parse::<BlockId>().map_err(|_| DtoError::InvalidField("parents")))
-                .collect::<Result<Vec<BlockId>, DtoError>>()?,
-        )?;
-
-        let mut builder = BlockBuilder::new(parents)
-            .with_protocol_version(value.protocol_version)
-            .with_nonce_provider(
+    impl Block {
+        pub fn try_from_dto(value: &BlockDto, protocol_parameters: &ProtocolParameters) -> Result<Block, DtoError> {
+            let parents = Parents::new(
                 value
-                    .nonce
-                    .parse::<u64>()
-                    .map_err(|_| DtoError::InvalidField("nonce"))?,
-            );
-        if let Some(p) = value.payload.as_ref() {
-            builder = builder.with_payload(try_from_payload_dto_payload(p, protocol_parameters)?);
-        }
+                    .parents
+                    .iter()
+                    .map(|m| m.parse::<BlockId>().map_err(|_| DtoError::InvalidField("parents")))
+                    .collect::<Result<Vec<BlockId>, DtoError>>()?,
+            )?;
 
-        Ok(builder.finish(protocol_parameters.min_pow_score())?)
+            let mut builder = BlockBuilder::new(parents)
+                .with_protocol_version(value.protocol_version)
+                .with_nonce_provider(
+                    value
+                        .nonce
+                        .parse::<u64>()
+                        .map_err(|_| DtoError::InvalidField("nonce"))?,
+                );
+            if let Some(p) = value.payload.as_ref() {
+                builder = builder.with_payload(Payload::try_from_dto(p, protocol_parameters)?);
+            }
+
+            Ok(builder.finish(protocol_parameters.min_pow_score())?)
+        }
     }
 }

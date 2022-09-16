@@ -100,17 +100,16 @@ pub mod dto {
         }
     }
 
-    pub fn try_from_migrated_funds_entry_dto_for_migrated_funds_entry(
-        value: &MigratedFundsEntryDto,
-        token_supply: u64,
-    ) -> Result<MigratedFundsEntry, DtoError> {
-        let tail_transaction_hash = prefix_hex::decode(&value.tail_transaction_hash)
-            .map_err(|_| DtoError::InvalidField("tailTransactionHash"))?;
-        Ok(MigratedFundsEntry::new(
-            TailTransactionHash::new(tail_transaction_hash)?,
-            (&value.address).try_into()?,
-            value.deposit,
-            token_supply,
-        )?)
+    impl MigratedFundsEntry {
+        pub fn try_from_dto(value: &MigratedFundsEntryDto, token_supply: u64) -> Result<MigratedFundsEntry, DtoError> {
+            let tail_transaction_hash = prefix_hex::decode(&value.tail_transaction_hash)
+                .map_err(|_| DtoError::InvalidField("tailTransactionHash"))?;
+            Ok(MigratedFundsEntry::new(
+                TailTransactionHash::new(tail_transaction_hash)?,
+                (&value.address).try_into()?,
+                value.deposit,
+                token_supply,
+            )?)
+        }
     }
 }

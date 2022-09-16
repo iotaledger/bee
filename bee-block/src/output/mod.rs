@@ -1,15 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod alias;
 mod alias_id;
-mod basic;
+
 mod chain_id;
-mod foundry;
+
 mod foundry_id;
 mod inputs_commitment;
 mod native_token;
-mod nft;
 mod nft_id;
 mod output_id;
 mod rent;
@@ -19,7 +17,15 @@ mod token_scheme;
 mod treasury;
 
 ///
+pub mod alias;
+///
+pub mod basic;
+///
 pub mod feature;
+///
+pub mod foundry;
+///
+pub mod nft;
 ///
 pub mod unlock_condition;
 
@@ -343,16 +349,16 @@ pub mod dto {
 
     use super::*;
     pub use super::{
-        alias::dto::{try_from_alias_output_dto_for_alias_output, AliasOutputDto},
+        alias::dto::AliasOutputDto,
         alias_id::dto::AliasIdDto,
-        basic::dto::{try_from_basic_output_dto_for_basic_output, BasicOutputDto},
-        foundry::dto::{try_from_foundry_output_dto_for_foundry_output, FoundryOutputDto},
+        basic::dto::BasicOutputDto,
+        foundry::dto::FoundryOutputDto,
         native_token::dto::NativeTokenDto,
-        nft::dto::{try_from_nft_output_dto_for_nft_output, NftOutputDto},
+        nft::dto::NftOutputDto,
         nft_id::dto::NftIdDto,
         token_id::dto::TokenIdDto,
         token_scheme::dto::{SimpleTokenSchemeDto, TokenSchemeDto},
-        treasury::dto::{try_from_treasury_output_dto_for_treasury_output, TreasuryOutputDto},
+        treasury::dto::TreasuryOutputDto,
     };
     use crate::error::dto::DtoError;
 
@@ -384,16 +390,16 @@ pub mod dto {
         }
     }
 
-    pub fn try_from_output_dto_for_output(value: &OutputDto, token_supply: u64) -> Result<Output, DtoError> {
-        Ok(match value {
-            OutputDto::Treasury(o) => {
-                Output::Treasury(try_from_treasury_output_dto_for_treasury_output(o, token_supply)?)
-            }
-            OutputDto::Basic(o) => Output::Basic(try_from_basic_output_dto_for_basic_output(o, token_supply)?),
-            OutputDto::Alias(o) => Output::Alias(try_from_alias_output_dto_for_alias_output(o, token_supply)?),
-            OutputDto::Foundry(o) => Output::Foundry(try_from_foundry_output_dto_for_foundry_output(o, token_supply)?),
-            OutputDto::Nft(o) => Output::Nft(try_from_nft_output_dto_for_nft_output(o, token_supply)?),
-        })
+    impl Output {
+        pub fn try_from_dto(value: &OutputDto, token_supply: u64) -> Result<Output, DtoError> {
+            Ok(match value {
+                OutputDto::Treasury(o) => Output::Treasury(TreasuryOutput::try_from_dto(o, token_supply)?),
+                OutputDto::Basic(o) => Output::Basic(BasicOutput::try_from_dto(o, token_supply)?),
+                OutputDto::Alias(o) => Output::Alias(AliasOutput::try_from_dto(o, token_supply)?),
+                OutputDto::Foundry(o) => Output::Foundry(FoundryOutput::try_from_dto(o, token_supply)?),
+                OutputDto::Nft(o) => Output::Nft(NftOutput::try_from_dto(o, token_supply)?),
+            })
+        }
     }
 
     impl<'de> Deserialize<'de> for OutputDto {
