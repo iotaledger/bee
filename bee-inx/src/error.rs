@@ -6,10 +6,12 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum Error {
+    #[error(transparent)]
+    BeeBlockError(#[from] bee_block::Error),
+    #[error(transparent)]
+    InxError(#[from] bee_block::InxError),
     #[error("gRPC status code: {0}")]
     StatusCode(#[from] tonic::Status),
     #[error(transparent)]
     TonicError(#[from] tonic::transport::Error),
-    #[error(transparent)]
-    InxError(#[from] bee_block::InxError),
 }
