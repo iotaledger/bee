@@ -13,33 +13,41 @@ use packable::{
 };
 
 use crate::{
-    constant::PROTOCOL_VERSION,
     parent::Parents,
     payload::{OptionalPayload, Payload},
-    BlockId, Error,
+    protocol::ProtocolParameters,
+    BlockId, Error, PROTOCOL_VERSION,
 };
 
 /// A builder to build a [`Block`].
 #[derive(Clone)]
 #[must_use]
 pub struct BlockBuilder<P: NonceProvider = Miner> {
+    protocol_version: Option<u8>,
     parents: Parents,
     payload: Option<Payload>,
-    nonce_provider: Option<(P, u32)>,
+    nonce_provider: Option<P>,
 }
 
 impl<P: NonceProvider> BlockBuilder<P> {
-    const DEFAULT_POW_SCORE: u32 = 4000;
     const DEFAULT_NONCE: u64 = 0;
 
     /// Creates a new [`BlockBuilder`].
     #[inline(always)]
     pub fn new(parents: Parents) -> Self {
         Self {
+            protocol_version: None,
             parents,
             payload: None,
             nonce_provider: None,
         }
+    }
+
+    /// Adds a protocol version to a [`BlockBuilder`].
+    #[inline(always)]
+    pub fn with_protocol_version(mut self, protocol_version: u8) -> Self {
+        self.protocol_version = Some(protocol_version);
+        self
     }
 
     /// Adds a payload to a [`BlockBuilder`].
@@ -51,17 +59,17 @@ impl<P: NonceProvider> BlockBuilder<P> {
 
     /// Adds a nonce provider to a [`BlockBuilder`].
     #[inline(always)]
-    pub fn with_nonce_provider(mut self, nonce_provider: P, target_score: u32) -> Self {
-        self.nonce_provider = Some((nonce_provider, target_score));
+    pub fn with_nonce_provider(mut self, nonce_provider: P) -> Self {
+        self.nonce_provider = Some(nonce_provider);
         self
     }
 
     /// Finishes the [`BlockBuilder`] into a [`Block`].
-    pub fn finish(self) -> Result<Block, Error> {
+    pub fn finish(self, min_pow_score: u32) -> Result<Block, Error> {
         verify_payload(self.payload.as_ref())?;
 
         let mut block = Block {
-            protocol_version: PROTOCOL_VERSION,
+            protocol_version: self.protocol_version.unwrap_or(PROTOCOL_VERSION),
             parents: self.parents,
             payload: self.payload.into(),
             nonce: 0,
@@ -73,14 +81,12 @@ impl<P: NonceProvider> BlockBuilder<P> {
             return Err(Error::InvalidBlockLength(block_bytes.len()));
         }
 
-        let (nonce_provider, target_score) = self
-            .nonce_provider
-            .unwrap_or((P::Builder::new().finish(), Self::DEFAULT_POW_SCORE));
+        let nonce_provider = self.nonce_provider.unwrap_or_else(|| P::Builder::new().finish());
 
         block.nonce = nonce_provider
             .nonce(
                 &block_bytes[..block_bytes.len() - core::mem::size_of::<u64>()],
-                target_score,
+                min_pow_score,
             )
             .unwrap_or(Self::DEFAULT_NONCE);
 
@@ -160,7 +166,7 @@ impl Block {
         let block = Self::unpack::<_, true>(&mut unpacker, visitor)?;
 
         // When parsing the block is complete, there should not be any trailing bytes left that were not parsed.
-        if u8::unpack::<_, true>(&mut unpacker, visitor).is_ok() {
+        if u8::unpack::<_, true>(&mut unpacker, &()).is_ok() {
             return Err(UnpackError::Packable(Error::RemainingBytesAfterBlock));
         }
 
@@ -170,7 +176,7 @@ impl Block {
 
 impl Packable for Block {
     type UnpackError = Error;
-    type UnpackVisitor = ();
+    type UnpackVisitor = ProtocolParameters;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         self.protocol_version.pack(packer)?;
@@ -187,23 +193,23 @@ impl Packable for Block {
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let start_opt = unpacker.read_bytes();
 
-        let protocol_version = u8::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
+        let protocol_version = u8::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
 
-        if VERIFY && protocol_version != PROTOCOL_VERSION {
+        if VERIFY && protocol_version != visitor.protocol_version() {
             return Err(UnpackError::Packable(Error::ProtocolVersionMismatch {
-                expected: PROTOCOL_VERSION,
+                expected: visitor.protocol_version(),
                 actual: protocol_version,
             }));
         }
 
-        let parents = Parents::unpack::<_, VERIFY>(unpacker, visitor)?;
+        let parents = Parents::unpack::<_, VERIFY>(unpacker, &())?;
         let payload = OptionalPayload::unpack::<_, VERIFY>(unpacker, visitor)?;
 
         if VERIFY {
             verify_payload(payload.deref().as_ref()).map_err(UnpackError::Packable)?;
         }
 
-        let nonce = u64::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
+        let nonce = u64::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
 
         let block = Self {
             protocol_version,
@@ -246,7 +252,11 @@ pub mod dto {
     use serde::{Deserialize, Serialize};
 
     use super::*;
-    use crate::{error::dto::DtoError, payload::dto::PayloadDto};
+    use crate::{
+        error::dto::DtoError,
+        payload::dto::{try_from_payload_dto_payload, PayloadDto},
+        protocol::ProtocolParameters,
+    };
 
     /// The block object that nodes gossip around in the network.
     #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -274,51 +284,30 @@ pub mod dto {
         }
     }
 
-    impl TryFrom<&BlockDto> for Block {
-        type Error = DtoError;
+    pub fn try_from_block_dto_for_block(
+        value: &BlockDto,
+        protocol_parameters: &ProtocolParameters,
+    ) -> Result<Block, DtoError> {
+        let parents = Parents::new(
+            value
+                .parents
+                .iter()
+                .map(|m| m.parse::<BlockId>().map_err(|_| DtoError::InvalidField("parents")))
+                .collect::<Result<Vec<BlockId>, DtoError>>()?,
+        )?;
 
-        fn try_from(value: &BlockDto) -> Result<Self, Self::Error> {
-            if value.protocol_version != PROTOCOL_VERSION {
-                return Err(Error::ProtocolVersionMismatch {
-                    expected: PROTOCOL_VERSION,
-                    actual: value.protocol_version,
-                }
-                .into());
-            }
-
-            let parents = Parents::new(
-                value
-                    .parents
-                    .iter()
-                    .map(|m| m.parse::<BlockId>().map_err(|_| DtoError::InvalidField("parents")))
-                    .collect::<Result<Vec<BlockId>, DtoError>>()?,
-            )?;
-
-            let mut builder = BlockBuilder::new(parents).with_nonce_provider(
+        let mut builder = BlockBuilder::new(parents)
+            .with_protocol_version(value.protocol_version)
+            .with_nonce_provider(
                 value
                     .nonce
                     .parse::<u64>()
                     .map_err(|_| DtoError::InvalidField("nonce"))?,
-                0,
             );
-            if let Some(p) = value.payload.as_ref() {
-                builder = builder.with_payload(p.try_into()?);
-            }
-
-            Ok(builder.finish()?)
+        if let Some(p) = value.payload.as_ref() {
+            builder = builder.with_payload(try_from_payload_dto_payload(p, protocol_parameters)?);
         }
-    }
-}
 
-#[cfg(feature = "inx")]
-mod inx {
-    use super::*;
-
-    impl TryFrom<inx_bindings::proto::RawBlock> for Block {
-        type Error = crate::error::inx::InxError;
-
-        fn try_from(value: inx_bindings::proto::RawBlock) -> Result<Self, Self::Error> {
-            Self::unpack_verified(value.data, &()).map_err(|e| Self::Error::InvalidRawBytes(e.to_string()))
-        }
+        Ok(builder.finish(protocol_parameters.min_pow_score())?)
     }
 }

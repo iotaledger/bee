@@ -5,12 +5,12 @@ use core::str::FromStr;
 
 use bee_block::{
     address::{Address, Ed25519Address},
-    constant::TOKEN_SUPPLY,
     payload::milestone::option::MigratedFundsEntry,
+    protocol::protocol_parameters,
     rand::receipt::rand_tail_transaction_hash,
     Error,
 };
-use packable::{bounded::InvalidBoundedU64, error::UnpackError, PackableExt};
+use packable::{error::UnpackError, PackableExt};
 
 const ED25519_ADDRESS: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 
@@ -19,7 +19,7 @@ fn new_valid() {
     let tth = rand_tail_transaction_hash();
     let address = Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap());
     let amount = 42424242;
-    let mfe = MigratedFundsEntry::new(tth.clone(), address, amount).unwrap();
+    let mfe = MigratedFundsEntry::new(tth.clone(), address, amount, protocol_parameters().token_supply()).unwrap();
 
     assert_eq!(mfe.tail_transaction_hash(), &tth);
     assert_eq!(*mfe.address(), address);
@@ -28,13 +28,16 @@ fn new_valid() {
 
 #[test]
 fn new_invalid_amount() {
+    let token_supply = protocol_parameters().token_supply();
+
     assert!(matches!(
         MigratedFundsEntry::new(
             rand_tail_transaction_hash(),
             Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-            TOKEN_SUPPLY + 1
+            token_supply + 1,
+          token_supply
         ),
-        Err(Error::InvalidMigratedFundsEntryAmount(InvalidBoundedU64(n))) if n == TOKEN_SUPPLY + 1
+        Err(Error::InvalidMigratedFundsEntryAmount(n)) if n == token_supply + 1
     ));
 }
 
@@ -44,6 +47,7 @@ fn packed_len() {
         rand_tail_transaction_hash(),
         Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
         42424242,
+        protocol_parameters().token_supply(),
     )
     .unwrap();
 
@@ -53,10 +57,17 @@ fn packed_len() {
 
 #[test]
 fn pack_unpack_valid() {
+    let protocol_parameters = protocol_parameters();
     let address = Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap());
     let amount = 42424242;
-    let mfe_1 = MigratedFundsEntry::new(rand_tail_transaction_hash(), address, amount).unwrap();
-    let mfe_2 = MigratedFundsEntry::unpack_verified(&mut mfe_1.pack_to_vec().as_slice(), &()).unwrap();
+    let mfe_1 = MigratedFundsEntry::new(
+        rand_tail_transaction_hash(),
+        address,
+        amount,
+        protocol_parameters.token_supply(),
+    )
+    .unwrap();
+    let mfe_2 = MigratedFundsEntry::unpack_verified(&mut mfe_1.pack_to_vec().as_slice(), &protocol_parameters).unwrap();
 
     assert_eq!(mfe_1.tail_transaction_hash(), mfe_2.tail_transaction_hash());
     assert_eq!(*mfe_1.address(), *mfe_2.address());
@@ -65,6 +76,7 @@ fn pack_unpack_valid() {
 
 #[test]
 fn pack_unpack_invalid_amount() {
+    let protocol_parameters = protocol_parameters();
     let bytes = vec![
         42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42,
         42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 0, 82, 253, 252, 7, 33,
@@ -73,9 +85,9 @@ fn pack_unpack_invalid_amount() {
     ];
 
     assert!(matches!(
-        MigratedFundsEntry::unpack_verified(&mut bytes.as_slice(), &()),
+        MigratedFundsEntry::unpack_verified(&mut bytes.as_slice(), &protocol_parameters),
         Err(UnpackError::Packable(Error::InvalidMigratedFundsEntryAmount(
-            InvalidBoundedU64(3_038_287_259_199_220_266)
+            3_038_287_259_199_220_266
         )))
     ));
 }

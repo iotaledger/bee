@@ -16,9 +16,10 @@ use crate::{
     output::{
         feature::{verify_allowed_features, Feature, FeatureFlags, Features},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        ChainId, FoundryId, NativeToken, NativeTokens, Output, OutputAmount, OutputBuilderAmount, OutputId, Rent,
-        RentStructure, StateTransitionError, StateTransitionVerifier, TokenId, TokenScheme,
+        verify_output_amount, ChainId, FoundryId, NativeToken, NativeTokens, Output, OutputBuilderAmount, OutputId,
+        Rent, RentStructure, StateTransitionError, StateTransitionVerifier, TokenId, TokenScheme,
     },
+    protocol::ProtocolParameters,
     semantic::{ConflictReason, ValidationContext},
     unlock::Unlock,
     Error,
@@ -44,11 +45,7 @@ impl FoundryOutputBuilder {
         serial_number: u32,
         token_scheme: TokenScheme,
     ) -> Result<FoundryOutputBuilder, Error> {
-        Self::new(
-            OutputBuilderAmount::Amount(amount.try_into().map_err(Error::InvalidOutputAmount)?),
-            serial_number,
-            token_scheme,
-        )
+        Self::new(OutputBuilderAmount::Amount(amount), serial_number, token_scheme)
     }
 
     /// Creates a [`FoundryOutputBuilder`] with a provided rent structure.
@@ -84,7 +81,7 @@ impl FoundryOutputBuilder {
     /// Sets the amount to the provided value.
     #[inline(always)]
     pub fn with_amount(mut self, amount: u64) -> Result<Self, Error> {
-        self.amount = OutputBuilderAmount::Amount(amount.try_into().map_err(Error::InvalidOutputAmount)?);
+        self.amount = OutputBuilderAmount::Amount(amount);
         Ok(self)
     }
 
@@ -201,7 +198,7 @@ impl FoundryOutputBuilder {
     }
 
     ///
-    pub fn finish(self) -> Result<FoundryOutput, Error> {
+    pub fn finish(self, token_supply: u64) -> Result<FoundryOutput, Error> {
         let unlock_conditions = UnlockConditions::new(self.unlock_conditions)?;
 
         verify_unlock_conditions(&unlock_conditions)?;
@@ -215,7 +212,7 @@ impl FoundryOutputBuilder {
         verify_allowed_features(&immutable_features, FoundryOutput::ALLOWED_IMMUTABLE_FEATURES)?;
 
         let mut output = FoundryOutput {
-            amount: 1u64.try_into().map_err(Error::InvalidOutputAmount)?,
+            amount: 1u64,
             native_tokens: NativeTokens::new(self.native_tokens)?,
             serial_number: self.serial_number,
             token_scheme: self.token_scheme,
@@ -226,18 +223,19 @@ impl FoundryOutputBuilder {
 
         output.amount = match self.amount {
             OutputBuilderAmount::Amount(amount) => amount,
-            OutputBuilderAmount::MinimumStorageDeposit(rent_structure) => Output::Foundry(output.clone())
-                .rent_cost(&rent_structure)
-                .try_into()
-                .map_err(Error::InvalidOutputAmount)?,
+            OutputBuilderAmount::MinimumStorageDeposit(rent_structure) => {
+                Output::Foundry(output.clone()).rent_cost(&rent_structure)
+            }
         };
+
+        verify_output_amount::<true>(&output.amount, &token_supply)?;
 
         Ok(output)
     }
 
     /// Finishes the [`FoundryOutputBuilder`] into an [`Output`].
-    pub fn finish_output(self) -> Result<Output, Error> {
-        Ok(Output::Foundry(self.finish()?))
+    pub fn finish_output(self, token_supply: u64) -> Result<Output, Error> {
+        Ok(Output::Foundry(self.finish(token_supply)?))
     }
 }
 
@@ -260,7 +258,7 @@ impl From<&FoundryOutput> for FoundryOutputBuilder {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct FoundryOutput {
     // Amount of IOTA tokens held by the output.
-    amount: OutputAmount,
+    amount: u64,
     // Native tokens held by the output.
     native_tokens: NativeTokens,
     // The serial number of the foundry with respect to the controlling alias.
@@ -283,19 +281,26 @@ impl FoundryOutput {
 
     /// Creates a new [`FoundryOutput`] with a provided amount.
     #[inline(always)]
-    pub fn new_with_amount(amount: u64, serial_number: u32, token_scheme: TokenScheme) -> Result<Self, Error> {
-        FoundryOutputBuilder::new_with_amount(amount, serial_number, token_scheme)?.finish()
+    pub fn new_with_amount(
+        amount: u64,
+        serial_number: u32,
+        token_scheme: TokenScheme,
+        token_supply: u64,
+    ) -> Result<Self, Error> {
+        FoundryOutputBuilder::new_with_amount(amount, serial_number, token_scheme)?.finish(token_supply)
     }
 
     /// Creates a new [`FoundryOutput`] with a provided rent structure.
     /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
     pub fn new_with_minimum_storage_deposit(
-        rent_structure: RentStructure,
         serial_number: u32,
         token_scheme: TokenScheme,
+        rent_structure: RentStructure,
+        token_supply: u64,
     ) -> Result<Self, Error> {
-        FoundryOutputBuilder::new_with_minimum_storage_deposit(rent_structure, serial_number, token_scheme)?.finish()
+        FoundryOutputBuilder::new_with_minimum_storage_deposit(rent_structure, serial_number, token_scheme)?
+            .finish(token_supply)
     }
 
     /// Creates a new [`FoundryOutputBuilder`] with a provided amount.
@@ -322,7 +327,7 @@ impl FoundryOutput {
     ///
     #[inline(always)]
     pub fn amount(&self) -> u64 {
-        self.amount.get()
+        self.amount
     }
 
     ///
@@ -532,7 +537,7 @@ impl StateTransitionVerifier for FoundryOutput {
 
 impl Packable for FoundryOutput {
     type UnpackError = Error;
-    type UnpackVisitor = ();
+    type UnpackVisitor = ProtocolParameters;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         self.amount.pack(packer)?;
@@ -550,11 +555,13 @@ impl Packable for FoundryOutput {
         unpacker: &mut U,
         visitor: &Self::UnpackVisitor,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let amount =
-            OutputAmount::unpack::<_, VERIFY>(unpacker, visitor).map_packable_err(Error::InvalidOutputAmount)?;
-        let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker, visitor)?;
-        let serial_number = u32::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
-        let token_scheme = TokenScheme::unpack::<_, VERIFY>(unpacker, visitor)?;
+        let amount = u64::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
+
+        verify_output_amount::<VERIFY>(&amount, &visitor.token_supply()).map_err(UnpackError::Packable)?;
+
+        let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker, &())?;
+        let serial_number = u32::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
+        let token_scheme = TokenScheme::unpack::<_, VERIFY>(unpacker, &())?;
 
         let unlock_conditions = UnlockConditions::unpack::<_, VERIFY>(unpacker, visitor)?;
 
@@ -562,13 +569,13 @@ impl Packable for FoundryOutput {
             verify_unlock_conditions(&unlock_conditions).map_err(UnpackError::Packable)?;
         }
 
-        let features = Features::unpack::<_, VERIFY>(unpacker, visitor)?;
+        let features = Features::unpack::<_, VERIFY>(unpacker, &())?;
 
         if VERIFY {
             verify_allowed_features(&features, FoundryOutput::ALLOWED_FEATURES).map_err(UnpackError::Packable)?;
         }
 
-        let immutable_features = Features::unpack::<_, VERIFY>(unpacker, visitor)?;
+        let immutable_features = Features::unpack::<_, VERIFY>(unpacker, &())?;
 
         if VERIFY {
             verify_allowed_features(&immutable_features, FoundryOutput::ALLOWED_IMMUTABLE_FEATURES)
@@ -604,8 +611,11 @@ pub mod dto {
     use crate::{
         error::dto::DtoError,
         output::{
-            dto::OutputBuilderAmountDto, feature::dto::FeatureDto, native_token::dto::NativeTokenDto,
-            token_scheme::dto::TokenSchemeDto, unlock_condition::dto::UnlockConditionDto,
+            dto::OutputBuilderAmountDto,
+            feature::dto::FeatureDto,
+            native_token::dto::NativeTokenDto,
+            token_scheme::dto::TokenSchemeDto,
+            unlock_condition::dto::{try_from_unlock_condition_dto_for_unlock_condition, UnlockConditionDto},
         },
     };
 
@@ -647,40 +657,41 @@ pub mod dto {
         }
     }
 
-    impl TryFrom<&FoundryOutputDto> for FoundryOutput {
-        type Error = DtoError;
+    pub fn try_from_foundry_output_dto_for_foundry_output(
+        value: &FoundryOutputDto,
+        token_supply: u64,
+    ) -> Result<FoundryOutput, DtoError> {
+        let mut builder = FoundryOutputBuilder::new_with_amount(
+            value
+                .amount
+                .parse::<u64>()
+                .map_err(|_| DtoError::InvalidField("amount"))?,
+            value.serial_number,
+            (&value.token_scheme).try_into()?,
+        )?;
 
-        fn try_from(value: &FoundryOutputDto) -> Result<Self, Self::Error> {
-            let mut builder = FoundryOutputBuilder::new_with_amount(
-                value
-                    .amount
-                    .parse::<u64>()
-                    .map_err(|_| DtoError::InvalidField("amount"))?,
-                value.serial_number,
-                (&value.token_scheme).try_into()?,
-            )?;
-
-            for t in &value.native_tokens {
-                builder = builder.add_native_token(t.try_into()?);
-            }
-
-            for b in &value.unlock_conditions {
-                builder = builder.add_unlock_condition(b.try_into()?);
-            }
-
-            for b in &value.features {
-                builder = builder.add_feature(b.try_into()?);
-            }
-
-            for b in &value.immutable_features {
-                builder = builder.add_immutable_feature(b.try_into()?);
-            }
-
-            Ok(builder.finish()?)
+        for t in &value.native_tokens {
+            builder = builder.add_native_token(t.try_into()?);
         }
+
+        for u in &value.unlock_conditions {
+            builder =
+                builder.add_unlock_condition(try_from_unlock_condition_dto_for_unlock_condition(u, token_supply)?);
+        }
+
+        for b in &value.features {
+            builder = builder.add_feature(b.try_into()?);
+        }
+
+        for b in &value.immutable_features {
+            builder = builder.add_immutable_feature(b.try_into()?);
+        }
+
+        Ok(builder.finish(token_supply)?)
     }
 
     impl FoundryOutput {
+        #[allow(clippy::too_many_arguments)]
         pub fn from_dtos(
             amount: OutputBuilderAmountDto,
             native_tokens: Option<Vec<NativeTokenDto>>,
@@ -689,6 +700,7 @@ pub mod dto {
             unlock_conditions: Vec<UnlockConditionDto>,
             features: Option<Vec<FeatureDto>>,
             immutable_features: Option<Vec<FeatureDto>>,
+            token_supply: u64,
         ) -> Result<FoundryOutput, DtoError> {
             let token_scheme = TokenScheme::try_from(token_scheme)?;
 
@@ -713,7 +725,7 @@ pub mod dto {
 
             let unlock_conditions = unlock_conditions
                 .iter()
-                .map(UnlockCondition::try_from)
+                .map(|u| try_from_unlock_condition_dto_for_unlock_condition(u, token_supply))
                 .collect::<Result<Vec<UnlockCondition>, DtoError>>()?;
             builder = builder.with_unlock_conditions(unlock_conditions);
 
@@ -733,7 +745,7 @@ pub mod dto {
                 builder = builder.with_immutable_features(immutable_features);
             }
 
-            Ok(builder.finish()?)
+            Ok(builder.finish(token_supply)?)
         }
     }
 }

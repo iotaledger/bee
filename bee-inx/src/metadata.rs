@@ -69,10 +69,39 @@ impl TryFrom<proto::BlockMetadata> for BlockMetadata {
 
 impl From<proto::block_metadata::LedgerInclusionState> for LedgerInclusionState {
     fn from(value: proto::block_metadata::LedgerInclusionState) -> Self {
+        use proto::block_metadata::LedgerInclusionState::*;
         match value {
-            proto::block_metadata::LedgerInclusionState::NoTransaction => LedgerInclusionState::NoTransaction,
-            proto::block_metadata::LedgerInclusionState::Included => LedgerInclusionState::Included,
-            proto::block_metadata::LedgerInclusionState::Conflicting => LedgerInclusionState::Conflicting,
+            NoTransaction => LedgerInclusionState::NoTransaction,
+            Included => LedgerInclusionState::Included,
+            Conflicting => LedgerInclusionState::Conflicting,
+        }
+    }
+}
+
+impl From<LedgerInclusionState> for proto::block_metadata::LedgerInclusionState {
+    fn from(value: LedgerInclusionState) -> Self {
+        match value {
+            LedgerInclusionState::NoTransaction => Self::NoTransaction,
+            LedgerInclusionState::Included => Self::Included,
+            LedgerInclusionState::Conflicting => Self::Conflicting,
+        }
+    }
+}
+
+impl From<BlockMetadata> for proto::BlockMetadata {
+    fn from(value: BlockMetadata) -> Self {
+        Self {
+            block_id: Some(value.block_id.into()),
+            parents: value.parents.into_vec().into_iter().map(Into::into).collect(),
+            solid: value.is_solid,
+            should_promote: value.should_promote,
+            should_reattach: value.should_reattach,
+            referenced_by_milestone_index: value.referenced_by_milestone_index,
+            milestone_index: value.milestone_index,
+            ledger_inclusion_state: proto::block_metadata::LedgerInclusionState::from(value.ledger_inclusion_state)
+                .into(),
+            conflict_reason: proto::block_metadata::ConflictReason::from(value.conflict_reason).into(),
+            white_flag_index: value.white_flag_index,
         }
     }
 }

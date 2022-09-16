@@ -23,11 +23,12 @@ pub fn rand_tail_transaction_hash() -> TailTransactionHash {
 }
 
 /// Generates a random migrated funds entry.
-pub fn rand_migrated_funds_entry() -> MigratedFundsEntry {
+pub fn rand_migrated_funds_entry(token_supply: u64) -> MigratedFundsEntry {
     MigratedFundsEntry::new(
         rand_tail_transaction_hash(),
         rand_address(),
-        rand_number_range(MigratedFundsEntry::AMOUNT_RANGE),
+        rand_number_range(MigratedFundsEntry::AMOUNT_MIN..token_supply),
+        token_supply,
     )
     .unwrap()
 }

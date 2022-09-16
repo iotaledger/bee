@@ -6,6 +6,6 @@ use bee_block::rand::{milestone::rand_milestone_index, milestone_option::rand_re
 use crate::Receipt;
 
 /// Generates a random ledger receipt.
-pub fn rand_ledger_receipt() -> Receipt {
-    Receipt::new(rand_receipt_milestone_option(), rand_milestone_index())
+pub fn rand_ledger_receipt(token_supply: u64) -> Receipt {
+    Receipt::new(rand_receipt_milestone_option(token_supply), rand_milestone_index())
 }

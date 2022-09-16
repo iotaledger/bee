@@ -26,15 +26,19 @@ pub mod unlock_condition;
 use core::ops::RangeInclusive;
 
 use derive_more::From;
-use packable::{bounded::BoundedU64, PackableExt};
+use packable::{
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    unpacker::Unpacker,
+    Packable, PackableExt,
+};
 
 pub(crate) use self::{
     alias::StateMetadataLength,
     feature::{MetadataFeatureLength, TagFeatureLength},
     native_token::NativeTokenCount,
     output_id::OutputIndex,
-    treasury::TreasuryOutputAmount,
-    unlock_condition::{AddressUnlockCondition, StorageDepositAmount},
+    unlock_condition::AddressUnlockCondition,
 };
 pub use self::{
     alias::{AliasOutput, AliasOutputBuilder},
@@ -56,7 +60,7 @@ pub use self::{
     treasury::TreasuryOutput,
     unlock_condition::{UnlockCondition, UnlockConditions},
 };
-use crate::{address::Address, constant::TOKEN_SUPPLY, semantic::ValidationContext, Error};
+use crate::{address::Address, protocol::ProtocolParameters, semantic::ValidationContext, Error};
 
 /// The maximum number of outputs of a transaction.
 pub const OUTPUT_COUNT_MAX: u16 = 128;
@@ -67,45 +71,35 @@ pub const OUTPUT_INDEX_MAX: u16 = OUTPUT_COUNT_MAX - 1; // 127
 /// The range of valid indices of outputs of a transaction .
 pub const OUTPUT_INDEX_RANGE: RangeInclusive<u16> = 0..=OUTPUT_INDEX_MAX; // [0..127]
 
-/// Type representing an output amount.
-pub type OutputAmount = BoundedU64<{ *Output::AMOUNT_RANGE.start() }, { *Output::AMOUNT_RANGE.end() }>;
-
 #[derive(Clone)]
 pub(crate) enum OutputBuilderAmount {
-    Amount(OutputAmount),
+    Amount(u64),
     MinimumStorageDeposit(RentStructure),
 }
 
 /// A generic output that can represent different types defining the deposit of funds.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From, packable::Packable)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From)]
 #[cfg_attr(
     feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
-#[packable(unpack_error = Error)]
-#[packable(tag_type = u8, with_error = Error::InvalidOutputKind)]
 pub enum Output {
     /// A treasury output.
-    #[packable(tag = TreasuryOutput::KIND)]
     Treasury(TreasuryOutput),
     /// A basic output.
-    #[packable(tag = BasicOutput::KIND)]
     Basic(BasicOutput),
     /// An alias output.
-    #[packable(tag = AliasOutput::KIND)]
     Alias(AliasOutput),
     /// A foundry output.
-    #[packable(tag = FoundryOutput::KIND)]
     Foundry(FoundryOutput),
     /// An NFT output.
-    #[packable(tag = NftOutput::KIND)]
     Nft(NftOutput),
 }
 
 impl Output {
-    /// Valid amounts for an [`Output`].
-    pub const AMOUNT_RANGE: RangeInclusive<u64> = 1..=TOKEN_SUPPLY;
+    /// Minimum amount for an output.
+    pub const AMOUNT_MIN: u64 = 1;
 
     /// Return the output kind of an [`Output`].
     pub fn kind(&self) -> u8 {
@@ -221,8 +215,8 @@ impl Output {
     /// byte cost, given by [`RentStructure`].
     /// If there is a [`StorageDepositReturnUnlockCondition`](unlock_condition::StorageDepositReturnUnlockCondition),
     /// its amount is also checked.
-    pub fn verify_storage_deposit(&self, rent_structure: &RentStructure) -> Result<(), Error> {
-        let required_output_amount = self.rent_cost(rent_structure);
+    pub fn verify_storage_deposit(&self, rent_structure: RentStructure, token_supply: u64) -> Result<(), Error> {
+        let required_output_amount = self.rent_cost(&rent_structure);
 
         if self.amount() < required_output_amount {
             return Err(Error::InsufficientStorageDepositAmount {
@@ -244,7 +238,8 @@ impl Output {
                 });
             }
 
-            let minimum_deposit = minimum_storage_deposit(rent_structure, return_condition.return_address());
+            let minimum_deposit =
+                minimum_storage_deposit(return_condition.return_address(), rent_structure, token_supply);
 
             // `Minimum Storage Deposit` ≤  `Return Amount`
             if return_condition.amount() < minimum_deposit {
@@ -259,22 +254,83 @@ impl Output {
     }
 }
 
+impl Packable for Output {
+    type UnpackError = Error;
+    type UnpackVisitor = ProtocolParameters;
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        match self {
+            Output::Treasury(output) => {
+                TreasuryOutput::KIND.pack(packer)?;
+                output.pack(packer)
+            }
+            Output::Basic(output) => {
+                BasicOutput::KIND.pack(packer)?;
+                output.pack(packer)
+            }
+            Output::Alias(output) => {
+                AliasOutput::KIND.pack(packer)?;
+                output.pack(packer)
+            }
+            Output::Foundry(output) => {
+                FoundryOutput::KIND.pack(packer)?;
+                output.pack(packer)
+            }
+            Output::Nft(output) => {
+                NftOutput::KIND.pack(packer)?;
+                output.pack(packer)
+            }
+        }?;
+
+        Ok(())
+    }
+
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+        visitor: &Self::UnpackVisitor,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        Ok(match u8::unpack::<_, VERIFY>(unpacker, &()).coerce()? {
+            TreasuryOutput::KIND => Output::from(TreasuryOutput::unpack::<_, VERIFY>(unpacker, visitor).coerce()?),
+            BasicOutput::KIND => Output::from(BasicOutput::unpack::<_, VERIFY>(unpacker, visitor).coerce()?),
+            AliasOutput::KIND => Output::from(AliasOutput::unpack::<_, VERIFY>(unpacker, visitor).coerce()?),
+            FoundryOutput::KIND => Output::from(FoundryOutput::unpack::<_, VERIFY>(unpacker, visitor).coerce()?),
+            NftOutput::KIND => Output::from(NftOutput::unpack::<_, VERIFY>(unpacker, visitor).coerce()?),
+            k => return Err(Error::InvalidOutputKind(k)).map_err(UnpackError::Packable),
+        })
+    }
+}
+
 impl Rent for Output {
     fn weighted_bytes(&self, rent_structure: &RentStructure) -> u64 {
         self.packed_len() as u64 * rent_structure.v_byte_factor_data as u64
     }
 }
 
+pub(crate) fn verify_output_amount<const VERIFY: bool>(amount: &u64, token_supply: &u64) -> Result<(), Error> {
+    if VERIFY && (*amount < Output::AMOUNT_MIN || amount > token_supply) {
+        Err(Error::InvalidOutputAmount(*amount))
+    } else {
+        Ok(())
+    }
+}
+
+pub(crate) fn verify_output_amount_packable<const VERIFY: bool>(
+    amount: &u64,
+    protocol_parameters: &ProtocolParameters,
+) -> Result<(), Error> {
+    verify_output_amount::<VERIFY>(amount, &protocol_parameters.token_supply())
+}
+
 /// Computes the minimum amount that a storage deposit has to match to allow creating a return [`Output`] back to the
 /// sender [`Address`].
-fn minimum_storage_deposit(rent_structure: &RentStructure, address: &Address) -> u64 {
+fn minimum_storage_deposit(address: &Address, rent_structure: RentStructure, token_supply: u64) -> u64 {
     let address_condition = UnlockCondition::Address(AddressUnlockCondition::new(*address));
     // PANIC: This can never fail because the amount will always be within the valid range. Also, the actual value is
     // not important, we are only interested in the storage requirements of the type.
-    BasicOutputBuilder::new_with_minimum_storage_deposit(rent_structure.clone())
+    BasicOutputBuilder::new_with_minimum_storage_deposit(rent_structure)
         .unwrap()
         .add_unlock_condition(address_condition)
-        .finish()
+        .finish(token_supply)
         .unwrap()
         .amount()
 }
@@ -287,16 +343,16 @@ pub mod dto {
 
     use super::*;
     pub use super::{
-        alias::dto::AliasOutputDto,
+        alias::dto::{try_from_alias_output_dto_for_alias_output, AliasOutputDto},
         alias_id::dto::AliasIdDto,
-        basic::dto::BasicOutputDto,
-        foundry::dto::FoundryOutputDto,
+        basic::dto::{try_from_basic_output_dto_for_basic_output, BasicOutputDto},
+        foundry::dto::{try_from_foundry_output_dto_for_foundry_output, FoundryOutputDto},
         native_token::dto::NativeTokenDto,
-        nft::dto::NftOutputDto,
+        nft::dto::{try_from_nft_output_dto_for_nft_output, NftOutputDto},
         nft_id::dto::NftIdDto,
         token_id::dto::TokenIdDto,
         token_scheme::dto::{SimpleTokenSchemeDto, TokenSchemeDto},
-        treasury::dto::TreasuryOutputDto,
+        treasury::dto::{try_from_treasury_output_dto_for_treasury_output, TreasuryOutputDto},
     };
     use crate::error::dto::DtoError;
 
@@ -328,18 +384,16 @@ pub mod dto {
         }
     }
 
-    impl TryFrom<&OutputDto> for Output {
-        type Error = DtoError;
-
-        fn try_from(value: &OutputDto) -> Result<Self, Self::Error> {
-            match value {
-                OutputDto::Treasury(o) => Ok(Output::Treasury(o.try_into()?)),
-                OutputDto::Basic(o) => Ok(Output::Basic(o.try_into()?)),
-                OutputDto::Alias(o) => Ok(Output::Alias(o.try_into()?)),
-                OutputDto::Foundry(o) => Ok(Output::Foundry(o.try_into()?)),
-                OutputDto::Nft(o) => Ok(Output::Nft(o.try_into()?)),
+    pub fn try_from_output_dto_for_output(value: &OutputDto, token_supply: u64) -> Result<Output, DtoError> {
+        Ok(match value {
+            OutputDto::Treasury(o) => {
+                Output::Treasury(try_from_treasury_output_dto_for_treasury_output(o, token_supply)?)
             }
-        }
+            OutputDto::Basic(o) => Output::Basic(try_from_basic_output_dto_for_basic_output(o, token_supply)?),
+            OutputDto::Alias(o) => Output::Alias(try_from_alias_output_dto_for_alias_output(o, token_supply)?),
+            OutputDto::Foundry(o) => Output::Foundry(try_from_foundry_output_dto_for_foundry_output(o, token_supply)?),
+            OutputDto::Nft(o) => Output::Nft(try_from_nft_output_dto_for_nft_output(o, token_supply)?),
+        })
     }
 
     impl<'de> Deserialize<'de> for OutputDto {
@@ -416,19 +470,6 @@ pub mod dto {
                 },
             };
             output.serialize(serializer)
-        }
-    }
-}
-
-#[cfg(feature = "inx")]
-mod inx {
-    use super::*;
-
-    impl TryFrom<inx_bindings::proto::RawOutput> for Output {
-        type Error = crate::error::inx::InxError;
-
-        fn try_from(value: inx_bindings::proto::RawOutput) -> Result<Self, Self::Error> {
-            Self::unpack_verified(value.data, &()).map_err(|e| Self::Error::InvalidRawBytes(e.to_string()))
         }
     }
 }

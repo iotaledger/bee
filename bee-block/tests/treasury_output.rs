@@ -1,8 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_block::{constant::TOKEN_SUPPLY, output::TreasuryOutput, Error};
-use packable::{bounded::InvalidBoundedU64, error::UnpackError, PackableExt};
+use bee_block::{output::TreasuryOutput, protocol::protocol_parameters, Error};
+use packable::{error::UnpackError, PackableExt};
 
 #[test]
 fn kind() {
@@ -11,27 +11,37 @@ fn kind() {
 
 #[test]
 fn new_valid_min_amount() {
-    assert_eq!(TreasuryOutput::new(0).unwrap().amount(), 0);
+    assert_eq!(
+        TreasuryOutput::new(0, protocol_parameters().token_supply())
+            .unwrap()
+            .amount(),
+        0
+    );
 }
 
 #[test]
 fn new_valid_max_amount() {
-    assert_eq!(TreasuryOutput::new(TOKEN_SUPPLY).unwrap().amount(), TOKEN_SUPPLY);
+    let protocol_parameters = protocol_parameters();
+
+    assert_eq!(
+        TreasuryOutput::new(protocol_parameters.token_supply(), protocol_parameters.token_supply())
+            .unwrap()
+            .amount(),
+        protocol_parameters.token_supply()
+    );
 }
 
 #[test]
 fn invalid_more_than_max_amount() {
     assert!(matches!(
-        TreasuryOutput::new(3_038_287_259_199_220_266),
-        Err(Error::InvalidTreasuryOutputAmount(InvalidBoundedU64(
-            3_038_287_259_199_220_266
-        )))
+        TreasuryOutput::new(3_038_287_259_199_220_266, protocol_parameters().token_supply()),
+        Err(Error::InvalidTreasuryOutputAmount(3_038_287_259_199_220_266))
     ));
 }
 
 #[test]
 fn packed_len() {
-    let treasury_output = TreasuryOutput::new(1_000).unwrap();
+    let treasury_output = TreasuryOutput::new(1_000, protocol_parameters().token_supply()).unwrap();
 
     assert_eq!(treasury_output.packed_len(), 8);
     assert_eq!(treasury_output.pack_to_vec().len(), 8);
@@ -39,8 +49,9 @@ fn packed_len() {
 
 #[test]
 fn pack_unpack_valid() {
-    let output_1 = TreasuryOutput::new(1_000).unwrap();
-    let output_2 = TreasuryOutput::unpack_verified(&mut output_1.pack_to_vec().as_slice(), &()).unwrap();
+    let output_1 = TreasuryOutput::new(1_000, protocol_parameters().token_supply()).unwrap();
+    let output_2 =
+        TreasuryOutput::unpack_verified(&mut output_1.pack_to_vec().as_slice(), &protocol_parameters()).unwrap();
 
     assert_eq!(output_1, output_2);
 }
@@ -50,10 +61,10 @@ fn pack_unpack_invalid() {
     assert!(matches!(
         TreasuryOutput::unpack_verified(
             &mut vec![0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a].as_slice(),
-            &()
+            &protocol_parameters()
         ),
         Err(UnpackError::Packable(Error::InvalidTreasuryOutputAmount(
-            InvalidBoundedU64(3_038_287_259_199_220_266)
+            3_038_287_259_199_220_266
         )))
     ));
 }

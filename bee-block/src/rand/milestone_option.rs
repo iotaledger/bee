@@ -10,12 +10,13 @@ use crate::{
 };
 
 /// Generates a random receipt milestone option.
-pub fn rand_receipt_milestone_option() -> ReceiptMilestoneOption {
+pub fn rand_receipt_milestone_option(token_supply: u64) -> ReceiptMilestoneOption {
     ReceiptMilestoneOption::new(
         rand_milestone_index(),
         rand_bool(),
-        vec![rand_migrated_funds_entry()],
-        rand_treasury_transaction_payload(),
+        vec![rand_migrated_funds_entry(token_supply)],
+        rand_treasury_transaction_payload(token_supply),
+        token_supply,
     )
     .unwrap()
 }

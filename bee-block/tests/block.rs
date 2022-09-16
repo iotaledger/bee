@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_block::{
-    constant::PROTOCOL_VERSION,
     parent::Parents,
     payload::{Payload, TaggedDataPayload},
+    protocol::protocol_parameters,
     rand::{
         block::rand_block_ids,
         number::rand_number,
@@ -24,46 +24,51 @@ use packable::{error::UnpackError, PackableExt};
 
 #[test]
 fn pow_default_provider() {
-    let block = BlockBuilder::<Miner>::new(rand_parents()).finish().unwrap();
-
-    let block_bytes = block.pack_to_vec();
-    let score = PoWScorer::new().score(&block_bytes);
-
-    assert!(score >= 4000f64);
-}
-
-#[test]
-fn pow_provider() {
-    let block = BlockBuilder::new(rand_parents())
-        .with_nonce_provider(MinerBuilder::new().with_num_workers(num_cpus::get()).finish(), 10000)
-        .finish()
+    let min_pow_score = protocol_parameters().min_pow_score();
+    let block = BlockBuilder::<Miner>::new(rand_parents())
+        .finish(min_pow_score)
         .unwrap();
 
     let block_bytes = block.pack_to_vec();
     let score = PoWScorer::new().score(&block_bytes);
 
-    assert!(score >= 10000f64);
+    assert!(score >= min_pow_score as f64);
+}
+
+#[test]
+fn pow_provider() {
+    let min_pow_score = protocol_parameters().min_pow_score();
+    let block = BlockBuilder::new(rand_parents())
+        .with_nonce_provider(MinerBuilder::new().with_num_workers(num_cpus::get()).finish())
+        .finish(min_pow_score)
+        .unwrap();
+
+    let block_bytes = block.pack_to_vec();
+    let score = PoWScorer::new().score(&block_bytes);
+
+    assert!(score >= min_pow_score as f64);
 }
 
 #[test]
 fn invalid_length() {
     let res = BlockBuilder::new(Parents::new(rand_block_ids(2)).unwrap())
-        .with_nonce_provider(42, 10000)
+        .with_nonce_provider(42)
         .with_payload(
             TaggedDataPayload::new(vec![42], vec![0u8; Block::LENGTH_MAX])
                 .unwrap()
                 .into(),
         )
-        .finish();
+        .finish(protocol_parameters().min_pow_score());
 
     assert!(matches!(res, Err(Error::InvalidBlockLength(len)) if len == Block::LENGTH_MAX + 88));
 }
 
 #[test]
 fn invalid_payload_kind() {
+    let protocol_parameters = protocol_parameters();
     let res = BlockBuilder::<Miner>::new(rand_parents())
-        .with_payload(rand_treasury_transaction_payload().into())
-        .finish();
+        .with_payload(rand_treasury_transaction_payload(protocol_parameters.token_supply()).into())
+        .finish(protocol_parameters.min_pow_score());
 
     assert!(matches!(res, Err(Error::InvalidPayloadKind(4))))
 }
@@ -79,7 +84,7 @@ fn unpack_valid_no_remaining_bytes() {
                 205, 91, 7, 0, 0, 0, 0,
             ]
             .as_slice(),
-            &()
+            &protocol_parameters()
         )
         .is_ok()
     )
@@ -96,7 +101,7 @@ fn unpack_invalid_remaining_bytes() {
                 205, 91, 7, 0, 0, 0, 0, 42
             ]
             .as_slice(),
-            &()
+            &protocol_parameters()
         ),
         Err(UnpackError::Packable(Error::RemainingBytesAfterBlock))
     ))
@@ -105,29 +110,33 @@ fn unpack_invalid_remaining_bytes() {
 // Validate that a `unpack` ∘ `pack` round-trip results in the original block.
 #[test]
 fn pack_unpack_valid() {
-    let block = BlockBuilder::<Miner>::new(rand_parents()).finish().unwrap();
+    let protocol_parameters = protocol_parameters();
+    let block = BlockBuilder::<Miner>::new(rand_parents())
+        .finish(protocol_parameters.min_pow_score())
+        .unwrap();
     let packed_block = block.pack_to_vec();
 
     assert_eq!(packed_block.len(), block.packed_len());
     assert_eq!(
         block,
-        PackableExt::unpack_verified(&mut packed_block.as_slice(), &()).unwrap()
+        PackableExt::unpack_verified(&mut packed_block.as_slice(), &protocol_parameters).unwrap()
     );
 }
 
 #[test]
 fn getters() {
+    let protocol_parameters = protocol_parameters();
     let parents = rand_parents();
     let payload: Payload = rand_tagged_data_payload().into();
     let nonce: u64 = rand_number();
 
     let block = BlockBuilder::new(parents.clone())
         .with_payload(payload.clone())
-        .with_nonce_provider(nonce, 10000)
-        .finish()
+        .with_nonce_provider(nonce)
+        .finish(protocol_parameters.min_pow_score())
         .unwrap();
 
-    assert_eq!(block.protocol_version(), PROTOCOL_VERSION);
+    assert_eq!(block.protocol_version(), protocol_parameters.protocol_version());
     assert_eq!(*block.parents(), parents);
     assert_eq!(*block.payload().as_ref().unwrap(), &payload);
     assert_eq!(block.nonce(), nonce);

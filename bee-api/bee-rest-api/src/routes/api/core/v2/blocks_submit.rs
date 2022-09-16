@@ -3,9 +3,12 @@
 
 use axum::{body::Bytes, extract::Extension, http::header::HeaderMap, routing::post, Router};
 use bee_block::{
-    constant::PROTOCOL_VERSION,
     parent::Parents,
-    payload::{dto::PayloadDto, Payload},
+    payload::{
+        dto::{try_from_payload_dto_payload, PayloadDto},
+        Payload,
+    },
+    protocol::ProtocolParameters,
     Block, BlockBuilder, BlockId,
 };
 use bee_pow::providers::{miner::MinerBuilder, NonceProviderBuilder};
@@ -48,6 +51,11 @@ pub(crate) async fn submit_block_json<B: StorageBackend>(
     value: Value,
     args: ApiArgsFullNode<B>,
 ) -> Result<SubmitBlockResponse, ApiError> {
+    // TODO: this is obviously wrong but can't be done properly until the snapshot PR is merged.
+    // The node can't work properly with this.
+    // @thibault-martinez.
+    let protocol_parameters = ProtocolParameters::default();
+
     let protocol_version_json = &value["protocolVersion"];
     let parents_json = &value["parents"];
     let payload_json = &value["payload"];
@@ -62,7 +70,7 @@ pub(crate) async fn submit_block_json<B: StorageBackend>(
         ))?)
         .map_err(|_| ApiError::BadRequest("invalid protocol version: expected an unsigned integer < 256"))?;
 
-        if parsed_protocol_version != PROTOCOL_VERSION {
+        if parsed_protocol_version != protocol_parameters.protocol_version() {
             return Err(ApiError::BadRequest("invalid protocol version"));
         }
     }
@@ -98,7 +106,10 @@ pub(crate) async fn submit_block_json<B: StorageBackend>(
     } else {
         let payload_dto = serde_json::from_value::<PayloadDto>(payload_json.clone())
             .map_err(|e| ApiError::DependencyError(DependencyError::SerdeJsonError(e)))?;
-        Some(Payload::try_from(&payload_dto).map_err(|e| ApiError::DependencyError(DependencyError::InvalidDto(e)))?)
+        Some(
+            try_from_payload_dto_payload(&payload_dto, &protocol_parameters)
+                .map_err(|e| ApiError::DependencyError(DependencyError::InvalidDto(e)))?,
+        )
     };
 
     let nonce = if nonce_json.is_null() {
@@ -127,16 +138,21 @@ pub(crate) fn build_block<B: StorageBackend>(
     nonce: Option<u64>,
     args: ApiArgsFullNode<B>,
 ) -> Result<Block, ApiError> {
+    // TODO: this is obviously wrong but can't be done properly until the snapshot PR is merged.
+    // The node can't work properly with this.
+    // @thibault-martinez.
+    let protocol_parameters = ProtocolParameters::default();
+
     let block = if let Some(nonce) = nonce {
         let mut builder = BlockBuilder::new(
             Parents::new(parents).map_err(|e| ApiError::DependencyError(DependencyError::InvalidBlock(e)))?,
         )
-        .with_nonce_provider(nonce, 0);
+        .with_nonce_provider(nonce);
         if let Some(payload) = payload {
             builder = builder.with_payload(payload)
         }
         builder
-            .finish()
+            .finish(protocol_parameters.min_pow_score())
             .map_err(|e| ApiError::DependencyError(DependencyError::InvalidBlock(e)))?
     } else {
         if !args.rest_api_config.feature_proof_of_work() {
@@ -147,15 +163,12 @@ pub(crate) fn build_block<B: StorageBackend>(
         let mut builder = BlockBuilder::new(
             Parents::new(parents).map_err(|e| ApiError::DependencyError(DependencyError::InvalidBlock(e)))?,
         )
-        .with_nonce_provider(
-            MinerBuilder::new().with_num_workers(num_cpus::get()).finish(),
-            args.protocol_config.minimum_pow_score() as u32,
-        );
+        .with_nonce_provider(MinerBuilder::new().with_num_workers(num_cpus::get()).finish());
         if let Some(payload) = payload {
             builder = builder.with_payload(payload)
         }
         builder
-            .finish()
+            .finish(protocol_parameters.min_pow_score())
             .map_err(|e| ApiError::DependencyError(DependencyError::InvalidBlock(e)))?
     };
     Ok(block)

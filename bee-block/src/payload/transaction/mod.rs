@@ -14,7 +14,7 @@ pub use self::{
     essence::{RegularTransactionEssence, RegularTransactionEssenceBuilder, TransactionEssence},
     transaction_id::TransactionId,
 };
-use crate::{unlock::Unlocks, Error};
+use crate::{protocol::ProtocolParameters, unlock::Unlocks, Error};
 
 /// A transaction to move funds.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -58,7 +58,7 @@ impl TransactionPayload {
 
 impl Packable for TransactionPayload {
     type UnpackError = Error;
-    type UnpackVisitor = ();
+    type UnpackVisitor = ProtocolParameters;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         self.essence.pack(packer)?;
@@ -72,7 +72,7 @@ impl Packable for TransactionPayload {
         visitor: &Self::UnpackVisitor,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let essence = TransactionEssence::unpack::<_, VERIFY>(unpacker, visitor)?;
-        let unlocks = Unlocks::unpack::<_, VERIFY>(unpacker, visitor)?;
+        let unlocks = Unlocks::unpack::<_, VERIFY>(unpacker, &())?;
 
         if VERIFY {
             verify_essence_unlocks(&essence, &unlocks).map_err(UnpackError::Packable)?;
@@ -102,7 +102,7 @@ fn verify_essence_unlocks(essence: &TransactionEssence, unlocks: &Unlocks) -> Re
 pub mod dto {
     use serde::{Deserialize, Serialize};
 
-    pub use super::essence::dto::TransactionEssenceDto;
+    pub use super::essence::dto::{try_from_transaction_essence_dto_for_transaction_essence, TransactionEssenceDto};
     use super::*;
     use crate::{error::dto::DtoError, unlock::dto::UnlockDto};
 
@@ -124,20 +124,19 @@ pub mod dto {
             }
         }
     }
+    pub fn try_from_transaction_payload_dto_for_transaction_payload(
+        value: &TransactionPayloadDto,
+        protocol_parameters: &ProtocolParameters,
+    ) -> Result<TransactionPayload, DtoError> {
+        let mut unlocks = Vec::new();
 
-    impl TryFrom<&TransactionPayloadDto> for TransactionPayload {
-        type Error = DtoError;
-
-        fn try_from(value: &TransactionPayloadDto) -> Result<Self, Self::Error> {
-            let mut unlocks = Vec::new();
-            for b in &value.unlocks {
-                unlocks.push(b.try_into()?);
-            }
-
-            Ok(TransactionPayload::new(
-                (&value.essence).try_into()?,
-                Unlocks::new(unlocks)?,
-            )?)
+        for b in &value.unlocks {
+            unlocks.push(b.try_into()?);
         }
+
+        Ok(TransactionPayload::new(
+            try_from_transaction_essence_dto_for_transaction_essence(&value.essence, protocol_parameters)?,
+            Unlocks::new(unlocks)?,
+        )?)
     }
 }

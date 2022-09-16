@@ -16,7 +16,7 @@ use core::{fmt::Debug, ops::RangeInclusive};
 
 use crypto::{signatures::ed25519, Error as CryptoError};
 use iterator_sorted::is_unique_sorted;
-pub(crate) use option::{MigratedFundsAmount, MilestoneOptionCount, ReceiptFundsCount};
+pub(crate) use option::{MilestoneOptionCount, ReceiptFundsCount};
 use packable::{bounded::BoundedU8, prefix::VecPrefix, Packable};
 
 pub use self::{
@@ -27,7 +27,7 @@ pub use self::{
     option::{MilestoneOption, MilestoneOptions, ParametersMilestoneOption, ReceiptMilestoneOption},
 };
 pub(crate) use self::{essence::MilestoneMetadataLength, option::BinaryParametersLength};
-use crate::{signature::Signature, Error};
+use crate::{protocol::ProtocolParameters, signature::Signature, Error};
 
 #[derive(Debug)]
 #[allow(missing_docs)]
@@ -53,9 +53,10 @@ pub(crate) type SignatureCount =
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error)]
+#[packable(unpack_visitor = ProtocolParameters)]
 pub struct MilestonePayload {
     essence: MilestoneEssence,
-    #[packable(verify_with = verify_signatures)]
+    #[packable(verify_with = verify_signatures_packable)]
     #[packable(unpack_error_with = |e| e.unwrap_item_err_or_else(|p| Error::MilestoneInvalidSignatureCount(p.into())))]
     signatures: VecPrefix<Signature, SignatureCount>,
 }
@@ -142,7 +143,7 @@ impl MilestonePayload {
     }
 }
 
-fn verify_signatures<const VERIFY: bool>(signatures: &[Signature], _: &()) -> Result<(), Error> {
+fn verify_signatures<const VERIFY: bool>(signatures: &[Signature]) -> Result<(), Error> {
     if VERIFY
         && !is_unique_sorted(signatures.iter().map(|signature| {
             let Signature::Ed25519(signature) = signature;
@@ -155,6 +156,13 @@ fn verify_signatures<const VERIFY: bool>(signatures: &[Signature], _: &()) -> Re
     }
 }
 
+fn verify_signatures_packable<const VERIFY: bool>(
+    signatures: &[Signature],
+    _visitor: &ProtocolParameters,
+) -> Result<(), Error> {
+    verify_signatures::<VERIFY>(signatures)
+}
+
 #[cfg(feature = "dto")]
 #[allow(missing_docs)]
 pub mod dto {
@@ -162,11 +170,11 @@ pub mod dto {
 
     use serde::{Deserialize, Serialize};
 
-    use self::option::dto::MilestoneOptionDto;
+    use self::option::dto::{try_from_milestone_option_dto_for_milestone_option, MilestoneOptionDto};
     use super::*;
     use crate::{
-        constant::PROTOCOL_VERSION, error::dto::DtoError, parent::Parents, payload::milestone::MilestoneIndex,
-        signature::dto::SignatureDto, BlockId,
+        error::dto::DtoError, parent::Parents, payload::milestone::MilestoneIndex, signature::dto::SignatureDto,
+        BlockId,
     };
 
     /// The payload type to define a milestone.
@@ -210,93 +218,76 @@ pub mod dto {
         }
     }
 
-    impl TryFrom<&MilestonePayloadDto> for MilestonePayload {
-        type Error = DtoError;
+    pub fn try_from_milestone_payload_dto_for_milestone_payload(
+        value: &MilestonePayloadDto,
+        protocol_parameters: &ProtocolParameters,
+    ) -> Result<MilestonePayload, DtoError> {
+        let essence = {
+            let index = value.index;
+            let timestamp = value.timestamp;
+            let previous_milestone_id = MilestoneId::from_str(&value.previous_milestone_id)
+                .map_err(|_| DtoError::InvalidField("previousMilestoneId"))?;
+            let mut parent_ids = Vec::new();
 
-        fn try_from(value: &MilestonePayloadDto) -> Result<Self, Self::Error> {
-            if value.protocol_version != PROTOCOL_VERSION {
-                return Err(Error::ProtocolVersionMismatch {
-                    expected: PROTOCOL_VERSION,
-                    actual: value.protocol_version,
-                }
-                .into());
+            for block_id in &value.parents {
+                parent_ids.push(
+                    block_id
+                        .parse::<BlockId>()
+                        .map_err(|_| DtoError::InvalidField("parents"))?,
+                );
             }
 
-            let essence = {
-                let index = value.index;
-
-                let timestamp = value.timestamp;
-
-                let previous_milestone_id = MilestoneId::from_str(&value.previous_milestone_id)
-                    .map_err(|_| DtoError::InvalidField("lastMilestoneId"))?;
-
-                let mut parent_ids = Vec::new();
-
-                for block_id in &value.parents {
-                    parent_ids.push(
-                        block_id
-                            .parse::<BlockId>()
-                            .map_err(|_| DtoError::InvalidField("parents"))?,
-                    );
-                }
-
-                let inclusion_merkle_root = MerkleRoot::from_str(&value.inclusion_merkle_root)
-                    .map_err(|_| DtoError::InvalidField("inclusionMerkleRoot"))?;
-
-                let applied_merkle_root = MerkleRoot::from_str(&value.applied_merkle_root)
-                    .map_err(|_| DtoError::InvalidField("appliedMerkleRoot"))?;
-
-                let options = MilestoneOptions::try_from(
-                    value
-                        .options
-                        .iter()
-                        .map(TryInto::try_into)
-                        .collect::<Result<Vec<_>, _>>()?,
-                )?;
-
-                let metadata = if !value.metadata.is_empty() {
-                    prefix_hex::decode(&value.metadata).map_err(|_| DtoError::InvalidField("metadata"))?
-                } else {
-                    Vec::new()
-                };
-
-                MilestoneEssence::new(
-                    MilestoneIndex(index),
-                    timestamp,
-                    previous_milestone_id,
-                    Parents::new(parent_ids)?,
-                    inclusion_merkle_root,
-                    applied_merkle_root,
-                    metadata,
-                    options,
-                )?
+            let inclusion_merkle_root = MerkleRoot::from_str(&value.inclusion_merkle_root)
+                .map_err(|_| DtoError::InvalidField("inclusionMerkleRoot"))?;
+            let applied_merkle_root = MerkleRoot::from_str(&value.applied_merkle_root)
+                .map_err(|_| DtoError::InvalidField("appliedMerkleRoot"))?;
+            let options = MilestoneOptions::try_from(
+                value
+                    .options
+                    .iter()
+                    .map(|o| try_from_milestone_option_dto_for_milestone_option(o, protocol_parameters.token_supply()))
+                    .collect::<Result<Vec<_>, _>>()?,
+            )?;
+            let metadata = if !value.metadata.is_empty() {
+                prefix_hex::decode(&value.metadata).map_err(|_| DtoError::InvalidField("metadata"))?
+            } else {
+                Vec::new()
             };
 
-            let mut signatures = Vec::new();
-            for v in &value.signatures {
-                signatures.push(v.try_into().map_err(|_| DtoError::InvalidField("signatures"))?)
-            }
+            MilestoneEssence::new(
+                MilestoneIndex(index),
+                timestamp,
+                protocol_parameters.protocol_version(),
+                previous_milestone_id,
+                Parents::new(parent_ids)?,
+                inclusion_merkle_root,
+                applied_merkle_root,
+                metadata,
+                options,
+            )?
+        };
 
-            Ok(MilestonePayload::new(essence, signatures)?)
+        let mut signatures = Vec::new();
+        for v in &value.signatures {
+            signatures.push(v.try_into().map_err(|_| DtoError::InvalidField("signatures"))?)
         }
+
+        Ok(MilestonePayload::new(essence, signatures)?)
     }
 }
 
 #[cfg(feature = "inx")]
-mod inx {
+#[allow(missing_docs)]
+pub mod inx {
+    use packable::PackableExt;
+
     use super::*;
+    use crate::payload::Payload;
 
-    impl TryFrom<inx_bindings::proto::RawMilestone> for MilestonePayload {
-        type Error = crate::error::inx::InxError;
-
-        fn try_from(value: inx_bindings::proto::RawMilestone) -> Result<Self, Self::Error> {
-            use packable::PackableExt;
-            let payload = crate::payload::Payload::unpack_verified(value.data, &())
-                .map_err(|e| Self::Error::InvalidRawBytes(e.to_string()))?;
-
-            match payload {
-                crate::payload::Payload::Milestone(payload) => Ok(*payload),
-                _ => Err(crate::Error::InvalidPayloadKind(payload.kind()).into()),
+    impl From<MilestonePayload> for inx_bindings::proto::RawMilestone {
+        fn from(value: MilestonePayload) -> Self {
+            Self {
+                data: Payload::from(value).pack_to_vec(),
             }
         }
     }

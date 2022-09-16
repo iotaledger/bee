@@ -12,6 +12,7 @@ use bee_block::{
         transaction::{RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayload},
         Payload, TaggedDataPayload, TreasuryTransactionPayload,
     },
+    protocol::protocol_parameters,
     rand::{
         bytes::rand_bytes,
         milestone::{rand_merkle_root, rand_milestone_id},
@@ -31,9 +32,10 @@ const BLOCK_ID: &str = "0xb0212bde21643a8b719f398fe47545c4275b52c1f600e255caa53d
 
 #[test]
 fn transaction() {
-    let txid = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
-    let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
-    let input2 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
+    let protocol_parameters = protocol_parameters();
+    let transaction_id = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
+    let input1 = Input::Utxo(UtxoInput::new(transaction_id, 0).unwrap());
+    let input2 = Input::Utxo(UtxoInput::new(transaction_id, 1).unwrap());
     let bytes: [u8; 32] = prefix_hex::decode(ED25519_ADDRESS).unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
@@ -41,14 +43,14 @@ fn transaction() {
         BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
-            .finish()
+            .finish(protocol_parameters.token_supply())
             .unwrap(),
     );
     let essence = TransactionEssence::Regular(
-        RegularTransactionEssence::builder(0, rand_inputs_commitment())
+        RegularTransactionEssence::builder(rand_inputs_commitment())
             .with_inputs(vec![input1, input2])
             .add_output(output)
-            .finish()
+            .finish(&protocol_parameters)
             .unwrap(),
     );
 
@@ -69,16 +71,18 @@ fn transaction() {
     assert!(matches!(payload, Payload::Transaction(_)));
     assert_eq!(
         payload,
-        PackableExt::unpack_verified(&mut packed.as_slice(), &()).unwrap()
+        PackableExt::unpack_verified(&mut packed.as_slice(), &protocol_parameters).unwrap()
     );
 }
 
 #[test]
 fn milestone() {
+    let protocol_parameters = protocol_parameters();
     let payload: Payload = MilestonePayload::new(
         MilestoneEssence::new(
             MilestoneIndex(0),
             0,
+            protocol_parameters.protocol_version(),
             rand_milestone_id(),
             rand_parents(),
             rand_merkle_root(),
@@ -99,7 +103,7 @@ fn milestone() {
     assert!(matches!(payload, Payload::Milestone(_)));
     assert_eq!(
         payload,
-        PackableExt::unpack_verified(&mut packed.as_slice(), &()).unwrap()
+        PackableExt::unpack_verified(&mut packed.as_slice(), &protocol_parameters).unwrap()
     );
 }
 
@@ -116,9 +120,10 @@ fn tagged_data() {
 
 #[test]
 fn treasury_transaction() {
+    let protocol_parameters = protocol_parameters();
     let payload: Payload = TreasuryTransactionPayload::new(
         TreasuryInput::from_str(BLOCK_ID).unwrap(),
-        TreasuryOutput::new(1_000_000).unwrap(),
+        TreasuryOutput::new(1_000_000, protocol_parameters.token_supply()).unwrap(),
     )
     .unwrap()
     .into();
@@ -130,6 +135,6 @@ fn treasury_transaction() {
     assert!(matches!(payload, Payload::TreasuryTransaction(_)));
     assert_eq!(
         payload,
-        PackableExt::unpack_verified(&mut packed.as_slice(), &()).unwrap()
+        PackableExt::unpack_verified(&mut packed.as_slice(), &protocol_parameters).unwrap()
     );
 }

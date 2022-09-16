@@ -3,7 +3,9 @@
 
 use core::str::FromStr;
 
-use bee_block::{input::TreasuryInput, output::TreasuryOutput, payload::TreasuryTransactionPayload};
+use bee_block::{
+    input::TreasuryInput, output::TreasuryOutput, payload::TreasuryTransactionPayload, protocol::protocol_parameters,
+};
 use packable::PackableExt;
 
 const BLOCK_ID: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
@@ -16,7 +18,7 @@ fn kind() {
 #[test]
 fn new_valid() {
     let input = TreasuryInput::from_str(BLOCK_ID).unwrap();
-    let output = TreasuryOutput::new(1_000).unwrap();
+    let output = TreasuryOutput::new(1_000, protocol_parameters().token_supply()).unwrap();
     let transaction = TreasuryTransactionPayload::new(input, output.clone()).unwrap();
 
     assert_eq!(*transaction.input(), input);
@@ -27,7 +29,7 @@ fn new_valid() {
 fn packed_len() {
     let treasury_transaction = TreasuryTransactionPayload::new(
         TreasuryInput::from_str(BLOCK_ID).unwrap(),
-        TreasuryOutput::new(1_000).unwrap(),
+        TreasuryOutput::new(1_000, protocol_parameters().token_supply()).unwrap(),
     )
     .unwrap();
 
@@ -37,13 +39,15 @@ fn packed_len() {
 
 #[test]
 fn pack_unpack_valid() {
+    let protocol_parameters = protocol_parameters();
     let transaction_1 = TreasuryTransactionPayload::new(
         TreasuryInput::from_str(BLOCK_ID).unwrap(),
-        TreasuryOutput::new(1_000).unwrap(),
+        TreasuryOutput::new(1_000, protocol_parameters.token_supply()).unwrap(),
     )
     .unwrap();
     let transaction_2 =
-        TreasuryTransactionPayload::unpack_verified(&mut transaction_1.pack_to_vec().as_slice(), &()).unwrap();
+        TreasuryTransactionPayload::unpack_verified(&mut transaction_1.pack_to_vec().as_slice(), &protocol_parameters)
+            .unwrap();
 
     assert_eq!(transaction_1, transaction_2);
 }
@@ -58,5 +62,5 @@ fn pack_unpack_invalid() {
 
     // Actual error is not checked because the output type check is done after the output is parsed so the error is not
     // `InvalidOutputKind` but something related to an invalid address, so not really relevant for this test.
-    assert!(TreasuryTransactionPayload::unpack_verified(&mut bytes.as_slice(), &()).is_err());
+    assert!(TreasuryTransactionPayload::unpack_verified(&mut bytes.as_slice(), &protocol_parameters()).is_err());
 }

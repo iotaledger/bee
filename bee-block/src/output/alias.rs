@@ -17,9 +17,10 @@ use crate::{
     output::{
         feature::{verify_allowed_features, Feature, FeatureFlags, Features},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        AliasId, ChainId, NativeToken, NativeTokens, Output, OutputAmount, OutputBuilderAmount, OutputId, Rent,
+        verify_output_amount, AliasId, ChainId, NativeToken, NativeTokens, Output, OutputBuilderAmount, OutputId, Rent,
         RentStructure, StateTransitionError, StateTransitionVerifier,
     },
+    protocol::ProtocolParameters,
     semantic::{ConflictReason, ValidationContext},
     unlock::Unlock,
     Error,
@@ -43,10 +44,7 @@ pub struct AliasOutputBuilder {
 impl AliasOutputBuilder {
     /// Creates an [`AliasOutputBuilder`] with a provided amount.
     pub fn new_with_amount(amount: u64, alias_id: AliasId) -> Result<AliasOutputBuilder, Error> {
-        Self::new(
-            OutputBuilderAmount::Amount(amount.try_into().map_err(Error::InvalidOutputAmount)?),
-            alias_id,
-        )
+        Self::new(OutputBuilderAmount::Amount(amount), alias_id)
     }
 
     /// Creates an [`AliasOutputBuilder`] with a provided rent structure.
@@ -75,7 +73,7 @@ impl AliasOutputBuilder {
     /// Sets the amount to the provided value.
     #[inline(always)]
     pub fn with_amount(mut self, amount: u64) -> Result<Self, Error> {
-        self.amount = OutputBuilderAmount::Amount(amount.try_into().map_err(Error::InvalidOutputAmount)?);
+        self.amount = OutputBuilderAmount::Amount(amount);
         Ok(self)
     }
 
@@ -206,7 +204,7 @@ impl AliasOutputBuilder {
     }
 
     ///
-    pub fn finish(self) -> Result<AliasOutput, Error> {
+    pub fn finish(self, token_supply: u64) -> Result<AliasOutput, Error> {
         let state_index = self.state_index.unwrap_or(0);
         let foundry_counter = self.foundry_counter.unwrap_or(0);
 
@@ -231,7 +229,7 @@ impl AliasOutputBuilder {
         verify_allowed_features(&immutable_features, AliasOutput::ALLOWED_IMMUTABLE_FEATURES)?;
 
         let mut output = AliasOutput {
-            amount: 1u64.try_into().map_err(Error::InvalidOutputAmount)?,
+            amount: 1,
             native_tokens: NativeTokens::new(self.native_tokens)?,
             alias_id: self.alias_id,
             state_index,
@@ -244,18 +242,19 @@ impl AliasOutputBuilder {
 
         output.amount = match self.amount {
             OutputBuilderAmount::Amount(amount) => amount,
-            OutputBuilderAmount::MinimumStorageDeposit(rent_structure) => Output::Alias(output.clone())
-                .rent_cost(&rent_structure)
-                .try_into()
-                .map_err(Error::InvalidOutputAmount)?,
+            OutputBuilderAmount::MinimumStorageDeposit(rent_structure) => {
+                Output::Alias(output.clone()).rent_cost(&rent_structure)
+            }
         };
+
+        verify_output_amount::<true>(&output.amount, &token_supply)?;
 
         Ok(output)
     }
 
     /// Finishes the [`AliasOutputBuilder`] into an [`Output`].
-    pub fn finish_output(self) -> Result<Output, Error> {
-        Ok(Output::Alias(self.finish()?))
+    pub fn finish_output(self, token_supply: u64) -> Result<Output, Error> {
+        Ok(Output::Alias(self.finish(token_supply)?))
     }
 }
 
@@ -282,7 +281,7 @@ pub(crate) type StateMetadataLength = BoundedU16<0, { AliasOutput::STATE_METADAT
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AliasOutput {
     // Amount of IOTA tokens held by the output.
-    amount: OutputAmount,
+    amount: u64,
     // Native tokens held by the output.
     native_tokens: NativeTokens,
     // Unique identifier of the alias.
@@ -315,15 +314,19 @@ impl AliasOutput {
 
     /// Creates a new [`AliasOutput`] with a provided amount.
     #[inline(always)]
-    pub fn new_with_amount(amount: u64, alias_id: AliasId) -> Result<Self, Error> {
-        AliasOutputBuilder::new_with_amount(amount, alias_id)?.finish()
+    pub fn new_with_amount(amount: u64, alias_id: AliasId, token_supply: u64) -> Result<Self, Error> {
+        AliasOutputBuilder::new_with_amount(amount, alias_id)?.finish(token_supply)
     }
 
     /// Creates a new [`AliasOutput`] with a provided rent structure.
     /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
-    pub fn new_with_minimum_storage_deposit(rent_structure: RentStructure, alias_id: AliasId) -> Result<Self, Error> {
-        AliasOutputBuilder::new_with_minimum_storage_deposit(rent_structure, alias_id)?.finish()
+    pub fn new_with_minimum_storage_deposit(
+        alias_id: AliasId,
+        rent_structure: RentStructure,
+        token_supply: u64,
+    ) -> Result<Self, Error> {
+        AliasOutputBuilder::new_with_minimum_storage_deposit(rent_structure, alias_id)?.finish(token_supply)
     }
 
     /// Creates a new [`AliasOutputBuilder`] with a provided amount.
@@ -345,7 +348,7 @@ impl AliasOutput {
     ///
     #[inline(always)]
     pub fn amount(&self) -> u64 {
-        self.amount.get()
+        self.amount
     }
 
     ///
@@ -545,7 +548,7 @@ impl StateTransitionVerifier for AliasOutput {
 
 impl Packable for AliasOutput {
     type UnpackError = Error;
-    type UnpackVisitor = ();
+    type UnpackVisitor = ProtocolParameters;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         self.amount.pack(packer)?;
@@ -565,15 +568,17 @@ impl Packable for AliasOutput {
         unpacker: &mut U,
         visitor: &Self::UnpackVisitor,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let amount =
-            OutputAmount::unpack::<_, VERIFY>(unpacker, visitor).map_packable_err(Error::InvalidOutputAmount)?;
-        let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker, visitor)?;
-        let alias_id = AliasId::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
-        let state_index = u32::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
-        let state_metadata = BoxedSlicePrefix::<u8, StateMetadataLength>::unpack::<_, VERIFY>(unpacker, visitor)
+        let amount = u64::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
+
+        verify_output_amount::<VERIFY>(&amount, &visitor.token_supply()).map_err(UnpackError::Packable)?;
+
+        let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker, &())?;
+        let alias_id = AliasId::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
+        let state_index = u32::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
+        let state_metadata = BoxedSlicePrefix::<u8, StateMetadataLength>::unpack::<_, VERIFY>(unpacker, &())
             .map_packable_err(|err| Error::InvalidStateMetadataLength(err.into_prefix_err().into()))?;
 
-        let foundry_counter = u32::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
+        let foundry_counter = u32::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
 
         if VERIFY {
             verify_index_counter(&alias_id, state_index, foundry_counter).map_err(UnpackError::Packable)?;
@@ -585,13 +590,13 @@ impl Packable for AliasOutput {
             verify_unlock_conditions(&unlock_conditions, &alias_id).map_err(UnpackError::Packable)?;
         }
 
-        let features = Features::unpack::<_, VERIFY>(unpacker, visitor)?;
+        let features = Features::unpack::<_, VERIFY>(unpacker, &())?;
 
         if VERIFY {
             verify_allowed_features(&features, AliasOutput::ALLOWED_FEATURES).map_err(UnpackError::Packable)?;
         }
 
-        let immutable_features = Features::unpack::<_, VERIFY>(unpacker, visitor)?;
+        let immutable_features = Features::unpack::<_, VERIFY>(unpacker, &())?;
 
         if VERIFY {
             verify_allowed_features(&immutable_features, AliasOutput::ALLOWED_IMMUTABLE_FEATURES)
@@ -654,8 +659,11 @@ pub mod dto {
     use crate::{
         error::dto::DtoError,
         output::{
-            alias_id::dto::AliasIdDto, dto::OutputBuilderAmountDto, feature::dto::FeatureDto,
-            native_token::dto::NativeTokenDto, unlock_condition::dto::UnlockConditionDto,
+            alias_id::dto::AliasIdDto,
+            dto::OutputBuilderAmountDto,
+            feature::dto::FeatureDto,
+            native_token::dto::NativeTokenDto,
+            unlock_condition::dto::{try_from_unlock_condition_dto_for_unlock_condition, UnlockConditionDto},
         },
     };
 
@@ -709,46 +717,46 @@ pub mod dto {
         }
     }
 
-    impl TryFrom<&AliasOutputDto> for AliasOutput {
-        type Error = DtoError;
+    pub fn try_from_alias_output_dto_for_alias_output(
+        value: &AliasOutputDto,
+        token_supply: u64,
+    ) -> Result<AliasOutput, DtoError> {
+        let mut builder = AliasOutputBuilder::new_with_amount(
+            value
+                .amount
+                .parse::<u64>()
+                .map_err(|_| DtoError::InvalidField("amount"))?,
+            (&value.alias_id).try_into()?,
+        )?;
 
-        fn try_from(value: &AliasOutputDto) -> Result<Self, Self::Error> {
-            let mut builder = AliasOutputBuilder::new_with_amount(
-                value
-                    .amount
-                    .parse::<u64>()
-                    .map_err(|_| DtoError::InvalidField("amount"))?,
-                (&value.alias_id).try_into()?,
-            )?;
+        builder = builder.with_state_index(value.state_index);
 
-            builder = builder.with_state_index(value.state_index);
-
-            if !value.state_metadata.is_empty() {
-                builder = builder.with_state_metadata(
-                    prefix_hex::decode(&value.state_metadata).map_err(|_| DtoError::InvalidField("state_metadata"))?,
-                );
-            }
-
-            builder = builder.with_foundry_counter(value.foundry_counter);
-
-            for t in &value.native_tokens {
-                builder = builder.add_native_token(t.try_into()?);
-            }
-
-            for b in &value.unlock_conditions {
-                builder = builder.add_unlock_condition(b.try_into()?);
-            }
-
-            for b in &value.features {
-                builder = builder.add_feature(b.try_into()?);
-            }
-
-            for b in &value.immutable_features {
-                builder = builder.add_immutable_feature(b.try_into()?);
-            }
-
-            Ok(builder.finish()?)
+        if !value.state_metadata.is_empty() {
+            builder = builder.with_state_metadata(
+                prefix_hex::decode(&value.state_metadata).map_err(|_| DtoError::InvalidField("state_metadata"))?,
+            );
         }
+
+        builder = builder.with_foundry_counter(value.foundry_counter);
+
+        for t in &value.native_tokens {
+            builder = builder.add_native_token(t.try_into()?);
+        }
+
+        for u in &value.unlock_conditions {
+            builder =
+                builder.add_unlock_condition(try_from_unlock_condition_dto_for_unlock_condition(u, token_supply)?);
+        }
+
+        for b in &value.features {
+            builder = builder.add_feature(b.try_into()?);
+        }
+
+        for b in &value.immutable_features {
+            builder = builder.add_immutable_feature(b.try_into()?);
+        }
+
+        Ok(builder.finish(token_supply)?)
     }
 
     impl AliasOutput {
@@ -763,6 +771,7 @@ pub mod dto {
             unlock_conditions: Vec<UnlockConditionDto>,
             features: Option<Vec<FeatureDto>>,
             immutable_features: Option<Vec<FeatureDto>>,
+            token_supply: u64,
         ) -> Result<AliasOutput, DtoError> {
             let alias_id = AliasId::try_from(alias_id)?;
 
@@ -798,7 +807,7 @@ pub mod dto {
 
             let unlock_conditions = unlock_conditions
                 .iter()
-                .map(UnlockCondition::try_from)
+                .map(|u| try_from_unlock_condition_dto_for_unlock_condition(u, token_supply))
                 .collect::<Result<Vec<UnlockCondition>, DtoError>>()?;
             builder = builder.with_unlock_conditions(unlock_conditions);
 
@@ -818,7 +827,7 @@ pub mod dto {
                 builder = builder.with_immutable_features(immutable_features);
             }
 
-            Ok(builder.finish()?)
+            Ok(builder.finish(token_supply)?)
         }
     }
 }

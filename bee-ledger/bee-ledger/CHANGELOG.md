@@ -19,35 +19,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
-## Unreleased - 2022-XX-XX
-
-### Changed
-
-- Updated dependencies (including `packable`);
-
-### Removed
-
-- Moved base types to crate `bee-ledger-types`;
-
 ## 0.8.0 - 2022-XX-XX
 
 ### Added
 
 - `CreatedOutput::milestone_index`, `CreatedOutput::milestone_timestamp` and their getters;
+- `token_supply` parameter to `validate_ledger_state` and `validate_ledger_unspent_state`;
 
 ### Changed
 
+- Updated dependencies (including `packable`);
 - Complete refactoring of White Flag with Tokenization and Smart Contracts layouts;
 - `BalanceDiff` is now an `u64` tuple struct;
 - `Balance` is now an `u64` tuple struct;
 - Serialize and deserialize the ledger types using `packable` instead of `bee-common::packable`;
 - Dispatch `CreatedOutput` through `OutputCreated` event;
+- Adapt consensus to `bee-block`'s `Packable` visitor changes;
 
 ### Removed
 
 - `Balance`, `BalanceDiff` and `BalanceDiffs`;
 - `Error::InvalidLedgerDustState`;
 - Pruning of `PaddedIndex`;
+- Moved base types to crate `bee-ledger-types`;
 
 ## 0.7.0 - 2022-XX-XX
 

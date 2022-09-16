@@ -3,7 +3,9 @@
 
 use std::collections::HashMap;
 
-use bee_block::{payload::milestone::MilestoneIndex, rand::milestone::rand_milestone_index};
+use bee_block::{
+    payload::milestone::MilestoneIndex, protocol::protocol_parameters, rand::milestone::rand_milestone_index,
+};
 use bee_ledger_types::{rand::receipt::rand_ledger_receipt, Receipt};
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
@@ -37,7 +39,8 @@ impl<T> StorageBackend for T where
 }
 
 pub fn milestone_index_to_receipt_access<B: StorageBackend>(storage: &B) {
-    let (index, receipt) = (rand_milestone_index(), rand_ledger_receipt());
+    let token_supply = protocol_parameters().token_supply();
+    let (index, receipt) = (rand_milestone_index(), rand_ledger_receipt(token_supply));
 
     assert!(!Exist::<(MilestoneIndex, Receipt), ()>::exist(storage, &(index, receipt.clone())).unwrap());
     assert!(
@@ -70,7 +73,7 @@ pub fn milestone_index_to_receipt_access<B: StorageBackend>(storage: &B) {
     let mut batch = B::batch_begin();
 
     for _ in 0..10 {
-        let (index, receipt) = (rand_milestone_index(), rand_ledger_receipt());
+        let (index, receipt) = (rand_milestone_index(), rand_ledger_receipt(token_supply));
         Insert::<(MilestoneIndex, Receipt), ()>::insert(storage, &(index, receipt.clone()), &()).unwrap();
         Batch::<(MilestoneIndex, Receipt), ()>::batch_delete(storage, &mut batch, &(index, receipt)).unwrap();
     }
@@ -80,7 +83,7 @@ pub fn milestone_index_to_receipt_access<B: StorageBackend>(storage: &B) {
     for _ in 0..5 {
         let index = rand_milestone_index();
         for _ in 0..5 {
-            let receipt = rand_ledger_receipt();
+            let receipt = rand_ledger_receipt(token_supply);
             Batch::<(MilestoneIndex, Receipt), ()>::batch_insert(storage, &mut batch, &(index, receipt.clone()), &())
                 .unwrap();
             receipts.entry(index).or_default().push(receipt);

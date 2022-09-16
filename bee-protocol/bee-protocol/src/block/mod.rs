@@ -16,6 +16,6 @@ pub(crate) use self::{
         MilestonePayloadWorker, PayloadWorker, PayloadWorkerEvent, TaggedDataPayloadWorker,
         TaggedDataPayloadWorkerEvent, TransactionPayloadWorker,
     },
-    processor::{ProcessorWorker, ProcessorWorkerConfig, ProcessorWorkerEvent},
+    processor::{ProcessorWorker, ProcessorWorkerEvent},
     unreferenced_inserter::{UnreferencedBlockInserterWorker, UnreferencedBlockInserterWorkerEvent},
 };

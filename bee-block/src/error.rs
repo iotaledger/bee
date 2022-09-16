@@ -12,13 +12,12 @@ use crate::{
     input::UtxoInput,
     output::{
         feature::FeatureCount, unlock_condition::UnlockConditionCount, AliasId, MetadataFeatureLength,
-        NativeTokenCount, NftId, OutputAmount, OutputIndex, StateMetadataLength, StorageDepositAmount,
-        TagFeatureLength, TreasuryOutputAmount,
+        NativeTokenCount, NftId, OutputIndex, StateMetadataLength, TagFeatureLength,
     },
     parent::ParentCount,
     payload::{
-        milestone::BinaryParametersLength, InputCount, MigratedFundsAmount, MilestoneMetadataLength,
-        MilestoneOptionCount, OutputCount, ReceiptFundsCount, SignatureCount, TagLength, TaggedDataLength,
+        milestone::BinaryParametersLength, InputCount, MilestoneMetadataLength, MilestoneOptionCount, OutputCount,
+        ReceiptFundsCount, SignatureCount, TagLength, TaggedDataLength,
     },
     unlock::{UnlockCount, UnlockIndex},
 };
@@ -42,7 +41,7 @@ pub enum Error {
     InvalidAddressKind(u8),
     InvalidAliasIndex(<UnlockIndex as TryFrom<u16>>::Error),
     InvalidControllerKind(u8),
-    InvalidStorageDepositAmount(<StorageDepositAmount as TryFrom<u64>>::Error),
+    InvalidStorageDepositAmount(u64),
     // The above is used by `Packable` to denote out-of-range values. The following denotes the actual amount.
     InsufficientStorageDepositAmount { amount: u64, required: u64 },
     StorageDepositReturnExceedsOutputAmount { deposit: u64, amount: u64 },
@@ -63,11 +62,11 @@ pub enum Error {
     InvalidMilestoneMetadataLength(<MilestoneMetadataLength as TryFrom<usize>>::Error),
     InvalidMilestoneOptionCount(<MilestoneOptionCount as TryFrom<usize>>::Error),
     InvalidMilestoneOptionKind(u8),
-    InvalidMigratedFundsEntryAmount(<MigratedFundsAmount as TryFrom<u64>>::Error),
+    InvalidMigratedFundsEntryAmount(u64),
     InvalidNativeTokenCount(<NativeTokenCount as TryFrom<usize>>::Error),
     InvalidNetworkName(FromUtf8Error),
     InvalidNftIndex(<UnlockIndex as TryFrom<u16>>::Error),
-    InvalidOutputAmount(<OutputAmount as TryFrom<u64>>::Error),
+    InvalidOutputAmount(u64),
     InvalidOutputCount(<OutputCount as TryFrom<usize>>::Error),
     InvalidOutputKind(u8),
     InvalidParentCount(<ParentCount as TryFrom<usize>>::Error),
@@ -86,7 +85,7 @@ pub enum Error {
     InvalidTokenSchemeKind(u8),
     InvalidTransactionAmountSum(u128),
     InvalidTransactionNativeTokensCount(u16),
-    InvalidTreasuryOutputAmount(<TreasuryOutputAmount as TryFrom<u64>>::Error),
+    InvalidTreasuryOutputAmount(u64),
     InvalidUnlockCount(<UnlockCount as TryFrom<usize>>::Error),
     InvalidUnlockKind(u8),
     InvalidUnlockReference(u16),
@@ -107,6 +106,7 @@ pub enum Error {
     NativeTokensNotUniqueSorted,
     NativeTokensNullAmount,
     NativeTokensOverflow,
+    NetworkIdMismatch { expected: u64, actual: u64 },
     NonZeroStateIndexOrFoundryCounter,
     ParentsNotUniqueSorted,
     ProtocolVersionMismatch { expected: u8, actual: u8 },
@@ -219,7 +219,7 @@ impl fmt::Display for Error {
             }
             Error::InvalidPayloadKind(k) => write!(f, "invalid payload kind: {}", k),
             Error::InvalidPayloadLength { expected, actual } => {
-                write!(f, "invalid payload length: expected {}, got {}", expected, actual)
+                write!(f, "invalid payload length: expected {} but got {}", expected, actual)
             }
             Error::InvalidReceiptFundsCount(count) => write!(f, "invalid receipt funds count: {}", count),
             Error::InvalidReceiptFundsSum(sum) => write!(f, "invalid receipt amount sum: {sum}"),
@@ -283,6 +283,9 @@ impl fmt::Display for Error {
             Error::NativeTokensNotUniqueSorted => write!(f, "native tokens are not unique and/or sorted"),
             Error::NativeTokensNullAmount => write!(f, "native tokens null amount"),
             Error::NativeTokensOverflow => write!(f, "native tokens overflow"),
+            Error::NetworkIdMismatch { expected, actual } => {
+                write!(f, "network ID mismatch: expected {expected} but got {actual}")
+            }
             Error::NonZeroStateIndexOrFoundryCounter => {
                 write!(f, "non zero state index or foundry counter while alias ID is all zero")
             }
@@ -290,7 +293,7 @@ impl fmt::Display for Error {
                 write!(f, "parents are not unique and/or sorted")
             }
             Error::ProtocolVersionMismatch { expected, actual } => {
-                write!(f, "protocol version mismatch: expected {expected}, got {actual}")
+                write!(f, "protocol version mismatch: expected {expected} but got {actual}")
             }
             Error::ReceiptFundsNotUniqueSorted => {
                 write!(f, "receipt funds are not unique and/or sorted")
@@ -307,7 +310,7 @@ impl fmt::Display for Error {
             Error::SignaturePublicKeyMismatch { expected, actual } => {
                 write!(
                     f,
-                    "signature public key mismatch: expected {0}, got {1}",
+                    "signature public key mismatch: expected {0} but got {1}",
                     expected, actual
                 )
             }

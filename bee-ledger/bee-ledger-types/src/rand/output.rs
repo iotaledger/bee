@@ -17,8 +17,8 @@ pub fn rand_unspent_output_id() -> Unspent {
 }
 
 /// Generates a random ledger [`TreasuryOutput`].
-pub fn rand_ledger_treasury_output() -> TreasuryOutput {
-    TreasuryOutput::new(rand_treasury_output(), rand_milestone_id())
+pub fn rand_ledger_treasury_output(token_supply: u64) -> TreasuryOutput {
+    TreasuryOutput::new(rand_treasury_output(token_supply), rand_milestone_id())
 }
 
 /// Generates a random [`ConsumedOutput`].
@@ -27,6 +27,11 @@ pub fn rand_consumed_output() -> ConsumedOutput {
 }
 
 /// Generates a random [`CreatedOutput`].
-pub fn rand_created_output() -> CreatedOutput {
-    CreatedOutput::new(rand_block_id(), rand_milestone_index(), rand_number(), rand_output())
+pub fn rand_created_output(token_supply: u64) -> CreatedOutput {
+    CreatedOutput::new(
+        rand_block_id(),
+        rand_milestone_index(),
+        rand_number(),
+        rand_output(token_supply),
+    )
 }

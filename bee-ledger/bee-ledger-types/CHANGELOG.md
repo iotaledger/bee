@@ -19,6 +19,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 1.0.0-beta.6 - 2022-XX-XX
+
+### Changed
+
+- Updated dependencies;
+- `Packable::UnpackVisitor` from `()` to `ProtocolParameters` for `MilestoneDiff` and `CreatedOutput`;
+- `Receipt::validate` new parameter `token_supply: u64`;
+- Adapt `rand` module to these changes;
+
 ## 1.0.0-beta.5 - 2022-08-30
 
 ### Changed

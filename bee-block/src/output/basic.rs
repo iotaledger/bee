@@ -10,8 +10,10 @@ use crate::{
     output::{
         feature::{verify_allowed_features, Feature, FeatureFlags, Features},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        NativeToken, NativeTokens, Output, OutputAmount, OutputBuilderAmount, OutputId, Rent, RentStructure,
+        verify_output_amount, verify_output_amount_packable, NativeToken, NativeTokens, Output, OutputBuilderAmount,
+        OutputId, Rent, RentStructure,
     },
+    protocol::ProtocolParameters,
     semantic::{ConflictReason, ValidationContext},
     unlock::Unlock,
     Error,
@@ -31,9 +33,7 @@ impl BasicOutputBuilder {
     /// Creates a [`BasicOutputBuilder`] with a provided amount.
     #[inline(always)]
     pub fn new_with_amount(amount: u64) -> Result<Self, Error> {
-        Self::new(OutputBuilderAmount::Amount(
-            amount.try_into().map_err(Error::InvalidOutputAmount)?,
-        ))
+        Self::new(OutputBuilderAmount::Amount(amount))
     }
 
     /// Creates an [`BasicOutputBuilder`] with a provided rent structure.
@@ -55,7 +55,7 @@ impl BasicOutputBuilder {
     /// Sets the amount to the provided value.
     #[inline(always)]
     pub fn with_amount(mut self, amount: u64) -> Result<Self, Error> {
-        self.amount = OutputBuilderAmount::Amount(amount.try_into().map_err(Error::InvalidOutputAmount)?);
+        self.amount = OutputBuilderAmount::Amount(amount);
         Ok(self)
     }
 
@@ -131,17 +131,17 @@ impl BasicOutputBuilder {
     }
 
     ///
-    pub fn finish(self) -> Result<BasicOutput, Error> {
+    pub fn finish(self, token_supply: u64) -> Result<BasicOutput, Error> {
         let unlock_conditions = UnlockConditions::new(self.unlock_conditions)?;
 
-        verify_unlock_conditions::<true>(&unlock_conditions, &())?;
+        verify_unlock_conditions::<true>(&unlock_conditions)?;
 
         let features = Features::new(self.features)?;
 
-        verify_features::<true>(&features, &())?;
+        verify_features::<true>(&features)?;
 
         let mut output = BasicOutput {
-            amount: 1u64.try_into().map_err(Error::InvalidOutputAmount)?,
+            amount: 1u64,
             native_tokens: NativeTokens::new(self.native_tokens)?,
             unlock_conditions,
             features,
@@ -149,18 +149,19 @@ impl BasicOutputBuilder {
 
         output.amount = match self.amount {
             OutputBuilderAmount::Amount(amount) => amount,
-            OutputBuilderAmount::MinimumStorageDeposit(rent_structure) => Output::Basic(output.clone())
-                .rent_cost(&rent_structure)
-                .try_into()
-                .map_err(Error::InvalidOutputAmount)?,
+            OutputBuilderAmount::MinimumStorageDeposit(rent_structure) => {
+                Output::Basic(output.clone()).rent_cost(&rent_structure)
+            }
         };
+
+        verify_output_amount::<true>(&output.amount, &token_supply)?;
 
         Ok(output)
     }
 
     /// Finishes the [`BasicOutputBuilder`] into an [`Output`].
-    pub fn finish_output(self) -> Result<Output, Error> {
-        Ok(Output::Basic(self.finish()?))
+    pub fn finish_output(self, token_supply: u64) -> Result<Output, Error> {
+        Ok(Output::Basic(self.finish(token_supply)?))
     }
 }
 
@@ -179,15 +180,16 @@ impl From<&BasicOutput> for BasicOutputBuilder {
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Packable)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error)]
+#[packable(unpack_visitor = ProtocolParameters)]
 pub struct BasicOutput {
     // Amount of IOTA tokens held by the output.
-    #[packable(unpack_error_with = Error::InvalidOutputAmount)]
-    amount: OutputAmount,
+    #[packable(verify_with = verify_output_amount_packable)]
+    amount: u64,
     // Native tokens held by the output.
     native_tokens: NativeTokens,
-    #[packable(verify_with = verify_unlock_conditions)]
+    #[packable(verify_with = verify_unlock_conditions_packable)]
     unlock_conditions: UnlockConditions,
-    #[packable(verify_with = verify_features)]
+    #[packable(verify_with = verify_features_packable)]
     features: Features,
 }
 
@@ -207,15 +209,15 @@ impl BasicOutput {
 
     /// Creates a new [`BasicOutput`] with a provided amount.
     #[inline(always)]
-    pub fn new_with_amount(amount: u64) -> Result<Self, Error> {
-        BasicOutputBuilder::new_with_amount(amount)?.finish()
+    pub fn new_with_amount(amount: u64, token_supply: u64) -> Result<Self, Error> {
+        BasicOutputBuilder::new_with_amount(amount)?.finish(token_supply)
     }
 
     /// Creates a new [`BasicOutput`] with a provided rent structure.
     /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
-    pub fn new_with_minimum_storage_deposit(rent_structure: RentStructure) -> Result<Self, Error> {
-        BasicOutputBuilder::new_with_minimum_storage_deposit(rent_structure)?.finish()
+    pub fn new_with_minimum_storage_deposit(rent_structure: RentStructure, token_supply: u64) -> Result<Self, Error> {
+        BasicOutputBuilder::new_with_minimum_storage_deposit(rent_structure)?.finish(token_supply)
     }
 
     /// Creates a new [`BasicOutputBuilder`] with a provided amount.
@@ -234,7 +236,7 @@ impl BasicOutput {
     ///
     #[inline(always)]
     pub fn amount(&self) -> u64 {
-        self.amount.get()
+        self.amount
     }
 
     ///
@@ -292,7 +294,7 @@ impl BasicOutput {
     }
 }
 
-fn verify_unlock_conditions<const VERIFY: bool>(unlock_conditions: &UnlockConditions, _: &()) -> Result<(), Error> {
+fn verify_unlock_conditions<const VERIFY: bool>(unlock_conditions: &UnlockConditions) -> Result<(), Error> {
     if VERIFY {
         if unlock_conditions.address().is_none() {
             Err(Error::MissingAddressUnlockCondition)
@@ -304,12 +306,23 @@ fn verify_unlock_conditions<const VERIFY: bool>(unlock_conditions: &UnlockCondit
     }
 }
 
-fn verify_features<const VERIFY: bool>(blocks: &Features, _: &()) -> Result<(), Error> {
+fn verify_unlock_conditions_packable<const VERIFY: bool>(
+    unlock_conditions: &UnlockConditions,
+    _: &ProtocolParameters,
+) -> Result<(), Error> {
+    verify_unlock_conditions::<VERIFY>(unlock_conditions)
+}
+
+fn verify_features<const VERIFY: bool>(blocks: &Features) -> Result<(), Error> {
     if VERIFY {
         verify_allowed_features(blocks, BasicOutput::ALLOWED_FEATURES)
     } else {
         Ok(())
     }
+}
+
+fn verify_features_packable<const VERIFY: bool>(blocks: &Features, _: &ProtocolParameters) -> Result<(), Error> {
+    verify_features::<VERIFY>(blocks)
 }
 
 #[cfg(feature = "dto")]
@@ -321,8 +334,10 @@ pub mod dto {
     use crate::{
         error::dto::DtoError,
         output::{
-            dto::OutputBuilderAmountDto, feature::dto::FeatureDto, native_token::dto::NativeTokenDto,
-            unlock_condition::dto::UnlockConditionDto,
+            dto::OutputBuilderAmountDto,
+            feature::dto::FeatureDto,
+            native_token::dto::NativeTokenDto,
+            unlock_condition::dto::{try_from_unlock_condition_dto_for_unlock_condition, UnlockConditionDto},
         },
     };
 
@@ -354,28 +369,27 @@ pub mod dto {
         }
     }
 
-    impl TryFrom<&BasicOutputDto> for BasicOutput {
-        type Error = DtoError;
+    pub fn try_from_basic_output_dto_for_basic_output(
+        value: &BasicOutputDto,
+        token_supply: u64,
+    ) -> Result<BasicOutput, DtoError> {
+        let mut builder =
+            BasicOutputBuilder::new_with_amount(value.amount.parse().map_err(|_| DtoError::InvalidField("amount"))?)?;
 
-        fn try_from(value: &BasicOutputDto) -> Result<Self, Self::Error> {
-            let mut builder = BasicOutputBuilder::new_with_amount(
-                value.amount.parse().map_err(|_| DtoError::InvalidField("amount"))?,
-            )?;
-
-            for t in &value.native_tokens {
-                builder = builder.add_native_token(t.try_into()?);
-            }
-
-            for b in &value.unlock_conditions {
-                builder = builder.add_unlock_condition(b.try_into()?);
-            }
-
-            for b in &value.features {
-                builder = builder.add_feature(b.try_into()?);
-            }
-
-            Ok(builder.finish()?)
+        for t in &value.native_tokens {
+            builder = builder.add_native_token(t.try_into()?);
         }
+
+        for u in &value.unlock_conditions {
+            builder =
+                builder.add_unlock_condition(try_from_unlock_condition_dto_for_unlock_condition(u, token_supply)?);
+        }
+
+        for b in &value.features {
+            builder = builder.add_feature(b.try_into()?);
+        }
+
+        Ok(builder.finish(token_supply)?)
     }
 
     impl BasicOutput {
@@ -384,6 +398,7 @@ pub mod dto {
             native_tokens: Option<Vec<NativeTokenDto>>,
             unlock_conditions: Vec<UnlockConditionDto>,
             features: Option<Vec<FeatureDto>>,
+            token_supply: u64,
         ) -> Result<BasicOutput, DtoError> {
             let mut builder = match amount {
                 OutputBuilderAmountDto::Amount(amount) => {
@@ -404,7 +419,7 @@ pub mod dto {
 
             let unlock_conditions = unlock_conditions
                 .iter()
-                .map(UnlockCondition::try_from)
+                .map(|u| try_from_unlock_condition_dto_for_unlock_condition(u, token_supply))
                 .collect::<Result<Vec<UnlockCondition>, DtoError>>()?;
             builder = builder.with_unlock_conditions(unlock_conditions);
 
@@ -416,7 +431,7 @@ pub mod dto {
                 builder = builder.with_features(features);
             }
 
-            Ok(builder.finish()?)
+            Ok(builder.finish(token_supply)?)
         }
     }
 }

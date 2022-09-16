@@ -14,9 +14,9 @@ use packable::{
 };
 
 use crate::{
-    constant::PROTOCOL_VERSION,
     parent::Parents,
     payload::milestone::{MerkleRoot, MilestoneId, MilestoneIndex, MilestoneOptions},
+    protocol::ProtocolParameters,
     Error,
 };
 
@@ -44,6 +44,7 @@ impl MilestoneEssence {
     pub fn new(
         index: MilestoneIndex,
         timestamp: u32,
+        protocol_version: u8,
         previous_milestone_id: MilestoneId,
         parents: Parents,
         inclusion_merkle_root: MerkleRoot,
@@ -59,7 +60,7 @@ impl MilestoneEssence {
         Ok(Self {
             index,
             timestamp,
-            protocol_version: PROTOCOL_VERSION,
+            protocol_version,
             previous_milestone_id,
             parents,
             inclusion_merkle_root,
@@ -122,7 +123,7 @@ impl MilestoneEssence {
 
 impl Packable for MilestoneEssence {
     type UnpackError = Error;
-    type UnpackVisitor = ();
+    type UnpackVisitor = ProtocolParameters;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         self.index.pack(packer)?;
@@ -142,23 +143,23 @@ impl Packable for MilestoneEssence {
         unpacker: &mut U,
         visitor: &Self::UnpackVisitor,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let index = MilestoneIndex::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
-        let timestamp = u32::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
-        let protocol_version = u8::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
+        let index = MilestoneIndex::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
+        let timestamp = u32::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
+        let protocol_version = u8::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
 
-        if VERIFY && protocol_version != PROTOCOL_VERSION {
+        if VERIFY && protocol_version != visitor.protocol_version() {
             return Err(UnpackError::Packable(Error::ProtocolVersionMismatch {
-                expected: PROTOCOL_VERSION,
+                expected: visitor.protocol_version(),
                 actual: protocol_version,
             }));
         }
 
-        let previous_milestone_id = MilestoneId::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
-        let parents = Parents::unpack::<_, VERIFY>(unpacker, visitor)?;
-        let inclusion_merkle_root = MerkleRoot::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
-        let applied_merkle_root = MerkleRoot::unpack::<_, VERIFY>(unpacker, visitor).coerce()?;
+        let previous_milestone_id = MilestoneId::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
+        let parents = Parents::unpack::<_, VERIFY>(unpacker, &())?;
+        let inclusion_merkle_root = MerkleRoot::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
+        let applied_merkle_root = MerkleRoot::unpack::<_, VERIFY>(unpacker, &()).coerce()?;
 
-        let metadata = BoxedSlicePrefix::<u8, MilestoneMetadataLength>::unpack::<_, VERIFY>(unpacker, visitor)
+        let metadata = BoxedSlicePrefix::<u8, MilestoneMetadataLength>::unpack::<_, VERIFY>(unpacker, &())
             .map_packable_err(|e| Error::InvalidMilestoneMetadataLength(e.into_prefix_err().into()))?;
 
         let options = MilestoneOptions::unpack::<_, VERIFY>(unpacker, visitor)?;

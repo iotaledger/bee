@@ -3,7 +3,7 @@
 
 use std::collections::HashMap;
 
-use bee_block::rand::bool::rand_bool;
+use bee_block::{protocol::protocol_parameters, rand::bool::rand_bool};
 use bee_ledger_types::{rand::output::rand_ledger_treasury_output, TreasuryOutput};
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
@@ -37,7 +37,11 @@ impl<T> StorageBackend for T where
 }
 
 pub fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
-    let (spent, treasury_output) = (rand_bool(), rand_ledger_treasury_output());
+    let protocol_parameters = protocol_parameters();
+    let (spent, treasury_output) = (
+        rand_bool(),
+        rand_ledger_treasury_output(protocol_parameters.token_supply()),
+    );
 
     assert!(!Exist::<(bool, TreasuryOutput), ()>::exist(storage, &(spent, treasury_output.clone())).unwrap());
     assert!(
@@ -70,7 +74,10 @@ pub fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
     let mut batch = B::batch_begin();
 
     for _ in 0..10 {
-        let (spent, treasury_output) = (rand_bool(), rand_ledger_treasury_output());
+        let (spent, treasury_output) = (
+            rand_bool(),
+            rand_ledger_treasury_output(protocol_parameters.token_supply()),
+        );
         Insert::<(bool, TreasuryOutput), ()>::insert(storage, &(spent, treasury_output.clone()), &()).unwrap();
         Batch::<(bool, TreasuryOutput), ()>::batch_delete(storage, &mut batch, &(spent, treasury_output)).unwrap();
     }
@@ -79,7 +86,7 @@ pub fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
 
     for _ in 0..10 {
         let spent = false;
-        let treasury_output = rand_ledger_treasury_output();
+        let treasury_output = rand_ledger_treasury_output(protocol_parameters.token_supply());
         Batch::<(bool, TreasuryOutput), ()>::batch_insert(storage, &mut batch, &(spent, treasury_output.clone()), &())
             .unwrap();
         treasury_outputs.entry(spent).or_default().push(treasury_output);
@@ -87,7 +94,7 @@ pub fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
 
     for _ in 0..10 {
         let spent = true;
-        let treasury_output = rand_ledger_treasury_output();
+        let treasury_output = rand_ledger_treasury_output(protocol_parameters.token_supply());
         Batch::<(bool, TreasuryOutput), ()>::batch_insert(storage, &mut batch, &(spent, treasury_output.clone()), &())
             .unwrap();
         treasury_outputs.entry(spent).or_default().push(treasury_output);

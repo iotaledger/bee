@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_block::{
+    protocol::protocol_parameters,
     rand::block::{rand_block, rand_block_id},
     Block, BlockId,
 };
@@ -39,7 +40,8 @@ impl<T> StorageBackend for T where
 }
 
 pub fn block_id_to_block_access<B: StorageBackend>(storage: &B) {
-    let (block_id, block) = (rand_block_id(), rand_block());
+    let protocol_parameters = protocol_parameters();
+    let (block_id, block) = (rand_block_id(), rand_block(protocol_parameters.min_pow_score()));
 
     assert!(!Exist::<BlockId, Block>::exist(storage, &block_id).unwrap());
     assert!(Fetch::<BlockId, Block>::fetch(storage, &block_id).unwrap().is_none());
@@ -51,7 +53,7 @@ pub fn block_id_to_block_access<B: StorageBackend>(storage: &B) {
 
     Insert::<BlockId, Block>::insert(storage, &block_id, &block).unwrap();
 
-    let block = rand_block();
+    let block = rand_block(protocol_parameters.min_pow_score());
     Insert::<BlockId, Block>::insert(storage, &block_id, &block).unwrap();
     assert_eq!(
         Fetch::<BlockId, Block>::fetch(storage, &block_id).unwrap().as_ref(),
@@ -85,7 +87,7 @@ pub fn block_id_to_block_access<B: StorageBackend>(storage: &B) {
     let mut blocks = Vec::new();
 
     for _ in 0..10 {
-        let (block_id, block) = (rand_block_id(), rand_block());
+        let (block_id, block) = (rand_block_id(), rand_block(protocol_parameters.min_pow_score()));
         Insert::<BlockId, Block>::insert(storage, &block_id, &block).unwrap();
         Batch::<BlockId, Block>::batch_delete(storage, &mut batch, &block_id).unwrap();
         block_ids.push(block_id);
@@ -93,7 +95,7 @@ pub fn block_id_to_block_access<B: StorageBackend>(storage: &B) {
     }
 
     for _ in 0..10 {
-        let (block_id, block) = (rand_block_id(), rand_block());
+        let (block_id, block) = (rand_block_id(), rand_block(protocol_parameters.min_pow_score()));
         Batch::<BlockId, Block>::batch_insert(storage, &mut batch, &block_id, &block).unwrap();
         block_ids.push(block_id);
         blocks.push((block_id, Some(block)));

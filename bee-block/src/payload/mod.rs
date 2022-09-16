@@ -19,9 +19,7 @@ use packable::{
 };
 
 pub(crate) use self::{
-    milestone::{
-        MigratedFundsAmount, MilestoneMetadataLength, MilestoneOptionCount, ReceiptFundsCount, SignatureCount,
-    },
+    milestone::{MilestoneMetadataLength, MilestoneOptionCount, ReceiptFundsCount, SignatureCount},
     tagged_data::{TagLength, TaggedDataLength},
     transaction::{InputCount, OutputCount},
 };
@@ -31,29 +29,23 @@ pub use self::{
     transaction::TransactionPayload,
     treasury_transaction::TreasuryTransactionPayload,
 };
-use crate::Error;
+use crate::{protocol::ProtocolParameters, Error};
 
 /// A generic payload that can represent different types defining block payloads.
-#[derive(Clone, Debug, Eq, PartialEq, Packable)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(
     feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
-#[packable(unpack_error = Error)]
-#[packable(tag_type = u32, with_error = Error::InvalidPayloadKind)]
 pub enum Payload {
     /// A transaction payload.
-    #[packable(tag = TransactionPayload::KIND)]
     Transaction(Box<TransactionPayload>),
     /// A milestone payload.
-    #[packable(tag = MilestonePayload::KIND)]
     Milestone(Box<MilestonePayload>),
     /// A treasury transaction payload.
-    #[packable(tag = TreasuryTransactionPayload::KIND)]
     TreasuryTransaction(Box<TreasuryTransactionPayload>),
     /// A tagged data payload.
-    #[packable(tag = TaggedDataPayload::KIND)]
     TaggedData(Box<TaggedDataPayload>),
 }
 
@@ -93,6 +85,51 @@ impl Payload {
     }
 }
 
+impl Packable for Payload {
+    type UnpackError = Error;
+    type UnpackVisitor = ProtocolParameters;
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        match self {
+            Payload::Transaction(transaction) => {
+                TransactionPayload::KIND.pack(packer)?;
+                transaction.pack(packer)
+            }
+            Payload::Milestone(milestone) => {
+                MilestonePayload::KIND.pack(packer)?;
+                milestone.pack(packer)
+            }
+            Payload::TreasuryTransaction(treasury_transaction) => {
+                TreasuryTransactionPayload::KIND.pack(packer)?;
+                treasury_transaction.pack(packer)
+            }
+            Payload::TaggedData(tagged_data) => {
+                TaggedDataPayload::KIND.pack(packer)?;
+                tagged_data.pack(packer)
+            }
+        }?;
+
+        Ok(())
+    }
+
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+        visitor: &Self::UnpackVisitor,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        Ok(match u32::unpack::<_, VERIFY>(unpacker, &()).coerce()? {
+            TransactionPayload::KIND => {
+                Payload::from(TransactionPayload::unpack::<_, VERIFY>(unpacker, visitor).coerce()?)
+            }
+            MilestonePayload::KIND => Payload::from(MilestonePayload::unpack::<_, VERIFY>(unpacker, visitor).coerce()?),
+            TreasuryTransactionPayload::KIND => {
+                Payload::from(TreasuryTransactionPayload::unpack::<_, VERIFY>(unpacker, visitor).coerce()?)
+            }
+            TaggedDataPayload::KIND => Payload::from(TaggedDataPayload::unpack::<_, VERIFY>(unpacker, &()).coerce()?),
+            k => return Err(Error::InvalidPayloadKind(k)).map_err(UnpackError::Packable),
+        })
+    }
+}
+
 /// Representation of an optional [`Payload`].
 /// Essentially an `Option<Payload>` with a different [`Packable`] implementation, to conform to specs.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -116,7 +153,7 @@ impl Deref for OptionalPayload {
 
 impl Packable for OptionalPayload {
     type UnpackError = Error;
-    type UnpackVisitor = ();
+    type UnpackVisitor = ProtocolParameters;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         match &self.0 {
@@ -129,7 +166,7 @@ impl Packable for OptionalPayload {
         unpacker: &mut U,
         visitor: &Self::UnpackVisitor,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let len = u32::unpack::<_, VERIFY>(unpacker, visitor).coerce()? as usize;
+        let len = u32::unpack::<_, VERIFY>(unpacker, &()).coerce()? as usize;
 
         if len > 0 {
             unpacker.ensure_bytes(len)?;
@@ -179,8 +216,12 @@ pub mod dto {
 
     use super::*;
     pub use super::{
-        milestone::dto::MilestonePayloadDto, tagged_data::dto::TaggedDataPayloadDto,
-        transaction::dto::TransactionPayloadDto, treasury_transaction::dto::TreasuryTransactionPayloadDto,
+        milestone::dto::{try_from_milestone_payload_dto_for_milestone_payload, MilestonePayloadDto},
+        tagged_data::dto::TaggedDataPayloadDto,
+        transaction::dto::{try_from_transaction_payload_dto_for_transaction_payload, TransactionPayloadDto},
+        treasury_transaction::dto::{
+            try_from_treasury_transaction_payload_dto_for_treasury_transaction_payload, TreasuryTransactionPayloadDto,
+        },
     };
     use crate::error::dto::DtoError;
 
@@ -207,17 +248,26 @@ pub mod dto {
         }
     }
 
-    impl TryFrom<&PayloadDto> for Payload {
-        type Error = DtoError;
-        fn try_from(value: &PayloadDto) -> Result<Self, Self::Error> {
-            Ok(match value {
-                PayloadDto::Transaction(p) => Payload::Transaction(Box::new(TransactionPayload::try_from(p.as_ref())?)),
-                PayloadDto::Milestone(p) => Payload::Milestone(Box::new(MilestonePayload::try_from(p.as_ref())?)),
-                PayloadDto::TreasuryTransaction(p) => {
-                    Payload::TreasuryTransaction(Box::new(TreasuryTransactionPayload::try_from(p.as_ref())?))
-                }
-                PayloadDto::TaggedData(p) => Payload::TaggedData(Box::new(TaggedDataPayload::try_from(p.as_ref())?)),
-            })
-        }
+    pub fn try_from_payload_dto_payload(
+        value: &PayloadDto,
+        protocol_parameters: &ProtocolParameters,
+    ) -> Result<Payload, DtoError> {
+        Ok(match value {
+            PayloadDto::Transaction(p) => Payload::from(try_from_transaction_payload_dto_for_transaction_payload(
+                p.as_ref(),
+                protocol_parameters,
+            )?),
+            PayloadDto::Milestone(p) => Payload::from(try_from_milestone_payload_dto_for_milestone_payload(
+                p.as_ref(),
+                protocol_parameters,
+            )?),
+            PayloadDto::TreasuryTransaction(p) => Payload::from(
+                try_from_treasury_transaction_payload_dto_for_treasury_transaction_payload(
+                    p.as_ref(),
+                    protocol_parameters.token_supply(),
+                )?,
+            ),
+            PayloadDto::TaggedData(p) => Payload::from(TaggedDataPayload::try_from(p.as_ref())?),
+        })
     }
 }

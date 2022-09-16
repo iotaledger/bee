@@ -44,19 +44,62 @@ impl From<proto::RawOutput> for Raw<bee::output::Output> {
     }
 }
 
+impl From<Raw<bee::output::Output>> for proto::RawOutput {
+    fn from(value: Raw<bee::output::Output>) -> Self {
+        Self { data: value.data }
+    }
+}
+
+impl From<proto::RawBlock> for Raw<bee::Block> {
+    fn from(value: proto::RawBlock) -> Self {
+        value.data.into()
+    }
+}
+
+impl From<Raw<bee::Block>> for proto::RawBlock {
+    fn from(value: Raw<bee::Block>) -> Self {
+        Self { data: value.data }
+    }
+}
+
+impl From<proto::RawMilestone> for Raw<bee::payload::milestone::MilestonePayload> {
+    fn from(value: proto::RawMilestone) -> Self {
+        value.data.into()
+    }
+}
+
+impl From<Raw<bee::payload::milestone::MilestonePayload>> for proto::RawMilestone {
+    fn from(value: Raw<bee::payload::milestone::MilestonePayload>) -> Self {
+        Self { data: value.data }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use bee::rand::output::rand_output;
 
     use super::*;
+    use crate::ProtocolParameters;
 
     #[test]
     fn raw_output() {
-        let output = rand_output();
+        let protocol_parameters = bee::protocol::protocol_parameters();
+
+        let output = rand_output(protocol_parameters.token_supply());
+
         let proto = proto::RawOutput {
             data: output.pack_to_vec(),
         };
         let raw: Raw<bee::output::Output> = proto.into();
-        assert_eq!(output, raw.inner(&()).unwrap());
+        assert_eq!(output, raw.inner(&protocol_parameters).unwrap());
+    }
+
+    #[test]
+    fn raw_protocol_parameters() {
+        let protocol_parameters = bee::protocol::protocol_parameters();
+        let proto = proto::RawProtocolParameters::from(protocol_parameters.clone());
+
+        let pp: ProtocolParameters = proto.into();
+        assert_eq!(protocol_parameters, pp.params.inner(&()).unwrap());
     }
 }

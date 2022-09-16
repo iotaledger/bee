@@ -13,12 +13,11 @@ use hashbrown::HashMap;
 use iterator_sorted::is_unique_sorted;
 use packable::{bounded::BoundedU16, prefix::VecPrefix, Packable, PackableExt};
 
-pub(crate) use self::migrated_funds_entry::MigratedFundsAmount;
 pub use self::{migrated_funds_entry::MigratedFundsEntry, tail_transaction_hash::TailTransactionHash};
 use crate::{
-    constant::TOKEN_SUPPLY,
     output::OUTPUT_COUNT_RANGE,
     payload::{milestone::MilestoneIndex, Payload, TreasuryTransactionPayload},
+    protocol::ProtocolParameters,
     Error,
 };
 
@@ -31,13 +30,14 @@ pub(crate) type ReceiptFundsCount =
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error)]
+#[packable(unpack_visitor = ProtocolParameters)]
 pub struct ReceiptMilestoneOption {
     migrated_at: MilestoneIndex,
     last: bool,
     #[packable(unpack_error_with = |e| e.unwrap_item_err_or_else(|p| Error::InvalidReceiptFundsCount(p.into())))]
-    #[packable(verify_with = verify_funds)]
+    #[packable(verify_with = verify_funds_packable)]
     funds: VecPrefix<MigratedFundsEntry, ReceiptFundsCount>,
-    #[packable(verify_with = verify_transaction)]
+    #[packable(verify_with = verify_transaction_packable)]
     transaction: Payload,
 }
 
@@ -51,11 +51,12 @@ impl ReceiptMilestoneOption {
         last: bool,
         funds: Vec<MigratedFundsEntry>,
         transaction: TreasuryTransactionPayload,
+        token_supply: u64,
     ) -> Result<Self, Error> {
         let funds = VecPrefix::<MigratedFundsEntry, ReceiptFundsCount>::try_from(funds)
             .map_err(Error::InvalidReceiptFundsCount)?;
 
-        verify_funds::<true>(&funds, &())?;
+        verify_funds::<true>(&funds, &token_supply)?;
 
         Ok(Self {
             migrated_at,
@@ -98,41 +99,54 @@ impl ReceiptMilestoneOption {
     }
 }
 
-fn verify_funds<const VERIFY: bool>(funds: &[MigratedFundsEntry], _: &()) -> Result<(), Error> {
-    // Funds must be lexicographically sorted and unique in their serialised forms.
-    if !is_unique_sorted(funds.iter().map(PackableExt::pack_to_vec)) {
-        return Err(Error::ReceiptFundsNotUniqueSorted);
-    }
-
-    let mut tail_transaction_hashes = HashMap::with_capacity(funds.len());
-    let mut funds_sum: u64 = 0;
-
-    for (index, funds) in funds.iter().enumerate() {
-        if let Some(previous) = tail_transaction_hashes.insert(funds.tail_transaction_hash().as_ref(), index) {
-            return Err(Error::TailTransactionHashNotUnique {
-                previous,
-                current: index,
-            });
+fn verify_funds<const VERIFY: bool>(funds: &[MigratedFundsEntry], token_supply: &u64) -> Result<(), Error> {
+    if VERIFY {
+        // Funds must be lexicographically sorted and unique in their serialised forms.
+        if !is_unique_sorted(funds.iter().map(PackableExt::pack_to_vec)) {
+            return Err(Error::ReceiptFundsNotUniqueSorted);
         }
 
-        funds_sum = funds_sum
-            .checked_add(funds.amount())
-            .ok_or_else(|| Error::InvalidReceiptFundsSum(funds_sum as u128 + funds.amount() as u128))?;
+        let mut tail_transaction_hashes = HashMap::with_capacity(funds.len());
+        let mut funds_sum: u64 = 0;
 
-        if funds_sum > TOKEN_SUPPLY {
-            return Err(Error::InvalidReceiptFundsSum(funds_sum as u128));
+        for (index, funds) in funds.iter().enumerate() {
+            if let Some(previous) = tail_transaction_hashes.insert(funds.tail_transaction_hash().as_ref(), index) {
+                return Err(Error::TailTransactionHashNotUnique {
+                    previous,
+                    current: index,
+                });
+            }
+
+            funds_sum = funds_sum
+                .checked_add(funds.amount())
+                .ok_or_else(|| Error::InvalidReceiptFundsSum(funds_sum as u128 + funds.amount() as u128))?;
+
+            if funds_sum > *token_supply {
+                return Err(Error::InvalidReceiptFundsSum(funds_sum as u128));
+            }
         }
     }
 
     Ok(())
 }
 
-fn verify_transaction<const VERIFY: bool>(transaction: &Payload, _: &()) -> Result<(), Error> {
-    if !matches!(transaction, Payload::TreasuryTransaction(_)) {
+fn verify_funds_packable<const VERIFY: bool>(
+    funds: &[MigratedFundsEntry],
+    protocol_parameters: &ProtocolParameters,
+) -> Result<(), Error> {
+    verify_funds::<VERIFY>(funds, &protocol_parameters.token_supply())
+}
+
+fn verify_transaction<const VERIFY: bool>(transaction: &Payload) -> Result<(), Error> {
+    if VERIFY && !matches!(transaction, Payload::TreasuryTransaction(_)) {
         Err(Error::InvalidPayloadKind(transaction.kind()))
     } else {
         Ok(())
     }
+}
+
+fn verify_transaction_packable<const VERIFY: bool>(transaction: &Payload, _: &ProtocolParameters) -> Result<(), Error> {
+    verify_transaction::<VERIFY>(transaction)
 }
 
 #[cfg(feature = "dto")]
@@ -140,11 +154,16 @@ fn verify_transaction<const VERIFY: bool>(transaction: &Payload, _: &()) -> Resu
 pub mod dto {
     use serde::{Deserialize, Serialize};
 
-    pub use super::migrated_funds_entry::dto::MigratedFundsEntryDto;
+    pub use super::migrated_funds_entry::dto::{
+        try_from_migrated_funds_entry_dto_for_migrated_funds_entry, MigratedFundsEntryDto,
+    };
     use super::*;
     use crate::{
         error::dto::DtoError,
-        payload::dto::{PayloadDto, TreasuryTransactionPayloadDto},
+        payload::dto::{
+            try_from_treasury_transaction_payload_dto_for_treasury_transaction_payload, PayloadDto,
+            TreasuryTransactionPayloadDto,
+        },
     };
 
     ///
@@ -174,20 +193,27 @@ pub mod dto {
         }
     }
 
-    impl TryFrom<&ReceiptMilestoneOptionDto> for ReceiptMilestoneOption {
-        type Error = DtoError;
-
-        fn try_from(value: &ReceiptMilestoneOptionDto) -> Result<Self, Self::Error> {
-            Ok(ReceiptMilestoneOption::new(
-                MilestoneIndex(value.migrated_at),
-                value.last,
-                value.funds.iter().map(TryInto::try_into).collect::<Result<_, _>>()?,
-                if let PayloadDto::TreasuryTransaction(ref transaction) = value.transaction {
-                    (transaction.as_ref()).try_into()?
-                } else {
-                    return Err(DtoError::InvalidField("transaction"));
-                },
-            )?)
-        }
+    pub fn try_from_receipt_milestone_option_dto_for_receipt_milestone_option(
+        value: &ReceiptMilestoneOptionDto,
+        token_supply: u64,
+    ) -> Result<ReceiptMilestoneOption, DtoError> {
+        Ok(ReceiptMilestoneOption::new(
+            MilestoneIndex(value.migrated_at),
+            value.last,
+            value
+                .funds
+                .iter()
+                .map(|f| try_from_migrated_funds_entry_dto_for_migrated_funds_entry(f, token_supply))
+                .collect::<Result<_, _>>()?,
+            if let PayloadDto::TreasuryTransaction(ref transaction) = value.transaction {
+                try_from_treasury_transaction_payload_dto_for_treasury_transaction_payload(
+                    transaction.as_ref(),
+                    token_supply,
+                )?
+            } else {
+                return Err(DtoError::InvalidField("transaction"));
+            },
+            token_supply,
+        )?)
     }
 }

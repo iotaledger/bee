@@ -4,12 +4,7 @@
 use std::{any::TypeId, convert::Infallible, time::Instant};
 
 use async_trait::async_trait;
-use bee_block::{
-    constant::PROTOCOL_VERSION,
-    output::RentStructure,
-    payload::{transaction::TransactionEssence, Payload},
-    Block, BlockId,
-};
+use bee_block::{payload::Payload, Block, BlockId};
 use bee_gossip::PeerId;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{block_metadata::BlockMetadata, Tangle, TangleWorker};
@@ -42,19 +37,12 @@ pub(crate) struct ProcessorWorker {
     pub(crate) tx: mpsc::UnboundedSender<ProcessorWorkerEvent>,
 }
 
-#[derive(Clone)]
-pub(crate) struct ProcessorWorkerConfig {
-    pub(crate) network_id: u64,
-    pub(crate) minimum_pow_score: f64,
-    pub(crate) rent: RentStructure,
-}
-
 #[async_trait]
 impl<N: Node> Worker<N> for ProcessorWorker
 where
     N::Backend: StorageBackend,
 {
-    type Config = ProcessorWorkerConfig;
+    type Config = ();
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
@@ -71,7 +59,7 @@ where
         .leak()
     }
 
-    async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
+    async fn start(node: &mut N, _: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
 
         let propagator = node.worker::<PropagatorWorker>().unwrap().tx.clone();
@@ -95,6 +83,11 @@ where
 
             let (tx, rx) = async_channel::unbounded();
 
+            // TODO: this is obviously wrong but can't be done properly until the snapshot PR is merged.
+            // The node can't work properly with this.
+            // @thibault-martinez.
+            let protocol_parameters = bee_block::protocol::ProtocolParameters::default();
+
             for _ in 0..16 {
                 let rx = rx.clone();
                 let propagator = propagator.clone();
@@ -107,7 +100,7 @@ where
                 let metrics = metrics.clone();
                 let peer_manager = peer_manager.clone();
                 let bus = bus.clone();
-                let config = config.clone();
+                let protocol_parameters = protocol_parameters.clone();
 
                 tokio::spawn(async move {
                     'next_event: while let Ok(ProcessorWorkerEvent {
@@ -119,26 +112,13 @@ where
                     {
                         trace!("Processing received block...");
 
-                        let block = match Block::unpack_strict(&mut &block_packet.bytes[..], &()) {
+                        let block = match Block::unpack_strict(&mut &block_packet.bytes[..], &protocol_parameters) {
                             Ok(block) => block,
                             Err(e) => {
                                 notify_invalid_block(format!("Invalid block: {:?}.", e), &metrics, notifier);
                                 continue;
                             }
                         };
-
-                        if block.protocol_version() != PROTOCOL_VERSION {
-                            notify_invalid_block(
-                                format!(
-                                    "Incompatible protocol version {} != {}.",
-                                    block.protocol_version(),
-                                    PROTOCOL_VERSION
-                                ),
-                                &metrics,
-                                notifier,
-                            );
-                            continue;
-                        }
 
                         if let Some(Payload::Milestone(_)) = block.payload() {
                             if block.nonce() != 0 {
@@ -149,41 +129,17 @@ where
                                 );
                                 continue;
                             }
-                        } else if pow_score < config.minimum_pow_score {
+                        } else if pow_score < protocol_parameters.min_pow_score() as f64 {
                             notify_invalid_block(
-                                format!("Insufficient pow score: {} < {}.", pow_score, config.minimum_pow_score),
+                                format!(
+                                    "Insufficient pow score: {} < {}.",
+                                    pow_score,
+                                    protocol_parameters.min_pow_score()
+                                ),
                                 &metrics,
                                 notifier,
                             );
                             continue;
-                        }
-
-                        if let Some(Payload::Transaction(transaction)) = block.payload() {
-                            let TransactionEssence::Regular(essence) = transaction.essence();
-
-                            if essence.network_id() != config.network_id {
-                                notify_invalid_block(
-                                    format!(
-                                        "Incompatible network ID {} != {}.",
-                                        essence.network_id(),
-                                        config.network_id
-                                    ),
-                                    &metrics,
-                                    notifier,
-                                );
-                                continue 'next_event;
-                            }
-
-                            for (i, output) in essence.outputs().iter().enumerate() {
-                                if let Err(error) = output.verify_storage_deposit(&config.rent) {
-                                    notify_invalid_block(
-                                        format!("Invalid output i={i}: {}", error),
-                                        &metrics,
-                                        notifier,
-                                    );
-                                    continue 'next_event;
-                                }
-                            }
                         }
 
                         let block_id = block.id();

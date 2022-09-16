@@ -4,6 +4,7 @@
 use bee_block::{
     parent::Parents,
     payload::milestone::{MilestoneEssence, MilestoneIndex, MilestoneOptions, MilestonePayload},
+    protocol::protocol_parameters,
     rand::{
         block::rand_block_ids,
         milestone::{rand_merkle_root, rand_milestone_id, rand_milestone_index},
@@ -27,6 +28,7 @@ fn new_valid() {
             MilestoneEssence::new(
                 MilestoneIndex(0),
                 0,
+                protocol_parameters().protocol_version(),
                 rand_milestone_id(),
                 rand_parents(),
                 rand_merkle_root(),
@@ -48,6 +50,7 @@ fn new_invalid_no_signature() {
             MilestoneEssence::new(
                 MilestoneIndex(0),
                 0,
+                protocol_parameters().protocol_version(),
                 rand_milestone_id(),
                 rand_parents(),
                 rand_merkle_root(),
@@ -69,6 +72,7 @@ fn new_invalid_too_many_signatures() {
             MilestoneEssence::new(
                 MilestoneIndex(0),
                 0,
+                protocol_parameters().protocol_version(),
                 rand_milestone_id(),
                 rand_parents(),
                 rand_merkle_root(),
@@ -91,6 +95,7 @@ fn packed_len() {
         MilestoneEssence::new(
             MilestoneIndex(0),
             0,
+            protocol_parameters().protocol_version(),
             rand_milestone_id(),
             Parents::new(rand_block_ids(4)).unwrap(),
             rand_merkle_root(),
@@ -112,10 +117,12 @@ fn packed_len() {
 
 #[test]
 fn pack_unpack_valid() {
+    let protocol_parameters = protocol_parameters();
     let payload = MilestonePayload::new(
         MilestoneEssence::new(
             MilestoneIndex(0),
             0,
+            protocol_parameters.protocol_version(),
             rand_milestone_id(),
             rand_parents(),
             rand_merkle_root(),
@@ -133,7 +140,7 @@ fn pack_unpack_valid() {
     assert_eq!(payload.packed_len(), packed.len());
     assert_eq!(
         payload,
-        PackableExt::unpack_verified(&mut packed.as_slice(), &()).unwrap()
+        PackableExt::unpack_verified(&mut packed.as_slice(), &protocol_parameters).unwrap()
     )
 }
 
@@ -142,6 +149,7 @@ fn getters() {
     let essence = MilestoneEssence::new(
         rand_milestone_index(),
         rand_number::<u32>(),
+        protocol_parameters().protocol_version(),
         rand_milestone_id(),
         rand_parents(),
         rand_merkle_root(),

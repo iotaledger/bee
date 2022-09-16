@@ -29,15 +29,16 @@ pub fn rand_tagged_data_payload() -> TaggedDataPayload {
 }
 
 /// Generates a random treasury transaction payload.
-pub fn rand_treasury_transaction_payload() -> TreasuryTransactionPayload {
-    TreasuryTransactionPayload::new(rand_treasury_input(), rand_treasury_output()).unwrap()
+pub fn rand_treasury_transaction_payload(token_supply: u64) -> TreasuryTransactionPayload {
+    TreasuryTransactionPayload::new(rand_treasury_input(), rand_treasury_output(token_supply)).unwrap()
 }
 
 /// Generates a random milestone payload.
-pub fn rand_milestone_payload() -> MilestonePayload {
+pub fn rand_milestone_payload(protocol_version: u8) -> MilestonePayload {
     let essence = MilestoneEssence::new(
         rand_milestone_index(),
         rand_number(),
+        protocol_version,
         rand_milestone_id(),
         rand_parents(),
         rand_merkle_root(),

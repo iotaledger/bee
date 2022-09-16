@@ -36,19 +36,19 @@ pub fn rand_output_id() -> OutputId {
 }
 
 /// Generates a random treasury output.
-pub fn rand_treasury_output() -> TreasuryOutput {
-    TreasuryOutput::new(rand_number_range(TreasuryOutput::AMOUNT_RANGE)).unwrap()
+pub fn rand_treasury_output(token_supply: u64) -> TreasuryOutput {
+    TreasuryOutput::new(rand_number_range(0..token_supply), token_supply).unwrap()
 }
 
 /// Generates a random [`BasicOutput`](BasicOutput).
-pub fn rand_basic_output() -> BasicOutput {
+pub fn rand_basic_output(token_supply: u64) -> BasicOutput {
     let features = rand_allowed_features(BasicOutput::ALLOWED_FEATURES);
     // TODO: Add `NativeTokens`
-    BasicOutput::build_with_amount(rand_number_range(Output::AMOUNT_RANGE))
+    BasicOutput::build_with_amount(rand_number_range(Output::AMOUNT_MIN..token_supply))
         .unwrap()
         .with_features(features)
         .add_unlock_condition(rand_address_unlock_condition().into())
-        .finish()
+        .finish(token_supply)
         .unwrap()
 }
 
@@ -58,18 +58,18 @@ pub fn rand_alias_id() -> AliasId {
 }
 
 /// Generates a random [`AliasOutput`](AliasOutput).
-pub fn rand_alias_output() -> AliasOutput {
+pub fn rand_alias_output(token_supply: u64) -> AliasOutput {
     let features = rand_allowed_features(AliasOutput::ALLOWED_FEATURES);
 
     // We need to make sure that `AliasId` and `Address` don't match.
     let alias_id = rand_alias_id();
 
-    AliasOutput::build_with_amount(rand_number_range(Output::AMOUNT_RANGE), alias_id)
+    AliasOutput::build_with_amount(rand_number_range(Output::AMOUNT_MIN..token_supply), alias_id)
         .unwrap()
         .with_features(features)
         .add_unlock_condition(rand_state_controller_address_unlock_condition_different_from(&alias_id).into())
         .add_unlock_condition(rand_governor_address_unlock_condition_different_from(&alias_id).into())
-        .finish()
+        .finish(token_supply)
         .unwrap()
 }
 
@@ -83,33 +83,33 @@ pub fn rand_token_scheme() -> TokenScheme {
 }
 
 /// Generates a random [`FoundryOutput`](FoundryOutput).
-pub fn rand_foundry_output() -> FoundryOutput {
+pub fn rand_foundry_output(token_supply: u64) -> FoundryOutput {
     let features = rand_allowed_features(FoundryOutput::ALLOWED_FEATURES);
 
     FoundryOutput::build_with_amount(
-        rand_number_range(Output::AMOUNT_RANGE),
+        rand_number_range(Output::AMOUNT_MIN..token_supply),
         rand_number(),
         rand_token_scheme(),
     )
     .unwrap()
     .with_features(features)
     .add_unlock_condition(ImmutableAliasAddressUnlockCondition::new(rand_alias_address()).into())
-    .finish()
+    .finish(token_supply)
     .unwrap()
 }
 
 /// Generates a random [`NftOutput`](NftOutput).
-pub fn rand_nft_output() -> NftOutput {
+pub fn rand_nft_output(token_supply: u64) -> NftOutput {
     let features = rand_allowed_features(NftOutput::ALLOWED_FEATURES);
 
     // We need to make sure that `NftId` and `Address` don't match.
     let nft_id = NftId::from(rand_bytes_array());
 
-    NftOutput::build_with_amount(rand_number_range(Output::AMOUNT_RANGE), nft_id)
+    NftOutput::build_with_amount(rand_number_range(Output::AMOUNT_MIN..token_supply), nft_id)
         .unwrap()
         .with_features(features)
         .add_unlock_condition(rand_address_unlock_condition_different_from(&nft_id).into())
-        .finish()
+        .finish(token_supply)
         .unwrap()
 }
 
@@ -119,13 +119,13 @@ pub fn rand_inputs_commitment() -> InputsCommitment {
 }
 
 /// Generates a random [`Output`].
-pub fn rand_output() -> Output {
+pub fn rand_output(token_supply: u64) -> Output {
     match rand_number::<u64>() % 5 {
-        0 => rand_treasury_output().into(),
-        1 => rand_basic_output().into(),
-        2 => rand_alias_output().into(),
-        3 => rand_foundry_output().into(),
-        4 => rand_nft_output().into(),
+        0 => rand_treasury_output(token_supply).into(),
+        1 => rand_basic_output(token_supply).into(),
+        2 => rand_alias_output(token_supply).into(),
+        3 => rand_foundry_output(token_supply).into(),
+        4 => rand_nft_output(token_supply).into(),
         _ => unreachable!(),
     }
 }

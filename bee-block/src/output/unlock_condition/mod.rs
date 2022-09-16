@@ -14,47 +14,44 @@ use alloc::{boxed::Box, vec::Vec};
 use bitflags::bitflags;
 use derive_more::{Deref, From};
 use iterator_sorted::is_unique_sorted;
-use packable::{bounded::BoundedU8, prefix::BoxedSlicePrefix, Packable};
+use packable::{
+    bounded::BoundedU8,
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    prefix::BoxedSlicePrefix,
+    unpacker::Unpacker,
+    Packable,
+};
 
-pub(crate) use self::storage_deposit_return::StorageDepositAmount;
 pub use self::{
     address::AddressUnlockCondition, expiration::ExpirationUnlockCondition,
     governor_address::GovernorAddressUnlockCondition, immutable_alias_address::ImmutableAliasAddressUnlockCondition,
     state_controller_address::StateControllerAddressUnlockCondition,
     storage_deposit_return::StorageDepositReturnUnlockCondition, timelock::TimelockUnlockCondition,
 };
-use crate::{address::Address, create_bitflags, Error};
+use crate::{address::Address, create_bitflags, protocol::ProtocolParameters, Error};
 
 ///
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From, Packable)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From)]
 #[cfg_attr(
     feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
-#[packable(unpack_error = Error)]
-#[packable(tag_type = u8, with_error = Error::InvalidUnlockConditionKind)]
 pub enum UnlockCondition {
     /// An address unlock condition.
-    #[packable(tag = AddressUnlockCondition::KIND)]
     Address(AddressUnlockCondition),
     /// A storage deposit return unlock condition.
-    #[packable(tag = StorageDepositReturnUnlockCondition::KIND)]
     StorageDepositReturn(StorageDepositReturnUnlockCondition),
     /// A timelock unlock condition.
-    #[packable(tag = TimelockUnlockCondition::KIND)]
     Timelock(TimelockUnlockCondition),
     /// An expiration unlock condition.
-    #[packable(tag = ExpirationUnlockCondition::KIND)]
     Expiration(ExpirationUnlockCondition),
     /// A state controller address unlock condition.
-    #[packable(tag = StateControllerAddressUnlockCondition::KIND)]
     StateControllerAddress(StateControllerAddressUnlockCondition),
     /// A governor address unlock condition.
-    #[packable(tag = GovernorAddressUnlockCondition::KIND)]
     GovernorAddress(GovernorAddressUnlockCondition),
     /// An immutable alias address unlock condition.
-    #[packable(tag = ImmutableAliasAddressUnlockCondition::KIND)]
     ImmutableAliasAddress(ImmutableAliasAddressUnlockCondition),
 }
 
@@ -101,14 +98,85 @@ create_bitflags!(
     ]
 );
 
+impl Packable for UnlockCondition {
+    type UnpackError = Error;
+    type UnpackVisitor = ProtocolParameters;
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        match self {
+            UnlockCondition::Address(unlock_condition) => {
+                AddressUnlockCondition::KIND.pack(packer)?;
+                unlock_condition.pack(packer)
+            }
+            UnlockCondition::StorageDepositReturn(unlock_condition) => {
+                StorageDepositReturnUnlockCondition::KIND.pack(packer)?;
+                unlock_condition.pack(packer)
+            }
+            UnlockCondition::Timelock(unlock_condition) => {
+                TimelockUnlockCondition::KIND.pack(packer)?;
+                unlock_condition.pack(packer)
+            }
+            UnlockCondition::Expiration(unlock_condition) => {
+                ExpirationUnlockCondition::KIND.pack(packer)?;
+                unlock_condition.pack(packer)
+            }
+            UnlockCondition::StateControllerAddress(unlock_condition) => {
+                StateControllerAddressUnlockCondition::KIND.pack(packer)?;
+                unlock_condition.pack(packer)
+            }
+            UnlockCondition::GovernorAddress(unlock_condition) => {
+                GovernorAddressUnlockCondition::KIND.pack(packer)?;
+                unlock_condition.pack(packer)
+            }
+            UnlockCondition::ImmutableAliasAddress(unlock_condition) => {
+                ImmutableAliasAddressUnlockCondition::KIND.pack(packer)?;
+                unlock_condition.pack(packer)
+            }
+        }?;
+
+        Ok(())
+    }
+
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+        visitor: &Self::UnpackVisitor,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        Ok(match u8::unpack::<_, VERIFY>(unpacker, &()).coerce()? {
+            AddressUnlockCondition::KIND => {
+                UnlockCondition::from(AddressUnlockCondition::unpack::<_, VERIFY>(unpacker, &()).coerce()?)
+            }
+            StorageDepositReturnUnlockCondition::KIND => UnlockCondition::from(
+                StorageDepositReturnUnlockCondition::unpack::<_, VERIFY>(unpacker, visitor).coerce()?,
+            ),
+            TimelockUnlockCondition::KIND => {
+                UnlockCondition::from(TimelockUnlockCondition::unpack::<_, VERIFY>(unpacker, &()).coerce()?)
+            }
+            ExpirationUnlockCondition::KIND => {
+                UnlockCondition::from(ExpirationUnlockCondition::unpack::<_, VERIFY>(unpacker, &()).coerce()?)
+            }
+            StateControllerAddressUnlockCondition::KIND => UnlockCondition::from(
+                StateControllerAddressUnlockCondition::unpack::<_, VERIFY>(unpacker, &()).coerce()?,
+            ),
+            GovernorAddressUnlockCondition::KIND => {
+                UnlockCondition::from(GovernorAddressUnlockCondition::unpack::<_, VERIFY>(unpacker, &()).coerce()?)
+            }
+            ImmutableAliasAddressUnlockCondition::KIND => UnlockCondition::from(
+                ImmutableAliasAddressUnlockCondition::unpack::<_, VERIFY>(unpacker, &()).coerce()?,
+            ),
+            k => return Err(Error::InvalidOutputKind(k)).map_err(UnpackError::Packable),
+        })
+    }
+}
+
 pub(crate) type UnlockConditionCount = BoundedU8<0, { UnlockConditions::COUNT_MAX }>;
 
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Deref, Packable)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error, with = |e| e.unwrap_item_err_or_else(|p| Error::InvalidUnlockConditionCount(p.into())))]
+#[packable(unpack_visitor = ProtocolParameters)]
 pub struct UnlockConditions(
-    #[packable(verify_with = verify_unique_sorted)] BoxedSlicePrefix<UnlockCondition, UnlockConditionCount>,
+    #[packable(verify_with = verify_unique_sorted_packable)] BoxedSlicePrefix<UnlockCondition, UnlockConditionCount>,
 );
 
 impl TryFrom<Vec<UnlockCondition>> for UnlockConditions {
@@ -141,7 +209,7 @@ impl UnlockConditions {
 
         unlock_conditions.sort_by_key(UnlockCondition::kind);
         // Sort is obviously fine now but uniqueness still needs to be checked.
-        verify_unique_sorted::<true>(&unlock_conditions, &())?;
+        verify_unique_sorted::<true>(&unlock_conditions)?;
 
         Ok(Self(unlock_conditions))
     }
@@ -257,12 +325,20 @@ impl UnlockConditions {
 }
 
 #[inline]
-fn verify_unique_sorted<const VERIFY: bool>(unlock_conditions: &[UnlockCondition], _: &()) -> Result<(), Error> {
+fn verify_unique_sorted<const VERIFY: bool>(unlock_conditions: &[UnlockCondition]) -> Result<(), Error> {
     if VERIFY && !is_unique_sorted(unlock_conditions.iter().map(UnlockCondition::kind)) {
         Err(Error::UnlockConditionsNotUniqueSorted)
     } else {
         Ok(())
     }
+}
+
+#[inline]
+fn verify_unique_sorted_packable<const VERIFY: bool>(
+    unlock_conditions: &[UnlockCondition],
+    _: &ProtocolParameters,
+) -> Result<(), Error> {
+    verify_unique_sorted::<VERIFY>(unlock_conditions)
 }
 
 pub(crate) fn verify_allowed_unlock_conditions(
@@ -490,60 +566,62 @@ pub mod dto {
         }
     }
 
-    impl TryFrom<&UnlockConditionDto> for UnlockCondition {
-        type Error = DtoError;
-
-        fn try_from(value: &UnlockConditionDto) -> Result<Self, Self::Error> {
-            Ok(match value {
-                UnlockConditionDto::Address(v) => Self::Address(AddressUnlockCondition::new(
+    pub fn try_from_unlock_condition_dto_for_unlock_condition(
+        value: &UnlockConditionDto,
+        token_supply: u64,
+    ) -> Result<UnlockCondition, DtoError> {
+        Ok(match value {
+            UnlockConditionDto::Address(v) => UnlockCondition::Address(AddressUnlockCondition::new(
+                (&v.address)
+                    .try_into()
+                    .map_err(|_e| DtoError::InvalidField("AddressUnlockCondition"))?,
+            )),
+            UnlockConditionDto::StorageDepositReturn(v) => {
+                UnlockCondition::StorageDepositReturn(StorageDepositReturnUnlockCondition::new(
+                    Address::try_from(&v.return_address)?,
+                    v.amount.parse::<u64>().map_err(|_| DtoError::InvalidField("amount"))?,
+                    token_supply,
+                )?)
+            }
+            UnlockConditionDto::Timelock(v) => UnlockCondition::Timelock(
+                TimelockUnlockCondition::new(v.timestamp)
+                    .map_err(|_| DtoError::InvalidField("TimelockUnlockCondition"))?,
+            ),
+            UnlockConditionDto::Expiration(v) => UnlockCondition::Expiration(
+                ExpirationUnlockCondition::new(
+                    (&v.return_address)
+                        .try_into()
+                        .map_err(|_e| DtoError::InvalidField("ExpirationUnlockCondition"))?,
+                    v.timestamp,
+                )
+                .map_err(|_| DtoError::InvalidField("ExpirationUnlockCondition"))?,
+            ),
+            UnlockConditionDto::StateControllerAddress(v) => {
+                UnlockCondition::StateControllerAddress(StateControllerAddressUnlockCondition::new(
                     (&v.address)
                         .try_into()
-                        .map_err(|_e| DtoError::InvalidField("AddressUnlockCondition"))?,
-                )),
-                UnlockConditionDto::StorageDepositReturn(v) => {
-                    Self::StorageDepositReturn(StorageDepositReturnUnlockCondition::new(
-                        Address::try_from(&v.return_address)?,
-                        v.amount.parse::<u64>().map_err(|_| DtoError::InvalidField("amount"))?,
-                    )?)
-                }
-                UnlockConditionDto::Timelock(v) => Self::Timelock(
-                    TimelockUnlockCondition::new(v.timestamp)
-                        .map_err(|_| DtoError::InvalidField("TimelockUnlockCondition"))?,
-                ),
-                UnlockConditionDto::Expiration(v) => Self::Expiration(
-                    ExpirationUnlockCondition::new(
-                        (&v.return_address)
-                            .try_into()
-                            .map_err(|_e| DtoError::InvalidField("ExpirationUnlockCondition"))?,
-                        v.timestamp,
-                    )
-                    .map_err(|_| DtoError::InvalidField("ExpirationUnlockCondition"))?,
-                ),
-                UnlockConditionDto::StateControllerAddress(v) => {
-                    Self::StateControllerAddress(StateControllerAddressUnlockCondition::new(
-                        (&v.address)
-                            .try_into()
-                            .map_err(|_e| DtoError::InvalidField("StateControllerAddressUnlockCondition"))?,
-                    ))
-                }
-                UnlockConditionDto::GovernorAddress(v) => Self::GovernorAddress(GovernorAddressUnlockCondition::new(
+                        .map_err(|_e| DtoError::InvalidField("StateControllerAddressUnlockCondition"))?,
+                ))
+            }
+            UnlockConditionDto::GovernorAddress(v) => {
+                UnlockCondition::GovernorAddress(GovernorAddressUnlockCondition::new(
                     (&v.address)
                         .try_into()
                         .map_err(|_e| DtoError::InvalidField("GovernorAddressUnlockCondition"))?,
-                )),
-                UnlockConditionDto::ImmutableAliasAddress(v) => {
-                    let address: Address = (&v.address)
-                        .try_into()
-                        .map_err(|_e| DtoError::InvalidField("ImmutableAliasAddressUnlockCondition"))?;
-                    // An ImmutableAliasAddressUnlockCondition must have an AliasAddress.
-                    if let Address::Alias(alias_address) = &address {
-                        Self::ImmutableAliasAddress(ImmutableAliasAddressUnlockCondition::new(*alias_address))
-                    } else {
-                        return Err(DtoError::InvalidField("ImmutableAliasAddressUnlockCondition"));
-                    }
+                ))
+            }
+            UnlockConditionDto::ImmutableAliasAddress(v) => {
+                let address: Address = (&v.address)
+                    .try_into()
+                    .map_err(|_e| DtoError::InvalidField("ImmutableAliasAddressUnlockCondition"))?;
+                // An ImmutableAliasAddressUnlockCondition must have an AliasAddress.
+                if let Address::Alias(alias_address) = &address {
+                    UnlockCondition::ImmutableAliasAddress(ImmutableAliasAddressUnlockCondition::new(*alias_address))
+                } else {
+                    return Err(DtoError::InvalidField("ImmutableAliasAddressUnlockCondition"));
                 }
-            })
-        }
+            }
+        })
     }
 
     impl UnlockConditionDto {

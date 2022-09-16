@@ -1,42 +1,49 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::ops::RangeInclusive;
-
-use packable::bounded::BoundedU64;
-
-use crate::{constant::TOKEN_SUPPLY, Error};
-
-pub(crate) type TreasuryOutputAmount =
-    BoundedU64<{ *TreasuryOutput::AMOUNT_RANGE.start() }, { *TreasuryOutput::AMOUNT_RANGE.end() }>;
+use crate::{protocol::ProtocolParameters, Error};
 
 /// [`TreasuryOutput`] is an output which holds the treasury of a network.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, packable::Packable)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[packable(unpack_error = Error, with = Error::InvalidTreasuryOutputAmount)]
+#[packable(unpack_error = Error)]
+#[packable(unpack_visitor = ProtocolParameters)]
 pub struct TreasuryOutput {
-    amount: TreasuryOutputAmount,
+    #[packable(verify_with = verify_amount_packable)]
+    amount: u64,
 }
 
 impl TreasuryOutput {
     /// The [`Output`](crate::output::Output) kind of a [`TreasuryOutput`].
     pub const KIND: u8 = 2;
-    /// The allowed range of the amount of a [`TreasuryOutput`].
-    pub const AMOUNT_RANGE: RangeInclusive<u64> = 0..=TOKEN_SUPPLY;
 
     /// Creates a new [`TreasuryOutput`].
-    pub fn new(amount: u64) -> Result<Self, Error> {
-        amount
-            .try_into()
-            .map(|amount| Self { amount })
-            .map_err(Error::InvalidTreasuryOutputAmount)
+    pub fn new(amount: u64, token_supply: u64) -> Result<Self, Error> {
+        verify_amount::<true>(&amount, &token_supply)?;
+
+        Ok(Self { amount })
     }
 
     /// Returns the amount of a [`TreasuryOutput`].
     #[inline(always)]
     pub fn amount(&self) -> u64 {
-        self.amount.get()
+        self.amount
     }
+}
+
+fn verify_amount<const VERIFY: bool>(amount: &u64, token_supply: &u64) -> Result<(), Error> {
+    if VERIFY && amount > token_supply {
+        Err(Error::InvalidTreasuryOutputAmount(*amount))
+    } else {
+        Ok(())
+    }
+}
+
+fn verify_amount_packable<const VERIFY: bool>(
+    amount: &u64,
+    protocol_parameters: &ProtocolParameters,
+) -> Result<(), Error> {
+    verify_amount::<VERIFY>(amount, &protocol_parameters.token_supply())
 }
 
 #[cfg(feature = "dto")]
@@ -64,16 +71,16 @@ pub mod dto {
         }
     }
 
-    impl TryFrom<&TreasuryOutputDto> for TreasuryOutput {
-        type Error = DtoError;
-
-        fn try_from(value: &TreasuryOutputDto) -> Result<Self, Self::Error> {
-            Ok(Self::new(
-                value
-                    .amount
-                    .parse::<u64>()
-                    .map_err(|_| DtoError::InvalidField("amount"))?,
-            )?)
-        }
+    pub fn try_from_treasury_output_dto_for_treasury_output(
+        value: &TreasuryOutputDto,
+        token_supply: u64,
+    ) -> Result<TreasuryOutput, DtoError> {
+        Ok(TreasuryOutput::new(
+            value
+                .amount
+                .parse::<u64>()
+                .map_err(|_| DtoError::InvalidField("amount"))?,
+            token_supply,
+        )?)
     }
 }

@@ -11,6 +11,7 @@ use std::{
 use bee_block::{
     output::{self, OutputId},
     payload::milestone::MilestoneIndex,
+    protocol::ProtocolParameters,
 };
 use bee_storage::access::{Insert, Truncate};
 use bee_tangle::solid_entry_point::SolidEntryPoint;
@@ -66,10 +67,11 @@ fn import_outputs<U: Unpacker<Error = std::io::Error>, B: StorageBackend>(
     unpacker: &mut U,
     storage: &B,
     output_count: u64,
+    protocol_parameters: &ProtocolParameters,
 ) -> Result<(), Error> {
     for _ in 0..output_count {
         let output_id = OutputId::unpack::<_, true>(unpacker, &())?;
-        let created_output = CreatedOutput::unpack::<_, true>(unpacker, &())?;
+        let created_output = CreatedOutput::unpack::<_, true>(unpacker, protocol_parameters)?;
 
         create_output(storage, &output_id, &created_output)?;
     }
@@ -81,9 +83,10 @@ fn import_milestone_diffs<U: Unpacker<Error = std::io::Error>, B: StorageBackend
     unpacker: &mut U,
     storage: &B,
     milestone_diff_count: u64,
+    protocol_parameters: &ProtocolParameters,
 ) -> Result<(), Error> {
     for _ in 0..milestone_diff_count {
-        let diff = MilestoneDiff::unpack::<_, true>(unpacker, &())?;
+        let diff = MilestoneDiff::unpack::<_, true>(unpacker, protocol_parameters)?;
         let index = diff.milestone().essence().index();
         // Unwrap is fine because ledger index was inserted just before.
         let ledger_index = *storage::fetch_ledger_index(storage)?.unwrap();
@@ -107,6 +110,7 @@ fn import_milestone_diffs<U: Unpacker<Error = std::io::Error>, B: StorageBackend
                 diff.milestone().id(),
                 receipt,
                 TreasuryOutput::new(consumed_treasury.0, consumed_treasury.1),
+                protocol_parameters.token_supply(),
             )?)
         } else {
             None
@@ -140,7 +144,12 @@ fn check_header(header: &SnapshotHeader, kind: SnapshotKind, network_id: u64) ->
     }
 }
 
-fn import_full_snapshot<B: StorageBackend>(storage: &B, path: &Path, network_id: u64) -> Result<(), Error> {
+fn import_full_snapshot<B: StorageBackend>(
+    storage: &B,
+    path: &Path,
+    network_id: u64,
+    protocol_parameters: &ProtocolParameters,
+) -> Result<(), Error> {
     info!("Importing full snapshot file {}...", &path.to_string_lossy());
 
     let mut unpacker = IoUnpacker::new(snapshot_reader(path)?);
@@ -166,7 +175,7 @@ fn import_full_snapshot<B: StorageBackend>(storage: &B, path: &Path, network_id:
     storage::insert_treasury_output(
         storage,
         &TreasuryOutput::new(
-            output::TreasuryOutput::new(full_header.treasury_output_amount())?,
+            output::TreasuryOutput::new(full_header.treasury_output_amount(), protocol_parameters.token_supply())?,
             *full_header.treasury_output_milestone_id(),
         ),
     )?;
@@ -184,8 +193,13 @@ fn import_full_snapshot<B: StorageBackend>(storage: &B, path: &Path, network_id:
     )?;
 
     import_solid_entry_points(&mut unpacker, storage, full_header.sep_count(), header.sep_index())?;
-    import_outputs(&mut unpacker, storage, full_header.output_count())?;
-    import_milestone_diffs(&mut unpacker, storage, full_header.milestone_diff_count())?;
+    import_outputs(&mut unpacker, storage, full_header.output_count(), protocol_parameters)?;
+    import_milestone_diffs(
+        &mut unpacker,
+        storage,
+        full_header.milestone_diff_count(),
+        protocol_parameters,
+    )?;
 
     if unpacker.into_inner().bytes().next().is_some() {
         return Err(Error::Snapshot(SnapshotError::RemainingBytes));
@@ -204,7 +218,12 @@ fn import_full_snapshot<B: StorageBackend>(storage: &B, path: &Path, network_id:
     Ok(())
 }
 
-fn import_delta_snapshot<B: StorageBackend>(storage: &B, path: &Path, network_id: u64) -> Result<(), Error> {
+fn import_delta_snapshot<B: StorageBackend>(
+    storage: &B,
+    path: &Path,
+    network_id: u64,
+    protocol_parameters: &ProtocolParameters,
+) -> Result<(), Error> {
     info!("Importing delta snapshot file {}...", &path.to_string_lossy());
 
     let mut unpacker = IoUnpacker::new(snapshot_reader(path)?);
@@ -240,7 +259,12 @@ fn import_delta_snapshot<B: StorageBackend>(storage: &B, path: &Path, network_id
     )?;
 
     import_solid_entry_points(&mut unpacker, storage, delta_header.sep_count(), header.sep_index())?;
-    import_milestone_diffs(&mut unpacker, storage, delta_header.milestone_diff_count())?;
+    import_milestone_diffs(
+        &mut unpacker,
+        storage,
+        delta_header.milestone_diff_count(),
+        protocol_parameters,
+    )?;
 
     if unpacker.into_inner().bytes().next().is_some() {
         return Err(Error::Snapshot(SnapshotError::RemainingBytes));
@@ -266,6 +290,11 @@ pub(crate) async fn import_snapshots<B: StorageBackend>(
     let full_exists = config.full_path().exists();
     let delta_exists = config.delta_path().map_or(false, Path::exists);
 
+    // TODO: this is obviously wrong but can't be done properly until the snapshot PR is merged.
+    // The node can't work properly with this.
+    // @thibault-martinez.
+    let protocol_parameters = ProtocolParameters::default();
+
     if !full_exists && delta_exists {
         return Err(Error::Snapshot(SnapshotError::OnlyDeltaSnapshotFileExists));
     } else if !full_exists && !delta_exists {
@@ -278,11 +307,11 @@ pub(crate) async fn import_snapshots<B: StorageBackend>(
         .await?;
     }
 
-    import_full_snapshot(storage, config.full_path(), network_id)?;
+    import_full_snapshot(storage, config.full_path(), network_id, &protocol_parameters)?;
 
     if let Some(delta_path) = config.delta_path() {
         if delta_path.exists() {
-            import_delta_snapshot(storage, delta_path, network_id)?;
+            import_delta_snapshot(storage, delta_path, network_id, &protocol_parameters)?;
         }
     }
 
