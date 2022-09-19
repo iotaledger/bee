@@ -547,59 +547,59 @@ pub mod dto {
 
             Ok(builder.finish(token_supply)?)
         }
-    }
 
-    pub fn try_from_dtos(
-        amount: OutputBuilderAmountDto,
-        native_tokens: Option<Vec<NativeTokenDto>>,
-        nft_id: &NftIdDto,
-        unlock_conditions: Vec<UnlockConditionDto>,
-        features: Option<Vec<FeatureDto>>,
-        immutable_features: Option<Vec<FeatureDto>>,
-        token_supply: u64,
-    ) -> Result<NftOutput, DtoError> {
-        let nft_id = NftId::try_from(nft_id)?;
+        pub fn try_from_dtos(
+            amount: OutputBuilderAmountDto,
+            native_tokens: Option<Vec<NativeTokenDto>>,
+            nft_id: &NftIdDto,
+            unlock_conditions: Vec<UnlockConditionDto>,
+            features: Option<Vec<FeatureDto>>,
+            immutable_features: Option<Vec<FeatureDto>>,
+            token_supply: u64,
+        ) -> Result<NftOutput, DtoError> {
+            let nft_id = NftId::try_from(nft_id)?;
 
-        let mut builder = match amount {
-            OutputBuilderAmountDto::Amount(amount) => NftOutputBuilder::new_with_amount(
-                amount.parse().map_err(|_| DtoError::InvalidField("amount"))?,
-                nft_id,
-            )?,
-            OutputBuilderAmountDto::MinimumStorageDeposit(rent_structure) => {
-                NftOutputBuilder::new_with_minimum_storage_deposit(rent_structure, nft_id)?
+            let mut builder = match amount {
+                OutputBuilderAmountDto::Amount(amount) => NftOutputBuilder::new_with_amount(
+                    amount.parse().map_err(|_| DtoError::InvalidField("amount"))?,
+                    nft_id,
+                )?,
+                OutputBuilderAmountDto::MinimumStorageDeposit(rent_structure) => {
+                    NftOutputBuilder::new_with_minimum_storage_deposit(rent_structure, nft_id)?
+                }
+            };
+
+            if let Some(native_tokens) = native_tokens {
+                let native_tokens = native_tokens
+                    .iter()
+                    .map(NativeToken::try_from)
+                    .collect::<Result<Vec<NativeToken>, DtoError>>()?;
+                builder = builder.with_native_tokens(native_tokens);
             }
-        };
 
-        if let Some(native_tokens) = native_tokens {
-            let native_tokens = native_tokens
+            let unlock_conditions = unlock_conditions
                 .iter()
-                .map(NativeToken::try_from)
-                .collect::<Result<Vec<NativeToken>, DtoError>>()?;
-            builder = builder.with_native_tokens(native_tokens);
+                .map(|u| UnlockCondition::try_from_dto(u, token_supply))
+                .collect::<Result<Vec<UnlockCondition>, DtoError>>()?;
+            builder = builder.with_unlock_conditions(unlock_conditions);
+
+            if let Some(features) = features {
+                let features = features
+                    .iter()
+                    .map(Feature::try_from)
+                    .collect::<Result<Vec<Feature>, DtoError>>()?;
+                builder = builder.with_features(features);
+            }
+
+            if let Some(immutable_features) = immutable_features {
+                let immutable_features = immutable_features
+                    .iter()
+                    .map(Feature::try_from)
+                    .collect::<Result<Vec<Feature>, DtoError>>()?;
+                builder = builder.with_immutable_features(immutable_features);
+            }
+
+            Ok(builder.finish(token_supply)?)
         }
-
-        let unlock_conditions = unlock_conditions
-            .iter()
-            .map(|u| UnlockCondition::try_from_dto(u, token_supply))
-            .collect::<Result<Vec<UnlockCondition>, DtoError>>()?;
-        builder = builder.with_unlock_conditions(unlock_conditions);
-
-        if let Some(features) = features {
-            let features = features
-                .iter()
-                .map(Feature::try_from)
-                .collect::<Result<Vec<Feature>, DtoError>>()?;
-            builder = builder.with_features(features);
-        }
-
-        if let Some(immutable_features) = immutable_features {
-            let immutable_features = immutable_features
-                .iter()
-                .map(Feature::try_from)
-                .collect::<Result<Vec<Feature>, DtoError>>()?;
-            builder = builder.with_immutable_features(immutable_features);
-        }
-
-        Ok(builder.finish(token_supply)?)
     }
 }
