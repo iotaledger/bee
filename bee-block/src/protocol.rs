@@ -127,15 +127,15 @@ mod inx {
     use super::*;
     use crate::InxError;
 
-    impl TryFrom<inx_bindings::proto::RawProtocolParameters> for ProtocolParameters {
+    impl TryFrom<::inx::proto::RawProtocolParameters> for ProtocolParameters {
         type Error = crate::error::inx::InxError;
 
-        fn try_from(value: inx_bindings::proto::RawProtocolParameters) -> Result<Self, Self::Error> {
+        fn try_from(value: ::inx::proto::RawProtocolParameters) -> Result<Self, Self::Error> {
             Self::unpack_verified(value.params, &()).map_err(|e| InxError::InvalidRawBytes(format!("{:?}", e)))
         }
     }
 
-    impl From<ProtocolParameters> for inx_bindings::proto::RawProtocolParameters {
+    impl From<ProtocolParameters> for ::inx::proto::RawProtocolParameters {
         fn from(value: ProtocolParameters) -> Self {
             Self {
                 protocol_version: value.protocol_version() as u32,

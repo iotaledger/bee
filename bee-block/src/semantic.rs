@@ -373,9 +373,9 @@ pub fn semantic_validation(
 mod inx {
     use super::*;
 
-    impl From<inx_bindings::proto::block_metadata::ConflictReason> for ConflictReason {
-        fn from(value: inx_bindings::proto::block_metadata::ConflictReason) -> Self {
-            use inx_bindings::proto::block_metadata::ConflictReason as InxConflictReason;
+    impl From<::inx::proto::block_metadata::ConflictReason> for ConflictReason {
+        fn from(value: ::inx::proto::block_metadata::ConflictReason) -> Self {
+            use ::inx::proto::block_metadata::ConflictReason as InxConflictReason;
             match value {
                 InxConflictReason::None => ConflictReason::None,
                 InxConflictReason::InputAlreadySpent => ConflictReason::InputUtxoAlreadySpent,
@@ -397,7 +397,7 @@ mod inx {
         }
     }
 
-    impl From<ConflictReason> for inx_bindings::proto::block_metadata::ConflictReason {
+    impl From<ConflictReason> for ::inx::proto::block_metadata::ConflictReason {
         fn from(value: ConflictReason) -> Self {
             match value {
                 ConflictReason::None => Self::None,

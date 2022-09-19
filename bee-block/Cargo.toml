@@ -27,7 +27,7 @@ bytemuck = { version = "1.12.1", default-features = false }
 derive_more = { version = "0.99.17", default-features = false, features = [ "from", "as_ref", "deref", "deref_mut" ] }
 hashbrown = { version = "0.12.3", default-features = false, features = [ "ahash", "inline-more" ] }
 hex = { version = "0.4.3", default-features = false, features = [ "alloc" ] }
-inx-bindings = { package = "inx", version = "1.0.0-beta.4", default-features = false, optional = true }
+inx = { version = "1.0.0-beta.8", default-features = false, optional = true }
 iota-crypto = { version = "0.14.3", default-features = false, features = [ "ed25519", "blake2b" ] }
 iterator-sorted = { version = "0.1.0", default-features = false }
 packable = { version = "0.6.2", default-features = false, features = [ "serde", "primitive-types" ] }
@@ -44,7 +44,7 @@ num_cpus = { version = "1.13.1", default-features = false }
 
 [features]
 dto = [ "serde", "dep:serde_json" ]
-inx = [ "dep:inx-bindings" ]
+inx = [ "dep:inx", "std" ]
 serde = [ "dep:serde", "serde-big-array" ]
 std = [ ]
 rand = [ "dep:rand", "std" ]

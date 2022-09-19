@@ -14,16 +14,16 @@ string_serde_impl!(MilestoneId);
 mod inx {
     use super::*;
 
-    impl From<MilestoneId> for inx_bindings::proto::MilestoneId {
+    impl From<MilestoneId> for ::inx::proto::MilestoneId {
         fn from(value: MilestoneId) -> Self {
             Self { id: value.0.to_vec() }
         }
     }
 
-    impl TryFrom<inx_bindings::proto::MilestoneId> for MilestoneId {
+    impl TryFrom<::inx::proto::MilestoneId> for MilestoneId {
         type Error = crate::error::inx::InxError;
 
-        fn try_from(value: inx_bindings::proto::MilestoneId) -> Result<Self, Self::Error> {
+        fn try_from(value: ::inx::proto::MilestoneId) -> Result<Self, Self::Error> {
             let bytes: [u8; MilestoneId::LENGTH] = value
                 .id
                 .try_into()
