@@ -315,7 +315,7 @@ name = "bee-block"
 version = "1.0.0-beta.7"
 dependencies = [
  "bech32",
- "bee-pow 1.0.0-beta.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bee-pow 1.0.0-beta.1",
  "bee-ternary 1.0.0-alpha.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "bitflags",
  "bytemuck",
