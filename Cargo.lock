@@ -595,7 +595,7 @@ dependencies = [
  "bee-block",
  "bee-gossip",
  "bee-ledger",
- "bee-pow 1.0.0-beta.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bee-pow 1.0.0-beta.1",
  "bee-protocol",
  "bee-runtime",
  "bee-storage",
@@ -629,7 +629,7 @@ dependencies = [
 
 [[package]]
 name = "bee-storage"
-version = "1.0.0-beta.1"
+version = "1.0.0"
 dependencies = [
  "packable",
  "serde",

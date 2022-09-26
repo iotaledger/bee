@@ -24,7 +24,7 @@ bee-ledger = { version = "0.7.0", path = "../../bee-ledger/bee-ledger", default-
 bee-pow = { version = "1.0.0-beta.1", default-features = false }
 bee-protocol-types = { version = "1.0.0-beta.4", path = "../bee-protocol-types", default-features = false }
 bee-runtime = { version = "1.0.0-beta.1", path = "../../bee-runtime", default-features = false }
-bee-storage = { version = "1.0.0-beta.1", path = "../../bee-storage/bee-storage", default-features = false }
+bee-storage = { version = "1.0.0", path = "../../bee-storage/bee-storage", default-features = false }
 bee-tangle = { version = "0.3.0", path = "../../bee-tangle", default-features = false }
 
 async-channel = { version = "1.7.0", default-features = false }
