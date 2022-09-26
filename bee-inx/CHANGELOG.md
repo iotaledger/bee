@@ -31,6 +31,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Updated dependencies;
 
+### Fixed
+
+- `inx::proto::RawMilestone` contains a `bee_block::payload::Payload`;
+
 ## 1.0.0-beta.5 - 2022-09-09
 
 ### Changed
