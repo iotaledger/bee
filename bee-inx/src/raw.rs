@@ -29,7 +29,7 @@ impl<T: Packable> Raw<T> {
     }
 
     pub fn inner_unverified(self) -> Result<T, Error> {
-        T::unpack_unverified(self.data) 
+        T::unpack_unverified(self.data)
     }
 }
 
