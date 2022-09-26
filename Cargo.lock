@@ -315,7 +315,7 @@ name = "bee-block"
 version = "1.0.0-beta.7"
 dependencies = [
  "bech32",
- "bee-pow 1.0.0-beta.1",
+ "bee-pow",
  "bee-ternary 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "bitflags",
  "bytemuck",
@@ -521,20 +521,9 @@ dependencies = [
 
 [[package]]
 name = "bee-pow"
-version = "1.0.0-beta.1"
+version = "1.0.0"
 dependencies = [
  "bee-block",
- "bee-ternary 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "iota-crypto",
- "thiserror",
-]
-
-[[package]]
-name = "bee-pow"
-version = "1.0.0-beta.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f97ca064b7895679b723b1e188bad6103adad5cd712168185fb73fbfe6c205f0"
-dependencies = [
  "bee-ternary 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "iota-crypto",
  "thiserror",
@@ -551,7 +540,7 @@ dependencies = [
  "bee-block",
  "bee-gossip",
  "bee-ledger",
- "bee-pow 1.0.0-beta.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bee-pow",
  "bee-protocol-types",
  "bee-runtime",
  "bee-storage",
@@ -595,7 +584,7 @@ dependencies = [
  "bee-block",
  "bee-gossip",
  "bee-ledger",
- "bee-pow 1.0.0-beta.1",
+ "bee-pow",
  "bee-protocol",
  "bee-runtime",
  "bee-storage",
