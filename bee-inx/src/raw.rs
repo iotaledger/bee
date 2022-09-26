@@ -95,6 +95,7 @@ mod test {
             data: output.pack_to_vec(),
         };
         let raw: Raw<bee::output::Output> = proto.into();
+        assert_eq!(output, raw.inner_unverified().unwrap());
         assert_eq!(output, raw.inner(&protocol_parameters).unwrap());
     }
 
