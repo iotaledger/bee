@@ -29,7 +29,9 @@ impl<T: Packable> Raw<T> {
     }
 
     pub fn inner_unverified(self) -> Result<T, Error> {
-        T::unpack_unverified(self.data)
+        let unpacked = T::unpack_unverified(self.data)
+            .map_err(|e| bee_block::InxError::InvalidRawBytes(format!("{:?}", e)))?;
+        Ok(unpacked)
     }
 }
 
