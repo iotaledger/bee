@@ -19,7 +19,7 @@ rustdoc-args = [ "--cfg", "doc_cfg" ]
 
 [dependencies]
 bee-pow = { version = "1.0.0-beta.1", path = "../bee-pow", default-features = false }
-bee-ternary = { version = "1.0.0-alpha.1", default-features = false, features = [ "serde" ] }
+bee-ternary = { version = "1.0.0", default-features = false, features = [ "serde" ] }
 
 bech32 = { version = "0.9.1", default-features = false }
 bitflags = { version = "1.3.2", default-features = false }
