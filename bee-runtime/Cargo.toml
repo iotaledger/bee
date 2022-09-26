@@ -1,6 +1,6 @@
 [package]
 name = "bee-runtime"
-version = "1.0.0-beta.1"
+version = "1.0.0"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "Runtime components and utilities for the bee framework"

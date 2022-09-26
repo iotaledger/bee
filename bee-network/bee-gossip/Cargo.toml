@@ -41,7 +41,7 @@ full = [
 ]
 
 [dependencies]
-bee-runtime = { version = "1.0.0-beta.1", path = "../../bee-runtime", default-features = false, optional = true }
+bee-runtime = { version = "1.0.0", path = "../../bee-runtime", default-features = false, optional = true }
 
 async-trait = { version = "0.1.57", default-features = false, optional = true }
 futures = { version = "0.3.23", default-features = false, optional = true }

@@ -21,7 +21,7 @@ bee-plugin-mps = { version = "0.1.0", path = "../bee-plugin/bee-plugin-mps", def
 bee-plugin-version-checker = { version = "0.1.0", path = "../bee-plugin/bee-plugin-version-checker", default-features = false }
 bee-protocol = { version = "0.2.2", path = "../../bee-protocol/bee-protocol", default-features = false }
 bee-rest-api = { version = "0.2.0", path = "../../bee-api/bee-rest-api", default-features = false }
-bee-runtime = { version = "1.0.0-beta.1", path = "../../bee-runtime", default-features = false }
+bee-runtime = { version = "1.0.0", path = "../../bee-runtime", default-features = false }
 bee-storage = { version = "1.0.0", path = "../../bee-storage/bee-storage", default-features = false }
 bee-storage-null = { version = "0.3.0", path = "../../bee-storage/bee-storage-null", default-features = false }
 bee-storage-rocksdb = { version = "0.8.0", path = "../../bee-storage/bee-storage-rocksdb", default-features = false, optional = true }
