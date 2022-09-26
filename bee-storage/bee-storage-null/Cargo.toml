@@ -17,4 +17,4 @@ all-features = true
 rustdoc-args = [ "--cfg", "doc_cfg" ]
 
 [dependencies]
-bee-storage = { version = "1.0.0-beta.1", path = "../bee-storage", default-features = false }
+bee-storage = { version = "1.0.0", path = "../bee-storage", default-features = false }

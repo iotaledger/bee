@@ -1,6 +1,6 @@
 [package]
 name = "bee-ternary"
-version = "1.0.0-alpha.1"
+version = "1.0.0"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "Ergonomic ternary manipulation utilities"
