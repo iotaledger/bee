@@ -15,7 +15,8 @@ use crate::{maybe_missing, ProtocolParameters, Raw};
 pub struct Milestone {
     /// Information about the milestone.
     pub milestone_info: MilestoneInfo,
-    /// The raw bytes of the milestone. Note that this is not a [`bee::payload::milestone::MilestonePayload`], but rather a [`bee::payload::Payload`] and still needs to be unpacked.
+    /// The raw bytes of the milestone. Note that this is not a [`bee::payload::milestone::MilestonePayload`], but
+    /// rather a [`bee::payload::Payload`] and still needs to be unpacked.
     pub milestone: Raw<bee::payload::Payload>,
 }
 
