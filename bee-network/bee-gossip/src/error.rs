@@ -19,8 +19,8 @@ pub enum Error {
     CreatingTransportFailed,
 
     /// Binding to an address failed.
-    #[error("failed to bind to an address")]
-    BindingAddressFailed,
+    #[error("failed to bind to an address: {0}")]
+    BindingAddressFailed(#[from] libp2p_core::transport::TransportError<std::io::Error>),
 
     /// An error occurred in the host event loop.
     #[error("failed to process an item in the host processor event loop")]

@@ -205,7 +205,7 @@ fn init(
     }
 
     // Create the transport layer.
-    let swarm = build_swarm(&local_keys, internal_event_sender.clone()).map_err(|_| Error::CreatingTransportFailed)?;
+    let swarm = build_swarm(&local_keys).map_err(|_| Error::CreatingTransportFailed)?;
 
     let network_host_config = NetworkHostConfig {
         internal_event_sender: internal_event_sender.clone(),

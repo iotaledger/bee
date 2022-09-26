@@ -11,10 +11,10 @@ use crate::{standalone::init, Command, PeerRelation};
 #[tokio::test]
 #[serial_test::serial]
 async fn send_recv() {
-    let config1 = get_in_memory_network_config(1337);
+    let config1 = get_in_memory_network_config(1340);
     let keys1 = gen_random_keys();
 
-    let config2 = get_in_memory_network_config(4242);
+    let config2 = get_in_memory_network_config(4245);
     let keys2 = gen_random_keys();
 
     let network_id = gen_constant_net_id();

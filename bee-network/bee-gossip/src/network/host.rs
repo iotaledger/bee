@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use futures::{channel::oneshot, StreamExt};
-use libp2p::{swarm::SwarmEvent, Multiaddr, PeerId, Swarm};
+use libp2p::{identify::IdentifyEvent, swarm::SwarmEvent, Multiaddr, PeerId, Swarm};
 use log::*;
 
 use super::error::Error;
@@ -13,7 +13,10 @@ use crate::{
         command::{Command, CommandReceiver},
         event::{InternalEvent, InternalEventSender},
     },
-    swarm::behaviour::SwarmBehaviour,
+    swarm::{
+        behaviour::{SwarmBehaviour, SwarmBehaviourEvent},
+        protocols::iota_gossip::IotaGossipEvent,
+    },
 };
 
 pub struct NetworkHostConfig {
@@ -106,7 +109,7 @@ async fn network_host_processor(
 
     // Try binding to the configured bind address.
     info!("Binding to: {}", bind_multiaddr);
-    let _listener_id = Swarm::listen_on(&mut swarm, bind_multiaddr).map_err(|_| crate::Error::BindingAddressFailed)?;
+    let _listener_id = Swarm::listen_on(&mut swarm, bind_multiaddr)?;
 
     // Enter command/event loop.
     loop {
@@ -127,7 +130,7 @@ async fn network_host_processor(
 }
 
 async fn process_swarm_event(
-    event: SwarmEvent<(), impl std::error::Error>,
+    event: SwarmEvent<SwarmBehaviourEvent, impl std::error::Error>,
     internal_event_sender: &InternalEventSender,
     peerlist: &PeerList,
 ) {
@@ -160,7 +163,77 @@ async fn process_swarm_event(
         SwarmEvent::IncomingConnection { send_back_addr, .. } => {
             debug!("Swarm event: being dialed from {}.", send_back_addr);
         }
+        SwarmEvent::Behaviour(SwarmBehaviourEvent::Identify(identify_event)) => {
+            handle_identify_event(*identify_event, internal_event_sender);
+        }
+        SwarmEvent::Behaviour(SwarmBehaviourEvent::Gossip(gossip_event)) => {
+            handle_gossip_event(*gossip_event, internal_event_sender);
+        }
         _ => {}
+    }
+}
+
+fn handle_identify_event(event: IdentifyEvent, internal_event_sender: &InternalEventSender) {
+    match event {
+        IdentifyEvent::Received { peer_id, info } => {
+            trace!("Received Identify response from {}: {:?}.", alias!(peer_id), info,);
+
+            // Panic: we made sure that the sender (network host) is always dropped before the receiver (service
+            // host) through the worker dependencies, hence this can never panic.
+            internal_event_sender
+                .send(InternalEvent::PeerIdentified { peer_id })
+                .expect("send internal event");
+        }
+        IdentifyEvent::Sent { peer_id } => {
+            trace!("Sent Identify request to {}.", alias!(peer_id));
+        }
+        IdentifyEvent::Pushed { peer_id } => {
+            trace!("Pushed Identify request to {}.", alias!(peer_id));
+        }
+        IdentifyEvent::Error { peer_id, error } => {
+            debug!("Identification error with {}: Cause: {:?}.", alias!(peer_id), error);
+
+            // Panic: we made sure that the sender (network host) is always dropped before the receiver (service
+            // host) through the worker dependencies, hence this can never panic.
+            internal_event_sender
+                .send(InternalEvent::PeerUnreachable { peer_id })
+                .expect("send internal event");
+        }
+    }
+}
+
+fn handle_gossip_event(event: IotaGossipEvent, internal_event_sender: &InternalEventSender) {
+    match event {
+        IotaGossipEvent::ReceivedUpgradeRequest { from } => {
+            trace!("Received IOTA gossip request from {}.", alias!(from));
+        }
+        IotaGossipEvent::SentUpgradeRequest { to } => {
+            trace!("Sent IOTA gossip request to {}.", alias!(to));
+        }
+        IotaGossipEvent::UpgradeCompleted {
+            peer_id,
+            peer_addr,
+            origin,
+            substream,
+        } => {
+            trace!("Successfully negotiated IOTA gossip protocol with {}.", alias!(peer_id));
+
+            internal_event_sender
+                .send(InternalEvent::ProtocolEstablished {
+                    peer_id,
+                    peer_addr,
+                    origin,
+                    substream,
+                })
+                .expect("send internal event");
+        }
+        IotaGossipEvent::UpgradeError { peer_id, error } => {
+            debug!(
+                "IOTA gossip upgrade error with {}: Cause: {:?}.",
+                alias!(peer_id),
+                error
+            );
+        }
     }
 }
 
