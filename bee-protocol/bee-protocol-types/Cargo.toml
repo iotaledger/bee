@@ -18,6 +18,6 @@ rustdoc-args = [ "--cfg", "doc_cfg" ]
 
 [dependencies]
 bee-block = { version = "1.0.0-beta.7", path = "../../bee-block", default-features = false, features = [ "serde" ] }
-bee-gossip = { version = "1.0.0-beta.2", path = "../../bee-network/bee-gossip", default-features = false }
+bee-gossip = { version = "1.0.0", path = "../../bee-network/bee-gossip", default-features = false }
 
 serde = { version = "1.0.143", default-features = false, features = [ "derive" ]}
