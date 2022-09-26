@@ -85,7 +85,7 @@ impl UrtsTipPool {
             Entry::Occupied(mut entry) => {
                 let metadata = entry.get_mut();
                 metadata.children.insert(child);
-                if metadata.time_first_child == None {
+                if metadata.time_first_child.is_none() {
                     metadata.time_first_child = Some(Instant::now());
                 }
             }

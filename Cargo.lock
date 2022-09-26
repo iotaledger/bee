@@ -316,7 +316,7 @@ version = "1.0.0-beta.7"
 dependencies = [
  "bech32",
  "bee-pow 1.0.0-beta.1",
- "bee-ternary 1.0.0-alpha.1",
+ "bee-ternary 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "bitflags",
  "bytemuck",
  "derive_more",
@@ -524,7 +524,7 @@ name = "bee-pow"
 version = "1.0.0-beta.1"
 dependencies = [
  "bee-block",
- "bee-ternary 1.0.0-alpha.1",
+ "bee-ternary 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "iota-crypto",
  "thiserror",
 ]
@@ -535,7 +535,7 @@ version = "1.0.0-beta.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f97ca064b7895679b723b1e188bad6103adad5cd712168185fb73fbfe6c205f0"
 dependencies = [
- "bee-ternary 1.0.0-alpha.1",
+ "bee-ternary 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "iota-crypto",
  "thiserror",
 ]
@@ -725,17 +725,6 @@ dependencies = [
 
 [[package]]
 name = "bee-ternary"
-version = "1.0.0-alpha.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a9252b65ddd9a863b0efc06ddab6c26334ecbe00fb8fa47bbde10babda2981b2"
-dependencies = [
- "autocfg",
- "num-traits",
- "serde",
-]
-
-[[package]]
-name = "bee-ternary"
 version = "1.0.0"
 dependencies = [
  "autocfg",
@@ -744,6 +733,17 @@ dependencies = [
  "rand 0.8.5",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "bee-ternary"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "303a046c924e0b635640033126ca5d87c1e905b070f8c3251478fb606acb55b3"
+dependencies = [
+ "autocfg",
+ "num-traits",
+ "serde",
 ]
 
 [[package]]
@@ -1984,11 +1984,11 @@ dependencies = [
 
 [[package]]
 name = "iota-crypto"
-version = "0.14.2"
+version = "0.14.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "92d67b0725fbfe9e75950848bf0304df70ecb71a58526b1a36a087d0bc089499"
+checksum = "d53239ace29cccec48af2f3b509090d546bcc52648c6147866d88bc70f4352b3"
 dependencies = [
- "bee-ternary 1.0.0-alpha.1",
+ "bee-ternary 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "blake2",
  "digest 0.10.3",
  "ed25519-zebra",

@@ -34,7 +34,7 @@ impl<'a, V: Packable, E: From<rocksdb::Error>> Iterator for MultiIter<'a, V, E> 
         Some(
             self.iter
                 .next()?
-                .map(|option| option.map(|bytes| V::unpack_unverified(&mut bytes.as_slice()).unwrap()))
+                .map(|option| option.map(|bytes| V::unpack_unverified(bytes.as_slice()).unwrap()))
                 .map_err(E::from),
         )
     }

@@ -15,9 +15,9 @@ impl Update<BlockId, BlockMetadata> for Storage {
         self.inner
             .open_tree(TREE_BLOCK_ID_TO_METADATA)?
             .fetch_and_update(block_id, move |opt_bytes| {
-                opt_bytes.map(|mut bytes| {
+                opt_bytes.map(|bytes| {
                     // Unpacking from storage is fine.
-                    let mut metadata = BlockMetadata::unpack_unverified(&mut bytes).unwrap();
+                    let mut metadata = BlockMetadata::unpack_unverified(bytes).unwrap();
                     f(&mut metadata);
                     metadata.pack_to_vec()
                 })

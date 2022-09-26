@@ -30,7 +30,7 @@ impl<D: Default + Digest> MerkleHasher<D> {
 
     /// Returns the digest of the empty hash.
     fn empty(&mut self) -> Output<D> {
-        D::digest(&[])
+        D::digest([])
     }
 
     /// Returns the digest of a Merkle leaf.

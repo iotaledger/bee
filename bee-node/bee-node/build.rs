@@ -19,7 +19,7 @@ impl fmt::Display for BuildError {
 }
 
 fn main() -> Result<(), BuildError> {
-    match Command::new("git").args(&["rev-parse", "HEAD"]).output() {
+    match Command::new("git").args(["rev-parse", "HEAD"]).output() {
         Ok(output) => {
             println!(
                 "cargo:rustc-env=GIT_COMMIT={}",
@@ -29,10 +29,7 @@ fn main() -> Result<(), BuildError> {
         Err(_) => return Err(BuildError::GitCommit),
     }
 
-    match Command::new("git")
-        .args(&["rev-parse", "--abbrev-ref", "HEAD"])
-        .output()
-    {
+    match Command::new("git").args(["rev-parse", "--abbrev-ref", "HEAD"]).output() {
         Ok(output) => {
             println!("cargo:rerun-if-changed=../.git/HEAD");
             println!(

@@ -35,7 +35,7 @@ impl<'a, K: Packable, V: Packable, E: From<sled::Error>> Iterator for TreeIter<'
         Some(
             self.tree
                 .get(key)
-                .map(|option| option.map(|bytes| V::unpack_unverified(&mut bytes.as_ref()).unwrap()))
+                .map(|option| option.map(|bytes| V::unpack_unverified(bytes.as_ref()).unwrap()))
                 .map_err(E::from),
         )
     }
@@ -57,7 +57,7 @@ impl<'a, K: Packable, V: Packable, E: From<sled::Error>> Iterator for DbIter<'a,
         Some(
             self.db
                 .get(key)
-                .map(|option| option.map(|bytes| V::unpack_unverified(&mut bytes.as_ref()).unwrap()))
+                .map(|option| option.map(|bytes| V::unpack_unverified(bytes.as_ref()).unwrap()))
                 .map_err(E::from),
         )
     }
