@@ -16,7 +16,7 @@ impl Update<BlockId, BlockMetadata> for Storage {
 
         if let Some(v) = self.inner.get_pinned_cf(cf_handle, block_id)? {
             // Unpacking from storage is fine.
-            let mut metadata = BlockMetadata::unpack_unverified(&mut &*v).unwrap();
+            let mut metadata = BlockMetadata::unpack_unverified(&*v).unwrap();
 
             f(&mut metadata);
 

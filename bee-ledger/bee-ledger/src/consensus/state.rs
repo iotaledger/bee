@@ -20,7 +20,7 @@ fn validate_ledger_unspent_state<B: StorageBackend>(
 
     for result in iterator {
         let (output_id, _) = result.map_err(|e| Error::Storage(Box::new(e)))?;
-        let output = storage::fetch_output(storage, &*output_id)?.ok_or(Error::MissingUnspentOutput(output_id))?;
+        let output = storage::fetch_output(storage, &output_id)?.ok_or(Error::MissingUnspentOutput(output_id))?;
 
         let amount = match output.inner() {
             output::Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(output.kind())),

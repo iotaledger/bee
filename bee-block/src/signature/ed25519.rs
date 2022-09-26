@@ -44,7 +44,7 @@ impl Ed25519Signature {
 
     /// Verifies the [`Ed25519Signature`] for a message against an [`Ed25519Address`].
     pub fn is_valid(&self, message: &[u8], address: &Ed25519Address) -> Result<(), Error> {
-        let signature_address: [u8; PUBLIC_KEY_LENGTH] = Blake2b256::digest(&self.public_key).into();
+        let signature_address: [u8; PUBLIC_KEY_LENGTH] = Blake2b256::digest(self.public_key).into();
 
         if address.deref() != &signature_address {
             return Err(Error::SignaturePublicKeyMismatch {

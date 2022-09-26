@@ -34,7 +34,7 @@ bech32 = { version = "0.9.1", default-features = false }
 base64 = { version = "0.13.0", default-features = false }
 digest = { version = "0.10.3", default-features = false }
 futures = { version = "0.3.23", default-features = false }
-iota-crypto = { version = "0.14.0", default-features = false, features = [ "blake2b" ] }
+iota-crypto = { version = "0.14.3", default-features = false, features = [ "blake2b" ] }
 lazy_static = {version = "1.4.0", default-features = false }
 log = { version = "0.4.17", default-features = false }
 multiaddr = { version = "0.14.0", default-features = false }

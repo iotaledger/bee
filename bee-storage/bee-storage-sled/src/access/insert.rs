@@ -28,7 +28,7 @@ use crate::{storage::Storage, trees::*};
 
 impl Insert<u8, System> for Storage {
     fn insert(&self, key: &u8, value: &System) -> Result<(), <Self as StorageBackend>::Error> {
-        self.inner.insert(&[*key], value.pack_to_vec())?;
+        self.inner.insert([*key], value.pack_to_vec())?;
 
         Ok(())
     }

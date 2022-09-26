@@ -34,9 +34,9 @@ async fn download_snapshot_header(download_url: &str) -> Result<SnapshotHeader, 
                     if bytes.len() >= SnapshotHeader::LENGTH {
                         debug!("Downloaded snapshot header from {}.", download_url);
 
-                        let mut slice: &[u8] = &bytes[..SnapshotHeader::LENGTH];
+                        let slice: &[u8] = &bytes[..SnapshotHeader::LENGTH];
 
-                        return SnapshotHeader::unpack_verified(&mut slice, &()).map_err(|err| match err {
+                        return SnapshotHeader::unpack_verified(slice, &()).map_err(|err| match err {
                             UnpackError::Packable(err) => {
                                 warn!("Could not parse snapshot header from {}: {}.", download_url, err);
                                 Error::ParsingSnapshotHeaderFailed(err)
