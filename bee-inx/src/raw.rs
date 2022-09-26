@@ -27,6 +27,10 @@ impl<T: Packable> Raw<T> {
             .map_err(|e| bee_block::InxError::InvalidRawBytes(format!("{:?}", e)))?;
         Ok(unpacked)
     }
+
+    pub fn inner_unverified(self) -> Result<T, Error> {
+        T::unpack_unverified(self.data) 
+    }
 }
 
 impl<T: Packable> From<Vec<u8>> for Raw<T> {

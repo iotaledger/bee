@@ -19,12 +19,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
-## 1.0.0-beta.6 - 2022-XX-XX
+## 1.0.0-beta.6 - 2022-09-26
 
 ### Added
 
 - Convenience methods for `LedgerUpdate`;
 - `BeeBlockError` to `bee_inx::Error`;
+- `Raw<T>::inner_unverified`;
 
 ### Changed
 
