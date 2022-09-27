@@ -5,17 +5,13 @@ mod block;
 pub mod client;
 mod error;
 mod ledger;
-mod metadata;
 mod milestone;
 mod node;
 mod raw;
 mod request;
 mod treasury;
 
-pub use self::{
-    block::*, error::Error, ledger::*, metadata::*, milestone::*, node::*, raw::*, request::*,
-    treasury::*,
-};
+pub use self::{block::*, error::Error, ledger::*, milestone::*, node::*, raw::*, request::*, treasury::*};
 
 pub mod proto {
     pub use inx::proto::*;

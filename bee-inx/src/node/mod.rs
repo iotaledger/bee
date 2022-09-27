@@ -5,4 +5,4 @@ mod config;
 mod protocol_parameters;
 mod status;
 
-pub use self::{config::NodeConfiguration, status::NodeStatus, protocol_parameters::ProtocolParameters};
+pub use self::{config::NodeConfiguration, protocol_parameters::ProtocolParameters, status::NodeStatus};

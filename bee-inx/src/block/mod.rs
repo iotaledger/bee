@@ -1,9 +1,12 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+pub mod metadata;
+
 use bee_block as bee;
 use inx::proto;
 
+pub use self::metadata::*;
 use crate::{return_err_if_none, Raw};
 
 /// The [`Block`] type.
