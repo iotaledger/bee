@@ -8,7 +8,7 @@ mod info;
 use inx::proto;
 
 pub use self::info::MilestoneInfo;
-use crate::{maybe_missing, ProtocolParameters, Raw};
+use crate::{return_err_if_none, ProtocolParameters, Raw};
 
 /// The [`Milestone`] type.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -25,8 +25,8 @@ impl TryFrom<proto::Milestone> for Milestone {
 
     fn try_from(value: proto::Milestone) -> Result<Self, Self::Error> {
         Ok(Self {
-            milestone_info: maybe_missing!(value.milestone_info).try_into()?,
-            milestone: maybe_missing!(value.milestone).data.into(),
+            milestone_info: return_err_if_none!(value.milestone_info).try_into()?,
+            milestone: return_err_if_none!(value.milestone).data.into(),
         })
     }
 }
@@ -52,8 +52,8 @@ impl TryFrom<proto::MilestoneAndProtocolParameters> for MilestoneAndProtocolPara
 
     fn try_from(value: proto::MilestoneAndProtocolParameters) -> Result<Self, Self::Error> {
         Ok(Self {
-            milestone: maybe_missing!(value.milestone).try_into()?,
-            current_protocol_parameters: maybe_missing!(value.current_protocol_parameters).into(),
+            milestone: return_err_if_none!(value.milestone).try_into()?,
+            current_protocol_parameters: return_err_if_none!(value.current_protocol_parameters).into(),
         })
     }
 }

@@ -4,7 +4,7 @@
 use bee_block as bee;
 use inx::proto;
 
-use crate::{maybe_missing, Raw};
+use crate::{return_err_if_none, Raw};
 
 /// Represents a new output in the ledger.
 #[allow(missing_docs)]
@@ -135,7 +135,7 @@ impl TryFrom<proto::LedgerUpdate> for LedgerUpdate {
 
     fn try_from(value: proto::LedgerUpdate) -> Result<Self, Self::Error> {
         use proto::ledger_update::Op as proto;
-        Ok(match maybe_missing!(value.op) {
+        Ok(match return_err_if_none!(value.op) {
             proto::BatchMarker(marker) => marker.into(),
             proto::Consumed(consumed) => LedgerUpdate::Consumed(consumed.try_into()?),
             proto::Created(created) => LedgerUpdate::Created(created.try_into()?),
@@ -162,11 +162,11 @@ impl TryFrom<proto::LedgerOutput> for LedgerOutput {
 
     fn try_from(value: proto::LedgerOutput) -> Result<Self, Self::Error> {
         Ok(Self {
-            output_id: maybe_missing!(value.output_id).try_into()?,
-            block_id: maybe_missing!(value.block_id).try_into()?,
+            output_id: return_err_if_none!(value.output_id).try_into()?,
+            block_id: return_err_if_none!(value.block_id).try_into()?,
             milestone_index_booked: value.milestone_index_booked.into(),
             milestone_timestamp_booked: value.milestone_timestamp_booked,
-            output: maybe_missing!(value.output).into(),
+            output: return_err_if_none!(value.output).into(),
         })
     }
 }
@@ -188,8 +188,8 @@ impl TryFrom<proto::LedgerSpent> for LedgerSpent {
 
     fn try_from(value: proto::LedgerSpent) -> Result<Self, Self::Error> {
         Ok(Self {
-            output: maybe_missing!(value.output).try_into()?,
-            transaction_id_spent: maybe_missing!(value.transaction_id_spent).try_into()?,
+            output: return_err_if_none!(value.output).try_into()?,
+            transaction_id_spent: return_err_if_none!(value.transaction_id_spent).try_into()?,
             milestone_index_spent: value.milestone_index_spent.into(),
             milestone_timestamp_spent: value.milestone_timestamp_spent,
         })
@@ -213,7 +213,7 @@ impl TryFrom<proto::UnspentOutput> for UnspentOutput {
     fn try_from(value: proto::UnspentOutput) -> Result<Self, Self::Error> {
         Ok(Self {
             ledger_index: value.ledger_index.into(),
-            output: maybe_missing!(value.output).try_into()?,
+            output: return_err_if_none!(value.output).try_into()?,
         })
     }
 }

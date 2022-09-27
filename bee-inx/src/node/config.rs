@@ -4,7 +4,7 @@
 use bee_block as bee;
 use inx::proto;
 
-use crate::maybe_missing;
+use crate::return_err_if_none;
 
 /// The [`BaseToken`] type.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -86,7 +86,7 @@ impl TryFrom<proto::NodeConfiguration> for NodeConfiguration {
         Ok(NodeConfiguration {
             milestone_public_key_count: value.milestone_public_key_count,
             milestone_key_ranges: value.milestone_key_ranges.into_iter().map(Into::into).collect(),
-            base_token: maybe_missing!(value.base_token).into(),
+            base_token: return_err_if_none!(value.base_token).into(),
             supported_protocol_versions: value.supported_protocol_versions.into_iter().map(|v| v as u8).collect(),
         })
     }

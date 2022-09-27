@@ -23,7 +23,7 @@ pub mod proto {
 }
 
 #[macro_export]
-macro_rules! maybe_missing {
+macro_rules! return_err_if_none {
     ($object:ident.$field:ident) => {
         $object.$field.ok_or(Self::Error::MissingField(stringify!($field)))?
     };

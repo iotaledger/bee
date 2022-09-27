@@ -4,7 +4,7 @@
 use bee_block as bee;
 use inx::proto;
 
-use crate::maybe_missing;
+use crate::return_err_if_none;
 
 #[allow(missing_docs)]
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -53,7 +53,7 @@ impl TryFrom<proto::BlockMetadata> for BlockMetadata {
             .collect::<Result<Vec<_>, _>>()?;
 
         Ok(BlockMetadata {
-            block_id: maybe_missing!(value.block_id).try_into()?,
+            block_id: return_err_if_none!(value.block_id).try_into()?,
             parents: parents.into_boxed_slice(),
             is_solid: value.solid,
             should_promote: value.should_promote,

@@ -4,7 +4,7 @@
 use bee_block as bee;
 use inx::proto;
 
-use crate::{maybe_missing, Milestone, ProtocolParameters};
+use crate::{return_err_if_none, Milestone, ProtocolParameters};
 
 /// The [`NodeStatus`] type.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -39,9 +39,9 @@ impl TryFrom<proto::NodeStatus> for NodeStatus {
             is_healthy: value.is_healthy,
             is_synced: value.is_synced,
             is_almost_synced: value.is_almost_synced,
-            latest_milestone: maybe_missing!(value.latest_milestone).try_into()?,
-            confirmed_milestone: maybe_missing!(value.confirmed_milestone).try_into()?,
-            current_protocol_parameters: maybe_missing!(value.current_protocol_parameters).into(),
+            latest_milestone: return_err_if_none!(value.latest_milestone).try_into()?,
+            confirmed_milestone: return_err_if_none!(value.confirmed_milestone).try_into()?,
+            current_protocol_parameters: return_err_if_none!(value.current_protocol_parameters).into(),
             tangle_pruning_index: value.tangle_pruning_index.into(),
             milestones_pruning_index: value.milestones_pruning_index.into(),
             ledger_pruning_index: value.ledger_pruning_index.into(),

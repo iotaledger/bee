@@ -4,7 +4,7 @@
 use bee_block as bee;
 use inx::proto;
 
-use crate::{maybe_missing, Raw};
+use crate::{return_err_if_none, Raw};
 
 /// The [`Block`] type.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -29,8 +29,8 @@ impl TryFrom<proto::BlockWithMetadata> for BlockWithMetadata {
 
     fn try_from(value: proto::BlockWithMetadata) -> Result<Self, Self::Error> {
         Ok(BlockWithMetadata {
-            metadata: maybe_missing!(value.metadata).try_into()?,
-            block: maybe_missing!(value.block).data.into(),
+            metadata: return_err_if_none!(value.metadata).try_into()?,
+            block: return_err_if_none!(value.block).data.into(),
         })
     }
 }
@@ -49,8 +49,8 @@ impl TryFrom<proto::Block> for Block {
 
     fn try_from(value: proto::Block) -> Result<Self, Self::Error> {
         Ok(Block {
-            block_id: maybe_missing!(value.block_id).try_into()?,
-            block: maybe_missing!(value.block).data.into(),
+            block_id: return_err_if_none!(value.block_id).try_into()?,
+            block: return_err_if_none!(value.block).data.into(),
         })
     }
 }
