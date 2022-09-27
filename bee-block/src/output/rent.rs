@@ -12,7 +12,7 @@ use packable::{
 
 use crate::{output::OutputId, payload::milestone::MilestoneIndex, BlockId, Error};
 
-const DEFAULT_BYTE_COST: u32 = 500;
+const DEFAULT_BYTE_COST: u32 = 100;
 const DEFAULT_BYTE_COST_FACTOR_KEY: u8 = 10;
 const DEFAULT_BYTE_COST_FACTOR_DATA: u8 = 1;
 
