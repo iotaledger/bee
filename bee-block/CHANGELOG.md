@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `OutputBuilder`s `finish` now takes a `token_supply: u64` parameter; 
 - Adapt the `rand` module to all these changes;
 - All DTO conversion free functions have been made type methods.
+- Return `U256` instead of `&U256` for `NativeToken` amounts;
 
 ### Removed
 
