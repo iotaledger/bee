@@ -11,7 +11,7 @@ keywords = [ "iota", "inx", "bee", "node", "plugin" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-block = { version = "1.0.0-beta.7", path = "../bee-block", default-features = false, features = [ "inx" ] }
+bee-block = { version = "1.0.0", path = "../bee-block", default-features = false, features = [ "inx" ] }
 
 futures = { version = "0.3.21", default-features = false }
 inx = { version = "1.0.0-beta.8", default-features = false }
@@ -19,6 +19,6 @@ thiserror = { version = "1.0.32", default-features = false }
 packable = { version = "0.6.2", default-features = false }
 
 [dev-dependencies]
-bee-block = { version = "1.0.0-beta.7", path = "../bee-block", default-features = false, features = [ "inx", "rand" ] }
+bee-block = { version = "1.0.0", path = "../bee-block", default-features = false, features = [ "inx", "rand" ] }
 
 tokio = { version = "1.20.1", default-features = false, features = [ "macros", "rt-multi-thread" ] }
