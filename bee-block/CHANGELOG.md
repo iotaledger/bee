@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
-## 1.0.0-beta.8 - 2022-XX-XX
+## 1.0.0 - 2022-09-27
 
 ### Added
 
@@ -39,7 +39,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Output`s amount is now simply an `u64`;
 - `OutputBuilder`s `finish` now takes a `token_supply: u64` parameter; 
 - Adapt the `rand` module to all these changes;
-- All DTO conversion free functions have been made type methods.
+- All DTO conversion free functions have been made type methods;
+- `DEFAULT_BYTE_COST` from 500 to 100;
+- Implement `Default` for `ProtocolParameters` and `RentStructure`;
+- Return `U256` instead of `&U256` for `NativeToken` amounts;
 
 ### Removed
 

@@ -430,7 +430,7 @@ impl StateTransitionVerifier for FoundryOutput {
             return Err(StateTransitionError::InconsistentNativeTokensFoundryCreation);
         }
 
-        if &output_tokens != next_token_scheme.minted_tokens() || !next_token_scheme.melted_tokens().is_zero() {
+        if output_tokens != next_token_scheme.minted_tokens() || !next_token_scheme.melted_tokens().is_zero() {
             return Err(StateTransitionError::InconsistentNativeTokensFoundryCreation);
         }
 

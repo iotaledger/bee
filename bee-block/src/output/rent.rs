@@ -12,7 +12,7 @@ use packable::{
 
 use crate::{output::OutputId, payload::milestone::MilestoneIndex, BlockId, Error};
 
-const DEFAULT_BYTE_COST: u32 = 500;
+const DEFAULT_BYTE_COST: u32 = 100;
 const DEFAULT_BYTE_COST_FACTOR_KEY: u8 = 10;
 const DEFAULT_BYTE_COST_FACTOR_DATA: u8 = 1;
 
@@ -71,7 +71,7 @@ impl RentStructureBuilder {
 }
 
 /// Specifies the current parameters for the byte cost computation.
-#[derive(Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct RentStructure {
     /// Cost in tokens per virtual byte.
@@ -82,6 +82,12 @@ pub struct RentStructure {
     pub v_byte_factor_data: u8,
     /// The offset in addition to the other fields.
     v_byte_offset: u32,
+}
+
+impl Default for RentStructure {
+    fn default() -> Self {
+        RentStructureBuilder::new().finish()
+    }
 }
 
 impl RentStructure {

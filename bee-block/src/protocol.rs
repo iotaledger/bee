@@ -6,10 +6,10 @@ use core::borrow::Borrow;
 
 use packable::{prefix::StringPrefix, Packable};
 
-use crate::{helper::network_name_to_id, output::RentStructure, Error};
+use crate::{helper::network_name_to_id, output::RentStructure, Error, PROTOCOL_VERSION};
 
 /// Defines the parameters of the protocol.
-#[derive(Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Packable)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Packable)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error)]
 pub struct ProtocolParameters {
@@ -35,6 +35,22 @@ pub struct ProtocolParameters {
 impl Borrow<()> for ProtocolParameters {
     fn borrow(&self) -> &() {
         &()
+    }
+}
+
+impl Default for ProtocolParameters {
+    fn default() -> Self {
+        // PANIC: These values are known to be correct.
+        Self::new(
+            PROTOCOL_VERSION,
+            String::from("shimmer"),
+            String::from("smr"),
+            1500,
+            15,
+            RentStructure::default(),
+            1_813_620_509_061_365,
+        )
+        .unwrap()
     }
 }
 
