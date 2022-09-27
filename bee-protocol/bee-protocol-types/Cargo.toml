@@ -1,6 +1,6 @@
 [package]
 name = "bee-protocol-types"
-version = "1.0.0-beta.4"
+version = "1.0.0"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "All types enabling the IOTA protocol."

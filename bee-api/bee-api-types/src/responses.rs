@@ -53,24 +53,22 @@ pub struct StatusResponse {
 /// Information about the latest milestone.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct LatestMilestoneResponse {
-    #[serde(rename = "index")]
     pub index: u32,
-    #[serde(rename = "timestamp")]
-    pub timestamp: u32,
-    #[serde(rename = "milestoneId")]
-    pub milestone_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timestamp: Option<u32>,
+    #[serde(rename = "milestoneId", skip_serializing_if = "Option::is_none")]
+    pub milestone_id: Option<String>,
 }
 
 /// Returned in [`StatusResponse`].
 /// Information about the confirmed milestone.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct ConfirmedMilestoneResponse {
-    #[serde(rename = "index")]
     pub index: u32,
-    #[serde(rename = "timestamp")]
-    pub timestamp: u32,
-    #[serde(rename = "milestoneId")]
-    pub milestone_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timestamp: Option<u32>,
+    #[serde(rename = "milestoneId", skip_serializing_if = "Option::is_none")]
+    pub milestone_id: Option<String>,
 }
 
 /// Returned in [`InfoResponse`].

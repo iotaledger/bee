@@ -1,6 +1,6 @@
 [package]
 name = "bee-api-types"
-version = "1.0.0-beta.7"
+version = "1.0.0"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "Common types required by nodes and clients APIs like bodies, errors, responses and DTOs."
@@ -18,8 +18,8 @@ rustdoc-args = [ "--cfg", "doc_cfg" ]
 
 [dependencies]
 bee-block = { version = "1.0.0", path = "../../bee-block", default-features = false, features = [ "dto" ] }
-bee-ledger-types = { version = "1.0.0-beta.5", path = "../../bee-ledger/bee-ledger-types", default-features = false }
-bee-protocol-types = { version = "1.0.0-beta.4", path = "../../bee-protocol/bee-protocol-types", default-features = false, optional = true }
+bee-ledger-types = { version = "1.0.0", path = "../../bee-ledger/bee-ledger-types", default-features = false }
+bee-protocol-types = { version = "1.0.0", path = "../../bee-protocol/bee-protocol-types", default-features = false, optional = true }
 
 axum = { version = "0.5.15", default-features = false, features = [ "json" ], optional =  true }
 serde = { version = "1.0.143", default-features = false, features = [ "derive" ] }
