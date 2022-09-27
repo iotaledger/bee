@@ -39,7 +39,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Output`s amount is now simply an `u64`;
 - `OutputBuilder`s `finish` now takes a `token_supply: u64` parameter; 
 - Adapt the `rand` module to all these changes;
-- All DTO conversion free functions have been made type methods.
+- All DTO conversion free functions have been made type methods;
+- `DEFAULT_BYTE_COST` from 500 to 100;
+- Implement `Default` for `ProtocolParameters` and `RentStructure`;
 
 ### Removed
 
