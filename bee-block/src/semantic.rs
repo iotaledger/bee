@@ -254,7 +254,7 @@ pub fn semantic_validation(
             let native_token_amount = context.input_native_tokens.entry(*native_token.token_id()).or_default();
 
             *native_token_amount = native_token_amount
-                .checked_add(*native_token.amount())
+                .checked_add(native_token.amount())
                 .ok_or(Error::ConsumedNativeTokensAmountOverflow)?;
         }
     }
@@ -297,7 +297,7 @@ pub fn semantic_validation(
                 .or_default();
 
             *native_token_amount = native_token_amount
-                .checked_add(*native_token.amount())
+                .checked_add(native_token.amount())
                 .ok_or(Error::CreatedNativeTokensAmountOverflow)?;
         }
     }

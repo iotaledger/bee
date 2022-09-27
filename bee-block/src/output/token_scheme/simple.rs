@@ -41,20 +41,20 @@ impl SimpleTokenScheme {
 
     /// Returns the number of minted tokens of the [`SimpleTokenScheme`].
     #[inline(always)]
-    pub fn minted_tokens(&self) -> &U256 {
-        &self.minted_tokens
+    pub fn minted_tokens(&self) -> U256 {
+        self.minted_tokens
     }
 
     /// Returns the number of melted tokens of the [`SimpleTokenScheme`].
     #[inline(always)]
-    pub fn melted_tokens(&self) -> &U256 {
-        &self.melted_tokens
+    pub fn melted_tokens(&self) -> U256 {
+        self.melted_tokens
     }
 
     /// Returns the maximum supply of the [`SimpleTokenScheme`].
     #[inline(always)]
-    pub fn maximum_supply(&self) -> &U256 {
-        &self.maximum_supply
+    pub fn maximum_supply(&self) -> U256 {
+        self.maximum_supply
     }
 
     /// Returns the circulating supply of the [`SimpleTokenScheme`].
@@ -137,9 +137,9 @@ pub mod dto {
         fn from(value: &SimpleTokenScheme) -> Self {
             Self {
                 kind: SimpleTokenScheme::KIND,
-                minted_tokens: value.minted_tokens().into(),
-                melted_tokens: value.melted_tokens().into(),
-                maximum_supply: value.maximum_supply().into(),
+                minted_tokens: (&value.minted_tokens()).into(),
+                melted_tokens: (&value.melted_tokens()).into(),
+                maximum_supply: (&value.maximum_supply()).into(),
             }
         }
     }

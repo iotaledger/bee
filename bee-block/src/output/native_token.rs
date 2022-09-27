@@ -40,8 +40,8 @@ impl NativeToken {
 
     /// Returns the amount of the [`NativeToken`].
     #[inline(always)]
-    pub fn amount(&self) -> &U256 {
-        &self.amount
+    pub fn amount(&self) -> U256 {
+        self.amount
     }
 }
 
@@ -70,7 +70,7 @@ impl NativeTokensBuilder {
     pub fn add_native_token(&mut self, native_token: NativeToken) -> Result<(), Error> {
         let entry = self.0.entry(*native_token.token_id()).or_default();
         *entry = entry
-            .checked_add(*native_token.amount())
+            .checked_add(native_token.amount())
             .ok_or(Error::NativeTokensOverflow)?;
 
         Ok(())
@@ -206,7 +206,7 @@ pub mod dto {
         fn from(value: &NativeToken) -> Self {
             Self {
                 token_id: TokenIdDto(value.token_id().to_string()),
-                amount: value.amount().into(),
+                amount: (&value.amount()).into(),
             }
         }
     }

@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - All DTO conversion free functions have been made type methods;
 - `DEFAULT_BYTE_COST` from 500 to 100;
 - Implement `Default` for `ProtocolParameters` and `RentStructure`;
+- Return `U256` instead of `&U256` for `NativeToken` amounts;
 
 ### Removed
 
