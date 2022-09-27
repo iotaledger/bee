@@ -8,13 +8,12 @@ mod ledger;
 mod metadata;
 mod milestone;
 mod node;
-mod protocol_parameters;
 mod raw;
 mod request;
 mod treasury;
 
 pub use self::{
-    block::*, error::Error, ledger::*, metadata::*, milestone::*, node::*, protocol_parameters::*, raw::*, request::*,
+    block::*, error::Error, ledger::*, metadata::*, milestone::*, node::*, raw::*, request::*,
     treasury::*,
 };
 
