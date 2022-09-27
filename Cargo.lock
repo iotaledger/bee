@@ -399,7 +399,7 @@ dependencies = [
 
 [[package]]
 name = "bee-ledger-types"
-version = "1.0.0-beta.5"
+version = "1.0.0"
 dependencies = [
  "bee-block",
  "packable",
