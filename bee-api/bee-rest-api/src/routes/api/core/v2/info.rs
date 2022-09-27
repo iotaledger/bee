@@ -48,24 +48,14 @@ async fn info<B: StorageBackend>(Extension(args): Extension<ApiArgsFullNode<B>>)
             // TODO: In future, the snapshot might make all data for the `latest_milestone` available.
             latest_milestone: LatestMilestoneResponse {
                 index: *latest_milestone_index,
-                timestamp: latest_milestone_metadata
-                    .as_ref()
-                    .map(|m| m.timestamp())
-                    .unwrap_or_default(),
-                milestone_id: latest_milestone_metadata
-                    .map(|m| m.milestone_id().to_string())
-                    .unwrap_or_default(),
+                timestamp: latest_milestone_metadata.as_ref().map(|m| m.timestamp()),
+                milestone_id: latest_milestone_metadata.map(|m| m.milestone_id().to_string()),
             },
             // TODO: In future, the snapshot might make all data for the `confirmed_milestone` available.
             confirmed_milestone: ConfirmedMilestoneResponse {
                 index: *confirmed_milestone_index,
-                timestamp: confirmed_milestone_metadata
-                    .as_ref()
-                    .map(|m| m.timestamp())
-                    .unwrap_or_default(),
-                milestone_id: confirmed_milestone_metadata
-                    .map(|m| m.milestone_id().to_string())
-                    .unwrap_or_default(),
+                timestamp: confirmed_milestone_metadata.as_ref().map(|m| m.timestamp()),
+                milestone_id: confirmed_milestone_metadata.map(|m| m.milestone_id().to_string()),
             },
             pruning_index: *args.tangle.get_pruning_index(),
         },
