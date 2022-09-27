@@ -286,7 +286,7 @@ pub mod inx {
     use super::*;
     use crate::payload::Payload;
 
-    impl From<MilestonePayload> for inx_bindings::proto::RawMilestone {
+    impl From<MilestonePayload> for ::inx::proto::RawMilestone {
         fn from(value: MilestonePayload) -> Self {
             Self {
                 data: Payload::from(value).pack_to_vec(),
