@@ -144,7 +144,10 @@ pub mod dto {
     use serde::{Deserialize, Serialize, Serializer};
     use serde_json::Value;
 
-    pub use self::{parameters::dto::ParametersMilestoneOptionDto, receipt::dto::ReceiptMilestoneOptionDto};
+    pub use self::{
+        parameters::dto::ParametersMilestoneOptionDto,
+        receipt::dto::{MigratedFundsEntryDto, ReceiptMilestoneOptionDto},
+    };
     use super::*;
     use crate::error::dto::DtoError;
 

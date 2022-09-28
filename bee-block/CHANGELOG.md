@@ -25,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `#[serde(rename_all = "camelCase")]` to `ProtocolParameters` and `RentStructure`;
 
+### Changed
+
+- `pub` expose `ReceiptMilestoneOptionDto` and `RegularTransactionEssenceDto`;
+
 ## 1.0.0 - 2022-09-27
 
 ### Added
