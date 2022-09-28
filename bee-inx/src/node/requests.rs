@@ -6,7 +6,7 @@ use crate::inx;
 /// TODO
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct NodeStatusRequest {
-    cooldown_in_milliseconds: u32,
+    pub cooldown_in_milliseconds: u32,
 }
 
 impl From<inx::NodeStatusRequest> for NodeStatusRequest {
