@@ -19,6 +19,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 1.0.1 - 2022-09-28
+
+### Added
+
+- `#[serde(rename_all = "camelCase")]` to `ProtocolParameters` and `RentStructure`;
+- `From` derivation on DTO enums;
+
+### Changed
+
+- `pub` expose `ReceiptMilestoneOptionDto` and `RegularTransactionEssenceDto`;
+
 ## 1.0.0 - 2022-09-27
 
 ### Added

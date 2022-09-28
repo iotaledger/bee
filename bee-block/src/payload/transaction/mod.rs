@@ -102,7 +102,7 @@ fn verify_essence_unlocks(essence: &TransactionEssence, unlocks: &Unlocks) -> Re
 pub mod dto {
     use serde::{Deserialize, Serialize};
 
-    pub use super::essence::dto::TransactionEssenceDto;
+    pub use super::essence::dto::{RegularTransactionEssenceDto, TransactionEssenceDto};
     use super::*;
     use crate::{error::dto::DtoError, unlock::dto::UnlockDto};
 

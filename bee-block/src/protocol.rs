@@ -10,7 +10,11 @@ use crate::{helper::network_name_to_id, output::RentStructure, Error, PROTOCOL_V
 
 /// Defines the parameters of the protocol.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Packable)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
 #[packable(unpack_error = Error)]
 pub struct ProtocolParameters {
     // The version of the protocol running.

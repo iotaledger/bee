@@ -29,13 +29,14 @@ impl TokenScheme {
 #[cfg(feature = "dto")]
 #[allow(missing_docs)]
 pub mod dto {
+    use derive_more::From;
     use serde::{Deserialize, Serialize};
 
     pub use super::simple::dto::SimpleTokenSchemeDto;
     use super::*;
     use crate::error::dto::DtoError;
 
-    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, From)]
     #[serde(untagged)]
     pub enum TokenSchemeDto {
         /// A simple token scheme.

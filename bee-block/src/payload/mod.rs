@@ -231,6 +231,30 @@ pub mod dto {
         TaggedData(Box<TaggedDataPayloadDto>),
     }
 
+    impl From<TransactionPayloadDto> for PayloadDto {
+        fn from(payload: TransactionPayloadDto) -> Self {
+            Self::Transaction(Box::new(payload))
+        }
+    }
+
+    impl From<MilestonePayloadDto> for PayloadDto {
+        fn from(payload: MilestonePayloadDto) -> Self {
+            Self::Milestone(Box::new(payload))
+        }
+    }
+
+    impl From<TreasuryTransactionPayloadDto> for PayloadDto {
+        fn from(payload: TreasuryTransactionPayloadDto) -> Self {
+            Self::TreasuryTransaction(Box::new(payload))
+        }
+    }
+
+    impl From<TaggedDataPayloadDto> for PayloadDto {
+        fn from(payload: TaggedDataPayloadDto) -> Self {
+            Self::TaggedData(Box::new(payload))
+        }
+    }
+
     impl From<&Payload> for PayloadDto {
         fn from(value: &Payload) -> Self {
             match value {

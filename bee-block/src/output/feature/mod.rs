@@ -217,7 +217,7 @@ pub mod dto {
     use super::*;
     use crate::error::dto::DtoError;
 
-    #[derive(Clone, Debug, Eq, PartialEq)]
+    #[derive(Clone, Debug, Eq, PartialEq, From)]
     pub enum FeatureDto {
         /// A sender feature.
         Sender(SenderFeatureDto),
