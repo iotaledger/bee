@@ -5,17 +5,16 @@ mod error;
 
 pub mod block;
 pub mod client;
-pub mod ledger;
 pub mod milestone;
 pub mod node;
 pub mod raw;
 pub mod request;
-pub mod treasury;
+pub mod utxo;
 
-pub use self::{block::*, error::Error, ledger::*, milestone::*, node::*, raw::*, request::*, treasury::*};
+pub use self::{block::*, error::Error, milestone::*, node::*, raw::*, request::*, utxo::*};
 
-pub mod proto {
-    pub use inx::proto::*;
+pub mod inx {
+    pub use ::inx::proto::*;
 }
 
 #[macro_export]
@@ -31,7 +30,7 @@ mod test {
 
     #[test]
     fn macro_missing_field() {
-        let proto = proto::TreasuryOutput {
+        let proto = inx::TreasuryOutput {
             milestone_id: None,
             amount: 42,
         };

@@ -8,7 +8,7 @@ const INX_ADDRESS: &str = "http://localhost:9029";
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    let mut inx = client::Inx::connect(INX_ADDRESS.into()).await?;
+    let mut inx = client::Inx::connect(INX_ADDRESS).await?;
     let mut milestone_stream = inx.listen_to_confirmed_milestones((..).into()).await?;
 
     // Listen to the milestones from the node.

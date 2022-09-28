@@ -6,6 +6,49 @@ use inx::proto;
 
 use crate::return_err_if_none;
 
+/// The [`NodeConfiguration`] type.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct NodeConfiguration {
+    pub milestone_public_key_count: u32,
+    pub milestone_key_ranges: Box<[MilestoneKeyRange]>,
+    pub base_token: BaseToken,
+    pub supported_protocol_versions: Box<[u8]>,
+}
+
+impl TryFrom<proto::NodeConfiguration> for NodeConfiguration {
+    type Error = bee::InxError;
+
+    fn try_from(value: proto::NodeConfiguration) -> Result<Self, Self::Error> {
+        Ok(NodeConfiguration {
+            milestone_public_key_count: value.milestone_public_key_count,
+            milestone_key_ranges: value.milestone_key_ranges.into_iter().map(Into::into).collect(),
+            base_token: return_err_if_none!(value.base_token).into(),
+            supported_protocol_versions: value.supported_protocol_versions.into_iter().map(|v| v as u8).collect(),
+        })
+    }
+}
+
+impl From<NodeConfiguration> for proto::NodeConfiguration {
+    fn from(value: NodeConfiguration) -> Self {
+        Self {
+            milestone_public_key_count: value.milestone_public_key_count,
+            milestone_key_ranges: value
+                .milestone_key_ranges
+                .into_vec()
+                .into_iter()
+                .map(Into::into)
+                .collect(),
+            base_token: Some(value.base_token.into()),
+            supported_protocol_versions: value
+                .supported_protocol_versions
+                .into_vec()
+                .into_iter()
+                .map(|v| v as _)
+                .collect(),
+        }
+    }
+}
+
 /// The [`BaseToken`] type.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct BaseToken {
@@ -66,49 +109,6 @@ impl From<MilestoneKeyRange> for proto::MilestoneKeyRange {
             public_key: value.public_key.into_vec(),
             start_index: value.start_index.0,
             end_index: value.end_index.0,
-        }
-    }
-}
-
-/// The [`NodeConfiguration`] type.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct NodeConfiguration {
-    pub milestone_public_key_count: u32,
-    pub milestone_key_ranges: Box<[MilestoneKeyRange]>,
-    pub base_token: BaseToken,
-    pub supported_protocol_versions: Box<[u8]>,
-}
-
-impl TryFrom<proto::NodeConfiguration> for NodeConfiguration {
-    type Error = bee::InxError;
-
-    fn try_from(value: proto::NodeConfiguration) -> Result<Self, Self::Error> {
-        Ok(NodeConfiguration {
-            milestone_public_key_count: value.milestone_public_key_count,
-            milestone_key_ranges: value.milestone_key_ranges.into_iter().map(Into::into).collect(),
-            base_token: return_err_if_none!(value.base_token).into(),
-            supported_protocol_versions: value.supported_protocol_versions.into_iter().map(|v| v as u8).collect(),
-        })
-    }
-}
-
-impl From<NodeConfiguration> for proto::NodeConfiguration {
-    fn from(value: NodeConfiguration) -> Self {
-        Self {
-            milestone_public_key_count: value.milestone_public_key_count,
-            milestone_key_ranges: value
-                .milestone_key_ranges
-                .into_vec()
-                .into_iter()
-                .map(Into::into)
-                .collect(),
-            base_token: Some(value.base_token.into()),
-            supported_protocol_versions: value
-                .supported_protocol_versions
-                .into_vec()
-                .into_iter()
-                .map(|v| v as _)
-                .collect(),
         }
     }
 }
