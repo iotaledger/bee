@@ -4,7 +4,6 @@
 pub mod types;
 
 pub use self::types::*;
-
 use crate::client::Inx;
 
 impl Inx {
