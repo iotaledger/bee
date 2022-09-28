@@ -20,7 +20,7 @@ impl Inx {
     }
 }
 
-pub(crate) fn try_convert_proto_msg<P, B>(msg: Result<P, tonic::Status>) -> Result<B, Error>
+pub(crate) fn try_from_inx_type<P, B>(msg: Result<P, tonic::Status>) -> Result<B, Error>
 where
     B: TryFrom<P, Error = bee_block::InxError>,
 {

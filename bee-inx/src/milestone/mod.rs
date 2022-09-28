@@ -8,7 +8,7 @@ use futures::stream::{Stream, StreamExt};
 pub use self::types::*;
 use crate::{
     block::types::BlockWithMetadata,
-    client::{try_convert_proto_msg, Inx},
+    client::{try_from_inx_type, Inx},
     error::Error,
     inx,
     request::{MilestoneRangeRequest, MilestoneRequest},
@@ -36,7 +36,7 @@ impl Inx {
             .listen_to_confirmed_milestones(inx::MilestoneRangeRequest::from(request))
             .await?
             .into_inner()
-            .map(try_convert_proto_msg))
+            .map(try_from_inx_type))
     }
 
     /// Reads the past cone of a milestone specified by a [`MilestoneRequest`].
@@ -49,6 +49,6 @@ impl Inx {
             .read_milestone_cone(inx::MilestoneRequest::from(request))
             .await?
             .into_inner()
-            .map(try_convert_proto_msg))
+            .map(try_from_inx_type))
     }
 }
