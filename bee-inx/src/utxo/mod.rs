@@ -1,11 +1,11 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-pub mod types;
+pub mod responses;
 
 use futures::{Stream, StreamExt};
 
-pub use self::types::*;
+pub use self::responses::*;
 use crate::{
     client::{try_from_inx_type, Inx},
     error::Error,

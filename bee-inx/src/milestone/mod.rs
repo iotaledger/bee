@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub mod requests;
-pub mod types;
+pub mod responses;
 
 use futures::stream::{Stream, StreamExt};
 
-pub use self::{requests::*, types::*};
+pub use self::{requests::*, responses::*};
 use crate::{
-    block::types::BlockWithMetadata,
+    block::responses::BlockWithMetadata,
     client::{try_from_inx_type, Inx},
     error::Error,
     inx,

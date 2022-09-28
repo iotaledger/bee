@@ -1,7 +1,7 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{bee, inx, milestone::types::Milestone, raw::Raw, return_err_if_none};
+use crate::{bee, inx, milestone::responses::Milestone, raw::Raw, return_err_if_none};
 
 /// The [`NodeStatus`] type.
 #[derive(Clone, Debug, PartialEq, Eq)]

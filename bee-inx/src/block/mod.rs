@@ -1,9 +1,9 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-pub mod types;
+pub mod responses;
 
-pub use self::types::*;
+pub use self::responses::*;
 use crate::client::Inx;
 
 //   rpc ListenToBlocks(NoParams) returns (stream Block);
