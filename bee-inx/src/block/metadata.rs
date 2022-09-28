@@ -6,14 +6,6 @@ use inx::proto;
 
 use crate::return_err_if_none;
 
-#[allow(missing_docs)]
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum LedgerInclusionState {
-    NoTransaction,
-    Included,
-    Conflicting,
-}
-
 /// The metadata for a block with a given [`BlockId`](bee::BlockId).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct BlockMetadata {
@@ -104,4 +96,12 @@ impl From<BlockMetadata> for proto::BlockMetadata {
             white_flag_index: value.white_flag_index,
         }
     }
+}
+
+#[allow(missing_docs)]
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum LedgerInclusionState {
+    NoTransaction,
+    Included,
+    Conflicting,
 }

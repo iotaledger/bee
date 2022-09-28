@@ -1,15 +1,16 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod block;
-pub mod client;
 mod error;
-mod ledger;
-mod milestone;
-mod node;
-mod raw;
-mod request;
-mod treasury;
+
+pub mod block;
+pub mod client;
+pub mod ledger;
+pub mod milestone;
+pub mod node;
+pub mod raw;
+pub mod request;
+pub mod treasury;
 
 pub use self::{block::*, error::Error, ledger::*, milestone::*, node::*, raw::*, request::*, treasury::*};
 
