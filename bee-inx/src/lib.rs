@@ -14,7 +14,11 @@ pub mod utxo;
 pub use self::{block::*, error::Error, milestone::*, node::*, raw::*, requests::*, utxo::*};
 
 pub mod inx {
-    pub use ::inx::proto::{block_metadata::*, *};
+    pub use ::inx::proto::{
+        block_metadata::*,
+        ledger_update::{marker::*, *},
+        *,
+    };
 }
 
 #[macro_export]

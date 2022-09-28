@@ -1,12 +1,11 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-pub mod ledger;
-pub mod treasury;
+pub mod types;
 
 use futures::{Stream, StreamExt};
 
-pub use self::{ledger::*, treasury::*};
+pub use self::types::*;
 use crate::{
     client::{try_from_inx_type, Inx},
     error::Error,
@@ -32,7 +31,7 @@ impl Inx {
     ) -> Result<impl Stream<Item = Result<crate::UnspentOutput, Error>>, Error> {
         Ok(self
             .client
-            .read_unspent_outputs(inx::NoParams {}) // TODO: ().into()
+            .read_unspent_outputs(inx::NoParams {})
             .await?
             .into_inner()
             .map(try_from_inx_type))
