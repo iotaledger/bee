@@ -11,7 +11,7 @@ use crate::{
     client::{try_from_inx_type, Inx},
     error::Error,
     inx,
-    request::{MilestoneRangeRequest, MilestoneRequest},
+    requests::{MilestoneRangeRequest, MilestoneRequest},
 };
 
 impl Inx {

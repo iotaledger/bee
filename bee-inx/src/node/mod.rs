@@ -4,7 +4,7 @@
 mod types;
 
 pub use self::types::*;
-use crate::{client::Inx, error::Error, inx, request::MilestoneRequest};
+use crate::{client::Inx, error::Error, inx, requests::MilestoneRequest};
 
 impl Inx {
     /// TODO

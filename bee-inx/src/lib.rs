@@ -8,10 +8,10 @@ pub mod client;
 pub mod milestone;
 pub mod node;
 pub mod raw;
-pub mod request;
+pub mod requests;
 pub mod utxo;
 
-pub use self::{block::*, error::Error, milestone::*, node::*, raw::*, request::*, utxo::*};
+pub use self::{block::*, error::Error, milestone::*, node::*, raw::*, requests::*, utxo::*};
 
 pub mod inx {
     pub use ::inx::proto::{block_metadata::*, *};

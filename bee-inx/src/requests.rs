@@ -4,14 +4,15 @@
 use std::ops::{Bound, RangeBounds};
 
 use bee_block::payload::milestone::{MilestoneId, MilestoneIndex};
-use inx::proto;
+
+use crate::inx;
 
 pub enum MilestoneRequest {
     MilestoneIndex(MilestoneIndex),
     MilestoneId(MilestoneId),
 }
 
-impl From<MilestoneRequest> for proto::MilestoneRequest {
+impl From<MilestoneRequest> for inx::MilestoneRequest {
     fn from(value: MilestoneRequest) -> Self {
         match value {
             MilestoneRequest::MilestoneIndex(MilestoneIndex(milestone_index)) => Self {
@@ -32,7 +33,7 @@ impl<T: Into<u32>> From<T> for MilestoneRequest {
     }
 }
 
-fn to_milestone_range_request<T, I>(range: T) -> proto::MilestoneRangeRequest
+fn to_milestone_range_request<T, I>(range: T) -> inx::MilestoneRangeRequest
 where
     T: RangeBounds<I>,
     I: Into<u32> + Copy,
@@ -47,7 +48,7 @@ where
         Bound::Excluded(&idx) => idx.into() - 1,
         Bound::Unbounded => 0,
     };
-    proto::MilestoneRangeRequest {
+    inx::MilestoneRangeRequest {
         start_milestone_index,
         end_milestone_index,
     }
@@ -55,7 +56,7 @@ where
 
 /// A request for a range of milestones by [`MilestoneIndex`].
 #[derive(Clone, Debug, PartialEq)]
-pub struct MilestoneRangeRequest(proto::MilestoneRangeRequest);
+pub struct MilestoneRangeRequest(inx::MilestoneRangeRequest);
 
 impl<T> From<T> for MilestoneRangeRequest
 where
@@ -66,7 +67,7 @@ where
     }
 }
 
-impl From<MilestoneRangeRequest> for proto::MilestoneRangeRequest {
+impl From<MilestoneRangeRequest> for inx::MilestoneRangeRequest {
     fn from(value: MilestoneRangeRequest) -> Self {
         value.0
     }
@@ -81,7 +82,7 @@ mod test {
         let range = MilestoneRangeRequest::from(17..43);
         assert_eq!(
             range,
-            MilestoneRangeRequest(proto::MilestoneRangeRequest {
+            MilestoneRangeRequest(inx::MilestoneRangeRequest {
                 start_milestone_index: 17,
                 end_milestone_index: 42
             })
@@ -93,7 +94,7 @@ mod test {
         let range = MilestoneRangeRequest::from(17..=42);
         assert_eq!(
             range,
-            MilestoneRangeRequest(proto::MilestoneRangeRequest {
+            MilestoneRangeRequest(inx::MilestoneRangeRequest {
                 start_milestone_index: 17,
                 end_milestone_index: 42
             })
