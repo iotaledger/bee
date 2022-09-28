@@ -8,10 +8,9 @@ pub mod client;
 pub mod milestone;
 pub mod node;
 pub mod raw;
-pub mod requests;
 pub mod utxo;
 
-pub use self::{block::*, error::Error, milestone::*, node::*, raw::*, requests::*, utxo::*};
+pub use self::{block::*, error::Error, milestone::*, node::*, raw::*, utxo::*};
 
 pub mod inx {
     pub use ::inx::proto::{
@@ -19,6 +18,12 @@ pub mod inx {
         ledger_update::{marker::*, *},
         *,
     };
+}
+
+pub(crate) mod bee {
+    pub use bee_block::{payload::milestone::MilestoneIndex, protocol::ProtocolParameters, InxError};
+    pub use bee_block::{Block, BlockId};
+    pub use bee_block::semantic::ConflictReason;
 }
 
 #[macro_export]

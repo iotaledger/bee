@@ -33,6 +33,25 @@ impl<T: Into<u32>> From<T> for MilestoneRequest {
     }
 }
 
+/// A request for a range of milestones by [`MilestoneIndex`].
+#[derive(Clone, Debug, PartialEq)]
+pub struct MilestoneRangeRequest(inx::MilestoneRangeRequest);
+
+impl<T> From<T> for MilestoneRangeRequest
+where
+    T: RangeBounds<u32>,
+{
+    fn from(value: T) -> MilestoneRangeRequest {
+        MilestoneRangeRequest(to_milestone_range_request(value))
+    }
+}
+
+impl From<MilestoneRangeRequest> for inx::MilestoneRangeRequest {
+    fn from(value: MilestoneRangeRequest) -> Self {
+        value.0
+    }
+}
+
 fn to_milestone_range_request<T, I>(range: T) -> inx::MilestoneRangeRequest
 where
     T: RangeBounds<I>,
@@ -51,25 +70,6 @@ where
     inx::MilestoneRangeRequest {
         start_milestone_index,
         end_milestone_index,
-    }
-}
-
-/// A request for a range of milestones by [`MilestoneIndex`].
-#[derive(Clone, Debug, PartialEq)]
-pub struct MilestoneRangeRequest(inx::MilestoneRangeRequest);
-
-impl<T> From<T> for MilestoneRangeRequest
-where
-    T: RangeBounds<u32>,
-{
-    fn from(value: T) -> MilestoneRangeRequest {
-        MilestoneRangeRequest(to_milestone_range_request(value))
-    }
-}
-
-impl From<MilestoneRangeRequest> for inx::MilestoneRangeRequest {
-    fn from(value: MilestoneRangeRequest) -> Self {
-        value.0
     }
 }
 

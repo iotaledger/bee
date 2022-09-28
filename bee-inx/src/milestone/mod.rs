@@ -1,18 +1,25 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+pub mod requests;
 pub mod types;
 
 use futures::stream::{Stream, StreamExt};
 
-pub use self::types::*;
+pub use self::{requests::*, types::*};
 use crate::{
     block::types::BlockWithMetadata,
     client::{try_from_inx_type, Inx},
     error::Error,
     inx,
-    requests::{MilestoneRangeRequest, MilestoneRequest},
 };
+
+//   rpc ReadMilestone(MilestoneRequest) returns (Milestone);
+//   rpc ListenToLatestMilestones(NoParams) returns (stream Milestone);
+//   rpc ListenToConfirmedMilestones(MilestoneRangeRequest) returns (stream MilestoneAndProtocolParameters);
+//   rpc ComputeWhiteFlag(WhiteFlagRequest) returns (WhiteFlagResponse);
+//   rpc ReadMilestoneCone(MilestoneRequest) returns (stream BlockWithMetadata);
+//   rpc ReadMilestoneConeMetadata(MilestoneRequest) returns (stream BlockMetadata);
 
 impl Inx {
     /// TODO

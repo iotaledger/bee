@@ -1,10 +1,18 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod types;
+pub mod requests;
+pub mod types;
 
-pub use self::types::*;
-use crate::{client::Inx, error::Error, inx, requests::MilestoneRequest};
+use futures::stream::{Stream, StreamExt};
+
+pub use self::{requests::*, types::*};
+use crate::{
+    client::{try_from_inx_type, Inx},
+    error::Error,
+    inx,
+    milestone::requests::MilestoneRequest,
+};
 
 impl Inx {
     /// TODO
@@ -13,7 +21,18 @@ impl Inx {
             .map_err(Error::InxError)
     }
 
-    // TODO: listen_to_node_status
+    // TODO
+    pub async fn listen_to_node_status(
+        &mut self,
+        request: NodeStatusRequest,
+    ) -> Result<impl Stream<Item = Result<NodeStatus, Error>>, Error> {
+        Ok(self
+            .client
+            .listen_to_node_status(inx::NodeStatusRequest::from(request))
+            .await?
+            .into_inner()
+            .map(try_from_inx_type))
+    }
 
     /// TODO
     pub async fn read_node_configuration(&mut self) -> Result<NodeConfiguration, Error> {

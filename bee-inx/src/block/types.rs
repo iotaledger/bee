@@ -1,9 +1,7 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_block as bee;
-
-use crate::{inx, raw::Raw, return_err_if_none};
+use crate::{bee, inx, raw::Raw, return_err_if_none};
 
 /// The [`Block`] type.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -83,7 +81,7 @@ pub struct BlockMetadata {
     /// Indicates if a block is part of the ledger state or not.
     pub ledger_inclusion_state: LedgerInclusionState,
     /// Indicates if a conflict occurred, and if so holds information about the reason for the conflict.
-    pub conflict_reason: bee::semantic::ConflictReason,
+    pub conflict_reason: bee::ConflictReason,
     /// The whiteflag index of this block inside the milestone.
     pub white_flag_index: u32,
 }

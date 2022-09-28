@@ -1,10 +1,7 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_block as bee;
-use inx::proto;
-
-use crate::{milestone::types::Milestone, raw::Raw, return_err_if_none};
+use crate::{bee, inx, milestone::types::Milestone, raw::Raw, return_err_if_none};
 
 /// The [`NodeStatus`] type.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -22,19 +19,19 @@ pub struct NodeStatus {
     /// The current protocol parameters.
     pub current_protocol_parameters: ProtocolParameters,
     /// The tangle pruning index of the node.
-    pub tangle_pruning_index: bee::payload::milestone::MilestoneIndex,
+    pub tangle_pruning_index: bee::MilestoneIndex,
     /// The milestones pruning index of the node.
-    pub milestones_pruning_index: bee::payload::milestone::MilestoneIndex,
+    pub milestones_pruning_index: bee::MilestoneIndex,
     /// The ledger pruning index of the node.
-    pub ledger_pruning_index: bee::payload::milestone::MilestoneIndex,
+    pub ledger_pruning_index: bee::MilestoneIndex,
     /// The ledger index of the node.
-    pub ledger_index: bee::payload::milestone::MilestoneIndex,
+    pub ledger_index: bee::MilestoneIndex,
 }
 
-impl TryFrom<proto::NodeStatus> for NodeStatus {
+impl TryFrom<inx::NodeStatus> for NodeStatus {
     type Error = bee::InxError;
 
-    fn try_from(value: proto::NodeStatus) -> Result<Self, Self::Error> {
+    fn try_from(value: inx::NodeStatus) -> Result<Self, Self::Error> {
         Ok(NodeStatus {
             is_healthy: value.is_healthy,
             is_synced: value.is_synced,
@@ -50,7 +47,7 @@ impl TryFrom<proto::NodeStatus> for NodeStatus {
     }
 }
 
-impl From<NodeStatus> for proto::NodeStatus {
+impl From<NodeStatus> for inx::NodeStatus {
     fn from(value: NodeStatus) -> Self {
         Self {
             is_healthy: value.is_healthy,
@@ -76,10 +73,10 @@ pub struct NodeConfiguration {
     pub supported_protocol_versions: Box<[u8]>,
 }
 
-impl TryFrom<proto::NodeConfiguration> for NodeConfiguration {
+impl TryFrom<inx::NodeConfiguration> for NodeConfiguration {
     type Error = bee::InxError;
 
-    fn try_from(value: proto::NodeConfiguration) -> Result<Self, Self::Error> {
+    fn try_from(value: inx::NodeConfiguration) -> Result<Self, Self::Error> {
         Ok(NodeConfiguration {
             milestone_public_key_count: value.milestone_public_key_count,
             milestone_key_ranges: value.milestone_key_ranges.into_iter().map(Into::into).collect(),
@@ -89,7 +86,7 @@ impl TryFrom<proto::NodeConfiguration> for NodeConfiguration {
     }
 }
 
-impl From<NodeConfiguration> for proto::NodeConfiguration {
+impl From<NodeConfiguration> for inx::NodeConfiguration {
     fn from(value: NodeConfiguration) -> Self {
         Self {
             milestone_public_key_count: value.milestone_public_key_count,
@@ -121,8 +118,8 @@ pub struct BaseToken {
     pub use_metric_prefix: bool,
 }
 
-impl From<proto::BaseToken> for BaseToken {
-    fn from(value: proto::BaseToken) -> Self {
+impl From<inx::BaseToken> for BaseToken {
+    fn from(value: inx::BaseToken) -> Self {
         Self {
             name: value.name,
             ticker_symbol: value.ticker_symbol,
@@ -134,7 +131,7 @@ impl From<proto::BaseToken> for BaseToken {
     }
 }
 
-impl From<BaseToken> for proto::BaseToken {
+impl From<BaseToken> for inx::BaseToken {
     fn from(value: BaseToken) -> Self {
         Self {
             name: value.name,
@@ -150,12 +147,12 @@ impl From<BaseToken> for proto::BaseToken {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MilestoneKeyRange {
     pub public_key: Box<[u8]>,
-    pub start_index: bee::payload::milestone::MilestoneIndex,
-    pub end_index: bee::payload::milestone::MilestoneIndex,
+    pub start_index: bee::MilestoneIndex,
+    pub end_index: bee::MilestoneIndex,
 }
 
-impl From<proto::MilestoneKeyRange> for MilestoneKeyRange {
-    fn from(value: proto::MilestoneKeyRange) -> Self {
+impl From<inx::MilestoneKeyRange> for MilestoneKeyRange {
+    fn from(value: inx::MilestoneKeyRange) -> Self {
         Self {
             public_key: value.public_key.into_boxed_slice(),
             start_index: value.start_index.into(),
@@ -164,7 +161,7 @@ impl From<proto::MilestoneKeyRange> for MilestoneKeyRange {
     }
 }
 
-impl From<MilestoneKeyRange> for proto::MilestoneKeyRange {
+impl From<MilestoneKeyRange> for inx::MilestoneKeyRange {
     fn from(value: MilestoneKeyRange) -> Self {
         Self {
             public_key: value.public_key.into_vec(),
@@ -178,11 +175,11 @@ impl From<MilestoneKeyRange> for proto::MilestoneKeyRange {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ProtocolParameters {
     pub protocol_version: u8,
-    pub params: Raw<bee::protocol::ProtocolParameters>,
+    pub params: Raw<bee::ProtocolParameters>,
 }
 
-impl From<proto::RawProtocolParameters> for ProtocolParameters {
-    fn from(value: proto::RawProtocolParameters) -> Self {
+impl From<inx::RawProtocolParameters> for ProtocolParameters {
+    fn from(value: inx::RawProtocolParameters) -> Self {
         Self {
             protocol_version: value.protocol_version as u8,
             params: value.params.into(),
@@ -190,7 +187,7 @@ impl From<proto::RawProtocolParameters> for ProtocolParameters {
     }
 }
 
-impl From<ProtocolParameters> for proto::RawProtocolParameters {
+impl From<ProtocolParameters> for inx::RawProtocolParameters {
     fn from(value: ProtocolParameters) -> Self {
         Self {
             protocol_version: value.protocol_version as u32,

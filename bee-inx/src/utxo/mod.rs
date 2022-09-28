@@ -10,10 +10,29 @@ use crate::{
     client::{try_from_inx_type, Inx},
     error::Error,
     inx,
-    requests::MilestoneRangeRequest,
+    milestone::requests::MilestoneRangeRequest,
 };
 
+// rpc ReadUnspentOutputs(NoParams) returns (stream UnspentOutput);
+// rpc ListenToLedgerUpdates(MilestoneRangeRequest) returns (stream LedgerUpdate);
+// rpc ListenToTreasuryUpdates(MilestoneRangeRequest) returns (stream TreasuryUpdate);
+// rpc ReadOutput(OutputId) returns (OutputResponse);
+// rpc ListenToMigrationReceipts(NoParams) returns (stream RawReceipt);
+
 impl Inx {
+    /// TODO
+    pub async fn read_unspent_outputs(
+        &mut self,
+    ) -> Result<impl Stream<Item = Result<crate::UnspentOutput, Error>>, Error> {
+        Ok(self
+            .client
+            .read_unspent_outputs(inx::NoParams {})
+            .await?
+            .into_inner()
+            .map(try_from_inx_type))
+    }
+
+    /// TODO
     pub async fn listen_to_ledger_updates(
         &mut self,
         request: MilestoneRangeRequest,
@@ -26,12 +45,14 @@ impl Inx {
             .map(try_from_inx_type))
     }
 
-    pub async fn read_unspent_outputs(
+    /// TODO
+    pub async fn listen_to_treasury_updates(
         &mut self,
-    ) -> Result<impl Stream<Item = Result<crate::UnspentOutput, Error>>, Error> {
+        request: MilestoneRangeRequest,
+    ) -> Result<impl Stream<Item = Result<TreasuryUpdate, Error>>, Error> {
         Ok(self
             .client
-            .read_unspent_outputs(inx::NoParams {})
+            .listen_to_treasury_updates(inx::MilestoneRangeRequest::from(request))
             .await?
             .into_inner()
             .map(try_from_inx_type))
