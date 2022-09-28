@@ -7,7 +7,7 @@ use futures::StreamExt;
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     dotenvy::dotenv().ok();
-    let inx_connect_url = std::env::var("INX_CONNECT_URL").expect("missing INX_CONNECT_URL environment variable");
+    let inx_connect_url = std::env::var("INX_CONNECT_URL").unwrap_or_else(|_| "http://localhost:9029".to_string());
 
     let mut inx = client::Inx::connect(&inx_connect_url).await?;
     println!("Connected via INX to node at {inx_connect_url}");

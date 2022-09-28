@@ -24,13 +24,12 @@ use crate::{
 impl Inx {
     /// TODO
     pub async fn read_milestone(&mut self, request: MilestoneRequest) -> Result<Milestone, Error> {
-        Milestone::try_from(
-            self.client
-                .read_milestone(inx::MilestoneRequest::from(request))
-                .await?
-                .into_inner(),
-        )
-        .map_err(Error::InxError)
+        Ok(self
+            .client
+            .read_milestone(inx::MilestoneRequest::from(request))
+            .await?
+            .into_inner()
+            .try_into()?)
     }
 
     /// Listens to confirmed milestones in a certain range.

@@ -39,7 +39,7 @@ mod test {
     use super::*;
 
     #[test]
-    fn macro_missing_field() {
+    fn test_return_err_if_none() {
         let proto = inx::TreasuryOutput {
             milestone_id: None,
             amount: 42,
