@@ -1,6 +1,6 @@
 [package]
 name = "bee-ledger-types"
-version = "1.0.0"
+version = "1.0.1"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "All types required to compute and maintain the ledger state."
@@ -17,7 +17,7 @@ all-features = true
 rustdoc-args = [ "--cfg", "doc_cfg" ]
 
 [dependencies]
-bee-block = { version = "1.0.0", path = "../../bee-block", default-features = false, features = [ "std" ] }
+bee-block = { version = "1.0.1", path = "../../bee-block", default-features = false, features = [ "std" ] }
 
 packable = { version = "0.6.2", default-features = false, features = [ "serde", "io" ] }
 thiserror = { version = "1.0.32", default-features = false }
