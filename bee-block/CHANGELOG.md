@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `#[serde(rename_all = "camelCase")]` to `ProtocolParameters` and `RentStructure`;
+- `From` derivation on DTO enums;
 
 ### Changed
 

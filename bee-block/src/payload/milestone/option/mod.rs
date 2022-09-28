@@ -151,7 +151,7 @@ pub mod dto {
     use super::*;
     use crate::error::dto::DtoError;
 
-    #[derive(Clone, Debug, Eq, PartialEq)]
+    #[derive(Clone, Debug, Eq, PartialEq, From)]
     pub enum MilestoneOptionDto {
         /// A receipt milestone option.
         Receipt(ReceiptMilestoneOptionDto),
