@@ -1,14 +1,10 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod configuration;
-mod protocol_parameters;
-mod status;
+mod types;
 
-pub use self::{configuration::NodeConfiguration, protocol_parameters::ProtocolParameters, status::NodeStatus};
+pub use self::types::*;
 use crate::{client::Inx, error::Error, inx, request::MilestoneRequest};
-
-// TODO: listen_to_node_status
 
 impl Inx {
     /// TODO
@@ -16,6 +12,8 @@ impl Inx {
         NodeStatus::try_from(self.client.read_node_status(inx::NoParams {}).await?.into_inner())
             .map_err(Error::InxError)
     }
+
+    // TODO: listen_to_node_status
 
     /// TODO
     pub async fn read_node_configuration(&mut self) -> Result<NodeConfiguration, Error> {
