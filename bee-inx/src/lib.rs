@@ -15,6 +15,7 @@ pub use self::{block::*, error::Error, milestone::*, node::*, raw::*, request::*
 
 pub mod inx {
     pub use ::inx::proto::*;
+    pub use ::inx::proto::block_metadata::*;
 }
 
 #[macro_export]

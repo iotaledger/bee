@@ -2,9 +2,66 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_block as bee;
-use inx::proto;
 
-use crate::return_err_if_none;
+use crate::{inx, raw::Raw, return_err_if_none};
+
+/// The [`Block`] type.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Block {
+    /// The [`BlockId`](bee::BlockId) of the block.
+    pub block_id: bee::BlockId,
+    /// The complete [`Block`](bee::Block) as raw bytes.
+    pub block: Raw<bee::Block>,
+}
+
+impl TryFrom<inx::Block> for Block {
+    type Error = bee::InxError;
+
+    fn try_from(value: inx::Block) -> Result<Self, Self::Error> {
+        Ok(Block {
+            block_id: return_err_if_none!(value.block_id).try_into()?,
+            block: return_err_if_none!(value.block).data.into(),
+        })
+    }
+}
+
+impl From<Block> for inx::Block {
+    fn from(value: Block) -> Self {
+        Self {
+            block_id: Some(value.block_id.into()),
+            block: Some(value.block.into()),
+        }
+    }
+}
+
+/// The [`BlockWithMetadata`] type.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct BlockWithMetadata {
+    /// The [`Metadata`](crate::BlockMetadata) of the block.
+    pub metadata: crate::BlockMetadata,
+    /// The complete [`Block`](bee::Block) as raw bytes.
+    pub block: Raw<bee::Block>,
+}
+
+impl TryFrom<inx::BlockWithMetadata> for BlockWithMetadata {
+    type Error = bee::InxError;
+
+    fn try_from(value: inx::BlockWithMetadata) -> Result<Self, Self::Error> {
+        Ok(BlockWithMetadata {
+            metadata: return_err_if_none!(value.metadata).try_into()?,
+            block: return_err_if_none!(value.block).data.into(),
+        })
+    }
+}
+
+impl From<BlockWithMetadata> for inx::BlockWithMetadata {
+    fn from(value: BlockWithMetadata) -> Self {
+        Self {
+            metadata: Some(value.metadata.into()),
+            block: Some(value.block.into()),
+        }
+    }
+}
 
 /// The metadata for a block with a given [`BlockId`](bee::BlockId).
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -31,10 +88,10 @@ pub struct BlockMetadata {
     pub white_flag_index: u32,
 }
 
-impl TryFrom<proto::BlockMetadata> for BlockMetadata {
+impl TryFrom<inx::BlockMetadata> for BlockMetadata {
     type Error = bee::InxError;
 
-    fn try_from(value: proto::BlockMetadata) -> Result<Self, Self::Error> {
+    fn try_from(value: inx::BlockMetadata) -> Result<Self, Self::Error> {
         let ledger_inclusion_state = value.ledger_inclusion_state().into();
         let conflict_reason = value.conflict_reason().into();
 
@@ -59,9 +116,9 @@ impl TryFrom<proto::BlockMetadata> for BlockMetadata {
     }
 }
 
-impl From<proto::block_metadata::LedgerInclusionState> for LedgerInclusionState {
-    fn from(value: proto::block_metadata::LedgerInclusionState) -> Self {
-        use proto::block_metadata::LedgerInclusionState::*;
+impl From<inx::LedgerInclusionState> for LedgerInclusionState {
+    fn from(value: inx::LedgerInclusionState) -> Self {
+        use crate::inx::LedgerInclusionState::*;
         match value {
             NoTransaction => LedgerInclusionState::NoTransaction,
             Included => LedgerInclusionState::Included,
@@ -70,7 +127,7 @@ impl From<proto::block_metadata::LedgerInclusionState> for LedgerInclusionState 
     }
 }
 
-impl From<LedgerInclusionState> for proto::block_metadata::LedgerInclusionState {
+impl From<LedgerInclusionState> for inx::LedgerInclusionState {
     fn from(value: LedgerInclusionState) -> Self {
         match value {
             LedgerInclusionState::NoTransaction => Self::NoTransaction,
@@ -80,7 +137,7 @@ impl From<LedgerInclusionState> for proto::block_metadata::LedgerInclusionState 
     }
 }
 
-impl From<BlockMetadata> for proto::BlockMetadata {
+impl From<BlockMetadata> for inx::BlockMetadata {
     fn from(value: BlockMetadata) -> Self {
         Self {
             block_id: Some(value.block_id.into()),
@@ -90,9 +147,9 @@ impl From<BlockMetadata> for proto::BlockMetadata {
             should_reattach: value.should_reattach,
             referenced_by_milestone_index: value.referenced_by_milestone_index,
             milestone_index: value.milestone_index,
-            ledger_inclusion_state: proto::block_metadata::LedgerInclusionState::from(value.ledger_inclusion_state)
+            ledger_inclusion_state: inx::block_metadata::LedgerInclusionState::from(value.ledger_inclusion_state)
                 .into(),
-            conflict_reason: proto::block_metadata::ConflictReason::from(value.conflict_reason).into(),
+            conflict_reason: inx::block_metadata::ConflictReason::from(value.conflict_reason).into(),
             white_flag_index: value.white_flag_index,
         }
     }
