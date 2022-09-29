@@ -94,3 +94,32 @@ impl From<MilestoneInfo> for inx::MilestoneInfo {
         }
     }
 }
+
+// message WhiteFlagResponse {
+//   bytes milestone_inclusion_merkle_root = 1;
+//   bytes milestone_applied_merkle_root = 2;
+// }
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct WhiteFlagResponse {
+    milestone_inclusion_merkle_root: Vec<u8>,
+    milestone_applied_merkle_root: Vec<u8>,
+}
+
+impl From<inx::WhiteFlagResponse> for WhiteFlagResponse {
+    fn from(value: inx::WhiteFlagResponse) -> Self {
+        Self {
+            milestone_inclusion_merkle_root: value.milestone_inclusion_merkle_root,
+            milestone_applied_merkle_root: value.milestone_applied_merkle_root,
+        }
+    }
+}
+
+impl From<WhiteFlagResponse> for inx::WhiteFlagResponse {
+    fn from(value: WhiteFlagResponse) -> Self {
+        Self {
+            milestone_inclusion_merkle_root: value.milestone_inclusion_merkle_root,
+            milestone_applied_merkle_root: value.milestone_applied_merkle_root,
+        }
+    }
+}

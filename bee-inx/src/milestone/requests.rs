@@ -3,19 +3,17 @@
 
 use std::ops::{Bound, RangeBounds};
 
-use bee_block::payload::milestone::{MilestoneId, MilestoneIndex};
-
-use crate::inx;
+use crate::{bee, error, inx};
 
 pub enum MilestoneRequest {
-    MilestoneIndex(MilestoneIndex),
-    MilestoneId(MilestoneId),
+    MilestoneIndex(bee::MilestoneIndex),
+    MilestoneId(bee::MilestoneId),
 }
 
 impl From<MilestoneRequest> for inx::MilestoneRequest {
     fn from(value: MilestoneRequest) -> Self {
         match value {
-            MilestoneRequest::MilestoneIndex(MilestoneIndex(milestone_index)) => Self {
+            MilestoneRequest::MilestoneIndex(bee::MilestoneIndex(milestone_index)) => Self {
                 milestone_index,
                 milestone_id: None,
             },
@@ -29,7 +27,7 @@ impl From<MilestoneRequest> for inx::MilestoneRequest {
 
 impl<T: Into<u32>> From<T> for MilestoneRequest {
     fn from(value: T) -> Self {
-        Self::MilestoneIndex(MilestoneIndex(value.into()))
+        Self::MilestoneIndex(bee::MilestoneIndex(value.into()))
     }
 }
 
@@ -70,6 +68,44 @@ where
     inx::MilestoneRangeRequest {
         start_milestone_index,
         end_milestone_index,
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct WhiteFlagRequest {
+    milestone_index: bee::MilestoneIndex,
+    milestone_timestamp: u32,
+    parents: Box<[bee::BlockId]>,
+    previous_milestone_id: Option<bee::MilestoneId>,
+}
+
+impl TryFrom<inx::WhiteFlagRequest> for WhiteFlagRequest {
+    type Error = error::Error;
+
+    fn try_from(value: inx::WhiteFlagRequest) -> Result<Self, Self::Error> {
+        let parents = value
+            .parents
+            .into_iter()
+            .map(TryInto::try_into)
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(Self {
+            milestone_index: value.milestone_index.into(),
+            milestone_timestamp: value.milestone_timestamp,
+            parents: parents.into_boxed_slice(),
+            previous_milestone_id: value.previous_milestone_id.map(TryInto::try_into).transpose()?,
+        })
+    }
+}
+
+impl From<WhiteFlagRequest> for inx::WhiteFlagRequest {
+    fn from(value: WhiteFlagRequest) -> Self {
+        Self {
+            milestone_index: value.milestone_index.0,
+            milestone_timestamp: value.milestone_timestamp,
+            parents: value.parents.into_vec().into_iter().map(Into::into).collect(),
+            previous_milestone_id: value.previous_milestone_id.map(Into::into),
+        }
     }
 }
 

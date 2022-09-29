@@ -22,8 +22,10 @@ pub mod inx {
 
 pub(crate) mod bee {
     pub use bee_block::{
-        payload::milestone::MilestoneIndex, protocol::ProtocolParameters, semantic::ConflictReason, Block, BlockId,
-        InxError,
+        payload::milestone::{MilestoneId, MilestoneIndex},
+        protocol::ProtocolParameters,
+        semantic::ConflictReason,
+        Block, BlockId, InxError,
     };
 }
 

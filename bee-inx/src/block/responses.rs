@@ -114,6 +114,24 @@ impl TryFrom<inx::BlockMetadata> for BlockMetadata {
     }
 }
 
+impl From<BlockMetadata> for inx::BlockMetadata {
+    fn from(value: BlockMetadata) -> Self {
+        Self {
+            block_id: Some(value.block_id.into()),
+            parents: value.parents.into_vec().into_iter().map(Into::into).collect(),
+            solid: value.is_solid,
+            should_promote: value.should_promote,
+            should_reattach: value.should_reattach,
+            referenced_by_milestone_index: value.referenced_by_milestone_index,
+            milestone_index: value.milestone_index,
+            ledger_inclusion_state: inx::block_metadata::LedgerInclusionState::from(value.ledger_inclusion_state)
+                .into(),
+            conflict_reason: inx::block_metadata::ConflictReason::from(value.conflict_reason).into(),
+            white_flag_index: value.white_flag_index,
+        }
+    }
+}
+
 impl From<inx::LedgerInclusionState> for LedgerInclusionState {
     fn from(value: inx::LedgerInclusionState) -> Self {
         use crate::inx::LedgerInclusionState::*;
@@ -131,24 +149,6 @@ impl From<LedgerInclusionState> for inx::LedgerInclusionState {
             LedgerInclusionState::NoTransaction => Self::NoTransaction,
             LedgerInclusionState::Included => Self::Included,
             LedgerInclusionState::Conflicting => Self::Conflicting,
-        }
-    }
-}
-
-impl From<BlockMetadata> for inx::BlockMetadata {
-    fn from(value: BlockMetadata) -> Self {
-        Self {
-            block_id: Some(value.block_id.into()),
-            parents: value.parents.into_vec().into_iter().map(Into::into).collect(),
-            solid: value.is_solid,
-            should_promote: value.should_promote,
-            should_reattach: value.should_reattach,
-            referenced_by_milestone_index: value.referenced_by_milestone_index,
-            milestone_index: value.milestone_index,
-            ledger_inclusion_state: inx::block_metadata::LedgerInclusionState::from(value.ledger_inclusion_state)
-                .into(),
-            conflict_reason: inx::block_metadata::ConflictReason::from(value.conflict_reason).into(),
-            white_flag_index: value.white_flag_index,
         }
     }
 }

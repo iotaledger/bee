@@ -8,18 +8,11 @@ use futures::stream::{Stream, StreamExt};
 
 pub use self::{requests::*, responses::*};
 use crate::{
-    block::responses::BlockWithMetadata,
+    block::responses::{BlockMetadata, BlockWithMetadata},
     client::{try_from_inx_type, Inx},
     error::Error,
     inx,
 };
-
-//   rpc ReadMilestone(MilestoneRequest) returns (Milestone);
-//   rpc ListenToLatestMilestones(NoParams) returns (stream Milestone);
-//   rpc ListenToConfirmedMilestones(MilestoneRangeRequest) returns (stream MilestoneAndProtocolParameters);
-//   rpc ComputeWhiteFlag(WhiteFlagRequest) returns (WhiteFlagResponse);
-//   rpc ReadMilestoneCone(MilestoneRequest) returns (stream BlockWithMetadata);
-//   rpc ReadMilestoneConeMetadata(MilestoneRequest) returns (stream BlockMetadata);
 
 impl Inx {
     /// TODO
@@ -30,6 +23,16 @@ impl Inx {
             .await?
             .into_inner()
             .try_into()?)
+    }
+
+    /// Listens to latest milestones.
+    pub async fn listen_to_latest_milestones(&mut self) -> Result<impl Stream<Item = Result<Milestone, Error>>, Error> {
+        Ok(self
+            .client
+            .listen_to_latest_milestones(inx::NoParams {})
+            .await?
+            .into_inner()
+            .map(try_from_inx_type))
     }
 
     /// Listens to confirmed milestones in a certain range.
@@ -45,6 +48,16 @@ impl Inx {
             .map(try_from_inx_type))
     }
 
+    /// TODO
+    pub async fn compute_white_flag(&mut self, request: WhiteFlagRequest) -> Result<WhiteFlagResponse, Error> {
+        Ok(self
+            .client
+            .compute_white_flag(inx::WhiteFlagRequest::from(request))
+            .await?
+            .into_inner()
+            .into())
+    }
+
     /// Reads the past cone of a milestone specified by a [`MilestoneRequest`].
     pub async fn read_milestone_cone(
         &mut self,
@@ -53,6 +66,19 @@ impl Inx {
         Ok(self
             .client
             .read_milestone_cone(inx::MilestoneRequest::from(request))
+            .await?
+            .into_inner()
+            .map(try_from_inx_type))
+    }
+
+    /// TODO
+    pub async fn read_milestone_cone_metadata(
+        &mut self,
+        request: MilestoneRequest,
+    ) -> Result<impl Stream<Item = Result<BlockMetadata, Error>>, Error> {
+        Ok(self
+            .client
+            .read_milestone_cone_metadata(inx::MilestoneRequest::from(request))
             .await?
             .into_inner()
             .map(try_from_inx_type))
