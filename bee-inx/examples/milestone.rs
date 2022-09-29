@@ -39,6 +39,8 @@ async fn main() -> Result<(), Error> {
             }
         }
         "latest_milestones" => {
+            println!("Streaming latest milestones... ");
+
             let mut milestone_stream = inx.listen_to_latest_milestones().await?;
 
             while let Some(milestone) = milestone_stream.next().await {

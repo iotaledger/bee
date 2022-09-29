@@ -95,11 +95,6 @@ impl From<MilestoneInfo> for inx::MilestoneInfo {
     }
 }
 
-// message WhiteFlagResponse {
-//   bytes milestone_inclusion_merkle_root = 1;
-//   bytes milestone_applied_merkle_root = 2;
-// }
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct WhiteFlagResponse {
     milestone_inclusion_merkle_root: Vec<u8>,
