@@ -8,17 +8,12 @@ use futures::{Stream, StreamExt};
 pub use self::responses::*;
 use crate::{
     bee,
-    client::{try_from_inx_type, Inx},
+    client::{from_inx_type, try_from_inx_type, Inx},
     error::Error,
     inx,
     milestone::requests::MilestoneRangeRequest,
+    raw::Raw,
 };
-
-// rpc ReadUnspentOutputs(NoParams) returns (stream UnspentOutput);
-// rpc ListenToLedgerUpdates(MilestoneRangeRequest) returns (stream LedgerUpdate);
-// rpc ListenToTreasuryUpdates(MilestoneRangeRequest) returns (stream TreasuryUpdate);
-// rpc ReadOutput(OutputId) returns (OutputResponse);
-// rpc ListenToMigrationReceipts(NoParams) returns (stream RawReceipt);
 
 impl Inx {
     /// TODO
@@ -67,5 +62,17 @@ impl Inx {
             .await?
             .into_inner()
             .try_into()?)
+    }
+
+    /// TODO
+    pub async fn listen_to_migration_receipts(
+        &mut self,
+    ) -> Result<impl Stream<Item = Result<Raw<bee::MilestoneOption>, Error>>, Error> {
+        Ok(self
+            .client
+            .listen_to_migration_receipts(inx::NoParams {})
+            .await?
+            .into_inner()
+            .map(from_inx_type))
     }
 }

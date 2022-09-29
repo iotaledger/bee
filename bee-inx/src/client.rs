@@ -20,10 +20,18 @@ impl Inx {
     }
 }
 
-pub(crate) fn try_from_inx_type<P, B>(msg: Result<P, tonic::Status>) -> Result<B, Error>
+pub(crate) fn try_from_inx_type<InxType, BeeType>(msg: Result<InxType, tonic::Status>) -> Result<BeeType, Error>
 where
-    B: TryFrom<P, Error = bee_block::InxError>,
+    BeeType: TryFrom<InxType, Error = bee_block::InxError>,
 {
     let inner = msg.map_err(Error::StatusCode)?;
-    B::try_from(inner).map_err(Error::InxError)
+    BeeType::try_from(inner).map_err(Error::InxError)
+}
+
+pub(crate) fn from_inx_type<InxType, BeeType>(msg: Result<InxType, tonic::Status>) -> Result<BeeType, Error>
+where
+    BeeType: From<InxType>,
+{
+    let inner = msg.map_err(Error::StatusCode)?;
+    Ok(BeeType::from(inner))
 }

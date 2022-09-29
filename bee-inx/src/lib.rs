@@ -24,13 +24,16 @@ pub(crate) mod bee {
     pub use bee_block::{
         output::{Output, OutputId},
         payload::{
-            milestone::{MilestoneId, MilestoneIndex},
+            milestone::{MilestoneId, MilestoneIndex, MilestoneOption},
             transaction::TransactionId,
+            Payload,
         },
         protocol::ProtocolParameters,
         semantic::ConflictReason,
         Block, BlockId, InxError,
     };
+    #[cfg(test)]
+    pub use bee_block::{protocol::protocol_parameters, rand::output::rand_output};
 }
 
 #[macro_export]
