@@ -15,7 +15,7 @@ pub struct Raw<T: Packable> {
 }
 
 impl<T: Packable> Raw<T> {
-    /// Returns the inner byte data as-is. 
+    /// Returns the inner byte data as-is.
     #[must_use]
     pub fn data(self) -> Vec<u8> {
         self.data

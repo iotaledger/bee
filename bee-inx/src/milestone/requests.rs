@@ -33,7 +33,7 @@ impl<T: Into<u32>> From<T> for MilestoneRequest {
     }
 }
 
-/// A request for a range of milestones by [`MilestoneIndex`].
+/// A request for a range of milestones by [`bee::MilestoneIndex`].
 #[derive(Clone, Debug, PartialEq)]
 pub struct MilestoneRangeRequest(inx::MilestoneRangeRequest);
 

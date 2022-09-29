@@ -59,7 +59,7 @@ impl Inx {
             .into())
     }
 
-    /// Requests the metadata of the block with the given block id. 
+    /// Requests the metadata of the block with the given block id.
     pub async fn read_block_metadata(&mut self, block_id: bee::BlockId) -> Result<BlockMetadata, Error> {
         Ok(self
             .client
