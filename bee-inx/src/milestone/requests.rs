@@ -5,6 +5,8 @@ use std::ops::{Bound, RangeBounds};
 
 use crate::{bee, error, inx};
 
+/// Allows to request a milestone by either its index or its id.
+#[allow(missing_docs)]
 pub enum MilestoneRequest {
     MilestoneIndex(bee::MilestoneIndex),
     MilestoneId(bee::MilestoneId),
@@ -71,6 +73,7 @@ where
     }
 }
 
+/// Allows to request "white flag" data for a particular milestone.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct WhiteFlagRequest {
     milestone_index: bee::MilestoneIndex,

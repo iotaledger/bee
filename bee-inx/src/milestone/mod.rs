@@ -1,7 +1,9 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+/// A module that provides milestone related INX requests.
 pub mod requests;
+/// A module that provides milestone related INX responses.
 pub mod responses;
 
 use futures::stream::{Stream, StreamExt};
@@ -15,7 +17,7 @@ use crate::{
 };
 
 impl Inx {
-    /// TODO
+    /// Requests a particular milestone.
     pub async fn read_milestone(&mut self, request: MilestoneRequest) -> Result<Milestone, Error> {
         Ok(self
             .client
@@ -48,7 +50,7 @@ impl Inx {
             .map(try_from_inx_type))
     }
 
-    /// TODO
+    /// Requests "white flag" data for a milestone.
     pub async fn compute_white_flag(&mut self, request: WhiteFlagRequest) -> Result<WhiteFlagResponse, Error> {
         Ok(self
             .client
@@ -71,7 +73,7 @@ impl Inx {
             .map(try_from_inx_type))
     }
 
-    /// TODO
+    /// Reads the past cone metadata of a milestone specified by a [`MilestoneRequest`].
     pub async fn read_milestone_cone_metadata(
         &mut self,
         request: MilestoneRequest,

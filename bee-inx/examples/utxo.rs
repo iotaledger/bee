@@ -15,7 +15,7 @@ async fn main() -> Result<(), Error> {
     let mut unspent_outputs = inx.read_unspent_outputs().await?;
 
     let mut count = 0;
-    while let Some(_) = unspent_outputs.next().await {
+    while let Some(_unspent_output) = unspent_outputs.next().await {
         count += 1;
     }
     println!("Read {count} unspent outputs.");

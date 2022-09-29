@@ -153,6 +153,7 @@ impl From<LedgerInclusionState> for inx::LedgerInclusionState {
     }
 }
 
+/// Whether a block contains a transaction that is either included or conflicting, or contains no transaction at all.
 #[allow(missing_docs)]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum LedgerInclusionState {

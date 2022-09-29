@@ -4,6 +4,7 @@
 use inx::tonic;
 use thiserror::Error;
 
+#[allow(missing_docs)]
 #[derive(Debug, Error)]
 pub enum Error {
     #[error(transparent)]

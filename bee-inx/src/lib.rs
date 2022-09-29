@@ -1,18 +1,28 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Bee compatible INX types and INX node request bindings.
+
+#![deny(missing_docs)]
+
 mod error;
 
+/// A module that provides block related requests..
 pub mod block;
+/// A module that provides the INX client.
 pub mod client;
+/// A module that provides milestone related requests.
 pub mod milestone;
+/// A module that provides node related requests.
 pub mod node;
+/// A module that provides the [`Raw<T: Packable>`] struct.
 pub mod raw;
+/// A module that provides UTXO ledger related requests.
 pub mod utxo;
 
 pub use self::{block::*, error::Error, milestone::*, node::*, raw::*, utxo::*};
 
-pub mod inx {
+pub(crate) mod inx {
     pub use ::inx::proto::{
         block_metadata::*,
         ledger_update::{marker::*, *},
@@ -36,6 +46,7 @@ pub(crate) mod bee {
     pub use bee_block::{protocol::protocol_parameters, rand::output::rand_output};
 }
 
+#[allow(missing_docs)]
 #[macro_export]
 macro_rules! return_err_if_none {
     ($object:ident.$field:ident) => {

@@ -1,6 +1,7 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+/// A module that provides block related INX responses.
 pub mod responses;
 
 use futures::stream::{Stream, StreamExt};
@@ -15,7 +16,7 @@ use crate::{
 };
 
 impl Inx {
-    // TODO
+    /// Listens to all blocks.
     pub async fn listen_to_blocks(&mut self) -> Result<impl Stream<Item = Result<Block, Error>>, Error> {
         Ok(self
             .client
@@ -25,7 +26,7 @@ impl Inx {
             .map(try_from_inx_type))
     }
 
-    // TODO
+    /// Listens to solid blocks.
     pub async fn listen_to_solid_blocks(&mut self) -> Result<impl Stream<Item = Result<BlockMetadata, Error>>, Error> {
         Ok(self
             .client
@@ -35,7 +36,7 @@ impl Inx {
             .map(try_from_inx_type))
     }
 
-    // TODO
+    /// Listens to referenced blocks.
     pub async fn listen_to_referenced_blocks(
         &mut self,
     ) -> Result<impl Stream<Item = Result<BlockMetadata, Error>>, Error> {
@@ -47,7 +48,7 @@ impl Inx {
             .map(try_from_inx_type))
     }
 
-    // TODO
+    /// Requests the block with the given block id.
     pub async fn read_block(&mut self, block_id: bee::BlockId) -> Result<Raw<bee::Block>, Error> {
         Ok(self
             .client
@@ -58,7 +59,7 @@ impl Inx {
             .into())
     }
 
-    // TODO
+    /// Requests the metadata of the block with the given block id. 
     pub async fn read_block_metadata(&mut self, block_id: bee::BlockId) -> Result<BlockMetadata, Error> {
         Ok(self
             .client
@@ -68,7 +69,7 @@ impl Inx {
             .try_into()?)
     }
 
-    // TODO
+    /// Submits a block and returns its corresponding block id.
     pub async fn submit_block(&mut self, raw_block: Raw<bee::Block>) -> Result<bee::BlockId, Error> {
         Ok(self
             .client

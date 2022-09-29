@@ -3,7 +3,7 @@
 
 use crate::{bee, inx, return_err_if_none, Raw};
 
-/// Represents a new output in the ledger.
+/// Represents unspent output response.
 #[allow(missing_docs)]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LedgerOutput {
@@ -40,7 +40,7 @@ impl From<LedgerOutput> for inx::LedgerOutput {
     }
 }
 
-/// Represents a spent output in the ledger.
+/// A spent output response.
 #[allow(missing_docs)]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LedgerSpent {
@@ -74,6 +74,7 @@ impl From<LedgerSpent> for inx::LedgerSpent {
     }
 }
 
+/// An unspent output response.
 #[allow(missing_docs)]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct UnspentOutput {
@@ -101,6 +102,7 @@ impl From<UnspentOutput> for inx::UnspentOutput {
     }
 }
 
+/// A ledger update response.
 #[allow(missing_docs)]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum LedgerUpdate {
@@ -171,6 +173,7 @@ impl From<LedgerUpdate> for inx::LedgerUpdate {
     }
 }
 
+/// Represents a ledger update batch marker.
 #[allow(missing_docs)]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Marker {
@@ -283,14 +286,6 @@ impl From<TreasuryUpdate> for inx::TreasuryUpdate {
     }
 }
 
-// message OutputResponse {
-//   uint32 ledger_index = 1;
-//   oneof payload {
-//     LedgerOutput output = 2;
-//     LedgerSpent spent = 3;
-//   }
-// }
-
 /// Represents an output response.
 #[allow(missing_docs)]
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -299,6 +294,7 @@ pub struct OutputResponse {
     pub payload: Option<OutputResponsePayload>,
 }
 
+#[allow(missing_docs)]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum OutputResponsePayload {
     LedgerOutput(LedgerOutput),

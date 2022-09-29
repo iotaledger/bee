@@ -36,6 +36,7 @@ impl From<Milestone> for inx::Milestone {
 }
 
 /// The [`Milestone`] type.
+#[allow(missing_docs)]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MilestoneAndProtocolParameters {
     pub milestone: Milestone,
@@ -95,6 +96,8 @@ impl From<MilestoneInfo> for inx::MilestoneInfo {
     }
 }
 
+/// The response of a corresponding "white flag" request.
+#[allow(missing_docs)]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct WhiteFlagResponse {
     milestone_inclusion_merkle_root: Vec<u8>,

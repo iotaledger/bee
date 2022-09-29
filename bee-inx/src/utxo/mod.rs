@@ -1,6 +1,7 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+/// A module that provides utxo related INX responses.
 pub mod responses;
 
 use futures::{Stream, StreamExt};
@@ -16,7 +17,7 @@ use crate::{
 };
 
 impl Inx {
-    /// TODO
+    /// Requests all unspent outputs.
     pub async fn read_unspent_outputs(
         &mut self,
     ) -> Result<impl Stream<Item = Result<crate::UnspentOutput, Error>>, Error> {
@@ -28,7 +29,7 @@ impl Inx {
             .map(try_from_inx_type))
     }
 
-    /// TODO
+    /// Creates a feed of ledger updates.
     pub async fn listen_to_ledger_updates(
         &mut self,
         request: MilestoneRangeRequest,
@@ -41,7 +42,7 @@ impl Inx {
             .map(try_from_inx_type))
     }
 
-    /// TODO
+    /// Creates a feed of treasury updates.
     pub async fn listen_to_treasury_updates(
         &mut self,
         request: MilestoneRangeRequest,
@@ -54,7 +55,7 @@ impl Inx {
             .map(try_from_inx_type))
     }
 
-    /// TODO
+    /// Requests an output by its output id.
     pub async fn read_output(&mut self, output_id: bee::OutputId) -> Result<OutputResponse, Error> {
         Ok(self
             .client
@@ -64,7 +65,7 @@ impl Inx {
             .try_into()?)
     }
 
-    /// TODO
+    /// Creates a feed of migration receipts.
     pub async fn listen_to_migration_receipts(
         &mut self,
     ) -> Result<impl Stream<Item = Result<Raw<bee::MilestoneOption>, Error>>, Error> {

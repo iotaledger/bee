@@ -3,7 +3,8 @@
 
 use crate::inx;
 
-/// TODO
+/// A request for the node status.
+#[allow(missing_docs)]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct NodeStatusRequest {
     pub cooldown_in_milliseconds: u32,

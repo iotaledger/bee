@@ -15,17 +15,20 @@ pub struct Raw<T: Packable> {
 }
 
 impl<T: Packable> Raw<T> {
+    /// Returns the inner byte data as-is. 
     #[must_use]
     pub fn data(self) -> Vec<u8> {
         self.data
     }
 
+    /// Deserializes the inner byte data into `T`.
     pub fn inner(self, visitor: &T::UnpackVisitor) -> Result<T, Error> {
         let unpacked = T::unpack_verified(self.data, visitor)
             .map_err(|e| bee_block::InxError::InvalidRawBytes(format!("{:?}", e)))?;
         Ok(unpacked)
     }
 
+    /// Deserializes the raw byte data into `T` without verification.
     pub fn inner_unverified(self) -> Result<T, Error> {
         let unpacked =
             T::unpack_unverified(self.data).map_err(|e| bee_block::InxError::InvalidRawBytes(format!("{:?}", e)))?;

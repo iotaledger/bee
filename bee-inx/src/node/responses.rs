@@ -3,7 +3,7 @@
 
 use crate::{bee, inx, milestone::responses::Milestone, raw::Raw, return_err_if_none};
 
-/// The [`NodeStatus`] type.
+/// Represents the [`NodeStatus`] response.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct NodeStatus {
     /// Signals if the node is healthy.
@@ -64,7 +64,8 @@ impl From<NodeStatus> for inx::NodeStatus {
     }
 }
 
-/// The [`NodeConfiguration`] type.
+/// Represents the [`NodeConfiguration`] response.
+#[allow(missing_docs)]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct NodeConfiguration {
     pub milestone_public_key_count: u32,
@@ -108,6 +109,7 @@ impl From<NodeConfiguration> for inx::NodeConfiguration {
 }
 
 /// The [`BaseToken`] type.
+#[allow(missing_docs)]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct BaseToken {
     pub name: String,
@@ -144,6 +146,8 @@ impl From<BaseToken> for inx::BaseToken {
     }
 }
 
+/// Represents a milestone key range.
+#[allow(missing_docs)]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MilestoneKeyRange {
     pub public_key: Box<[u8]>,
@@ -171,6 +175,7 @@ impl From<MilestoneKeyRange> for inx::MilestoneKeyRange {
     }
 }
 
+/// Represents a protocol parameters response.
 #[allow(missing_docs)]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ProtocolParameters {

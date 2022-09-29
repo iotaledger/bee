@@ -1,7 +1,9 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+/// A module that provides node related INX requests.
 pub mod requests;
+/// A module that provides node related INX responses.
 pub mod responses;
 
 use futures::stream::{Stream, StreamExt};
@@ -15,13 +17,13 @@ use crate::{
 };
 
 impl Inx {
-    /// TODO
+    /// Requests the status of the connected node.
     pub async fn read_node_status(&mut self) -> Result<NodeStatus, Error> {
         NodeStatus::try_from(self.client.read_node_status(inx::NoParams {}).await?.into_inner())
             .map_err(Error::InxError)
     }
 
-    // TODO
+    /// Listens to node status updates.
     pub async fn listen_to_node_status(
         &mut self,
         request: NodeStatusRequest,
@@ -34,7 +36,7 @@ impl Inx {
             .map(try_from_inx_type))
     }
 
-    /// TODO
+    /// Requests the configuration of the connected node.
     pub async fn read_node_configuration(&mut self) -> Result<NodeConfiguration, Error> {
         NodeConfiguration::try_from(
             self.client
@@ -45,7 +47,7 @@ impl Inx {
         .map_err(Error::InxError)
     }
 
-    /// TODO
+    /// Requests the protocol parameters of the connected node.
     pub async fn read_protocol_parameters(&mut self, request: MilestoneRequest) -> Result<ProtocolParameters, Error> {
         Ok(self
             .client
