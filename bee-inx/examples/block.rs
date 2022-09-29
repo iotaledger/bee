@@ -31,7 +31,7 @@ async fn main() -> Result<(), Error> {
                 let block = block?;
                 println!("{}", block.block_id);
 
-                print_block_metadata(&mut inx, block.block_id, read_block, read_block_metadata).await?;
+                fetch_block_and_metadata(&mut inx, block.block_id, read_block, read_block_metadata).await?;
             }
         }
         "solid_blocks" => {
@@ -42,7 +42,7 @@ async fn main() -> Result<(), Error> {
                 let block_metadata = block_metadata?;
                 println!("{}", block_metadata.block_id);
 
-                print_block_metadata(&mut inx, block_metadata.block_id, read_block, read_block_metadata).await?;
+                fetch_block_and_metadata(&mut inx, block_metadata.block_id, read_block, read_block_metadata).await?;
             }
         }
         "referenced_blocks" => {
@@ -53,18 +53,18 @@ async fn main() -> Result<(), Error> {
                 let block_metadata = block_metadata?;
                 println!("{}", block_metadata.block_id);
 
-                print_block_metadata(&mut inx, block_metadata.block_id, read_block, read_block_metadata).await?;
+                fetch_block_and_metadata(&mut inx, block_metadata.block_id, read_block, read_block_metadata).await?;
             }
         }
         _ => {
-            panic!("unknown block stream variant '{}'", block_stream);
+            panic!("unknown block stream variant: '{block_stream}'");
         }
     }
 
     Ok(())
 }
 
-async fn print_block_metadata(
+async fn fetch_block_and_metadata(
     inx: &mut Inx,
     block_id: BlockId,
     read_block: bool,
