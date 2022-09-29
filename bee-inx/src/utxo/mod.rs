@@ -7,6 +7,7 @@ use futures::{Stream, StreamExt};
 
 pub use self::responses::*;
 use crate::{
+    bee,
     client::{try_from_inx_type, Inx},
     error::Error,
     inx,
@@ -56,5 +57,15 @@ impl Inx {
             .await?
             .into_inner()
             .map(try_from_inx_type))
+    }
+
+    /// TODO
+    pub async fn read_output(&mut self, output_id: bee::OutputId) -> Result<OutputResponse, Error> {
+        Ok(self
+            .client
+            .read_output(inx::OutputId::from(output_id))
+            .await?
+            .into_inner()
+            .try_into()?)
     }
 }
