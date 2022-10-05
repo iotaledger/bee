@@ -1,6 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+mod convert;
 mod ed25519;
 mod jwt_api;
 mod password;
@@ -32,6 +33,8 @@ pub enum Tool {
     Password(password::PasswordTool),
     /// Generates a JWT for the Node API.
     JwtApi(jwt_api::JwtApiTool),
+    /// Converts back & forth between Bech32 and Hex.
+    Convert(convert::ConvertTool),
 }
 
 #[derive(Debug, Error)]
@@ -50,6 +53,8 @@ pub enum ToolError {
     Password(#[from] password::PasswordError),
     #[error("{0}")]
     JwtApi(#[from] jwt_api::JwtApiError),
+    #[error("{0}")]
+    Convert(#[from] convert::ConvertError),
 }
 
 pub fn exec<B: NodeStorageBackend>(tool: &Tool, local: &Local, node_config: &NodeConfig<B>) -> Result<(), ToolError> {
@@ -62,6 +67,7 @@ pub fn exec<B: NodeStorageBackend>(tool: &Tool, local: &Local, node_config: &Nod
         Tool::SnapshotInfo(tool) => snapshot_info::exec(tool)?,
         Tool::Password(tool) => password::exec(tool)?,
         Tool::JwtApi(tool) => jwt_api::exec(tool, local, node_config)?,
+        Tool::Convert(tool) => convert::exec(tool)?,
     }
 
     Ok(())
