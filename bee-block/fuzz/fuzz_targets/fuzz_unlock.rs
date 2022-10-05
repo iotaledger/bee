@@ -9,5 +9,5 @@ use libfuzzer_sys::fuzz_target;
 use packable::PackableExt;
 
 fuzz_target!(|data: &[u8]| {
-    let _ = Unlock::unpack_verified(&mut data.to_vec().as_slice());
+    let _ = Unlock::unpack_verified(data.to_vec().as_slice());
 });

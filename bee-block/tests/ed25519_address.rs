@@ -68,6 +68,6 @@ fn pack_unpack_valid() {
 
     assert_eq!(
         address,
-        PackableExt::unpack_verified(&mut packed_address.as_slice(), &()).unwrap()
+        PackableExt::unpack_verified(packed_address.as_slice(), &()).unwrap()
     );
 }

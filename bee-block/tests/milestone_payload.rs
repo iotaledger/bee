@@ -140,7 +140,7 @@ fn pack_unpack_valid() {
     assert_eq!(payload.packed_len(), packed.len());
     assert_eq!(
         payload,
-        PackableExt::unpack_verified(&mut packed.as_slice(), &protocol_parameters).unwrap()
+        PackableExt::unpack_verified(packed.as_slice(), &protocol_parameters).unwrap()
     )
 }
 

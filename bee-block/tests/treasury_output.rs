@@ -50,8 +50,7 @@ fn packed_len() {
 #[test]
 fn pack_unpack_valid() {
     let output_1 = TreasuryOutput::new(1_000, protocol_parameters().token_supply()).unwrap();
-    let output_2 =
-        TreasuryOutput::unpack_verified(&mut output_1.pack_to_vec().as_slice(), &protocol_parameters()).unwrap();
+    let output_2 = TreasuryOutput::unpack_verified(output_1.pack_to_vec().as_slice(), &protocol_parameters()).unwrap();
 
     assert_eq!(output_1, output_2);
 }
@@ -60,7 +59,7 @@ fn pack_unpack_valid() {
 fn pack_unpack_invalid() {
     assert!(matches!(
         TreasuryOutput::unpack_verified(
-            &mut vec![0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a].as_slice(),
+            vec![0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a].as_slice(),
             &protocol_parameters()
         ),
         Err(UnpackError::Packable(Error::InvalidTreasuryOutputAmount(

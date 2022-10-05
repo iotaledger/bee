@@ -46,7 +46,7 @@ fn pack_unpack_valid() {
     )
     .unwrap();
     let transaction_2 =
-        TreasuryTransactionPayload::unpack_verified(&mut transaction_1.pack_to_vec().as_slice(), &protocol_parameters)
+        TreasuryTransactionPayload::unpack_verified(transaction_1.pack_to_vec().as_slice(), &protocol_parameters)
             .unwrap();
 
     assert_eq!(transaction_1, transaction_2);
@@ -62,5 +62,5 @@ fn pack_unpack_invalid() {
 
     // Actual error is not checked because the output type check is done after the output is parsed so the error is not
     // `InvalidOutputKind` but something related to an invalid address, so not really relevant for this test.
-    assert!(TreasuryTransactionPayload::unpack_verified(&mut bytes.as_slice(), &protocol_parameters()).is_err());
+    assert!(TreasuryTransactionPayload::unpack_verified(bytes.as_slice(), &protocol_parameters()).is_err());
 }

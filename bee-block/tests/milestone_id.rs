@@ -54,6 +54,6 @@ fn pack_unpack_valid() {
     assert_eq!(packed_milestone_id.len(), milestone_id.packed_len());
     assert_eq!(
         milestone_id,
-        PackableExt::unpack_verified(&mut packed_milestone_id.as_slice(), &()).unwrap()
+        PackableExt::unpack_verified(packed_milestone_id.as_slice(), &()).unwrap()
     );
 }
