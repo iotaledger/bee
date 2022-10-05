@@ -3,11 +3,9 @@
 
 use std::marker::PhantomData;
 
-use bee_block as bee;
-use inx::proto;
 use packable::{Packable, PackableExt};
 
-use crate::Error;
+use crate::{bee, inx, Error};
 
 /// Represents a type as raw bytes.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -17,17 +15,20 @@ pub struct Raw<T: Packable> {
 }
 
 impl<T: Packable> Raw<T> {
+    /// Returns the inner byte data as-is.
     #[must_use]
     pub fn data(self) -> Vec<u8> {
         self.data
     }
 
+    /// Deserializes the inner byte data into `T`.
     pub fn inner(self, visitor: &T::UnpackVisitor) -> Result<T, Error> {
         let unpacked = T::unpack_verified(self.data, visitor)
             .map_err(|e| bee_block::InxError::InvalidRawBytes(format!("{:?}", e)))?;
         Ok(unpacked)
     }
 
+    /// Deserializes the raw byte data into `T` without verification.
     pub fn inner_unverified(self) -> Result<T, Error> {
         let unpacked =
             T::unpack_unverified(self.data).map_err(|e| bee_block::InxError::InvalidRawBytes(format!("{:?}", e)))?;
@@ -44,67 +45,79 @@ impl<T: Packable> From<Vec<u8>> for Raw<T> {
     }
 }
 
-impl From<proto::RawOutput> for Raw<bee::output::Output> {
-    fn from(value: proto::RawOutput) -> Self {
+impl From<inx::RawOutput> for Raw<bee::Output> {
+    fn from(value: inx::RawOutput) -> Self {
         value.data.into()
     }
 }
 
-impl From<Raw<bee::output::Output>> for proto::RawOutput {
-    fn from(value: Raw<bee::output::Output>) -> Self {
+impl From<Raw<bee::Output>> for inx::RawOutput {
+    fn from(value: Raw<bee::Output>) -> Self {
         Self { data: value.data }
     }
 }
 
-impl From<proto::RawBlock> for Raw<bee::Block> {
-    fn from(value: proto::RawBlock) -> Self {
+impl From<inx::RawBlock> for Raw<bee::Block> {
+    fn from(value: inx::RawBlock) -> Self {
         value.data.into()
     }
 }
 
-impl From<Raw<bee::Block>> for proto::RawBlock {
+impl From<Raw<bee::Block>> for inx::RawBlock {
     fn from(value: Raw<bee::Block>) -> Self {
         Self { data: value.data }
     }
 }
 
-impl From<proto::RawMilestone> for Raw<bee::payload::Payload> {
-    fn from(value: proto::RawMilestone) -> Self {
+impl From<inx::RawMilestone> for Raw<bee::Payload> {
+    fn from(value: inx::RawMilestone) -> Self {
         value.data.into()
     }
 }
 
-impl From<Raw<bee::payload::Payload>> for proto::RawMilestone {
-    fn from(value: Raw<bee::payload::Payload>) -> Self {
+impl From<Raw<bee::Payload>> for inx::RawMilestone {
+    fn from(value: Raw<bee::Payload>) -> Self {
+        Self { data: value.data }
+    }
+}
+
+impl From<inx::RawReceipt> for Raw<bee::MilestoneOption> {
+    fn from(value: inx::RawReceipt) -> Self {
+        value.data.into()
+    }
+}
+
+impl From<Raw<bee::MilestoneOption>> for inx::RawReceipt {
+    fn from(value: Raw<bee::MilestoneOption>) -> Self {
         Self { data: value.data }
     }
 }
 
 #[cfg(test)]
 mod test {
-    use bee::{payload::Payload, rand::output::rand_output};
+    use bee::{rand_output, Payload};
 
     use super::*;
     use crate::ProtocolParameters;
 
     #[test]
     fn raw_output() {
-        let protocol_parameters = bee::protocol::protocol_parameters();
+        let protocol_parameters = bee::protocol_parameters();
 
         let output = rand_output(protocol_parameters.token_supply());
 
-        let proto = proto::RawOutput {
+        let proto = inx::RawOutput {
             data: output.pack_to_vec(),
         };
-        let raw: Raw<bee::output::Output> = proto.into();
+        let raw: Raw<bee::Output> = proto.into();
         assert_eq!(output, raw.clone().inner_unverified().unwrap());
         assert_eq!(output, raw.inner(&protocol_parameters).unwrap());
     }
 
     #[test]
     fn raw_protocol_parameters() {
-        let protocol_parameters = bee::protocol::protocol_parameters();
-        let proto = proto::RawProtocolParameters::from(protocol_parameters.clone());
+        let protocol_parameters = bee::protocol_parameters();
+        let proto = inx::RawProtocolParameters::from(protocol_parameters.clone());
 
         let pp: ProtocolParameters = proto.into();
         assert_eq!(protocol_parameters, pp.params.inner(&()).unwrap());

@@ -19,6 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 1.0.0-rc.1 - 2022-09-29
+
+### Added
+
+- Missing INX bindings
+- Examples
+- Documentation
+
 ## 1.0.0-beta.6 - 2022-09-26
 
 ### Added

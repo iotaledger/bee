@@ -1,68 +1,88 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_block as bee;
+/// A module that provides milestone related INX requests.
+pub mod requests;
+/// A module that provides milestone related INX responses.
+pub mod responses;
 
-mod info;
+use futures::stream::{Stream, StreamExt};
 
-use inx::proto;
+pub use self::{requests::*, responses::*};
+use crate::{
+    block::responses::{BlockMetadata, BlockWithMetadata},
+    client::{try_from_inx_type, Inx},
+    error::Error,
+    inx,
+};
 
-pub use self::info::MilestoneInfo;
-use crate::{maybe_missing, ProtocolParameters, Raw};
-
-/// The [`Milestone`] type.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Milestone {
-    /// Information about the milestone.
-    pub milestone_info: MilestoneInfo,
-    /// The raw bytes of the milestone. Note that this is not a [`bee::payload::milestone::MilestonePayload`], but
-    /// rather a [`bee::payload::Payload`] and still needs to be unpacked.
-    pub milestone: Raw<bee::payload::Payload>,
-}
-
-impl TryFrom<proto::Milestone> for Milestone {
-    type Error = bee::InxError;
-
-    fn try_from(value: proto::Milestone) -> Result<Self, Self::Error> {
-        Ok(Self {
-            milestone_info: maybe_missing!(value.milestone_info).try_into()?,
-            milestone: maybe_missing!(value.milestone).data.into(),
-        })
+impl Inx {
+    /// Requests a particular milestone.
+    pub async fn read_milestone(&mut self, request: MilestoneRequest) -> Result<Milestone, Error> {
+        Ok(self
+            .client
+            .read_milestone(inx::MilestoneRequest::from(request))
+            .await?
+            .into_inner()
+            .try_into()?)
     }
-}
 
-impl From<Milestone> for proto::Milestone {
-    fn from(value: Milestone) -> Self {
-        Self {
-            milestone_info: Some(value.milestone_info.into()),
-            milestone: Some(value.milestone.into()),
-        }
+    /// Listens to latest milestones.
+    pub async fn listen_to_latest_milestones(&mut self) -> Result<impl Stream<Item = Result<Milestone, Error>>, Error> {
+        Ok(self
+            .client
+            .listen_to_latest_milestones(inx::NoParams {})
+            .await?
+            .into_inner()
+            .map(try_from_inx_type))
     }
-}
 
-/// The [`Milestone`] type.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct MilestoneAndProtocolParameters {
-    pub milestone: Milestone,
-    pub current_protocol_parameters: ProtocolParameters,
-}
-
-impl TryFrom<proto::MilestoneAndProtocolParameters> for MilestoneAndProtocolParameters {
-    type Error = bee::InxError;
-
-    fn try_from(value: proto::MilestoneAndProtocolParameters) -> Result<Self, Self::Error> {
-        Ok(Self {
-            milestone: maybe_missing!(value.milestone).try_into()?,
-            current_protocol_parameters: maybe_missing!(value.current_protocol_parameters).into(),
-        })
+    /// Listens to confirmed milestones in a certain range.
+    pub async fn listen_to_confirmed_milestones(
+        &mut self,
+        request: MilestoneRangeRequest,
+    ) -> Result<impl Stream<Item = Result<MilestoneAndProtocolParameters, Error>>, Error> {
+        Ok(self
+            .client
+            .listen_to_confirmed_milestones(inx::MilestoneRangeRequest::from(request))
+            .await?
+            .into_inner()
+            .map(try_from_inx_type))
     }
-}
 
-impl From<MilestoneAndProtocolParameters> for proto::MilestoneAndProtocolParameters {
-    fn from(value: MilestoneAndProtocolParameters) -> Self {
-        Self {
-            milestone: Some(value.milestone.into()),
-            current_protocol_parameters: Some(value.current_protocol_parameters.into()),
-        }
+    /// Requests "white flag" data for a milestone.
+    pub async fn compute_white_flag(&mut self, request: WhiteFlagRequest) -> Result<WhiteFlagResponse, Error> {
+        Ok(self
+            .client
+            .compute_white_flag(inx::WhiteFlagRequest::from(request))
+            .await?
+            .into_inner()
+            .into())
+    }
+
+    /// Reads the past cone of a milestone specified by a [`MilestoneRequest`].
+    pub async fn read_milestone_cone(
+        &mut self,
+        request: MilestoneRequest,
+    ) -> Result<impl Stream<Item = Result<BlockWithMetadata, Error>>, Error> {
+        Ok(self
+            .client
+            .read_milestone_cone(inx::MilestoneRequest::from(request))
+            .await?
+            .into_inner()
+            .map(try_from_inx_type))
+    }
+
+    /// Reads the past cone metadata of a milestone specified by a [`MilestoneRequest`].
+    pub async fn read_milestone_cone_metadata(
+        &mut self,
+        request: MilestoneRequest,
+    ) -> Result<impl Stream<Item = Result<BlockMetadata, Error>>, Error> {
+        Ok(self
+            .client
+            .read_milestone_cone_metadata(inx::MilestoneRequest::from(request))
+            .await?
+            .into_inner()
+            .map(try_from_inx_type))
     }
 }

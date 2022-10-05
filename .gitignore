@@ -26,3 +26,5 @@ book
 
 # vscode
 **/.vscode/
+
+**/.env
