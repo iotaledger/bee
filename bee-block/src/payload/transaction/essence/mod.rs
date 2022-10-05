@@ -75,5 +75,13 @@ pub mod dto {
                 )),
             }
         }
+
+        pub fn try_from_dto_unverified(value: &TransactionEssenceDto) -> Result<TransactionEssence, DtoError> {
+            match value {
+                TransactionEssenceDto::Regular(r) => Ok(TransactionEssence::Regular(
+                    RegularTransactionEssence::try_from_dto_unverified(r)?,
+                )),
+            }
+        }
     }
 }

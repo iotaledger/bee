@@ -126,9 +126,9 @@ pub mod dto {
     }
 
     impl TransactionPayload {
-        pub fn try_from_dto(
+        fn _try_from_dto(
             value: &TransactionPayloadDto,
-            protocol_parameters: &ProtocolParameters,
+            essence: TransactionEssence,
         ) -> Result<TransactionPayload, DtoError> {
             let mut unlocks = Vec::new();
 
@@ -136,10 +136,21 @@ pub mod dto {
                 unlocks.push(b.try_into()?);
             }
 
-            Ok(TransactionPayload::new(
+            Ok(TransactionPayload::new(essence, Unlocks::new(unlocks)?)?)
+        }
+
+        pub fn try_from_dto(
+            value: &TransactionPayloadDto,
+            protocol_parameters: &ProtocolParameters,
+        ) -> Result<TransactionPayload, DtoError> {
+            TransactionPayload::_try_from_dto(
+                value,
                 TransactionEssence::try_from_dto(&value.essence, protocol_parameters)?,
-                Unlocks::new(unlocks)?,
-            )?)
+            )
+        }
+
+        pub fn try_from_dto_unverified(value: &TransactionPayloadDto) -> Result<TransactionPayload, DtoError> {
+            TransactionPayload::_try_from_dto(value, TransactionEssence::try_from_dto_unverified(&value.essence)?)
         }
     }
 }

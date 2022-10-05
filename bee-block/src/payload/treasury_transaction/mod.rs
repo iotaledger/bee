@@ -119,5 +119,22 @@ pub mod dto {
                 },
             )?)
         }
+
+        pub fn try_from_dto_unverified(
+            value: &TreasuryTransactionPayloadDto,
+        ) -> Result<TreasuryTransactionPayload, DtoError> {
+            Ok(TreasuryTransactionPayload::new(
+                if let InputDto::Treasury(ref input) = value.input {
+                    input.try_into()?
+                } else {
+                    return Err(DtoError::InvalidField("input"));
+                },
+                if let OutputDto::Treasury(ref output) = value.output {
+                    TreasuryOutput::try_from_dto_unverified(output)?
+                } else {
+                    return Err(DtoError::InvalidField("output"));
+                },
+            )?)
+        }
     }
 }

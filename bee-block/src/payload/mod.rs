@@ -284,5 +284,16 @@ pub mod dto {
                 PayloadDto::TaggedData(p) => Payload::from(TaggedDataPayload::try_from(p.as_ref())?),
             })
         }
+
+        pub fn try_from_dto_unverified(value: &PayloadDto) -> Result<Payload, DtoError> {
+            Ok(match value {
+                PayloadDto::Transaction(p) => Payload::from(TransactionPayload::try_from_dto_unverified(p.as_ref())?),
+                PayloadDto::Milestone(p) => Payload::from(MilestonePayload::try_from_dto_unverified(p.as_ref())?),
+                PayloadDto::TreasuryTransaction(p) => {
+                    Payload::from(TreasuryTransactionPayload::try_from_dto_unverified(p.as_ref())?)
+                }
+                PayloadDto::TaggedData(p) => Payload::from(TaggedDataPayload::try_from(p.as_ref())?),
+            })
+        }
     }
 }

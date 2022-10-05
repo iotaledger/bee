@@ -231,6 +231,15 @@ pub mod dto {
                 MilestoneOptionDto::Parameters(v) => MilestoneOption::Parameters(v.try_into()?),
             })
         }
+
+        pub fn try_from_dto_unverified(value: &MilestoneOptionDto) -> Result<MilestoneOption, DtoError> {
+            Ok(match value {
+                MilestoneOptionDto::Receipt(v) => {
+                    MilestoneOption::Receipt(ReceiptMilestoneOption::try_from_dto_unverified(v)?)
+                }
+                MilestoneOptionDto::Parameters(v) => MilestoneOption::Parameters(v.try_into()?),
+            })
+        }
     }
 
     impl MilestoneOptionDto {

@@ -400,6 +400,16 @@ pub mod dto {
                 OutputDto::Nft(o) => Output::Nft(NftOutput::try_from_dto(o, token_supply)?),
             })
         }
+
+        pub fn try_from_dto_unverified(value: &OutputDto) -> Result<Output, DtoError> {
+            Ok(match value {
+                OutputDto::Treasury(o) => Output::Treasury(TreasuryOutput::try_from_dto_unverified(o)?),
+                OutputDto::Basic(o) => Output::Basic(BasicOutput::try_from_dto_unverified(o)?),
+                OutputDto::Alias(o) => Output::Alias(AliasOutput::try_from_dto_unverified(o)?),
+                OutputDto::Foundry(o) => Output::Foundry(FoundryOutput::try_from_dto_unverified(o)?),
+                OutputDto::Nft(o) => Output::Nft(NftOutput::try_from_dto_unverified(o)?),
+            })
+        }
     }
 
     impl<'de> Deserialize<'de> for OutputDto {

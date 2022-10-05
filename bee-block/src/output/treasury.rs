@@ -81,5 +81,14 @@ pub mod dto {
                 token_supply,
             )?)
         }
+
+        pub fn try_from_dto_unverified(value: &TreasuryOutputDto) -> Result<TreasuryOutput, DtoError> {
+            Ok(TreasuryOutput {
+                amount: value
+                    .amount
+                    .parse::<u64>()
+                    .map_err(|_| DtoError::InvalidField("amount"))?,
+            })
+        }
     }
 }
