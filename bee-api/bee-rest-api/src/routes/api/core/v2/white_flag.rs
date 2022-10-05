@@ -97,7 +97,7 @@ pub(crate) async fn white_flag<B: StorageBackend>(
             request_block(
                 &*args.tangle,
                 &args.block_requester,
-                &*args.requested_blocks,
+                &args.requested_blocks,
                 *parent,
                 index,
             )

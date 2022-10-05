@@ -204,7 +204,7 @@ fn pack_unpack_valid() {
     assert_eq!(packed_receipt.len(), receipt.packed_len());
     assert_eq!(
         receipt,
-        PackableExt::unpack_verified(&mut packed_receipt.as_slice(), &protocol_parameters).unwrap()
+        PackableExt::unpack_verified(packed_receipt.as_slice(), &protocol_parameters).unwrap()
     );
 }
 

@@ -67,7 +67,7 @@ fn pack_unpack_valid() {
         protocol_parameters.token_supply(),
     )
     .unwrap();
-    let mfe_2 = MigratedFundsEntry::unpack_verified(&mut mfe_1.pack_to_vec().as_slice(), &protocol_parameters).unwrap();
+    let mfe_2 = MigratedFundsEntry::unpack_verified(mfe_1.pack_to_vec().as_slice(), &protocol_parameters).unwrap();
 
     assert_eq!(mfe_1.tail_transaction_hash(), mfe_2.tail_transaction_hash());
     assert_eq!(*mfe_1.address(), *mfe_2.address());
@@ -85,7 +85,7 @@ fn pack_unpack_invalid_amount() {
     ];
 
     assert!(matches!(
-        MigratedFundsEntry::unpack_verified(&mut bytes.as_slice(), &protocol_parameters),
+        MigratedFundsEntry::unpack_verified(bytes.as_slice(), &protocol_parameters),
         Err(UnpackError::Packable(Error::InvalidMigratedFundsEntryAmount(
             3_038_287_259_199_220_266
         )))

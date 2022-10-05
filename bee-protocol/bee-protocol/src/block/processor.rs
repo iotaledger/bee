@@ -112,7 +112,7 @@ where
                     {
                         trace!("Processing received block...");
 
-                        let block = match Block::unpack_strict(&mut &block_packet.bytes[..], &protocol_parameters) {
+                        let block = match Block::unpack_strict(&block_packet.bytes[..], &protocol_parameters) {
                             Ok(block) => block,
                             Err(e) => {
                                 notify_invalid_block(format!("Invalid block: {:?}.", e), &metrics, notifier);
@@ -149,7 +149,7 @@ where
                             if let Some(ref peer_id) = from {
                                 peer_manager
                                     .get_map(peer_id, |peer| {
-                                        (*peer).0.metrics().known_blocks_inc();
+                                        peer.0.metrics().known_blocks_inc();
                                     })
                                     .unwrap_or_default();
                             }
@@ -179,7 +179,7 @@ where
                                 metrics.blocks_average_latency_set(latency_sum / latency_num);
 
                                 for parent in block.parents().iter() {
-                                    request_block(&tangle, &block_requester, &*requested_blocks, *parent, index).await;
+                                    request_block(&tangle, &block_requester, &requested_blocks, *parent, index).await;
                                 }
                             }
                             // Block was not requested.

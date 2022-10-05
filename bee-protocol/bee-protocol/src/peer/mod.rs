@@ -86,7 +86,7 @@ impl PeerWorker {
         request_latest_milestone(
             &*tangle,
             &self.milestone_requester,
-            &*requested_milestones,
+            &requested_milestones,
             Some(*self.peer.id()),
         );
 

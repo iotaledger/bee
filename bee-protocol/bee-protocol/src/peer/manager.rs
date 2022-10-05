@@ -169,10 +169,10 @@ where
 
                         // TODO can't do it in the if because of deadlock, but it's not really right to do it here.
                         send_heartbeat(
-                            &new_heartbeat(&*tangle, &*peer_manager),
+                            &new_heartbeat(&*tangle, &peer_manager),
                             &peer_id,
-                            &*peer_manager,
-                            &*metrics,
+                            &peer_manager,
+                            &metrics,
                         );
                     }
                     NetworkEvent::PeerDisconnected { peer_id } => peer_manager

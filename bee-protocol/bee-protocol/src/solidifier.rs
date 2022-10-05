@@ -148,7 +148,7 @@ where
 
                 // Request all milestones within a range.
                 while next <= cmp::min(smi + MilestoneIndex(milestone_sync_count), lmi) {
-                    request_milestone(&tangle, &milestone_requester, &*requested_milestones, next, None);
+                    request_milestone(&tangle, &milestone_requester, &requested_milestones, next, None);
                     next = next + MilestoneIndex(1);
                 }
 
