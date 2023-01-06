@@ -16,5 +16,5 @@ bee-runtime = { version = "1.0.0", path = "../../../bee-runtime", default-featur
 async-trait = { version = "0.1.57", default-features = false }
 futures = { version = "0.3.21", default-features = false }
 log = { version = "0.4.17", default-features = false }
-tokio = { version = "1.20.1", default-features = false, features = [ "signal", "rt", "macros", "rt-multi-thread" ] }
+tokio = { version = "1.23.1", default-features = false, features = [ "signal", "rt", "macros", "rt-multi-thread" ] }
 tokio-stream = { version = "0.1.9", default-features = false }
