@@ -52,7 +52,7 @@ tokio = { version = "1.20.1", default-features = false, features = [ "signal", "
 tokio-stream = { version = "0.1.9", default-features = false }
 toml = { version = "0.5.9", default-features = false }
 tracing = { version = "0.1.36", default-features = false, optional = true }
-warp = { version = "0.3.2", default-features = false }
+warp = { version = "0.3.3", default-features = false }
 
 [lib]
 name = "bee_node"
